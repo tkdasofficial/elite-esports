@@ -15,6 +15,7 @@ import SignUp from '@/src/pages/SignUp';
 import ForgotPassword from '@/src/pages/ForgotPassword';
 import ResetPassword from '@/src/pages/ResetPassword';
 import Notifications from '@/src/pages/Notifications';
+import NotificationDetail from '@/src/pages/NotificationDetail';
 import MatchDetails from '@/src/pages/MatchDetails';
 import MyMatches from '@/src/pages/MyMatches';
 import MyTeam from '@/src/pages/MyTeam';
@@ -109,6 +110,7 @@ export const AppRouter = () => {
       <div className="h-full w-full md:max-w-[768px] lg:max-w-[1024px] bg-brand-dark relative flex flex-col shadow-2xl overflow-hidden md:border-x md:border-white/5">
         <Routes>
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/notifications/:id" element={<NotificationDetail />} />
           <Route path="*" element={
             <>
               {showGlobalHeader && <Header />}
