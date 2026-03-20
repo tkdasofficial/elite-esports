@@ -3,74 +3,56 @@ import { Link, useLocation } from 'react-router-dom';
 import { cn } from '@/src/utils/helpers';
 import { motion } from 'motion/react';
 
+const NAV = [
+  { icon: Home,   label: 'Home',    path: '/' },
+  { icon: Trophy, label: 'Rank',    path: '/leaderboard' },
+  { icon: Play,   label: 'Live',    path: '/live', center: true },
+  { icon: Wallet, label: 'Wallet',  path: '/wallet' },
+  { icon: User,   label: 'Profile', path: '/profile' },
+];
+
 export const BottomBar = () => {
   const location = useLocation();
-  const isMatchDetails = location.pathname.startsWith('/match/');
-  const isAdminPage = location.pathname.startsWith('/admin');
-
-  if (isMatchDetails || isAdminPage) return null;
-
-  const navItems = [
-    { icon: Home,   label: 'Home',    path: '/' },
-    { icon: Trophy, label: 'Rank',    path: '/leaderboard' },
-    { icon: Play,   label: 'Live',    path: '/live', isCenter: true },
-    { icon: Wallet, label: 'Wallet',  path: '/wallet' },
-    { icon: User,   label: 'Profile', path: '/profile' },
-  ];
+  if (location.pathname.startsWith('/match/') || location.pathname.startsWith('/admin')) return null;
 
   return (
-    <nav className="h-[64px] glass-dark border-t border-app-border px-4 flex items-center justify-around sticky bottom-0 z-50 w-full pb-1">
-      {navItems.map((item) => {
-        const isActive = location.pathname === item.path;
+    <nav className="glass-dark border-t border-app-border h-[64px] pb-safe flex items-center justify-around px-2 sticky bottom-0 z-50 w-full">
+      {NAV.map((item) => {
+        const active = location.pathname === item.path;
 
-        if (item.isCenter) {
+        if (item.center) {
           return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className="relative flex flex-col items-center justify-center -mt-5"
-            >
+            <Link key={item.path} to={item.path} className="flex flex-col items-center justify-center -mt-4">
               <motion.div
                 whileTap={{ scale: 0.88 }}
                 className={cn(
-                  'w-[52px] h-[52px] rounded-[18px] flex items-center justify-center shadow-xl transition-all duration-300',
-                  isActive
-                    ? 'bg-brand-primary shadow-brand-primary/40 scale-105'
-                    : 'bg-brand-primary/90 shadow-brand-primary/20'
+                  'w-[50px] h-[50px] rounded-full flex items-center justify-center shadow-lg transition-all duration-200',
+                  active
+                    ? 'bg-brand-primary shadow-brand-primary/40'
+                    : 'bg-brand-primary shadow-brand-primary/20'
                 )}
               >
-                <Play size={22} fill="white" className="text-white ml-0.5" />
+                <Play size={20} fill="white" className="text-white ml-0.5" />
               </motion.div>
             </Link>
           );
         }
 
         return (
-          <Link
-            key={item.path}
-            to={item.path}
-            className="relative flex flex-col items-center gap-1 w-12"
-          >
-            <motion.div
-              whileTap={{ scale: 0.85 }}
-              className={cn(
-                'w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-250',
-                isActive
-                  ? 'bg-brand-primary/15 text-brand-primary-light'
-                  : 'text-text-muted hover:text-text-secondary'
-              )}
-            >
+          <Link key={item.path} to={item.path} className="flex flex-col items-center gap-[3px] w-14 pt-1">
+            <motion.div whileTap={{ scale: 0.82 }} className="flex flex-col items-center gap-[3px]">
               <item.icon
-                size={20}
-                strokeWidth={isActive ? 2.5 : 2}
+                size={22}
+                strokeWidth={active ? 2.5 : 1.8}
+                className={active ? 'text-brand-primary' : 'text-text-muted'}
               />
+              <span className={cn(
+                'text-[10px] tracking-tight font-medium leading-none',
+                active ? 'text-brand-primary' : 'text-text-muted'
+              )}>
+                {item.label}
+              </span>
             </motion.div>
-            {isActive && (
-              <motion.div
-                layoutId="navDot"
-                className="absolute bottom-0 w-1 h-1 rounded-full bg-brand-primary"
-              />
-            )}
           </Link>
         );
       })}

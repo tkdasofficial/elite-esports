@@ -5,120 +5,108 @@ import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
 import { TrendingUp, TrendingDown, Minus, Crown } from 'lucide-react';
 
 const BASE = [
-  { id:'1', username:'ShadowSlayer', points:12450, trend:'up'   as const },
-  { id:'2', username:'EsportsPro',   points:11200, trend:'down' as const },
-  { id:'3', username:'NinjaX',       points:10800, trend:'up'   as const },
+  { id:'1', username:'ShadowSlayer', points:12450, trend:'up'      as const },
+  { id:'2', username:'EsportsPro',   points:11200, trend:'down'    as const },
+  { id:'3', username:'NinjaX',       points:10800, trend:'up'      as const },
   { id:'4', username:'GhostRider',   points:9500,  trend:'neutral' as const },
-  { id:'5', username:'ViperKing',    points:8900,  trend:'up'   as const },
-  { id:'6', username:'AceHunter',    points:8200,  trend:'down' as const },
-  { id:'7', username:'DarkPhoenix',  points:7600,  trend:'up'   as const },
+  { id:'5', username:'ViperKing',    points:8900,  trend:'up'      as const },
+  { id:'6', username:'AceHunter',    points:8200,  trend:'down'    as const },
+  { id:'7', username:'DarkPhoenix',  points:7600,  trend:'up'      as const },
   { id:'8', username:'StormBreaker', points:7100,  trend:'neutral' as const },
 ];
 
 const FILTERS = ['Daily','Weekly','All-Time'] as const;
 type Filter = typeof FILTERS[number];
+const mult: Record<Filter, number> = { Daily:1, Weekly:7, 'All-Time':30 };
 
-const multiplier: Record<Filter, number> = { Daily:1, Weekly:7, 'All-Time':30 };
+const Trend = ({ t }: { t: 'up'|'down'|'neutral' }) =>
+  t==='up'   ? <TrendingUp  size={14} className="text-brand-success" /> :
+  t==='down' ? <TrendingDown size={14} className="text-brand-live" />   :
+               <Minus size={14} className="text-text-muted" />;
+
+const podiumOrder = [
+  { pos:1, ring:'border-brand-gold',   medal:'#FFD60A', crown:true,  h:'h-[88px]', avatarSz:'w-[68px] h-[68px] text-2xl' },
+  { pos:2, ring:'border-app-elevated', medal:'#8E8E93', crown:false, h:'h-[68px]', avatarSz:'w-[56px] h-[56px] text-xl' },
+  { pos:3, ring:'border-[#FF9F0A]',    medal:'#FF9F0A', crown:false, h:'h-[52px]', avatarSz:'w-[48px] h-[48px] text-lg' },
+];
 
 export default function Leaderboard() {
   const [filter, setFilter] = useState<Filter>('Daily');
 
-  const rankings = BASE.map(p => ({
-    ...p,
-    points: Math.round(p.points * multiplier[filter]),
-  })).sort((a,b) => b.points - a.points);
+  const rankings = BASE.map(p => ({ ...p, points: Math.round(p.points * mult[filter]) }))
+    .sort((a,b) => b.points - a.points);
 
   const top3 = rankings.slice(0,3);
   const rest  = rankings.slice(3);
 
-  const TrendIcon = ({ t }: { t: 'up'|'down'|'neutral' }) =>
-    t==='up'   ? <TrendingUp  size={13} className="text-brand-success" /> :
-    t==='down' ? <TrendingDown size={13} className="text-brand-live"    /> :
-                 <Minus        size={13} className="text-text-muted"    />;
-
-  const podiumCfg = [
-    { pos:1, size:'w-20 h-20', barH:'h-[90px]', ring:'ring-brand-gold', barBg:'bg-brand-gold/12', label:'1st', labelColor:'text-brand-gold', crown:true },
-    { pos:2, size:'w-16 h-16', barH:'h-[68px]', ring:'ring-slate-400',  barBg:'bg-slate-400/10',  label:'2nd', labelColor:'text-slate-400', crown:false },
-    { pos:3, size:'w-14 h-14', barH:'h-[52px]', ring:'ring-orange-500', barBg:'bg-orange-500/10', label:'3rd', labelColor:'text-orange-500', crown:false },
-  ];
-
-  const order = [podiumCfg[1], podiumCfg[0], podiumCfg[2]];
-
   return (
-    <div className="px-4 pb-28 space-y-7">
+    <div className="px-4 pb-24 space-y-6">
       {/* Podium */}
-      <section className="pt-8 flex items-end justify-center gap-3">
-        {order.map((cfg, idx) => {
-          const player = rankings[cfg.pos - 1];
+      <section className="pt-8 flex items-end justify-center gap-4">
+        {[podiumOrder[1], podiumOrder[0], podiumOrder[2]].map((cfg, idx) => {
+          const player = top3[cfg.pos - 1];
           if (!player) return null;
           return (
-            <motion.div
-              key={cfg.pos}
-              initial={{ opacity:0, y:20 }}
-              animate={{ opacity:1, y:0 }}
-              transition={{ delay: idx*0.1 }}
-              className="flex flex-col items-center gap-2"
-            >
+            <motion.div key={cfg.pos}
+              initial={{ opacity:0, y:20 }} animate={{ opacity:1, y:0 }} transition={{ delay: idx*0.1 }}
+              className="flex flex-col items-center gap-2">
               <div className="relative">
                 {cfg.crown && (
-                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-brand-gold">
-                    <Crown size={18} fill="currentColor" />
-                  </div>
+                  <Crown size={22} fill="#FFD60A" className="absolute -top-7 left-1/2 -translate-x-1/2 text-brand-gold" />
                 )}
-                <LetterAvatar
-                  name={player.username}
-                  size="lg"
-                  className={cn(cfg.size, `ring-2 ${cfg.ring} shadow-xl`)}
-                />
-                <div className={cn('absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow',
-                  cfg.pos===1 ? 'bg-brand-gold' : cfg.pos===2 ? 'bg-slate-400' : 'bg-orange-500')}>
+                <div className={cn('rounded-full border-2 overflow-hidden flex items-center justify-center', cfg.ring, cfg.avatarSz)}>
+                  <LetterAvatar name={player.username} size={cfg.pos===1?'lg':'md'} />
+                </div>
+                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold border-2 border-app-bg text-black shadow-md"
+                  style={{ background: cfg.medal }}>
                   {cfg.pos}
                 </div>
               </div>
-              <div className="text-center w-full max-w-[72px]">
-                <p className="text-[11px] font-bold text-text-primary leading-tight truncate">{player.username}</p>
-                <p className="text-[10px] font-semibold text-text-muted">{player.points.toLocaleString()}</p>
+              <div className="text-center max-w-[72px]">
+                <p className="text-[12px] font-medium text-text-primary truncate leading-tight">{player.username}</p>
+                <p className="text-[11px] text-text-muted tabular font-normal">{player.points.toLocaleString()}</p>
               </div>
-              <div className={cn('w-full rounded-t-2xl flex items-center justify-center border border-white/5', cfg.barH, cfg.barBg)}>
-                <span className={cn('text-xs font-black', cfg.labelColor)}>{cfg.label}</span>
+              <div className={cn('w-full rounded-t-[12px] flex items-center justify-center', cfg.h)}
+                style={{ background: `${cfg.medal}15`, border: `1px solid ${cfg.medal}30` }}>
+                <span className="text-[13px] font-semibold" style={{ color: cfg.medal }}>
+                  #{cfg.pos}
+                </span>
               </div>
             </motion.div>
           );
         })}
       </section>
 
-      {/* Filters */}
-      <div className="flex gap-2.5 bg-app-card border border-app-border rounded-2xl p-1.5">
+      {/* Filter pills */}
+      <div className="bg-app-elevated rounded-full p-1 flex">
         {FILTERS.map(f => (
-          <button key={f} onClick={()=>setFilter(f)}
-            className={cn('flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200',
-              filter===f ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/25' : 'text-text-secondary hover:text-text-primary')}>
+          <button key={f} onClick={() => setFilter(f)}
+            className={cn('flex-1 py-2.5 rounded-full text-[14px] font-medium transition-all duration-200 active:opacity-70',
+              filter===f ? 'bg-app-card text-text-primary shadow-sm' : 'text-text-muted')}>
             {f}
           </button>
         ))}
       </div>
 
-      {/* List */}
-      <section className="space-y-2.5">
-        <AnimatePresence>
-          {rest.map((player, i) => (
-            <motion.div
-              key={player.id}
-              initial={{ opacity:0, x:-12 }}
-              animate={{ opacity:1, x:0 }}
-              transition={{ delay: i*0.05 }}
-              className="flex items-center gap-4 bg-app-card border border-app-border rounded-2xl p-4"
-            >
-              <span className="w-7 text-sm font-bold text-text-muted text-center">{i+4}</span>
-              <LetterAvatar name={player.username} size="md" className="rounded-xl" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-text-primary truncate">{player.username}</p>
-                <p className="text-xs text-text-muted font-medium">{player.points.toLocaleString()} pts</p>
-              </div>
-              <TrendIcon t={player.trend} />
-            </motion.div>
-          ))}
-        </AnimatePresence>
+      {/* Rankings list */}
+      <section>
+        <div className="bg-app-card rounded-[16px] overflow-hidden divide-y divide-app-border">
+          <AnimatePresence>
+            {rest.map((player, i) => (
+              <motion.div key={player.id}
+                initial={{ opacity:0, x:-10 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.05 }}
+                className="flex items-center gap-4 px-4 py-3.5 active:bg-app-elevated transition-colors">
+                <span className="w-6 text-[15px] font-medium text-text-muted text-center tabular shrink-0">{i+4}</span>
+                <LetterAvatar name={player.username} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[16px] font-normal text-text-primary truncate">{player.username}</p>
+                  <p className="text-[13px] text-text-muted font-normal tabular">{player.points.toLocaleString()} pts</p>
+                </div>
+                <Trend t={player.trend} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
       </section>
     </div>
   );

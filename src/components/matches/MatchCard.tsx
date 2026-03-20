@@ -1,36 +1,21 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Users, Trophy, Clock } from 'lucide-react';
+import { Users, Trophy, Clock, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { cn } from '@/src/utils/helpers';
 import { Match, MatchStatus } from '@/src/types';
 
-interface MatchCardProps {
-  match: Match;
-}
+interface MatchCardProps { match: Match; }
 
 const StatusBadge = ({ status }: { status: MatchStatus }) => {
   const cfg = {
-    live: {
-      label: 'LIVE',
-      cls: 'bg-brand-live/15 text-brand-live border-brand-live/30',
-      dot: 'bg-brand-live animate-pulse',
-    },
-    upcoming: {
-      label: 'UPCOMING',
-      cls: 'bg-brand-warning/15 text-brand-warning border-brand-warning/30',
-      dot: 'bg-brand-warning',
-    },
-    completed: {
-      label: 'ENDED',
-      cls: 'bg-text-muted/10 text-text-secondary border-text-muted/20',
-      dot: 'bg-text-muted',
-    },
+    live:      { label: '● LIVE',     cls: 'text-brand-live',    bg: 'bg-brand-live/15' },
+    upcoming:  { label: 'UPCOMING',   cls: 'text-brand-warning', bg: 'bg-brand-warning/12' },
+    completed: { label: 'ENDED',      cls: 'text-text-muted',    bg: 'bg-ios-fill' },
   };
   const c = cfg[status];
   return (
-    <span className={cn('flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[10px] font-bold border backdrop-blur-md', c.cls)}>
-      <span className={cn('w-1.5 h-1.5 rounded-full', c.dot)} />
+    <span className={cn('px-2 py-[3px] rounded-[6px] text-[11px] font-semibold', c.cls, c.bg)}>
       {c.label}
     </span>
   );
@@ -44,97 +29,87 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match }) => {
 
   return (
     <motion.div
-      whileHover={{ y: -4, scale: 1.005 }}
-      whileTap={{ scale: 0.98 }}
-      transition={{ type: 'spring', stiffness: 320, damping: 22 }}
-      className="cursor-pointer group"
+      whileTap={{ scale: 0.975 }}
+      transition={{ type: 'spring', stiffness: 400, damping: 28 }}
+      className="cursor-pointer"
       onClick={() => navigate(`/match/${match.match_id}`)}
     >
-      <div className="rounded-2xl overflow-hidden border border-app-border bg-app-card hover:border-brand-primary/30 transition-colors duration-300 shadow-lg shadow-black/30">
-        {/* Banner */}
+      <div className="rounded-[18px] overflow-hidden bg-app-card">
+        {/* Banner image */}
         <div className="relative aspect-[16/8] overflow-hidden">
           <img
             src={match.banner_image}
             alt={match.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+            className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-app-card via-app-card/30 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
 
-          <div className="absolute top-3 left-3">
-            <span className="px-2.5 py-1 bg-brand-primary/90 backdrop-blur-md text-white text-[10px] font-bold rounded-lg border border-brand-primary/50">
+          {/* Game badge */}
+          <div className="absolute top-2.5 left-3">
+            <span className="px-2 py-[3px] rounded-[7px] bg-black/60 backdrop-blur-md text-[11px] font-semibold text-white border border-white/15">
               {match.game_name}
             </span>
           </div>
-          <div className="absolute top-3 right-3">
+
+          {/* Status badge */}
+          <div className="absolute top-2.5 right-3">
             <StatusBadge status={match.status} />
+          </div>
+
+          {/* Title overlay */}
+          <div className="absolute bottom-0 left-0 right-0 px-3 pb-3">
+            <h3 className="text-[16px] font-semibold text-white leading-tight line-clamp-1 tracking-[-0.3px]">
+              {match.title}
+            </h3>
+            <p className="text-[12px] text-white/55 mt-0.5 font-medium">{match.mode}</p>
           </div>
         </div>
 
-        {/* Content */}
-        <div className="p-4 space-y-3">
-          <div>
-            <h3 className="text-[15px] font-bold text-text-primary leading-snug line-clamp-1 -mt-1">
-              {match.title}
-            </h3>
-            <p className="text-xs text-text-muted font-medium mt-0.5">{match.mode}</p>
-          </div>
-
-          {/* Stats row */}
-          <div className="flex items-center gap-4 text-xs">
-            <div className="flex items-center gap-1.5 text-brand-success font-semibold">
-              <Trophy size={12} />
-              <span>{match.prize}</span>
+        {/* Body */}
+        <div className="px-3 py-3 space-y-3">
+          {/* Meta row */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1.5">
+              <Trophy size={13} className="text-brand-success" />
+              <span className="text-[13px] font-semibold text-brand-success">{match.prize}</span>
             </div>
-            <div className="flex items-center gap-1.5 text-text-secondary font-medium">
-              <Clock size={12} />
-              <span>{match.start_time}</span>
+            <div className="flex items-center gap-1.5">
+              <Clock size={13} className="text-text-muted" />
+              <span className="text-[13px] text-text-secondary font-medium">{match.start_time}</span>
             </div>
-          </div>
-
-          {/* Slots progress */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-1.5">
-                <Users size={11} className="text-text-muted" />
-                <span className={cn('text-[11px] font-semibold', isFull ? 'text-brand-live' : 'text-text-secondary')}>
-                  {isFull ? 'Slots Full' : `${slotsLeft} slots left`}
-                </span>
-              </div>
-              <span className="text-[11px] font-medium text-text-muted">
-                {match.slots_filled}/{match.slots_total}
+            <div className="ml-auto flex items-center gap-1.5">
+              <Users size={12} className="text-text-muted" />
+              <span className={cn('text-[12px] font-medium', isFull ? 'text-brand-live' : 'text-text-secondary')}>
+                {isFull ? 'Full' : `${slotsLeft} left`}
               </span>
             </div>
+          </div>
+
+          {/* Slot progress */}
+          <div className="space-y-1">
             <div className="h-1 bg-app-elevated rounded-full overflow-hidden">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${fillPct}%` }}
-                transition={{ duration: 0.8, ease: 'easeOut' }}
-                className={cn(
-                  'h-full rounded-full',
-                  isFull
-                    ? 'bg-brand-live'
-                    : fillPct > 75
-                    ? 'bg-brand-warning'
-                    : 'bg-brand-primary'
-                )}
+                transition={{ duration: 0.7, ease: 'easeOut' }}
+                className={cn('h-full rounded-full', isFull ? 'bg-brand-live' : fillPct > 75 ? 'bg-brand-warning' : 'bg-brand-primary')}
               />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] text-text-muted font-medium">Entry {match.entry_fee}</span>
+              <span className="text-[11px] text-text-muted font-medium">{match.slots_filled}/{match.slots_total} joined</span>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="flex items-center justify-between pt-0.5">
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-text-muted font-medium">Entry:</span>
-              <span className="text-[13px] font-bold text-text-primary">{match.entry_fee}</span>
-            </div>
-            <button
-              onClick={(e) => { e.stopPropagation(); navigate(`/match/${match.match_id}`); }}
-              className="px-4 py-1.5 bg-brand-primary/15 hover:bg-brand-primary text-brand-primary-light hover:text-white text-[11px] font-semibold rounded-xl border border-brand-primary/30 hover:border-brand-primary transition-all duration-200"
-            >
-              View Details
-            </button>
-          </div>
+          {/* Footer CTA */}
+          <button
+            onClick={e => { e.stopPropagation(); navigate(`/match/${match.match_id}`); }}
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-[12px] bg-brand-primary/12 active:opacity-60 transition-opacity"
+          >
+            <span className="text-[14px] font-semibold text-brand-primary-light">View Details</span>
+            <ChevronRight size={14} className="text-brand-primary-light" />
+          </button>
         </div>
       </div>
     </motion.div>

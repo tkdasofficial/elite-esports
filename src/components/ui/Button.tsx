@@ -11,30 +11,30 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', fullWidth, ...props }, ref) => {
     const variants = {
       primary:
-        'bg-brand-primary text-white hover:bg-brand-primary-light active:scale-[0.97] shadow-lg shadow-brand-primary/25',
+        'bg-brand-primary text-white active:opacity-75 shadow-md shadow-brand-primary/20',
       secondary:
-        'bg-app-elevated text-text-primary hover:bg-app-card-hover border border-app-border active:scale-[0.97]',
+        'bg-app-elevated text-text-primary active:opacity-75',
       outline:
-        'border border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white active:scale-[0.97]',
+        'border border-brand-primary/50 text-brand-primary active:opacity-75',
       ghost:
-        'bg-transparent text-text-primary hover:bg-white/8 active:scale-[0.97]',
+        'bg-transparent text-brand-primary-light active:opacity-75',
       danger:
-        'bg-brand-live text-white hover:opacity-90 active:scale-[0.97] shadow-lg shadow-brand-live/25',
+        'bg-brand-live text-white active:opacity-75',
       success:
-        'bg-brand-success text-white hover:opacity-90 active:scale-[0.97] shadow-lg shadow-brand-success/25',
+        'bg-brand-success text-white active:opacity-75',
     };
 
     const sizes = {
-      sm: 'px-3.5 py-1.5 text-xs font-semibold rounded-xl',
-      md: 'px-5 py-2.5 text-sm font-semibold rounded-2xl',
-      lg: 'px-6 py-3.5 text-sm font-semibold rounded-2xl',
+      sm: 'px-4 py-2 text-[14px] font-semibold rounded-[12px]',
+      md: 'px-5 py-[11px] text-[15px] font-semibold rounded-[14px]',
+      lg: 'px-6 py-[14px] text-[16px] font-semibold rounded-[16px]',
     };
 
     return (
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center font-semibold transition-all duration-200 focus:outline-none disabled:opacity-40 disabled:pointer-events-none select-none',
+          'inline-flex items-center justify-center font-semibold transition-opacity duration-150 focus:outline-none disabled:opacity-30 disabled:pointer-events-none select-none',
           variants[variant],
           sizes[size],
           fullWidth && 'w-full',
@@ -45,3 +45,4 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     );
   }
 );
+Button.displayName = 'Button';

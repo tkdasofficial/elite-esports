@@ -2,160 +2,149 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", -apple-system, "SF Pro Display", "SF Pro Text", ui-sans-serif, system-ui, sans-serif;
 
-  --color-app-bg: #070C18;
-  --color-app-surface: #0E1626;
-  --color-app-card: #131F35;
-  --color-app-card-hover: #192741;
-  --color-app-elevated: #1C2C45;
-  --color-app-border: rgba(255,255,255,0.07);
+  /* ── iOS Dark Mode System Colors ─────────────────── */
+  --color-ios-bg:       #000000;
+  --color-ios-bg2:      #1C1C1E;
+  --color-ios-bg3:      #2C2C2E;
+  --color-ios-bg4:      #3A3A3C;
+  --color-ios-fill:     rgba(118,118,128,0.24);
+  --color-ios-fill2:    rgba(118,118,128,0.32);
+  --color-ios-sep:      rgba(84,84,88,0.65);
+  --color-ios-sep-soft: rgba(84,84,88,0.36);
 
-  --color-brand-primary: #6366F1;
-  --color-brand-primary-light: #818CF8;
-  --color-brand-primary-dark: #4F46E5;
-  --color-brand-cyan: #06B6D4;
-  --color-brand-live: #F43F5E;
-  --color-brand-success: #10B981;
-  --color-brand-warning: #F59E0B;
-  --color-brand-gold: #FBBF24;
+  /* ── App tokens (map to iOS) ─────────────────────── */
+  --color-app-bg:         #000000;
+  --color-app-surface:    #1C1C1E;
+  --color-app-card:       #1C1C1E;
+  --color-app-card-hover: #2C2C2E;
+  --color-app-elevated:   #2C2C2E;
+  --color-app-raised:     #3A3A3C;
+  --color-app-border:     rgba(84,84,88,0.55);
+  --color-app-border-soft:rgba(84,84,88,0.3);
+  --color-app-fill:       rgba(118,118,128,0.24);
 
-  --color-text-primary: #F1F5F9;
-  --color-text-secondary: #94A3B8;
-  --color-text-muted: #475569;
+  /* ── iOS System Accent Colors ────────────────────── */
+  --color-brand-primary:       #5E5CE6;
+  --color-brand-primary-light: #7977EC;
+  --color-brand-primary-dark:  #4845D1;
+  --color-brand-cyan:          #5AC8FA;
+  --color-brand-live:          #FF453A;
+  --color-brand-success:       #30D158;
+  --color-brand-warning:       #FF9F0A;
+  --color-brand-gold:          #FFD60A;
 
-  /* legacy aliases so existing code still works */
-  --color-brand-blue: #6366F1;
-  --color-brand-red: #F43F5E;
-  --color-brand-green: #10B981;
-  --color-brand-yellow: #F59E0B;
-  --color-brand-gray: #475569;
-  --color-brand-dark: #070C18;
-  --color-brand-card: #131F35;
+  /* ── Text (iOS Label hierarchy) ──────────────────── */
+  --color-text-primary:   #FFFFFF;
+  --color-text-secondary: rgba(235,235,245,0.6);
+  --color-text-muted:     rgba(235,235,245,0.3);
+  --color-text-faint:     rgba(235,235,245,0.18);
+
+  /* ── Legacy aliases (keep admin pages compiling) ─── */
+  --color-brand-blue:   #5E5CE6;
+  --color-brand-red:    #FF453A;
+  --color-brand-green:  #30D158;
+  --color-brand-yellow: #FFD60A;
+  --color-brand-gray:   rgba(235,235,245,0.3);
+  --color-brand-dark:   #000000;
+  --color-brand-card:   #1C1C1E;
 }
 
 @layer base {
   html, body, #root {
     @apply h-full w-full overflow-hidden;
   }
-
   body {
-    background-color: #070C18;
-    color: #F1F5F9;
-    font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: "Inter", -apple-system, "SF Pro Display", ui-sans-serif, system-ui, sans-serif;
     -webkit-tap-highlight-color: transparent;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     user-select: none;
+    letter-spacing: -0.01em;
   }
-
   .scrollable-content {
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
-  .scrollable-content::-webkit-scrollbar {
-    display: none;
-  }
+  .scrollable-content::-webkit-scrollbar { display: none; }
 }
 
-/* ─── Utility classes ─────────────────────────── */
+/* ─── Scrollbar hide ──────────────────────────────── */
+.no-scrollbar { scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
-.no-scrollbar {
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-/* Glow effects */
-.glow-primary {
-  box-shadow: 0 0 24px rgba(99,102,241,0.35);
-}
-.glow-live {
-  box-shadow: 0 0 16px rgba(244,63,94,0.45);
-}
-.glow-success {
-  box-shadow: 0 0 16px rgba(16,185,129,0.35);
-}
-.glow-gold {
-  box-shadow: 0 0 16px rgba(251,191,36,0.4);
-}
-
-/* Glassmorphism */
-.glass {
-  background: rgba(19, 31, 53, 0.75);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.07);
-}
+/* ─── iOS Nav Bar blur ────────────────────────────── */
 .glass-dark {
-  background: rgba(7, 12, 24, 0.85);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(0,0,0,0.82);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+.glass {
+  background: rgba(28,28,30,0.82);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
 }
 
-/* Live pulse dot */
-.live-dot {
-  position: relative;
-  display: inline-flex;
+/* ─── Glow effects ────────────────────────────────── */
+.glow-primary { box-shadow: 0 0 28px rgba(94,92,230,0.35); }
+.glow-live    { box-shadow: 0 0 20px rgba(255,69,58,0.4); }
+.glow-success { box-shadow: 0 0 20px rgba(48,209,88,0.35); }
+.glow-gold    { box-shadow: 0 0 20px rgba(255,214,10,0.4); }
+
+/* ─── Gradient text ───────────────────────────────── */
+.gradient-text {
+  background: linear-gradient(135deg, #7977EC 0%, #5AC8FA 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
+
+/* ─── Live pulse dot ──────────────────────────────── */
+@keyframes ios-ping {
+  0%   { transform: scale(1); opacity: 0.6; }
+  75%, 100% { transform: scale(2.2); opacity: 0; }
+}
+.live-dot { position: relative; display: inline-flex; }
 .live-dot::after {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: 9999px;
-  background: #F43F5E;
-  animation: ping 1s cubic-bezier(0,0,0.2,1) infinite;
-  opacity: 0.6;
+  background: #FF453A;
+  animation: ios-ping 1.2s cubic-bezier(0,0,0.2,1) infinite;
 }
 
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(135deg, #818CF8 0%, #06B6D4 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.gradient-text-gold {
-  background: linear-gradient(135deg, #FBBF24 0%, #F97316 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* ─── iOS-style grouped section header ───────────── */
+.ios-section-header {
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(235,235,245,0.6);
+  padding: 0 20px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
-/* Card shine effect */
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
+/* ─── Active scale feedback ───────────────────────── */
+.ios-tap { transition: opacity 0.1s; }
+.ios-tap:active { opacity: 0.6; }
+
+/* ─── iOS card border ─────────────────────────────── */
+.ios-card {
+  background: #1C1C1E;
+  border-radius: 16px;
+  overflow: hidden;
 }
-.shimmer-effect::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
-  animation: shimmer 2.5s infinite;
+.ios-card-elevated {
+  background: #2C2C2E;
+  border-radius: 16px;
+  overflow: hidden;
 }
 
-/* Tab indicator pill */
-.tab-indicator {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 4px;
-  height: 4px;
-  border-radius: 9999px;
-  background: #6366F1;
-}
-
-/* Page transitions */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-.page-enter {
-  animation: fadeUp 0.22s ease forwards;
-}
+/* ─── SF Pro number style ─────────────────────────── */
+.tabular { font-variant-numeric: tabular-nums; }
