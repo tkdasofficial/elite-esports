@@ -1,8 +1,9 @@
+import { useState } from 'react';
 import { motion } from 'motion/react';
 import { Bell, Trophy, Wallet, User, CheckCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const NOTIFICATIONS = [
+const INITIAL_NOTIFICATIONS = [
   {
     id:'1', unread:true,
     title:'Match Starting Soon!',
@@ -41,30 +42,40 @@ const NOTIFICATIONS = [
 ];
 
 export default function Notifications() {
-  const unread = NOTIFICATIONS.filter(n => n.unread).length;
+  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
+
+  const unread = notifications.filter(n => n.unread);
+  const read   = notifications.filter(n => !n.unread);
+
+  const markAllRead = () => setNotifications(prev => prev.map(n => ({ ...n, unread: false })));
+  const markRead = (id: string) => setNotifications(prev => prev.map(n => n.id === id ? { ...n, unread: false } : n));
 
   return (
     <div className="h-full flex flex-col bg-app-bg">
       <header className="h-[56px] px-5 flex items-center glass-dark border-b border-app-border sticky top-0 z-50">
         <Link to="/" className="text-[17px] text-brand-primary font-normal mr-auto">‹ Back</Link>
         <h1 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-text-primary">Notifications</h1>
-        {unread > 0 && (
-          <button className="ml-auto flex items-center gap-1.5 text-[15px] text-brand-primary font-normal">
+        {unread.length > 0 && (
+          <button
+            onClick={markAllRead}
+            className="ml-auto flex items-center gap-1.5 text-[15px] text-brand-primary font-normal active:opacity-60 transition-opacity"
+          >
             <CheckCheck size={15} /> Mark all
           </button>
         )}
       </header>
 
       <div className="flex-1 scrollable-content">
-        {/* Unread */}
-        {NOTIFICATIONS.some(n => n.unread) && (
+        {unread.length > 0 && (
           <div className="pt-5 px-4 pb-2 space-y-2">
             <p className="ios-section-header">New</p>
             <div className="bg-app-card rounded-[16px] overflow-hidden divide-y divide-app-border">
-              {NOTIFICATIONS.filter(n => n.unread).map((n, i) => (
+              {unread.map((n, i) => (
                 <motion.div key={n.id}
-                  initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay: i*0.07 }}
-                  className="flex gap-3.5 px-4 py-4 active:bg-app-elevated transition-colors">
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }}
+                  className="flex gap-3.5 px-4 py-4 active:bg-app-elevated transition-colors cursor-pointer"
+                  onClick={() => markRead(n.id)}
+                >
                   <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${n.iconBg}`}>
                     <n.icon size={20} className={n.iconColor} />
                   </div>
@@ -82,28 +93,41 @@ export default function Notifications() {
           </div>
         )}
 
-        {/* Earlier */}
-        <div className="pt-5 px-4 pb-8 space-y-2">
-          <p className="ios-section-header">Earlier</p>
-          <div className="bg-app-card rounded-[16px] overflow-hidden divide-y divide-app-border">
-            {NOTIFICATIONS.filter(n => !n.unread).map((n, i) => (
-              <motion.div key={n.id}
-                initial={{ opacity:0, y:8 }} animate={{ opacity:1, y:0 }} transition={{ delay: (i+2)*0.07 }}
-                className="flex gap-3.5 px-4 py-4 active:bg-app-elevated transition-colors">
-                <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${n.iconBg} opacity-60`}>
-                  <n.icon size={20} className={n.iconColor} />
-                </div>
-                <div className="flex-1 min-w-0 space-y-0.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-[15px] font-normal text-text-secondary leading-snug">{n.title}</p>
-                    <span className="text-[12px] text-text-muted font-normal shrink-0">{n.time}</span>
+        {read.length > 0 && (
+          <div className="pt-5 px-4 pb-8 space-y-2">
+            <p className="ios-section-header">{unread.length > 0 ? 'Earlier' : 'All Notifications'}</p>
+            <div className="bg-app-card rounded-[16px] overflow-hidden divide-y divide-app-border">
+              {read.map((n, i) => (
+                <motion.div key={n.id}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (i + (unread.length)) * 0.07 }}
+                  className="flex gap-3.5 px-4 py-4 active:bg-app-elevated transition-colors">
+                  <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${n.iconBg} opacity-60`}>
+                    <n.icon size={20} className={n.iconColor} />
                   </div>
-                  <p className="text-[14px] text-text-muted font-normal leading-relaxed line-clamp-2">{n.message}</p>
-                </div>
-              </motion.div>
-            ))}
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-[15px] font-normal text-text-secondary leading-snug">{n.title}</p>
+                      <span className="text-[12px] text-text-muted font-normal shrink-0">{n.time}</span>
+                    </div>
+                    <p className="text-[14px] text-text-muted font-normal leading-relaxed line-clamp-2">{n.message}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {notifications.every(n => !n.unread) && unread.length === 0 && read.length === 0 && (
+          <div className="py-20 flex flex-col items-center gap-4 text-center px-4">
+            <div className="w-[88px] h-[88px] bg-app-card rounded-[28px] flex items-center justify-center">
+              <Bell size={36} className="text-text-muted" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-[17px] font-semibold text-text-primary">All Caught Up</p>
+              <p className="text-[15px] text-text-secondary font-normal">No notifications right now</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

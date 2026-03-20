@@ -82,7 +82,7 @@ export default function AdminDashboard() {
             </Card>
           </Link>
 
-          <Link to="/admin/transactions">
+          <Link to="/admin/economy">
             <Card className="p-4 flex items-center justify-between bg-brand-card/60 border-white/5 hover:bg-brand-card transition-colors group h-full">
               <div className="flex items-center gap-4 min-w-0">
                 <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-slate-300 flex-shrink-0">

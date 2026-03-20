@@ -3,20 +3,27 @@ import { useUserStore } from '@/src/store/userStore';
 import { motion } from 'motion/react';
 import { Logo } from '@/src/components/common/Logo';
 import { Eye, EyeOff } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 export default function Login() {
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw]     = useState(false);
   const [loading, setLoading]   = useState(false);
+  const [error, setError]       = useState('');
   const { login } = useUserStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setLoading(true);
     await new Promise(r => setTimeout(r, 500));
     if (email === 'admin' && password === '123') {
       login({ id:'admin-001', username:'Admin', email:'admin@elite.com', avatar:'', coins:999999, rank:'Administrator' }, true);
+    } else if (!email.trim() || !password.trim()) {
+      setError('Please enter your email and password');
+      setLoading(false);
+      return;
     } else {
       login({ id:'1', username: email.split('@')[0] || 'EsportsPro', email, avatar:'', coins:1250, rank:'Diamond' });
     }
@@ -27,7 +34,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-app-bg flex flex-col">
-      {/* Top section */}
       <div className="flex-1 flex flex-col items-center justify-center px-5">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -35,7 +41,6 @@ export default function Login() {
           transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
           className="w-full max-w-[360px] space-y-8"
         >
-          {/* Brand mark */}
           <div className="flex flex-col items-center gap-4">
             <div className="w-[72px] h-[72px] bg-brand-primary rounded-[22px] flex items-center justify-center shadow-xl shadow-brand-primary/30">
               <Logo size={44} />
@@ -46,7 +51,6 @@ export default function Login() {
             </div>
           </div>
 
-          {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-2.5">
               <input
@@ -73,10 +77,14 @@ export default function Login() {
               </div>
             </div>
 
+            {error && (
+              <p className="text-[14px] text-brand-live font-normal px-1">{error}</p>
+            )}
+
             <div className="flex justify-end">
-              <button type="button" className="text-[15px] text-brand-primary font-normal">
+              <Link to="/forgot-password" className="text-[15px] text-brand-primary font-normal">
                 Forgot Password?
-              </button>
+              </Link>
             </div>
 
             <button
@@ -90,14 +98,12 @@ export default function Login() {
             </button>
           </form>
 
-          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-app-border" />
             <span className="text-[13px] text-text-muted font-medium">or continue with</span>
             <div className="flex-1 h-px bg-app-border" />
           </div>
 
-          {/* Social */}
           <div className="grid grid-cols-2 gap-3">
             {['Google', 'Apple'].map(p => (
               <button key={p}
@@ -109,12 +115,11 @@ export default function Login() {
 
           <p className="text-center text-[15px] text-text-secondary">
             New to Elite?{' '}
-            <button className="text-brand-primary font-medium">Create Account</button>
+            <Link to="/signup" className="text-brand-primary font-medium">Create Account</Link>
           </p>
         </motion.div>
       </div>
 
-      {/* Bottom hint */}
       <p className="text-center text-[12px] text-text-muted pb-8 font-medium">
         Use <span className="text-text-secondary">admin / 123</span> for admin access
       </p>

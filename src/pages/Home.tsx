@@ -1,9 +1,11 @@
+import React from 'react';
 import { useMatchStore } from '@/src/store/matchStore';
 import { MatchCard } from '@/src/components/matches/MatchCard';
 import { BannerCarousel } from '@/src/components/home/BannerCarousel';
 import { cn } from '@/src/utils/helpers';
 import { motion } from 'motion/react';
 import { Radio, Zap, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 const GAMES = ['All', 'BGMI', 'Valorant', 'Free Fire', 'COD', 'PUBG'];
 
@@ -27,7 +29,15 @@ export default function Home() {
   const completed = filterMatches(completedMatches);
   const activeFilter = searchQuery || 'All';
 
-  const SectionHeader = ({ icon, label, count, badge }: { icon?: React.ReactNode; label: string; count?: number; badge?: string }) => (
+  const SectionHeader = ({
+    icon, label, count, badge, badgeTo
+  }: {
+    icon?: React.ReactNode;
+    label: string;
+    count?: number;
+    badge?: string;
+    badgeTo?: string;
+  }) => (
     <div className="flex items-center justify-between px-1">
       <div className="flex items-center gap-2">
         {icon}
@@ -36,18 +46,18 @@ export default function Home() {
           <span className="px-[7px] py-[1px] bg-brand-live rounded-full text-[11px] font-semibold text-white tabular">{count}</span>
         )}
       </div>
-      {badge && <span className="text-[15px] text-brand-primary font-normal">{badge}</span>}
+      {badge && badgeTo && (
+        <Link to={badgeTo} className="text-[15px] text-brand-primary font-normal active:opacity-60">{badge}</Link>
+      )}
     </div>
   );
 
   return (
     <div className="space-y-6 px-4 pb-24 pt-3">
-      {/* Banner */}
       {!searchQuery && (
         <section><BannerCarousel /></section>
       )}
 
-      {/* Game filter chips */}
       <section>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
           {GAMES.map(g => {
@@ -70,7 +80,6 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Search result context */}
       {searchQuery && (
         <div className="flex items-center justify-between">
           <p className="text-[14px] text-text-secondary">
@@ -81,7 +90,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* No results */}
       {searchQuery && !live.length && !upcoming.length && !completed.length && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
           className="py-20 flex flex-col items-center gap-3">
@@ -90,47 +98,62 @@ export default function Home() {
         </motion.div>
       )}
 
-      {/* Live Now */}
       {live.length > 0 && (
         <section className="space-y-4">
           <SectionHeader
             icon={<div className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-live opacity-60"/><span className="relative inline-flex rounded-full h-2 w-2 bg-brand-live"/></div>}
-            label="Live Now" count={live.length} badge="See All"
+            label="Live Now" count={live.length} badge="See All" badgeTo="/tournaments?filter=live"
           />
           <div className="space-y-4">
-            {live.map((m, i) => (
+            {live.slice(0, 3).map((m, i) => (
               <motion.div key={m.match_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                 <MatchCard match={m} />
               </motion.div>
             ))}
+            {live.length > 3 && (
+              <Link to="/tournaments?filter=live"
+                className="flex items-center justify-center py-3 bg-app-elevated rounded-[14px] text-[14px] font-medium text-brand-primary active:opacity-60 transition-opacity">
+                View all {live.length} live matches
+              </Link>
+            )}
           </div>
         </section>
       )}
 
-      {/* Upcoming */}
       {upcoming.length > 0 && (
         <section className="space-y-4">
-          <SectionHeader icon={<Zap size={16} className="text-brand-warning fill-brand-warning" />} label="Upcoming" badge="View All" />
+          <SectionHeader icon={<Zap size={16} className="text-brand-warning fill-brand-warning" />} label="Upcoming" badge="View All" badgeTo="/tournaments?filter=upcoming" />
           <div className="space-y-4">
-            {upcoming.map((m, i) => (
+            {upcoming.slice(0, 3).map((m, i) => (
               <motion.div key={m.match_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                 <MatchCard match={m} />
               </motion.div>
             ))}
+            {upcoming.length > 3 && (
+              <Link to="/tournaments?filter=upcoming"
+                className="flex items-center justify-center py-3 bg-app-elevated rounded-[14px] text-[14px] font-medium text-brand-primary active:opacity-60 transition-opacity">
+                View all {upcoming.length} upcoming matches
+              </Link>
+            )}
           </div>
         </section>
       )}
 
-      {/* Completed */}
       {completed.length > 0 && (
         <section className="space-y-4">
-          <SectionHeader icon={<CheckCircle2 size={16} className="text-text-muted" />} label="Recently Finished" badge="History" />
+          <SectionHeader icon={<CheckCircle2 size={16} className="text-text-muted" />} label="Recently Finished" badge="History" badgeTo="/tournaments?filter=completed" />
           <div className="space-y-4 opacity-70">
-            {completed.map((m, i) => (
+            {completed.slice(0, 2).map((m, i) => (
               <motion.div key={m.match_id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
                 <MatchCard match={m} />
               </motion.div>
             ))}
+            {completed.length > 2 && (
+              <Link to="/tournaments?filter=completed"
+                className="flex items-center justify-center py-3 bg-app-elevated rounded-[14px] text-[14px] font-medium text-text-secondary active:opacity-60 transition-opacity">
+                View all {completed.length} completed matches
+              </Link>
+            )}
           </div>
         </section>
       )}

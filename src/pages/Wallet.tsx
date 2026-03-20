@@ -4,9 +4,11 @@ import { Button } from '@/src/components/ui/Button';
 import { Plus, ArrowUpRight, ArrowDownLeft, Trophy, Gamepad2, X, Copy, CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
+import { useNavigate } from 'react-router-dom';
 
 export default function Wallet() {
   const { user, transactions, addTransaction } = useUserStore();
+  const navigate = useNavigate();
   const [showAdd, setShowAdd]   = useState(false);
   const [showWith, setShowWith] = useState(false);
   const [amount, setAmount]     = useState('');
@@ -57,7 +59,6 @@ export default function Wallet() {
             transition={{type:'spring',stiffness:300,damping:30}}
             className="relative w-full max-w-[440px] bg-app-card rounded-t-[28px] pb-8 max-h-[90vh] overflow-y-auto"
           >
-            {/* Handle */}
             <div className="flex justify-center pt-3 pb-1">
               <div className="w-10 h-[5px] bg-app-elevated rounded-full" />
             </div>
@@ -68,9 +69,10 @@ export default function Wallet() {
     </AnimatePresence>
   );
 
+  const recentTransactions = transactions.slice(0, 5);
+
   return (
     <div className="pb-24 space-y-6 pt-2">
-      {/* Balance card */}
       <section className="mx-4">
         <div className="relative rounded-[22px] overflow-hidden p-6 bg-app-elevated border border-app-border" style={{background:'linear-gradient(145deg,#1a1a2e,#16213e,#0f3460)'}}>
           <div className="absolute -top-12 -right-12 w-48 h-48 bg-brand-primary/8 rounded-full blur-3xl pointer-events-none"/>
@@ -104,7 +106,6 @@ export default function Wallet() {
         </div>
       </section>
 
-      {/* Action buttons */}
       <div className="grid grid-cols-2 gap-3 mx-4">
         <button onClick={() => setShowAdd(true)}
           className="flex items-center justify-center gap-2 py-4 bg-brand-primary rounded-[16px] text-white text-[16px] font-semibold active:opacity-75 transition-opacity shadow-lg shadow-brand-primary/20">
@@ -116,11 +117,15 @@ export default function Wallet() {
         </button>
       </div>
 
-      {/* Transactions */}
       <section className="mx-4 space-y-3">
         <div className="flex items-center justify-between px-1">
           <h3 className="text-[17px] font-semibold text-text-primary tracking-[-0.3px]">Transactions</h3>
-          <button className="text-[15px] text-brand-primary font-normal">View All</button>
+          <button
+            onClick={() => navigate('/transactions')}
+            className="text-[15px] text-brand-primary font-normal active:opacity-60 transition-opacity"
+          >
+            View All
+          </button>
         </div>
 
         {transactions.length === 0 && (
@@ -129,33 +134,43 @@ export default function Wallet() {
           </div>
         )}
 
-        <div className="bg-app-card rounded-[16px] overflow-hidden divide-y divide-app-border">
-          {transactions.map((tx, i) => (
-            <motion.div key={tx.id} initial={{ opacity:0, x:-8 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.04 }}
-              className="flex items-center gap-3.5 px-4 py-3.5">
-              <div className={cn('w-10 h-10 rounded-full flex items-center justify-center shrink-0',
-                tx.amount>0 ? 'bg-brand-success/15 text-brand-success' : 'bg-brand-live/15 text-brand-live')}>
-                {txIcon(tx.type)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[16px] font-normal text-text-primary truncate">{tx.title || tx.type}</p>
-                <p className="text-[13px] text-text-muted font-normal mt-0.5">{tx.date}</p>
-              </div>
-              <div className="text-right">
-                <p className={cn('text-[16px] font-semibold tabular', tx.amount>0 ? 'text-brand-success':'text-text-primary')}>
-                  {tx.amount>0?'+':''}₹{Math.abs(tx.amount)}
-                </p>
-                <p className={cn('text-[12px] font-normal capitalize mt-0.5',
-                  tx.status==='success'?'text-brand-success':tx.status==='pending'?'text-brand-warning':'text-brand-live')}>
-                  {tx.status}
-                </p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
+        {transactions.length > 0 && (
+          <div className="bg-app-card rounded-[16px] overflow-hidden divide-y divide-app-border">
+            {recentTransactions.map((tx, i) => (
+              <motion.div key={tx.id} initial={{ opacity:0, x:-8 }} animate={{ opacity:1, x:0 }} transition={{ delay: i*0.04 }}
+                className="flex items-center gap-3.5 px-4 py-3.5">
+                <div className={cn('w-10 h-10 rounded-full flex items-center justify-center shrink-0',
+                  tx.amount>0 ? 'bg-brand-success/15 text-brand-success' : 'bg-brand-live/15 text-brand-live')}>
+                  {txIcon(tx.type)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[16px] font-normal text-text-primary truncate">{tx.title || tx.type}</p>
+                  <p className="text-[13px] text-text-muted font-normal mt-0.5">{tx.date}</p>
+                </div>
+                <div className="text-right">
+                  <p className={cn('text-[16px] font-semibold tabular', tx.amount>0 ? 'text-brand-success':'text-text-primary')}>
+                    {tx.amount>0?'+':''}₹{Math.abs(tx.amount)}
+                  </p>
+                  <p className={cn('text-[12px] font-normal capitalize mt-0.5',
+                    tx.status==='success'?'text-brand-success':tx.status==='pending'?'text-brand-warning':'text-brand-live')}>
+                    {tx.status}
+                  </p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {transactions.length > 5 && (
+          <button
+            onClick={() => navigate('/transactions')}
+            className="w-full py-3 bg-app-elevated rounded-[14px] text-[14px] font-medium text-text-secondary active:opacity-60 transition-opacity border border-app-border"
+          >
+            View all {transactions.length} transactions
+          </button>
+        )}
       </section>
 
-      {/* Add Cash Modal */}
       <Modal visible={showAdd} onClose={() => setShowAdd(false)}>
         <div className="px-5 pt-2 pb-2 space-y-5">
           <div className="flex items-center justify-between">
@@ -230,7 +245,6 @@ export default function Wallet() {
         </div>
       </Modal>
 
-      {/* Withdraw Modal */}
       <Modal visible={showWith} onClose={() => setShowWith(false)}>
         <div className="px-5 pt-2 pb-2 space-y-5">
           <div className="flex items-center justify-between">

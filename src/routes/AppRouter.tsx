@@ -11,6 +11,9 @@ import Live from '@/src/pages/Live';
 import Wallet from '@/src/pages/Wallet';
 import Profile from '@/src/pages/Profile';
 import Login from '@/src/pages/Login';
+import SignUp from '@/src/pages/SignUp';
+import ForgotPassword from '@/src/pages/ForgotPassword';
+import ResetPassword from '@/src/pages/ResetPassword';
 import Notifications from '@/src/pages/Notifications';
 import MatchDetails from '@/src/pages/MatchDetails';
 import MyMatches from '@/src/pages/MyMatches';
@@ -19,6 +22,13 @@ import Settings from '@/src/pages/Settings';
 import EditProfile from '@/src/pages/EditProfile';
 import AddGameProfile from '@/src/pages/AddGameProfile';
 import EditGameProfile from '@/src/pages/EditGameProfile';
+import TermsAndConditions from '@/src/pages/TermsAndConditions';
+import PrivacyPolicy from '@/src/pages/PrivacyPolicy';
+import HelpCenter from '@/src/pages/HelpCenter';
+import About from '@/src/pages/About';
+import BlockedUsers from '@/src/pages/BlockedUsers';
+import TournamentsAll from '@/src/pages/TournamentsAll';
+import AllTransactions from '@/src/pages/AllTransactions';
 
 // Admin Pages
 import { AdminLayout } from '@/src/components/layout/AdminLayout';
@@ -36,6 +46,8 @@ import AdminSupport from '@/src/pages/AdminSupport';
 import AdminRules from '@/src/pages/AdminRules';
 import AdminReferrals from '@/src/pages/AdminReferrals';
 
+const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password'];
+
 export const AppRouter = () => {
   const { isAuthenticated, isAdmin } = useUserStore();
   const location = useLocation();
@@ -45,6 +57,9 @@ export const AppRouter = () => {
       <div className="h-full w-full bg-brand-dark overflow-hidden">
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </div>
@@ -54,12 +69,10 @@ export const AppRouter = () => {
   const showGlobalHeader = ['/', '/leaderboard', '/live', '/wallet', '/profile'].includes(location.pathname);
   const isAdminPage = location.pathname.startsWith('/admin');
 
-  // Admin Redirection: If admin is logged in and tries to access user pages, redirect to admin dashboard
   if (isAdmin && !isAdminPage) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
-  // User Redirection: If regular user tries to access admin pages, redirect to home
   if (!isAdmin && isAdminPage) {
     return <Navigate to="/" replace />;
   }
@@ -93,7 +106,6 @@ export const AppRouter = () => {
 
   return (
     <div className="h-full w-full bg-black flex justify-center">
-      {/* Responsive Frame Container */}
       <div className="h-full w-full md:max-w-[768px] lg:max-w-[1024px] bg-brand-dark relative flex flex-col shadow-2xl overflow-hidden md:border-x md:border-white/5">
         <Routes>
           <Route path="/notifications" element={<Notifications />} />
@@ -123,7 +135,13 @@ export const AppRouter = () => {
                       <Route path="/edit-profile" element={<EditProfile />} />
                       <Route path="/add-game" element={<AddGameProfile />} />
                       <Route path="/edit-game/:id" element={<EditGameProfile />} />
-                      
+                      <Route path="/tournaments" element={<TournamentsAll />} />
+                      <Route path="/transactions" element={<AllTransactions />} />
+                      <Route path="/terms" element={<TermsAndConditions />} />
+                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                      <Route path="/help-center" element={<HelpCenter />} />
+                      <Route path="/about" element={<About />} />
+                      <Route path="/blocked-users" element={<BlockedUsers />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>
                   </motion.div>
@@ -137,4 +155,3 @@ export const AppRouter = () => {
     </div>
   );
 };
-
