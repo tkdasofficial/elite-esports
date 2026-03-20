@@ -8,37 +8,34 @@ interface LetterAvatarProps {
   variant?: 'blue' | 'red' | 'green' | 'yellow' | 'slate';
 }
 
-export const LetterAvatar: React.FC<LetterAvatarProps> = ({ 
-  name, 
-  size = 'md', 
-  className,
-  variant = 'blue'
+export const LetterAvatar: React.FC<LetterAvatarProps> = ({
+  name, size = 'md', className, variant = 'blue'
 }) => {
-  const firstLetter = name.charAt(0).toUpperCase();
-  
-  const sizeClasses = {
+  const first = name.charAt(0).toUpperCase();
+
+  const sizes = {
     sm: 'w-8 h-8 text-xs',
-    md: 'w-12 h-12 text-sm',
-    lg: 'w-20 h-20 text-xl',
-    xl: 'w-28 h-28 text-3xl'
+    md: 'w-10 h-10 text-sm',
+    lg: 'w-16 h-16 text-xl',
+    xl: 'w-24 h-24 text-3xl',
   };
 
-  const variantClasses = {
-    blue: 'bg-brand-blue/20 text-brand-blue border-brand-blue/30',
-    red: 'bg-brand-red/20 text-brand-red border-brand-red/30',
-    green: 'bg-brand-green/20 text-brand-green border-brand-green/30',
-    yellow: 'bg-brand-yellow/20 text-brand-yellow border-brand-yellow/30',
-    slate: 'bg-slate-500/20 text-slate-400 border-white/10'
+  const variants = {
+    blue:   'bg-brand-primary/15 text-brand-primary-light border border-brand-primary/25',
+    red:    'bg-brand-live/15 text-brand-live border border-brand-live/25',
+    green:  'bg-brand-success/15 text-brand-success border border-brand-success/25',
+    yellow: 'bg-brand-gold/15 text-brand-gold border border-brand-gold/25',
+    slate:  'bg-app-elevated text-text-secondary border border-app-border',
   };
 
   return (
     <div className={cn(
-      "rounded-full flex items-center justify-center font-black border shadow-inner select-none",
-      sizeClasses[size],
-      variantClasses[variant],
+      'rounded-2xl flex items-center justify-center font-bold select-none shrink-0',
+      sizes[size],
+      variants[variant],
       className
     )}>
-      {firstLetter}
+      {first}
     </div>
   );
 };

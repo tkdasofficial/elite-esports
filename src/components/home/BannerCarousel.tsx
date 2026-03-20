@@ -1,119 +1,133 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useBannerStore } from '@/src/store/bannerStore';
-import { Button } from '@/src/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function BannerCarousel() {
   const { banners } = useBannerStore();
-  const activeBanners = banners.filter(b => b.isActive);
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const activeBanners = banners.filter((b) => b.isActive);
+  const [index, setIndex] = useState(0);
+  const [direction, setDirection] = useState(1);
   const navigate = useNavigate();
 
-  const nextSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev + 1) % activeBanners.length);
+  const next = useCallback(() => {
+    setDirection(1);
+    setIndex((prev) => (prev + 1) % activeBanners.length);
   }, [activeBanners.length]);
 
-  const prevSlide = useCallback(() => {
-    setCurrentIndex((prev) => (prev - 1 + activeBanners.length) % activeBanners.length);
+  const prev = useCallback(() => {
+    setDirection(-1);
+    setIndex((prev) => (prev - 1 + activeBanners.length) % activeBanners.length);
   }, [activeBanners.length]);
 
   useEffect(() => {
-    const timer = setInterval(nextSlide, 5000); // Auto-scroll every 5 seconds
-    return () => clearInterval(timer);
-  }, [nextSlide]);
-
-  const swipeConfidenceThreshold = 10000;
-  const swipePower = (offset: number, velocity: number) => {
-    return Math.abs(offset) * velocity;
-  };
+    const t = setInterval(next, 5000);
+    return () => clearInterval(t);
+  }, [next]);
 
   if (activeBanners.length === 0) return null;
 
-  return (
-    <div className="relative w-full aspect-video sm:aspect-[21/9] max-h-[400px] rounded-3xl overflow-hidden group shadow-2xl shadow-brand-blue/10 touch-none">
-      <AnimatePresence initial={false} mode="wait">
-        <motion.div
-          key={activeBanners[currentIndex].id}
-          drag="x"
-          dragConstraints={{ left: 0, right: 0 }}
-          dragElastic={1}
-          onDragEnd={(e, { offset, velocity }) => {
-            const swipe = swipePower(offset.x, velocity.x);
+  const banner = activeBanners[index];
 
-            if (swipe < -swipeConfidenceThreshold) {
-              nextSlide();
-            } else if (swipe > swipeConfidenceThreshold) {
-              prevSlide();
-            }
-          }}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ 
-            opacity: { duration: 0.3 },
-            scale: { duration: 0.4, ease: "easeOut" }
-          }}
-          className="absolute inset-0 cursor-grab active:cursor-grabbing"
-        >
-          <img
-            src={activeBanners[currentIndex].image}
-            alt={activeBanners[currentIndex].title}
-            className="w-full h-full object-cover"
+  return (
+    <div className="relative w-full rounded-[22px] overflow-hidden shadow-2xl shadow-black/50 group">
+      {/* Image */}
+      <div className="aspect-[16/8] relative overflow-hidden">
+        <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+          <motion.img
+            key={banner.id}
+            custom={direction}
+            variants={{
+              enter: (d: number) => ({ x: d * 60, opacity: 0 }),
+              center: { x: 0, opacity: 1 },
+              exit: (d: number) => ({ x: d * -60, opacity: 0 }),
+            }}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.38, ease: [0.32, 0, 0.67, 0] }}
+            drag="x"
+            dragConstraints={{ left: 0, right: 0 }}
+            dragElastic={0.2}
+            onDragEnd={(_, { offset, velocity }) => {
+              const swipe = Math.abs(offset.x) * velocity.x;
+              if (swipe < -8000) next();
+              else if (swipe > 8000) prev();
+            }}
+            src={banner.image}
+            alt={banner.title}
+            className="absolute inset-0 w-full h-full object-cover cursor-grab active:cursor-grabbing"
             referrerPolicy="no-referrer"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-brand-dark via-brand-dark/40 to-transparent" />
-          
-          <div className="absolute inset-0 p-6 sm:p-10 flex flex-col justify-end space-y-2 sm:space-y-4">
-            <motion.h2 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-              className="text-2xl sm:text-4xl font-black text-white leading-none tracking-tighter uppercase italic"
-            >
-              {activeBanners[currentIndex].title}
-            </motion.h2>
-            <motion.p 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.3 }}
-              className="text-[10px] sm:text-xs font-bold text-white/70 max-w-md line-clamp-2 uppercase tracking-widest"
-            >
-              {activeBanners[currentIndex].description}
-            </motion.p>
-            <motion.div
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
-              <Button
-                onClick={() => navigate(activeBanners[currentIndex].link)}
-                className="bg-brand-blue hover:bg-brand-blue/90 text-white font-black uppercase tracking-widest text-[10px] sm:text-xs px-6 py-2 sm:py-3 rounded-xl shadow-xl shadow-brand-blue/20"
-              >
-                {activeBanners[currentIndex].buttonText}
-              </Button>
-            </motion.div>
-          </div>
-        </motion.div>
-      </AnimatePresence>
+        </AnimatePresence>
 
-      {/* Navigation Controls */}
-      <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-4 opacity-0 group-hover:opacity-100 transition-opacity">
+        {/* Gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-app-bg via-app-bg/40 to-transparent pointer-events-none" />
+
+        {/* Content */}
+        <div className="absolute inset-0 p-5 flex flex-col justify-end gap-3">
+          <div className="space-y-1">
+            <motion.h2
+              key={`title-${banner.id}`}
+              initial={{ y: 14, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.3 }}
+              className="text-xl font-extrabold text-white leading-tight tracking-tight drop-shadow-lg"
+            >
+              {banner.title}
+            </motion.h2>
+            <motion.p
+              key={`desc-${banner.id}`}
+              initial={{ y: 10, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.18, duration: 0.3 }}
+              className="text-xs font-medium text-white/60 line-clamp-1 max-w-[260px]"
+            >
+              {banner.description}
+            </motion.p>
+          </div>
+          <motion.button
+            key={`btn-${banner.id}`}
+            initial={{ y: 8, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.24, duration: 0.3 }}
+            onClick={() => navigate(banner.link)}
+            className="self-start px-5 py-2 bg-brand-primary hover:bg-brand-primary-light text-white text-xs font-bold rounded-xl shadow-lg shadow-brand-primary/40 transition-colors active:scale-95"
+          >
+            {banner.buttonText}
+          </motion.button>
+        </div>
+      </div>
+
+      {/* Nav arrows (hover) */}
+      <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
         <button
-          onClick={(e) => { e.stopPropagation(); prevSlide(); }}
-          className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 text-white hover:bg-black/60 transition-colors"
+          onClick={(e) => { e.stopPropagation(); prev(); }}
+          className="pointer-events-auto w-8 h-8 rounded-xl glass-dark flex items-center justify-center text-white hover:bg-white/20 transition-colors"
         >
-          <ChevronLeft size={20} />
+          <ChevronLeft size={16} />
         </button>
         <button
-          onClick={(e) => { e.stopPropagation(); nextSlide(); }}
-          className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 text-white hover:bg-black/60 transition-colors"
+          onClick={(e) => { e.stopPropagation(); next(); }}
+          className="pointer-events-auto w-8 h-8 rounded-xl glass-dark flex items-center justify-center text-white hover:bg-white/20 transition-colors"
         >
-          <ChevronRight size={20} />
+          <ChevronRight size={16} />
         </button>
       </div>
 
+      {/* Dots */}
+      <div className="absolute bottom-3 right-4 flex items-center gap-1.5">
+        {activeBanners.map((_, i) => (
+          <button
+            key={i}
+            onClick={() => { setDirection(i > index ? 1 : -1); setIndex(i); }}
+            className={`rounded-full transition-all duration-300 ${
+              i === index ? 'w-4 h-1.5 bg-white' : 'w-1.5 h-1.5 bg-white/35'
+            }`}
+          />
+        ))}
+      </div>
     </div>
   );
 }

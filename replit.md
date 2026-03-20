@@ -1,12 +1,12 @@
 # Elite Esports
 
-A premium esports tournament platform for live matches, leaderboards, and wallet management.
+A premium global esports tournament platform for live matches, leaderboards, and wallet management. Features a Google Play Store-quality dark UI with a professional indigo/purple color system.
 
 ## Tech Stack
 
 - **Framework**: React 19 + TypeScript
 - **Build Tool**: Vite 6
-- **Styling**: Tailwind CSS v4 (via @tailwindcss/vite plugin)
+- **Styling**: Tailwind CSS v4 (via @tailwindcss/vite plugin) — Inter font, indigo/purple brand palette, glassmorphism
 - **Routing**: React Router DOM v7
 - **State Management**: Zustand
 - **Animations**: Motion (Framer Motion)

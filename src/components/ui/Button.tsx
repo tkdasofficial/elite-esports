@@ -10,25 +10,31 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant = 'primary', size = 'md', fullWidth, ...props }, ref) => {
     const variants = {
-      primary: 'bg-brand-blue text-white hover:bg-blue-600',
-      secondary: 'bg-brand-card text-white hover:bg-slate-700',
-      outline: 'border border-brand-blue text-brand-blue hover:bg-brand-blue hover:text-white',
-      ghost: 'bg-transparent text-white hover:bg-white/10',
-      danger: 'bg-brand-red text-white hover:bg-red-600',
-      success: 'bg-brand-green text-white hover:bg-green-600',
+      primary:
+        'bg-brand-primary text-white hover:bg-brand-primary-light active:scale-[0.97] shadow-lg shadow-brand-primary/25',
+      secondary:
+        'bg-app-elevated text-text-primary hover:bg-app-card-hover border border-app-border active:scale-[0.97]',
+      outline:
+        'border border-brand-primary text-brand-primary hover:bg-brand-primary hover:text-white active:scale-[0.97]',
+      ghost:
+        'bg-transparent text-text-primary hover:bg-white/8 active:scale-[0.97]',
+      danger:
+        'bg-brand-live text-white hover:opacity-90 active:scale-[0.97] shadow-lg shadow-brand-live/25',
+      success:
+        'bg-brand-success text-white hover:opacity-90 active:scale-[0.97] shadow-lg shadow-brand-success/25',
     };
 
     const sizes = {
-      sm: 'px-3 py-1.5 text-xs',
-      md: 'px-4 py-2 text-sm',
-      lg: 'px-6 py-3 text-base',
+      sm: 'px-3.5 py-1.5 text-xs font-semibold rounded-xl',
+      md: 'px-5 py-2.5 text-sm font-semibold rounded-2xl',
+      lg: 'px-6 py-3.5 text-sm font-semibold rounded-2xl',
     };
 
     return (
       <button
         ref={ref}
         className={cn(
-          'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus:outline-none disabled:opacity-50 disabled:pointer-events-none',
+          'inline-flex items-center justify-center font-semibold transition-all duration-200 focus:outline-none disabled:opacity-40 disabled:pointer-events-none select-none',
           variants[variant],
           sizes[size],
           fullWidth && 'w-full',

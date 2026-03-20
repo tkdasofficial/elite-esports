@@ -1,150 +1,182 @@
 import { useMatchStore } from '@/src/store/matchStore';
 import { MatchCard } from '@/src/components/matches/MatchCard';
 import { BannerCarousel } from '@/src/components/home/BannerCarousel';
-import { Tag } from '@/src/components/ui/Tag';
 import { cn } from '@/src/utils/helpers';
-import { Search } from 'lucide-react';
+import { Search, Zap, ChevronRight } from 'lucide-react';
+import { motion } from 'motion/react';
+
+const GAMES = ['All', 'PUBG', 'BGMI', 'Free Fire', 'COD', 'Valorant'];
 
 export default function Home() {
   const { liveMatches, upcomingMatches, completedMatches, searchQuery } = useMatchStore();
   const now = new Date();
 
-  // Filter logic for admin-controlled visibility and search
-  const filterMatches = (matches: any[]) => matches.filter(match => {
-    // Admin visibility filters
-    if (match.delete_at && new Date(match.delete_at) < now) return false;
-    if (match.status === 'completed' && match.show_until && new Date(match.show_until) < now) {
-      return false;
-    }
+  const filterMatches = (matches: any[]) =>
+    matches.filter((m) => {
+      if (m.delete_at && new Date(m.delete_at) < now) return false;
+      if (m.status === 'completed' && m.show_until && new Date(m.show_until) < now) return false;
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        return (
+          m.title.toLowerCase().includes(q) ||
+          m.game_name.toLowerCase().includes(q) ||
+          m.prize.toLowerCase().includes(q) ||
+          m.mode.toLowerCase().includes(q)
+        );
+      }
+      return true;
+    });
 
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      const matchesSearch = 
-        match.title.toLowerCase().includes(query) ||
-        match.game_name.toLowerCase().includes(query) ||
-        match.prize.toLowerCase().includes(query) ||
-        match.mode.toLowerCase().includes(query);
-      
-      if (!matchesSearch) return false;
-    }
+  const live = filterMatches(liveMatches);
+  const upcoming = filterMatches(upcomingMatches);
+  const completed = filterMatches(completedMatches);
+  const hasResults = live.length + upcoming.length + completed.length > 0;
 
-    return true;
-  });
-
-  const visibleLive = filterMatches(liveMatches);
-  const visibleUpcoming = filterMatches(upcomingMatches);
-  const visibleCompleted = filterMatches(completedMatches);
-
-  const hasResults = visibleLive.length > 0 || visibleUpcoming.length > 0 || visibleCompleted.length > 0;
+  const activeFilter = searchQuery || 'All';
 
   return (
-    <div className="space-y-8 px-6 pb-24">
-      {/* Banner Section - Hide when searching */}
+    <div className="space-y-7 px-4 pb-28">
+      {/* Banner */}
       {!searchQuery && (
-        <section className="pt-2">
+        <section className="pt-3">
           <BannerCarousel />
         </section>
       )}
 
-      {/* Categories / Quick Actions */}
-      <section className="flex gap-4 overflow-x-auto no-scrollbar pb-2">
-        {['All Games', 'PUBG', 'BGMI', 'Free Fire', 'COD', 'Valorant'].map((cat, i) => (
-          <button 
-            key={cat} 
-            onClick={() => {
-              if (cat === 'All Games') useMatchStore.getState().setSearchQuery('');
-              else useMatchStore.getState().setSearchQuery(cat);
-            }}
-            className={cn(
-              "px-5 py-2.5 rounded-2xl text-xs font-bold whitespace-nowrap transition-all active:scale-95",
-              (searchQuery === cat || (cat === 'All Games' && !searchQuery)) 
-                ? "bg-brand-blue text-white shadow-lg shadow-brand-blue/30" 
-                : "bg-brand-card text-slate-400 border border-white/5"
-            )}
-          >
-            {cat}
-          </button>
-        ))}
+      {/* Game filters */}
+      <section>
+        <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+          {GAMES.map((g) => {
+            const isActive = activeFilter === g || (g === 'All' && !searchQuery);
+            return (
+              <button
+                key={g}
+                onClick={() => useMatchStore.getState().setSearchQuery(g === 'All' ? '' : g)}
+                className={cn(
+                  'px-4 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-all duration-200 active:scale-95',
+                  isActive
+                    ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/30'
+                    : 'bg-app-card border border-app-border text-text-secondary hover:border-brand-primary/30 hover:text-text-primary'
+                )}
+              >
+                {g}
+              </button>
+            );
+          })}
+        </div>
       </section>
 
-      {/* Search Results Info */}
+      {/* Search context */}
       {searchQuery && (
-        <div className="flex items-center justify-between px-1">
-          <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-            Results for "{searchQuery}"
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-medium text-text-muted">
+            Results for <span className="text-text-primary font-semibold">"{searchQuery}"</span>
           </p>
-          <button 
+          <button
             onClick={() => useMatchStore.getState().setSearchQuery('')}
-            className="text-[10px] font-black text-brand-red uppercase tracking-widest"
+            className="text-xs font-semibold text-brand-primary-light hover:underline"
           >
             Clear
           </button>
         </div>
       )}
 
-      {/* No Results */}
+      {/* Empty search */}
       {searchQuery && !hasResults && (
-        <div className="py-20 text-center space-y-4">
-          <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto text-slate-600">
-            <Search size={32} />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="py-20 flex flex-col items-center gap-4"
+        >
+          <div className="w-16 h-16 bg-app-card border border-app-border rounded-2xl flex items-center justify-center text-text-muted">
+            <Search size={28} />
           </div>
-          <div className="space-y-1">
-            <h3 className="font-black text-lg">No matches found</h3>
-            <p className="text-xs text-slate-500 font-bold">Try searching for a different game or mode</p>
+          <div className="text-center space-y-1">
+            <p className="font-bold text-base text-text-primary">No results found</p>
+            <p className="text-sm text-text-muted font-medium">Try a different game or keyword</p>
           </div>
-        </div>
+        </motion.div>
       )}
 
-      {/* Live Matches */}
-      {visibleLive.length > 0 && (
+      {/* Live Now */}
+      {live.length > 0 && (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-black text-xl tracking-tight flex items-center gap-2">
-              LIVE NOW
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-red opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-red"></span>
+            <div className="flex items-center gap-2">
+              <div className="flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-2 w-2 rounded-full bg-brand-live opacity-60" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-live" />
+              </div>
+              <h2 className="text-[15px] font-bold text-text-primary">Live Now</h2>
+              <span className="px-2 py-0.5 bg-brand-live/15 text-brand-live text-[10px] font-bold rounded-lg border border-brand-live/25">
+                {live.length}
               </span>
-            </h2>
-            <button className="text-xs text-brand-blue font-bold tracking-widest uppercase">See All</button>
+            </div>
+            <button className="flex items-center gap-1 text-xs font-semibold text-brand-primary-light hover:underline">
+              See All <ChevronRight size={13} />
+            </button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {visibleLive.map((match) => (
-              <MatchCard key={match.match_id} match={match} />
+          <div className="grid grid-cols-1 gap-4">
+            {live.map((m, i) => (
+              <motion.div
+                key={m.match_id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <MatchCard match={m} />
+              </motion.div>
             ))}
           </div>
         </section>
       )}
 
-      {/* Upcoming Matches */}
-      {visibleUpcoming.length > 0 && (
+      {/* Upcoming */}
+      {upcoming.length > 0 && (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-black text-xl tracking-tight">UPCOMING</h2>
-            <button className="text-xs text-brand-blue font-bold tracking-widest uppercase">Filter</button>
+            <div className="flex items-center gap-2">
+              <Zap size={15} className="text-brand-warning fill-brand-warning" />
+              <h2 className="text-[15px] font-bold text-text-primary">Upcoming</h2>
+            </div>
+            <button className="flex items-center gap-1 text-xs font-semibold text-brand-primary-light hover:underline">
+              Filter <ChevronRight size={13} />
+            </button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {visibleUpcoming.map((match) => (
-              <MatchCard key={match.match_id} match={match} />
+          <div className="grid grid-cols-1 gap-4">
+            {upcoming.map((m, i) => (
+              <motion.div
+                key={m.match_id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <MatchCard match={m} />
+              </motion.div>
             ))}
           </div>
         </section>
       )}
 
-      {/* Completed Matches */}
-      {visibleCompleted.length > 0 && (
+      {/* Completed */}
+      {completed.length > 0 && (
         <section className="space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="font-black text-xl tracking-tight text-slate-500">RECENTLY FINISHED</h2>
-            <button className="text-xs text-slate-500 font-bold tracking-widest uppercase">History</button>
+            <h2 className="text-[15px] font-bold text-text-secondary">Recently Finished</h2>
+            <button className="flex items-center gap-1 text-xs font-semibold text-text-muted hover:text-text-secondary hover:underline">
+              History <ChevronRight size={13} />
+            </button>
           </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 opacity-80">
-            {visibleCompleted.map((match) => (
-              <MatchCard key={match.match_id} match={match} />
+          <div className="grid grid-cols-1 gap-4 opacity-75">
+            {completed.map((m, i) => (
+              <motion.div
+                key={m.match_id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <MatchCard match={m} />
+              </motion.div>
             ))}
           </div>
         </section>
@@ -152,4 +184,3 @@ export default function Home() {
     </div>
   );
 }
-

@@ -4,23 +4,38 @@ import { cn } from '@/src/utils/helpers';
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
+  icon?: React.ReactNode;
 }
 
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className, ...props }, ref) => {
+  ({ label, error, icon, className, ...props }, ref) => {
     return (
-      <div className="space-y-1.5 w-full">
-        {label && <label className="text-xs font-medium text-slate-400 ml-1">{label}</label>}
-        <input
-          ref={ref}
-          className={cn(
-            'w-full bg-brand-dark border border-white/10 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand-blue transition-colors placeholder:text-slate-600',
-            error && 'border-brand-red focus:border-brand-red',
-            className
+      <div className="space-y-2 w-full">
+        {label && (
+          <label className="text-xs font-semibold text-text-secondary ml-1 tracking-wide">
+            {label}
+          </label>
+        )}
+        <div className="relative">
+          {icon && (
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
+              {icon}
+            </div>
           )}
-          {...props}
-        />
-        {error && <p className="text-[10px] text-brand-red ml-1">{error}</p>}
+          <input
+            ref={ref}
+            className={cn(
+              'w-full bg-app-elevated border border-app-border rounded-2xl py-3.5 text-sm font-medium text-text-primary placeholder:text-text-muted focus:outline-none focus:border-brand-primary focus:bg-app-card-hover transition-all duration-200',
+              icon ? 'pl-11 pr-4' : 'px-4',
+              error && 'border-brand-live focus:border-brand-live',
+              className
+            )}
+            {...props}
+          />
+        </div>
+        {error && (
+          <p className="text-xs text-brand-live ml-1 font-medium">{error}</p>
+        )}
       </div>
     );
   }

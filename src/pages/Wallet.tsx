@@ -1,297 +1,234 @@
 import { useState } from 'react';
 import { useUserStore } from '@/src/store/userStore';
-import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
-import { Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, Plus, Trophy, Gamepad2, X, Copy, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  Plus, ArrowUpRight, ArrowDownLeft, Trophy,
+  Gamepad2, X, Copy, CheckCircle2, AlertCircle,
+  TrendingUp, Wallet as WalletIcon
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
-import { Tag } from '@/src/components/ui/Tag';
 
 export default function Wallet() {
   const { user, transactions, addTransaction } = useUserStore();
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [amount, setAmount] = useState('');
-  const [step, setStep] = useState(1);
-  const [utr, setUtr] = useState('');
-  const [withdrawMethod, setWithdrawMethod] = useState<'upi' | 'giftcard'>('upi');
-  const [withdrawDetails, setWithdrawDetails] = useState('');
-  const [status, setStatus] = useState<'idle' | 'success'>('idle');
+  const [showAdd, setShowAdd]           = useState(false);
+  const [showWith, setShowWith]         = useState(false);
+  const [amount, setAmount]             = useState('');
+  const [step, setStep]                 = useState(1);
+  const [utr, setUtr]                   = useState('');
+  const [method, setMethod]             = useState<'upi'|'giftcard'>('upi');
+  const [details, setDetails]           = useState('');
+  const [status, setStatus]             = useState<'idle'|'success'>('idle');
+  const ADMIN_UPI                       = 'admin@upi';
 
-  const ADMIN_UPI = "admin@upi";
+  const depositedAmt = transactions.filter(t => t.type === 'deposit' && t.status === 'success').reduce((a,t) => a+t.amount,0);
+  const winningsAmt  = transactions.filter(t => t.type === 'win'     && t.status === 'success').reduce((a,t) => a+t.amount,0);
 
   const handleAddCash = () => {
-    const numAmount = Number(amount);
-    if (numAmount < 10) return alert("Minimum deposit is ₹10");
+    if (Number(amount) < 10) return alert('Minimum deposit is ₹10');
     setStep(2);
   };
 
   const submitDeposit = () => {
-    if (!utr) return alert("Please enter Transaction ID (UTR)");
-    addTransaction({
-      type: 'deposit',
-      amount: Number(amount),
-      status: 'pending',
-      method: 'upi',
-      details: utr,
-      title: 'Deposit Request'
-    });
+    if (!utr) return alert('Enter Transaction ID');
+    addTransaction({ type:'deposit', amount:Number(amount), status:'pending', method:'upi', details:utr, title:'Deposit Request' });
     setStatus('success');
-    setTimeout(() => {
-      setShowAddModal(false);
-      setStep(1);
-      setAmount('');
-      setUtr('');
-      setStatus('idle');
-    }, 2000);
+    setTimeout(() => { setShowAdd(false); setStep(1); setAmount(''); setUtr(''); setStatus('idle'); }, 2200);
   };
 
   const handleWithdraw = () => {
-    const numAmount = Number(amount);
-    if (numAmount < 50) return alert("Minimum withdrawal is ₹50");
-    if (numAmount > (user?.coins || 0)) return alert("Insufficient balance");
-    if (!withdrawDetails) return alert(`Please enter ${withdrawMethod === 'upi' ? 'UPI ID' : 'Email Address'}`);
-
-    addTransaction({
-      type: 'withdrawal',
-      amount: -numAmount,
-      status: 'pending',
-      method: withdrawMethod,
-      details: withdrawDetails,
-      title: `${withdrawMethod === 'upi' ? 'UPI' : 'Gift Card'} Withdrawal`
-    });
-    
-    // Deduct coins immediately for withdrawal request
-    useUserStore.getState().updateCoins(-numAmount);
-
+    const n = Number(amount);
+    if (n < 50) return alert('Minimum withdrawal ₹50');
+    if (n > (user?.coins||0)) return alert('Insufficient balance');
+    if (!details) return alert(`Enter ${method==='upi'?'UPI ID':'Email'}`);
+    addTransaction({ type:'withdrawal', amount:-n, status:'pending', method, details, title:`${method==='upi'?'UPI':'Gift Card'} Withdrawal` });
+    useUserStore.getState().updateCoins(-n);
     setStatus('success');
-    setTimeout(() => {
-      setShowWithdrawModal(false);
-      setAmount('');
-      setWithdrawDetails('');
-      setStatus('idle');
-    }, 2000);
+    setTimeout(() => { setShowWith(false); setAmount(''); setDetails(''); setStatus('idle'); }, 2200);
   };
 
-  const copyUpi = () => {
-    navigator.clipboard.writeText(ADMIN_UPI);
-    alert("UPI ID Copied!");
+  const txIcon = (type: string) => {
+    if (type==='deposit')    return <Plus className="w-5 h-5" />;
+    if (type==='win')        return <Trophy className="w-5 h-5" />;
+    if (type==='withdrawal') return <ArrowUpRight className="w-5 h-5" />;
+    return <Gamepad2 className="w-5 h-5" />;
   };
-
-  const depositedAmount = transactions
-    .filter(tx => tx.type === 'deposit' && tx.status === 'success')
-    .reduce((acc, tx) => acc + tx.amount, 0);
-
-  const winningsAmount = transactions
-    .filter(tx => tx.type === 'win' && tx.status === 'success')
-    .reduce((acc, tx) => acc + tx.amount, 0);
 
   return (
-    <div className="px-6 space-y-8 pb-24">
-      {/* Balance Card */}
-      <section className="pt-4">
-        <div className="relative h-56 rounded-[32px] overflow-hidden bg-gradient-to-br from-brand-blue to-indigo-600 p-8 flex flex-col justify-between shadow-2xl shadow-brand-blue/30">
-          <div className="flex justify-between items-start">
-            <div>
-              <p className="text-[10px] font-black text-white/60 uppercase tracking-widest mb-1">Total Balance</p>
-              <h2 className="text-4xl font-black text-white tracking-tighter">₹{user?.coins || 0}.00</h2>
+    <div className="pb-28 space-y-6 px-4">
+      {/* Balance card */}
+      <section className="pt-3">
+        <div className="relative rounded-[24px] overflow-hidden p-6 bg-gradient-to-br from-[#312E81] via-[#1e1b4b] to-[#0E1626] border border-brand-primary/20 shadow-2xl shadow-brand-primary/20">
+          {/* Decorative circles */}
+          <div className="absolute -top-10 -right-10 w-48 h-48 bg-brand-primary/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-10 -left-10 w-36 h-36 bg-brand-cyan/8 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative space-y-5">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-xs font-semibold text-white/50 tracking-wide uppercase mb-1.5">Total Balance</p>
+                <p className="text-4xl font-extrabold text-white tracking-tight">₹{user?.coins||0}<span className="text-lg font-semibold">.00</span></p>
+              </div>
+              <div className="w-11 h-11 bg-white/10 backdrop-blur rounded-2xl flex items-center justify-center border border-white/15">
+                <WalletIcon size={20} className="text-white" />
+              </div>
             </div>
-            <div className="w-12 h-12 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20">
-              <WalletIcon className="w-6 h-6 text-white" />
-            </div>
-          </div>
-          
-          <div className="flex gap-4">
-            <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-              <p className="text-[8px] font-black text-white/50 uppercase tracking-widest mb-1">Deposited</p>
-              <p className="text-sm font-black text-white">₹{depositedAmount}</p>
-            </div>
-            <div className="flex-1 bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/10">
-              <p className="text-[8px] font-black text-white/50 uppercase tracking-widest mb-1">Winnings</p>
-              <p className="text-sm font-black text-white">₹{winningsAmount}</p>
+
+            <div className="flex gap-3">
+              <div className="flex-1 bg-white/8 backdrop-blur rounded-2xl p-3.5 border border-white/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <ArrowDownLeft size={12} className="text-brand-success" />
+                  <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wide">Deposited</p>
+                </div>
+                <p className="text-sm font-bold text-white">₹{depositedAmt}</p>
+              </div>
+              <div className="flex-1 bg-white/8 backdrop-blur rounded-2xl p-3.5 border border-white/10">
+                <div className="flex items-center gap-2 mb-1">
+                  <TrendingUp size={12} className="text-brand-warning" />
+                  <p className="text-[10px] font-semibold text-white/50 uppercase tracking-wide">Winnings</p>
+                </div>
+                <p className="text-sm font-bold text-white">₹{winningsAmt}</p>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Quick Actions */}
-      <section className="grid grid-cols-2 gap-4">
-        <button 
-          onClick={() => setShowAddModal(true)}
-          className="bg-brand-blue text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg shadow-brand-blue/20 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+      {/* Actions */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => setShowAdd(true)}
+          className="flex items-center justify-center gap-2 py-4 bg-brand-primary hover:bg-brand-primary-light text-white text-sm font-bold rounded-2xl shadow-lg shadow-brand-primary/25 transition-all active:scale-95"
         >
-          <Plus className="w-5 h-5" /> Add Cash
+          <Plus size={18} /> Add Cash
         </button>
-        <button 
-          onClick={() => setShowWithdrawModal(true)}
-          className="bg-brand-card text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest border border-white/5 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+        <button
+          onClick={() => setShowWith(true)}
+          className="flex items-center justify-center gap-2 py-4 bg-app-card border border-app-border text-text-primary text-sm font-bold rounded-2xl hover:border-brand-primary/30 transition-all active:scale-95"
         >
-          <ArrowUpRight className="w-5 h-5" /> Withdraw
+          <ArrowUpRight size={18} /> Withdraw
         </button>
-      </section>
+      </div>
 
       {/* Transactions */}
-      <section className="space-y-4">
+      <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h3 className="text-xs font-black uppercase tracking-widest text-slate-500">Recent Transactions</h3>
-          <button className="text-[10px] font-black text-brand-blue uppercase tracking-widest">View All</button>
+          <h3 className="text-[15px] font-bold text-text-primary">Transactions</h3>
+          <button className="text-xs font-semibold text-brand-primary-light hover:underline">View All</button>
         </div>
 
-        <div className="space-y-3">
-          {transactions.map((tx, index) => (
+        {transactions.length === 0 && (
+          <div className="py-10 text-center text-sm text-text-muted font-medium">No transactions yet</div>
+        )}
+
+        <div className="space-y-2.5">
+          {transactions.map((tx, i) => (
             <motion.div
               key={tx.id}
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: index * 0.05 }}
+              transition={{ delay: i * 0.04 }}
+              className="flex items-center justify-between bg-app-card border border-app-border rounded-2xl p-4"
             >
-              <Card className="p-4 flex items-center justify-between bg-brand-card/40 border-none shadow-lg">
-                <div className="flex items-center gap-4">
-                  <div className={cn(
-                    "w-12 h-12 rounded-2xl flex items-center justify-center",
-                    tx.amount > 0 ? "bg-brand-green/10 text-brand-green" : "bg-brand-red/10 text-brand-red"
-                  )}>
-                    {tx.type === 'deposit' ? <Plus className="w-5 h-5" /> : 
-                     tx.type === 'win' ? <Trophy className="w-5 h-5" /> : 
-                     tx.type === 'withdrawal' ? <ArrowUpRight className="w-5 h-5" /> : <Gamepad2 className="w-5 h-5" />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-black tracking-tight capitalize">{tx.title || (tx.type === 'deposit' ? 'Added to Wallet' : 'Withdrawal')}</p>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{tx.date}</p>
-                  </div>
+              <div className="flex items-center gap-3.5">
+                <div className={cn('w-11 h-11 rounded-2xl flex items-center justify-center', tx.amount>0 ? 'bg-brand-success/10 text-brand-success' : 'bg-brand-live/10 text-brand-live')}>
+                  {txIcon(tx.type)}
                 </div>
-                <div className="text-right">
-                  <p className={cn(
-                    "text-sm font-black tracking-tighter",
-                    tx.amount > 0 ? "text-brand-green" : "text-white"
-                  )}>{tx.amount > 0 ? '+' : ''}₹{Math.abs(tx.amount)}</p>
-                  <p className={cn(
-                    "text-[8px] font-black uppercase tracking-widest",
-                    tx.status === 'success' ? "text-brand-green/60" : 
-                    tx.status === 'pending' ? "text-brand-yellow/60" : "text-brand-red/60"
-                  )}>{tx.status}</p>
+                <div>
+                  <p className="text-sm font-semibold text-text-primary">{tx.title || tx.type}</p>
+                  <p className="text-xs text-text-muted font-medium">{tx.date}</p>
                 </div>
-              </Card>
+              </div>
+              <div className="text-right">
+                <p className={cn('text-sm font-bold', tx.amount>0 ? 'text-brand-success' : 'text-text-primary')}>
+                  {tx.amount>0?'+':''}₹{Math.abs(tx.amount)}
+                </p>
+                <p className={cn('text-[10px] font-semibold capitalize', tx.status==='success'?'text-brand-success/70':tx.status==='pending'?'text-brand-warning/70':'text-brand-live/70')}>
+                  {tx.status}
+                </p>
+              </div>
             </motion.div>
           ))}
         </div>
       </section>
 
-      {/* Add Cash Modal */}
+      {/* ── Add Cash Modal ── */}
       <AnimatePresence>
-        {showAddModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowAddModal(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-md bg-brand-card rounded-[32px] p-6 sm:p-8 space-y-6 border border-white/5 max-h-[90vh] overflow-y-auto scrollbar-hide shadow-2xl"
+        {showAdd && (
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={()=>setShowAdd(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            <motion.div
+              initial={{y:60,opacity:0}} animate={{y:0,opacity:1}} exit={{y:60,opacity:0}}
+              transition={{type:'spring',stiffness:260,damping:26}}
+              className="relative w-full max-w-md bg-app-card border border-app-border rounded-3xl p-6 space-y-5 max-h-[90vh] overflow-y-auto shadow-2xl"
             >
-              <div className="flex justify-between items-center sticky top-0 bg-brand-card z-10 pb-4">
-                <h3 className="text-xl font-black tracking-tighter">Add Cash</h3>
-                <button 
-                  onClick={() => setShowAddModal(false)} 
-                  className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
-                >
-                  <X className="w-5 h-5" />
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-text-primary">Add Cash</h3>
+                <button onClick={()=>setShowAdd(false)} className="w-8 h-8 bg-app-elevated rounded-xl flex items-center justify-center text-text-muted hover:text-text-primary transition-colors">
+                  <X size={16} />
                 </button>
               </div>
 
-              {status === 'success' ? (
-                <div className="py-12 flex flex-col items-center space-y-4 text-center">
-                  <div className="w-20 h-20 bg-brand-green/20 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="w-10 h-10 text-brand-green" />
+              {status==='success' ? (
+                <div className="py-10 flex flex-col items-center gap-4 text-center">
+                  <div className="w-16 h-16 bg-brand-success/15 rounded-full flex items-center justify-center">
+                    <CheckCircle2 size={32} className="text-brand-success" />
                   </div>
                   <div>
-                    <h4 className="text-xl font-black tracking-tighter">Request Submitted</h4>
-                    <p className="text-sm text-slate-400 font-bold">Admin will verify and add funds shortly.</p>
+                    <p className="font-bold text-text-primary">Request Submitted!</p>
+                    <p className="text-sm text-text-muted font-medium mt-1">Admin will verify and add funds shortly.</p>
                   </div>
                 </div>
-              ) : step === 1 ? (
-                <div className="space-y-6">
+              ) : step===1 ? (
+                <div className="space-y-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Enter Amount (Min ₹10)</label>
+                    <label className="text-xs font-semibold text-text-secondary">Amount (Min ₹10)</label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-black">₹</span>
-                      <input 
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-10 pr-4 text-xl font-black focus:border-brand-blue outline-none transition-colors"
-                      />
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-text-muted">₹</span>
+                      <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0.00"
+                        className="w-full bg-app-elevated border border-app-border rounded-2xl py-3.5 pl-9 pr-4 text-lg font-bold focus:border-brand-primary outline-none transition-colors" />
                     </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-3">
-                    {[50, 100, 500].map(val => (
-                      <button 
-                        key={val}
-                        onClick={() => setAmount(val.toString())}
-                        className="bg-white/5 py-3 rounded-xl font-black text-xs hover:bg-white/10 transition-colors"
-                      >
-                        +₹{val}
+                  <div className="grid grid-cols-4 gap-2">
+                    {[50,100,200,500].map(v=>(
+                      <button key={v} onClick={()=>setAmount(v.toString())}
+                        className="py-2.5 bg-app-elevated border border-app-border rounded-xl text-xs font-semibold text-text-secondary hover:border-brand-primary/40 hover:text-text-primary transition-all active:scale-95">
+                        +₹{v}
                       </button>
                     ))}
                   </div>
-                  <Button onClick={handleAddCash} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest">
-                    Continue
-                  </Button>
+                  <Button onClick={handleAddCash} fullWidth size="lg">Continue</Button>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  <div className="p-4 bg-gradient-to-br from-brand-blue/20 to-indigo-600/20 rounded-2xl border border-brand-blue/20 space-y-4">
-                    <div className="flex justify-between items-center">
+                <div className="space-y-5">
+                  <div className="p-4 bg-brand-primary/8 border border-brand-primary/20 rounded-2xl space-y-3">
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-[10px] font-black text-brand-blue uppercase tracking-widest mb-1">Pay to UPI ID</p>
-                        <p className="text-lg font-black tracking-tight text-white">{ADMIN_UPI}</p>
+                        <p className="text-xs font-semibold text-brand-primary-light mb-0.5">Pay via UPI</p>
+                        <p className="text-base font-bold text-text-primary">{ADMIN_UPI}</p>
                       </div>
-                      <button 
-                        onClick={copyUpi} 
-                        className="p-3 bg-brand-blue text-white rounded-xl shadow-lg shadow-brand-blue/30 active:scale-90 transition-transform"
-                      >
-                        <Copy className="w-4 h-4" />
+                      <button onClick={()=>{navigator.clipboard.writeText(ADMIN_UPI);alert('Copied!');}}
+                        className="p-2.5 bg-brand-primary text-white rounded-xl active:scale-90 transition-transform">
+                        <Copy size={15} />
                       </button>
                     </div>
-                    <div className="pt-4 border-t border-white/10">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Quick Instructions</p>
-                      <div className="space-y-2">
-                        {[
-                          "Copy the UPI ID above",
-                          "Pay ₹" + amount + " using any UPI app",
-                          "Copy the 12-digit UTR/Ref No."
-                        ].map((text, i) => (
-                          <div key={i} className="flex items-center gap-2">
-                            <div className="w-4 h-4 rounded-full bg-brand-blue/20 flex items-center justify-center text-[8px] font-black text-brand-blue">
-                              {i + 1}
-                            </div>
-                            <p className="text-[10px] font-bold text-slate-300">{text}</p>
-                          </div>
-                        ))}
-                      </div>
+                    <div className="space-y-2 pt-3 border-t border-app-border">
+                      {['Copy the UPI ID','Pay ₹'+amount+' using any UPI app','Enter the 12-digit UTR below'].map((t,i)=>(
+                        <div key={i} className="flex items-center gap-2.5">
+                          <div className="w-5 h-5 rounded-full bg-brand-primary/15 flex items-center justify-center text-[9px] font-bold text-brand-primary shrink-0">{i+1}</div>
+                          <p className="text-xs font-medium text-text-secondary">{t}</p>
+                        </div>
+                      ))}
                     </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Transaction ID (UTR)</label>
-                    <input 
-                      type="text"
-                      value={utr}
-                      onChange={(e) => setUtr(e.target.value)}
-                      placeholder="Enter 12-digit ID"
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-sm font-black focus:border-brand-blue outline-none transition-colors"
-                    />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary">Transaction ID (UTR)</label>
+                    <input type="text" value={utr} onChange={e=>setUtr(e.target.value)} placeholder="Enter 12-digit ID"
+                      className="w-full bg-app-elevated border border-app-border rounded-2xl py-3.5 px-4 text-sm font-medium focus:border-brand-primary outline-none transition-colors" />
                   </div>
-
                   <div className="flex gap-3">
-                    <Button variant="outline" onClick={() => setStep(1)} className="flex-1">Back</Button>
-                    <Button onClick={submitDeposit} className="flex-[2]">Submit Request</Button>
+                    <Button variant="secondary" onClick={()=>setStep(1)} className="flex-1">Back</Button>
+                    <Button onClick={submitDeposit} className="flex-[2]">Submit</Button>
                   </div>
                 </div>
               )}
@@ -300,119 +237,73 @@ export default function Wallet() {
         )}
       </AnimatePresence>
 
-      {/* Withdraw Modal */}
+      {/* ── Withdraw Modal ── */}
       <AnimatePresence>
-        {showWithdrawModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowWithdrawModal(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
-            />
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-md bg-brand-card rounded-[32px] p-6 sm:p-8 space-y-6 border border-white/5 max-h-[90vh] overflow-y-auto scrollbar-hide shadow-2xl"
+        {showWith && (
+          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-4">
+            <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={()=>setShowWith(false)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            <motion.div
+              initial={{y:60,opacity:0}} animate={{y:0,opacity:1}} exit={{y:60,opacity:0}}
+              transition={{type:'spring',stiffness:260,damping:26}}
+              className="relative w-full max-w-md bg-app-card border border-app-border rounded-3xl p-6 space-y-5 shadow-2xl"
             >
-              <div className="flex justify-between items-center sticky top-0 bg-brand-card z-10 pb-4">
-                <h3 className="text-xl font-black tracking-tighter">Withdraw Funds</h3>
-                <button 
-                  onClick={() => setShowWithdrawModal(false)} 
-                  className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors"
-                >
-                  <X className="w-5 h-5" />
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold text-text-primary">Withdraw Funds</h3>
+                <button onClick={()=>setShowWith(false)} className="w-8 h-8 bg-app-elevated rounded-xl flex items-center justify-center text-text-muted hover:text-text-primary transition-colors">
+                  <X size={16} />
                 </button>
               </div>
 
-              {status === 'success' ? (
-                <div className="py-12 flex flex-col items-center space-y-4 text-center">
-                  <div className="w-20 h-20 bg-brand-green/20 rounded-full flex items-center justify-center">
-                    <CheckCircle2 className="w-10 h-10 text-brand-green" />
+              {status==='success' ? (
+                <div className="py-10 flex flex-col items-center gap-4 text-center">
+                  <div className="w-16 h-16 bg-brand-success/15 rounded-full flex items-center justify-center">
+                    <CheckCircle2 size={32} className="text-brand-success" />
                   </div>
                   <div>
-                    <h4 className="text-xl font-black tracking-tighter">Withdrawal Requested</h4>
-                    <p className="text-sm text-slate-400 font-bold">Funds will be sent to your account within 24 hours.</p>
+                    <p className="font-bold text-text-primary">Withdrawal Requested!</p>
+                    <p className="text-sm text-text-muted font-medium mt-1">Funds sent within 24 hours.</p>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-6">
+                <div className="space-y-5">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Withdrawal Method</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button 
-                        onClick={() => setWithdrawMethod('upi')}
-                        className={cn(
-                          "flex flex-col items-center gap-2 p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest border transition-all",
-                          withdrawMethod === 'upi' ? "bg-brand-blue border-brand-blue text-white shadow-lg shadow-brand-blue/20" : "bg-white/5 border-white/10 text-slate-400"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-8 h-8 rounded-xl flex items-center justify-center",
-                          withdrawMethod === 'upi' ? "bg-white/20" : "bg-white/5"
-                        )}>
-                          <ArrowUpRight className="w-5 h-5" />
-                        </div>
-                        UPI Transfer
-                      </button>
-                      <button 
-                        onClick={() => setWithdrawMethod('giftcard')}
-                        className={cn(
-                          "flex flex-col items-center gap-2 p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest border transition-all",
-                          withdrawMethod === 'giftcard' ? "bg-brand-blue border-brand-blue text-white shadow-lg shadow-brand-blue/20" : "bg-white/5 border-white/10 text-slate-400"
-                        )}
-                      >
-                        <div className={cn(
-                          "w-8 h-8 rounded-xl flex items-center justify-center",
-                          withdrawMethod === 'giftcard' ? "bg-white/20" : "bg-white/5"
-                        )}>
-                          <Gamepad2 className="w-5 h-5" />
-                        </div>
-                        Google Play
-                      </button>
+                    <label className="text-xs font-semibold text-text-secondary">Method</label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {(['upi','giftcard'] as const).map(m=>(
+                        <button key={m} onClick={()=>setMethod(m)}
+                          className={cn('py-3.5 rounded-2xl text-xs font-semibold border transition-all',
+                            method===m ? 'bg-brand-primary border-brand-primary text-white' : 'bg-app-elevated border-app-border text-text-secondary hover:border-brand-primary/30')}>
+                          {m==='upi'?'UPI Transfer':'Google Play'}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Amount (Min ₹50)</label>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary">Amount (Min ₹50)</label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-black">₹</span>
-                      <input 
-                        type="number"
-                        value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
-                        placeholder="0.00"
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-10 pr-4 text-xl font-black focus:border-brand-blue outline-none transition-colors"
-                      />
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-text-muted">₹</span>
+                      <input type="number" value={amount} onChange={e=>setAmount(e.target.value)} placeholder="0.00"
+                        className="w-full bg-app-elevated border border-app-border rounded-2xl py-3.5 pl-9 pr-4 text-lg font-bold focus:border-brand-primary outline-none transition-colors" />
                     </div>
-                    <p className="text-[10px] font-bold text-slate-500">Available: ₹{user?.coins || 0}</p>
+                    <p className="text-xs text-text-muted font-medium">Available: ₹{user?.coins||0}</p>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                      {withdrawMethod === 'upi' ? 'UPI ID' : 'Email Address'}
-                    </label>
-                    <input 
-                      type="text"
-                      value={withdrawDetails}
-                      onChange={(e) => setWithdrawDetails(e.target.value)}
-                      placeholder={withdrawMethod === 'upi' ? 'example@upi' : 'your@email.com'}
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 px-4 text-sm font-black focus:border-brand-blue outline-none transition-colors"
-                    />
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-text-secondary">{method==='upi'?'UPI ID':'Email Address'}</label>
+                    <input type="text" value={details} onChange={e=>setDetails(e.target.value)}
+                      placeholder={method==='upi'?'example@upi':'your@email.com'}
+                      className="w-full bg-app-elevated border border-app-border rounded-2xl py-3.5 px-4 text-sm font-medium focus:border-brand-primary outline-none transition-colors" />
                   </div>
 
-                  <div className="p-4 bg-brand-yellow/10 rounded-2xl border border-brand-yellow/20 flex gap-3">
-                    <AlertCircle className="w-5 h-5 text-brand-yellow shrink-0" />
-                    <p className="text-[10px] font-bold text-brand-yellow/80 leading-relaxed">
-                      Withdrawals are processed manually and may take up to 24 hours to reflect in your account.
+                  <div className="flex items-start gap-3 p-3.5 bg-brand-warning/8 border border-brand-warning/20 rounded-2xl">
+                    <AlertCircle size={16} className="text-brand-warning shrink-0 mt-0.5" />
+                    <p className="text-xs font-medium text-brand-warning/80 leading-relaxed">
+                      Withdrawals are processed manually and may take up to 24 hours.
                     </p>
                   </div>
 
-                  <Button onClick={handleWithdraw} className="w-full py-4 rounded-2xl font-black text-xs uppercase tracking-widest">
-                    Withdraw Now
-                  </Button>
+                  <Button onClick={handleWithdraw} fullWidth size="lg">Withdraw Now</Button>
                 </div>
               )}
             </motion.div>

@@ -1,131 +1,125 @@
 import { useState } from 'react';
-import { Card } from '@/src/components/ui/Card';
-import { Tag } from '@/src/components/ui/Tag';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
 import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
+import { TrendingUp, TrendingDown, Minus, Crown } from 'lucide-react';
+
+const BASE = [
+  { id:'1', username:'ShadowSlayer', points:12450, trend:'up'   as const },
+  { id:'2', username:'EsportsPro',   points:11200, trend:'down' as const },
+  { id:'3', username:'NinjaX',       points:10800, trend:'up'   as const },
+  { id:'4', username:'GhostRider',   points:9500,  trend:'neutral' as const },
+  { id:'5', username:'ViperKing',    points:8900,  trend:'up'   as const },
+  { id:'6', username:'AceHunter',    points:8200,  trend:'down' as const },
+  { id:'7', username:'DarkPhoenix',  points:7600,  trend:'up'   as const },
+  { id:'8', username:'StormBreaker', points:7100,  trend:'neutral' as const },
+];
+
+const FILTERS = ['Daily','Weekly','All-Time'] as const;
+type Filter = typeof FILTERS[number];
+
+const multiplier: Record<Filter, number> = { Daily:1, Weekly:7, 'All-Time':30 };
 
 export default function Leaderboard() {
-  const [activeFilter, setActiveFilter] = useState<'Daily' | 'Weekly' | 'All-Time'>('Daily');
+  const [filter, setFilter] = useState<Filter>('Daily');
 
-  const getRankings = () => {
-    const baseRankings = [
-      { id: '1', username: 'ShadowSlayer', rank: '1', points: '12,450', avatar: 'https://picsum.photos/seed/1/100', trend: 'up' },
-      { id: '2', username: 'EsportsPro', rank: '2', points: '11,200', avatar: 'https://picsum.photos/seed/avatar/100', trend: 'down' },
-      { id: '3', username: 'NinjaX', rank: '3', points: '10,800', avatar: 'https://picsum.photos/seed/3/100', trend: 'up' },
-      { id: '4', username: 'GhostRider', rank: '4', points: '9,500', avatar: 'https://picsum.photos/seed/4/100', trend: 'stable' },
-      { id: '5', username: 'ViperKing', rank: '5', points: '8,900', avatar: 'https://picsum.photos/seed/5/100', trend: 'up' },
-      { id: '6', username: 'AceHunter', rank: '6', points: '8,200', avatar: 'https://picsum.photos/seed/6/100', trend: 'down' },
-    ];
+  const rankings = BASE.map(p => ({
+    ...p,
+    points: Math.round(p.points * multiplier[filter]),
+  })).sort((a,b) => b.points - a.points);
 
-    if (activeFilter === 'Weekly') {
-      return baseRankings.map(r => ({
-        ...r,
-        points: (parseInt(r.points.replace(',', '')) * 7).toLocaleString(),
-        trend: Math.random() > 0.5 ? 'up' : 'down'
-      }));
-    }
+  const top3 = rankings.slice(0,3);
+  const rest  = rankings.slice(3);
 
-    if (activeFilter === 'All-Time') {
-      return baseRankings.map(r => ({
-        ...r,
-        points: (parseInt(r.points.replace(',', '')) * 30).toLocaleString(),
-        trend: 'stable'
-      }));
-    }
+  const TrendIcon = ({ t }: { t: 'up'|'down'|'neutral' }) =>
+    t==='up'   ? <TrendingUp  size={13} className="text-brand-success" /> :
+    t==='down' ? <TrendingDown size={13} className="text-brand-live"    /> :
+                 <Minus        size={13} className="text-text-muted"    />;
 
-    return baseRankings;
-  };
+  const podiumCfg = [
+    { pos:1, size:'w-20 h-20', barH:'h-[90px]', ring:'ring-brand-gold', barBg:'bg-brand-gold/12', label:'1st', labelColor:'text-brand-gold', crown:true },
+    { pos:2, size:'w-16 h-16', barH:'h-[68px]', ring:'ring-slate-400',  barBg:'bg-slate-400/10',  label:'2nd', labelColor:'text-slate-400', crown:false },
+    { pos:3, size:'w-14 h-14', barH:'h-[52px]', ring:'ring-orange-500', barBg:'bg-orange-500/10', label:'3rd', labelColor:'text-orange-500', crown:false },
+  ];
 
-  const rankings = getRankings();
-  const filters = ['Daily', 'Weekly', 'All-Time'] as const;
+  const order = [podiumCfg[1], podiumCfg[0], podiumCfg[2]];
 
   return (
-    <div className="px-4 sm:px-6 space-y-8 pb-24">
-      {/* Top 3 Podium */}
-      <section className="pt-12 flex items-end justify-center gap-2 sm:gap-4 min-h-[280px]">
-        {/* Rank 2 */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <LetterAvatar name={rankings[1].username} size="lg" className="w-16 h-16 sm:w-20 sm:h-20 border-4 border-slate-400 shadow-xl" />
-            <div className="absolute -bottom-1 -right-1 bg-slate-400 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] font-black shadow-lg">2</div>
-          </div>
-          <div className="bg-slate-400/10 w-16 h-20 sm:w-20 sm:h-24 rounded-t-3xl flex items-center justify-center border-t border-x border-white/5">
-            <span className="text-[10px] sm:text-xs font-black text-slate-400 uppercase tracking-widest">2nd</span>
-          </div>
-        </div>
-
-        {/* Rank 1 */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <LetterAvatar name={rankings[0].username} size="xl" className="w-20 h-20 sm:w-28 sm:h-28 border-4 border-brand-yellow shadow-2xl shadow-brand-yellow/20" />
-            <div className="absolute -bottom-1 -right-1 bg-brand-yellow text-black w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-xs font-black shadow-lg">1</div>
-          </div>
-          <div className="bg-brand-yellow/10 w-20 h-28 sm:w-24 sm:h-36 rounded-t-3xl flex items-center justify-center border-t border-x border-white/5">
-            <span className="text-xs sm:text-sm font-black text-brand-yellow uppercase tracking-widest">1st</span>
-          </div>
-        </div>
-
-        {/* Rank 3 */}
-        <div className="flex flex-col items-center gap-3">
-          <div className="relative">
-            <LetterAvatar name={rankings[2].username} size="lg" className="w-16 h-16 sm:w-20 sm:h-20 border-4 border-orange-600 shadow-xl" />
-            <div className="absolute -bottom-1 -right-1 bg-orange-600 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center text-[10px] font-black shadow-lg">3</div>
-          </div>
-          <div className="bg-orange-600/10 w-16 h-16 sm:w-20 sm:h-20 rounded-t-3xl flex items-center justify-center border-t border-x border-white/5">
-            <span className="text-[10px] sm:text-xs font-black text-orange-600 uppercase tracking-widest">3rd</span>
-          </div>
-        </div>
+    <div className="px-4 pb-28 space-y-7">
+      {/* Podium */}
+      <section className="pt-8 flex items-end justify-center gap-3">
+        {order.map((cfg, idx) => {
+          const player = rankings[cfg.pos - 1];
+          if (!player) return null;
+          return (
+            <motion.div
+              key={cfg.pos}
+              initial={{ opacity:0, y:20 }}
+              animate={{ opacity:1, y:0 }}
+              transition={{ delay: idx*0.1 }}
+              className="flex flex-col items-center gap-2"
+            >
+              <div className="relative">
+                {cfg.crown && (
+                  <div className="absolute -top-5 left-1/2 -translate-x-1/2 text-brand-gold">
+                    <Crown size={18} fill="currentColor" />
+                  </div>
+                )}
+                <LetterAvatar
+                  name={player.username}
+                  size="lg"
+                  className={cn(cfg.size, `ring-2 ${cfg.ring} shadow-xl`)}
+                />
+                <div className={cn('absolute -bottom-1.5 -right-1.5 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow',
+                  cfg.pos===1 ? 'bg-brand-gold' : cfg.pos===2 ? 'bg-slate-400' : 'bg-orange-500')}>
+                  {cfg.pos}
+                </div>
+              </div>
+              <div className="text-center w-full max-w-[72px]">
+                <p className="text-[11px] font-bold text-text-primary leading-tight truncate">{player.username}</p>
+                <p className="text-[10px] font-semibold text-text-muted">{player.points.toLocaleString()}</p>
+              </div>
+              <div className={cn('w-full rounded-t-2xl flex items-center justify-center border border-white/5', cfg.barH, cfg.barBg)}>
+                <span className={cn('text-xs font-black', cfg.labelColor)}>{cfg.label}</span>
+              </div>
+            </motion.div>
+          );
+        })}
       </section>
 
       {/* Filters */}
-      <div className="flex gap-3">
-        {filters.map((filter) => (
-          <button
-            key={filter}
-            onClick={() => setActiveFilter(filter)}
-            className={cn(
-              "flex-1 text-[10px] font-black uppercase tracking-widest py-3 rounded-2xl transition-all active:scale-95",
-              activeFilter === filter 
-                ? "bg-brand-blue text-white shadow-lg shadow-brand-blue/20" 
-                : "bg-brand-card text-slate-500 border border-white/5"
-            )}
-          >
-            {filter}
+      <div className="flex gap-2.5 bg-app-card border border-app-border rounded-2xl p-1.5">
+        {FILTERS.map(f => (
+          <button key={f} onClick={()=>setFilter(f)}
+            className={cn('flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200',
+              filter===f ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/25' : 'text-text-secondary hover:text-text-primary')}>
+            {f}
           </button>
         ))}
       </div>
 
       {/* List */}
-      <section className="space-y-3">
-        {rankings.map((player, index) => (
-          <motion.div
-            key={player.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-          >
-            <Card className="p-4 flex items-center justify-between bg-brand-card/40 border-none shadow-lg">
-              <div className="flex items-center gap-4">
-                <span className="text-xs font-black text-slate-600 w-5">{player.rank}</span>
-                <LetterAvatar name={player.username} size="md" className="rounded-2xl" />
-                <div>
-                  <p className="text-sm font-black tracking-tight">{player.username}</p>
-                  <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{player.points} Points</p>
-                </div>
+      <section className="space-y-2.5">
+        <AnimatePresence>
+          {rest.map((player, i) => (
+            <motion.div
+              key={player.id}
+              initial={{ opacity:0, x:-12 }}
+              animate={{ opacity:1, x:0 }}
+              transition={{ delay: i*0.05 }}
+              className="flex items-center gap-4 bg-app-card border border-app-border rounded-2xl p-4"
+            >
+              <span className="w-7 text-sm font-bold text-text-muted text-center">{i+4}</span>
+              <LetterAvatar name={player.username} size="md" className="rounded-xl" />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-text-primary truncate">{player.username}</p>
+                <p className="text-xs text-text-muted font-medium">{player.points.toLocaleString()} pts</p>
               </div>
-              <div className={cn(
-                "text-[10px] font-black px-3 py-1 rounded-xl",
-                player.trend === 'up' ? "text-brand-green bg-brand-green/10" : 
-                player.trend === 'down' ? "text-brand-red bg-brand-red/10" : "text-slate-500 bg-slate-500/10"
-              )}>
-                {player.trend === 'up' ? '▲' : player.trend === 'down' ? '▼' : '●'}
-              </div>
-            </Card>
-          </motion.div>
-        ))}
+              <TrendIcon t={player.trend} />
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </section>
     </div>
   );
 }
-
