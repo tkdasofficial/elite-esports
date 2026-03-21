@@ -29,6 +29,7 @@ export default function AdminMatchForm() {
   const allGames = useGameStore(s => s.games);
   const activeGames = allGames.filter(g => g.status === 'active');
   const getGame = useGameStore(s => s.getGameByName);
+  const incrementMatches = useGameStore(s => s.incrementMatches);
   const isEditing = !!id;
 
   const gameOptions = activeGames.map(g => ({
@@ -88,6 +89,7 @@ export default function AdminMatchForm() {
         match_id: Math.random().toString(36).substr(2, 9),
       };
       addMatch(newMatch);
+      if (newMatch.game_name) incrementMatches(newMatch.game_name);
     }
     navigate('/admin/matches');
   };

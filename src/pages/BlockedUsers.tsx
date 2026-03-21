@@ -3,14 +3,9 @@ import { ArrowLeft, UserX, UserCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 
-const INITIAL_BLOCKED = [
-  { id: '1', username: 'ToxicPlayer99', blockedOn: 'Mar 15, 2026' },
-  { id: '2', username: 'Hacker_X123', blockedOn: 'Mar 10, 2026' },
-];
-
 export default function BlockedUsers() {
   const navigate = useNavigate();
-  const [blocked, setBlocked] = useState(INITIAL_BLOCKED);
+  const [blocked, setBlocked] = useState<{ id: string; username: string; blockedOn: string }[]>([]);
   const [unblocking, setUnblocking] = useState<string | null>(null);
 
   const handleUnblock = async (id: string) => {

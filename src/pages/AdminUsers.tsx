@@ -1,27 +1,22 @@
 import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
-import { ArrowLeft, Search, User, Ban, CheckCircle2, Coins, Trash2, X, Check, Plus, Minus } from 'lucide-react';
+import { Search, User, Ban, CheckCircle2, Coins, Trash2, X, Check, Plus, Minus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/src/components/ui/Button';
 import { cn } from '@/src/utils/helpers';
+import { usePlatformStore, PlatformUser } from '@/src/store/platformStore';
+import { useUserStore } from '@/src/store/userStore';
 
-const INITIAL_USERS = [
-  { id: '1', username: 'EsportsPro',   email: 'pro@elite.com',    rank: 'Diamond', coins: 1250, status: 'active', joined: '15 Jan 2024' },
-  { id: '2', username: 'ProSlayer',     email: 'slayer@gmail.com', rank: 'Master',  coins: 4500, status: 'active', joined: '10 Feb 2024' },
-  { id: '3', username: 'NoobMaster69', email: 'noob@yahoo.com',   rank: 'Bronze',  coins: 10,   status: 'banned', joined: '01 Mar 2024' },
-  { id: '4', username: 'ShadowHunter', email: 'shadow@gmail.com', rank: 'Gold',    coins: 890,  status: 'active', joined: '22 Mar 2024' },
-];
-
-type User = typeof INITIAL_USERS[0];
 type Toast = { msg: string; ok: boolean } | null;
 
 export default function AdminUsers() {
   const navigate = useNavigate();
+  const { registeredUsers, banUser, unbanUser, adjustCoins, deleteUser } = usePlatformStore();
+  const { updateCoins } = useUserStore();
   const [searchQuery, setSearchQuery]     = useState('');
   const [statusFilter, setStatusFilter]   = useState('all');
-  const [users, setUsers]                 = useState(INITIAL_USERS);
-  const [coinModal, setCoinModal]         = useState<User | null>(null);
+  const [coinModal, setCoinModal]         = useState<PlatformUser | null>(null);
   const [coinAmount, setCoinAmount]       = useState('');
   const [coinMode, setCoinMode]           = useState<'add' | 'deduct'>('add');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -32,40 +27,43 @@ export default function AdminUsers() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  const toggleStatus = (id: string) => {
-    setUsers(prev => prev.map(u =>
-      u.id === id ? { ...u, status: u.status === 'active' ? 'banned' : 'active' } : u
-    ));
-    const u = users.find(u => u.id === id);
-    showToast(`${u?.username} ${u?.status === 'active' ? 'banned' : 'unbanned'} successfully`);
+  const handleToggleStatus = (user: PlatformUser) => {
+    if (user.status === 'active') {
+      banUser(user.id);
+      showToast(`${user.username} banned successfully`);
+    } else {
+      unbanUser(user.id);
+      showToast(`${user.username} unbanned successfully`);
+    }
   };
 
   const applyCoins = () => {
     if (!coinModal || !coinAmount || isNaN(Number(coinAmount))) return;
     const delta = coinMode === 'add' ? Number(coinAmount) : -Number(coinAmount);
-    setUsers(prev => prev.map(u =>
-      u.id === coinModal.id ? { ...u, coins: Math.max(0, u.coins + delta) } : u
-    ));
+    adjustCoins(coinModal.id, delta);
+    if (coinModal.id === '1') {
+      updateCoins(delta);
+    }
     showToast(`${coinMode === 'add' ? '+' : '-'}₹${coinAmount} applied to ${coinModal.username}`);
     setCoinModal(null);
     setCoinAmount('');
   };
 
-  const deleteUser = () => {
+  const handleDeleteUser = () => {
     if (!confirmDeleteId) return;
-    const u = users.find(u => u.id === confirmDeleteId);
-    setUsers(prev => prev.filter(u => u.id !== confirmDeleteId));
+    const u = registeredUsers.find(u => u.id === confirmDeleteId);
+    deleteUser(confirmDeleteId);
     setConfirmDeleteId(null);
     showToast(`${u?.username} deleted`);
   };
 
   const counts = {
-    all: users.length,
-    active: users.filter(u => u.status === 'active').length,
-    banned: users.filter(u => u.status === 'banned').length,
+    all: registeredUsers.length,
+    active: registeredUsers.filter(u => u.status === 'active').length,
+    banned: registeredUsers.filter(u => u.status === 'banned').length,
   };
 
-  const filtered = users.filter(u => {
+  const filtered = registeredUsers.filter(u => {
     const matchesSearch =
       u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.email.toLowerCase().includes(searchQuery.toLowerCase());
@@ -73,11 +71,10 @@ export default function AdminUsers() {
     return matchesSearch && matchesStatus;
   });
 
-  const deleteTarget = users.find(u => u.id === confirmDeleteId);
+  const deleteTarget = registeredUsers.find(u => u.id === confirmDeleteId);
 
   return (
     <div className="space-y-6 px-4 sm:px-6 pb-24 pt-4 text-white relative">
-      {/* Toast */}
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -89,18 +86,17 @@ export default function AdminUsers() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
       <div className="flex items-center gap-4">
         <button onClick={() => navigate('/admin')} className="p-2 bg-white/5 rounded-xl text-slate-400 hover:bg-white/10 transition-colors">
-          <ArrowLeft size={20} />
+          <span className="sr-only">Back</span>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
         </button>
         <div>
           <h1 className="text-2xl font-black tracking-tight">Users</h1>
-          <p className="text-xs text-slate-500 font-bold">{users.length} total players</p>
+          <p className="text-xs text-slate-500 font-bold">{registeredUsers.length} total players</p>
         </div>
       </div>
 
-      {/* Status filter tabs */}
       <div className="flex gap-2">
         {([
           ['all', `All (${counts.all})`],
@@ -119,7 +115,6 @@ export default function AdminUsers() {
         ))}
       </div>
 
-      {/* Search */}
       <div className="relative">
         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
         <input
@@ -131,7 +126,6 @@ export default function AdminUsers() {
         />
       </div>
 
-      {/* User list */}
       <div className="space-y-3">
         {filtered.map((user, i) => (
           <motion.div key={user.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
@@ -156,7 +150,6 @@ export default function AdminUsers() {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="mt-3 flex items-center gap-2">
                 <button
                   onClick={() => { setCoinModal(user); setCoinAmount(''); setCoinMode('add'); }}
@@ -165,7 +158,7 @@ export default function AdminUsers() {
                   <Coins size={14} /> Coins
                 </button>
                 <button
-                  onClick={() => toggleStatus(user.id)}
+                  onClick={() => handleToggleStatus(user)}
                   className={cn(
                     'flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5',
                     user.status === 'banned'
@@ -191,7 +184,6 @@ export default function AdminUsers() {
         )}
       </div>
 
-      {/* Delete confirm modal */}
       <AnimatePresence>
         {confirmDeleteId && deleteTarget && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
@@ -209,14 +201,13 @@ export default function AdminUsers() {
               </div>
               <div className="flex gap-3">
                 <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-3 bg-white/5 rounded-xl text-sm font-bold text-slate-300 hover:bg-white/10 transition-all">Cancel</button>
-                <button onClick={deleteUser} className="flex-1 py-3 bg-red-500 rounded-xl text-sm font-bold text-white hover:bg-red-600 transition-all">Delete</button>
+                <button onClick={handleDeleteUser} className="flex-1 py-3 bg-red-500 rounded-xl text-sm font-bold text-white hover:bg-red-600 transition-all">Delete</button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Coin Modal */}
       <AnimatePresence>
         {coinModal && (
           <div className="fixed inset-0 z-[100] flex items-end justify-center">

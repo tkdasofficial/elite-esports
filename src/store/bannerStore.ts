@@ -15,67 +15,10 @@ interface BannerState {
   setMobileOnly: (val: boolean) => void;
 }
 
-const initialBanners: Banner[] = [
-  {
-    id: '1',
-    image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=1200&q=85',
-    title: 'Elite Pro Series S4',
-    description: '₹1,00,000 prize pool · 100 squads · Starts tonight',
-    buttonText: 'Register Now',
-    link: '/match/1',
-    isActive: true,
-  },
-  {
-    id: '2',
-    image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=1200&q=85',
-    title: 'Valorant Champions Cup',
-    description: 'Ultimate tactical showdown · ₹12,000 prize',
-    buttonText: 'Join Now',
-    link: '/match/2',
-    isActive: true,
-  },
-  {
-    id: '3',
-    image: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=1200&q=85',
-    title: 'BGMI Battlegrounds',
-    description: 'Squad up · Drop in · Win big',
-    buttonText: 'Play Now',
-    link: '/match/1',
-    isActive: true,
-  },
-  {
-    id: '4',
-    image: 'https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=1200&q=85',
-    title: 'Free Fire Max Cup',
-    description: 'Fast-paced battle royale · 48 players',
-    buttonText: 'Enter Now',
-    link: '/match/3',
-    isActive: true,
-  },
-  {
-    id: '5',
-    image: 'https://images.unsplash.com/photo-1593305841991-05c297ba4575?w=1200&q=85',
-    title: 'COD Mobile Invitational',
-    description: 'Elite squads only · ₹25,000 winner takes all',
-    buttonText: 'Apply Now',
-    link: '/match/2',
-    isActive: true,
-  },
-  {
-    id: '6',
-    image: 'https://images.unsplash.com/photo-1616588589676-62b3bd4ff6d2?w=1200&q=85',
-    title: 'Season 12 Kickoff',
-    description: 'New season, new champions. Are you ready?',
-    buttonText: 'View Schedule',
-    link: '/',
-    isActive: true,
-  },
-];
-
 export const useBannerStore = create<BannerState>()(
   persist(
     (set) => ({
-      banners: initialBanners,
+      banners: [],
       autoRotate: true,
       mobileOnly: false,
 
@@ -124,7 +67,7 @@ export const useBannerStore = create<BannerState>()(
       setMobileOnly: (val) => set({ mobileOnly: val }),
     }),
     {
-      name: 'elite-banners-v1',
+      name: 'elite-banners-v2',
       storage: createJSONStorage(() => localStorage),
     }
   )

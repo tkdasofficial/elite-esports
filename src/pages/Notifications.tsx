@@ -1,7 +1,16 @@
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, CheckCheck, ChevronRight } from 'lucide-react';
+import { Bell, CheckCheck, ChevronRight, Trophy, Wallet, User } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotificationStore } from '@/src/store/notificationStore';
+
+const getIcon = (iconType: string) => {
+  switch (iconType) {
+    case 'trophy': return Trophy;
+    case 'wallet': return Wallet;
+    case 'user': return User;
+    default: return Bell;
+  }
+};
 
 export default function Notifications() {
   const { notifications, hasUnread, markAllRead } = useNotificationStore();
@@ -36,31 +45,34 @@ export default function Notifications() {
           <div className="pt-5 px-4 pb-2 space-y-2">
             <p className="ios-section-header">New</p>
             <div className="bg-app-card rounded-[16px] overflow-hidden divide-y divide-app-border">
-              {unread.map((n, i) => (
-                <motion.div
-                  key={n.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.06 }}
-                  onClick={() => navigate(`/notifications/${n.id}`)}
-                  className="flex gap-3.5 px-4 py-4 active:bg-app-elevated transition-colors cursor-pointer"
-                >
-                  <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${n.iconBg}`}>
-                    <n.icon size={20} className={n.iconColor} />
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-0.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-[15px] font-semibold text-text-primary leading-snug">{n.title}</p>
-                      <span className="text-[12px] text-text-muted font-normal shrink-0">{n.time}</span>
+              {unread.map((n, i) => {
+                const Icon = getIcon(n.iconType);
+                return (
+                  <motion.div
+                    key={n.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.06 }}
+                    onClick={() => navigate(`/notifications/${n.id}`)}
+                    className="flex gap-3.5 px-4 py-4 active:bg-app-elevated transition-colors cursor-pointer"
+                  >
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${n.iconBg}`}>
+                      <Icon size={20} className={n.iconColor} />
                     </div>
-                    <p className="text-[14px] text-text-secondary font-normal leading-relaxed line-clamp-2">{n.message}</p>
-                  </div>
-                  <div className="flex flex-col items-center gap-1.5 shrink-0 pt-0.5">
-                    <div className="w-2 h-2 rounded-full bg-brand-primary" />
-                    <ChevronRight size={13} className="text-text-muted" />
-                  </div>
-                </motion.div>
-              ))}
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-[15px] font-semibold text-text-primary leading-snug">{n.title}</p>
+                        <span className="text-[12px] text-text-muted font-normal shrink-0">{n.time}</span>
+                      </div>
+                      <p className="text-[14px] text-text-secondary font-normal leading-relaxed line-clamp-2">{n.message}</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 shrink-0 pt-0.5">
+                      <div className="w-2 h-2 rounded-full bg-brand-primary" />
+                      <ChevronRight size={13} className="text-text-muted" />
+                    </div>
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         )}
@@ -69,28 +81,31 @@ export default function Notifications() {
           <div className="pt-5 px-4 pb-8 space-y-2">
             <p className="ios-section-header">{unread.length > 0 ? 'Earlier' : 'All Notifications'}</p>
             <div className="bg-app-card rounded-[16px] overflow-hidden divide-y divide-app-border">
-              {read.map((n, i) => (
-                <motion.div
-                  key={n.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  onClick={() => navigate(`/notifications/${n.id}`)}
-                  className="flex gap-3.5 px-4 py-4 active:bg-app-elevated transition-colors cursor-pointer"
-                >
-                  <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${n.iconBg} opacity-60`}>
-                    <n.icon size={20} className={n.iconColor} />
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-0.5">
-                    <div className="flex items-start justify-between gap-2">
-                      <p className="text-[15px] font-normal text-text-secondary leading-snug">{n.title}</p>
-                      <span className="text-[12px] text-text-muted font-normal shrink-0">{n.time}</span>
+              {read.map((n, i) => {
+                const Icon = getIcon(n.iconType);
+                return (
+                  <motion.div
+                    key={n.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    onClick={() => navigate(`/notifications/${n.id}`)}
+                    className="flex gap-3.5 px-4 py-4 active:bg-app-elevated transition-colors cursor-pointer"
+                  >
+                    <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 ${n.iconBg} opacity-60`}>
+                      <Icon size={20} className={n.iconColor} />
                     </div>
-                    <p className="text-[14px] text-text-muted font-normal leading-relaxed line-clamp-2">{n.message}</p>
-                  </div>
-                  <ChevronRight size={13} className="text-text-muted shrink-0 self-center" />
-                </motion.div>
-              ))}
+                    <div className="flex-1 min-w-0 space-y-0.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-[15px] font-normal text-text-secondary leading-snug">{n.title}</p>
+                        <span className="text-[12px] text-text-muted font-normal shrink-0">{n.time}</span>
+                      </div>
+                      <p className="text-[14px] text-text-muted font-normal leading-relaxed line-clamp-2">{n.message}</p>
+                    </div>
+                    <ChevronRight size={13} className="text-text-muted shrink-0 self-center" />
+                  </motion.div>
+                );
+              })}
             </div>
           </div>
         )}

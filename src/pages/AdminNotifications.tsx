@@ -4,25 +4,21 @@ import { Button } from '@/src/components/ui/Button';
 import { Bell, Send, Trash2, CheckCircle2, X, Users, Globe, Clock, Calendar } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
+import { useNotificationStore } from '@/src/store/notificationStore';
 
 type NotifType = 'global' | 'user';
-type Notif = { id: string; title: string; message: string; date: string; type: NotifType; status: string; targetUser?: string };
+type SentRecord = { id: string; title: string; message: string; date: string; type: NotifType; status: string; targetUser?: string };
 type Toast = { msg: string; ok: boolean } | null;
 
-const INITIAL: Notif[] = [
-  { id: '1', title: 'New Tournament Alert!',  message: 'BGMI Pro League starts in 2 hours. Join now!',         date: '20 Mar, 10:30 AM', type: 'global', status: 'sent' },
-  { id: '2', title: 'Withdrawal Success',     message: 'Your withdrawal of ₹500 has been processed.',           date: '20 Mar, 09:15 AM', type: 'user',   status: 'sent', targetUser: 'ProSlayer' },
-  { id: '3', title: 'Server Maintenance',     message: 'The app will be down for 30 mins tonight at 11 PM.',    date: '19 Mar, 08:00 PM', type: 'global', status: 'scheduled' },
-];
-
 export default function AdminNotifications() {
+  const { addNotification } = useNotificationStore();
   const [title, setTitle]             = useState('');
   const [message, setMessage]         = useState('');
   const [type, setType]               = useState<NotifType>('global');
   const [targetUser, setTargetUser]   = useState('');
   const [scheduleAt, setScheduleAt]   = useState('');
   const [showSchedule, setShowSchedule] = useState(false);
-  const [notifications, setNotifs]    = useState<Notif[]>(INITIAL);
+  const [sentHistory, setSentHistory] = useState<SentRecord[]>([]);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [toast, setToast]             = useState<Toast>(null);
   const [sending, setSending]         = useState(false);
@@ -44,15 +40,31 @@ export default function AdminNotifications() {
     setSending(true);
     await new Promise(r => setTimeout(r, 800));
     const isScheduled = showSchedule && !!scheduleAt;
-    setNotifs(prev => [{
+    const dateStr = isScheduled
+      ? new Date(scheduleAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+      : new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+    if (!isScheduled) {
+      addNotification({
+        unread: true,
+        title,
+        message,
+        fullMessage: message,
+        time: 'Just now',
+        iconType: 'bell',
+        iconColor: 'text-brand-cyan',
+        iconBg: 'bg-brand-cyan/15',
+      });
+    }
+
+    setSentHistory(prev => [{
       id: Math.random().toString(36).slice(2),
       title, message, type,
       targetUser: type === 'user' ? targetUser : undefined,
-      date: isScheduled
-        ? new Date(scheduleAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
-        : new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }),
+      date: dateStr,
       status: isScheduled ? 'scheduled' : 'sent',
     }, ...prev]);
+
     setTitle('');
     setMessage('');
     setTargetUser('');
@@ -60,22 +72,21 @@ export default function AdminNotifications() {
     setShowSchedule(false);
     setSending(false);
     showToast(isScheduled
-      ? `Notification scheduled for ${new Date(scheduleAt).toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}`
+      ? `Notification scheduled for ${dateStr}`
       : `Notification sent to ${type === 'global' ? 'all users' : targetUser}!`
     );
   };
 
   const handleDelete = (id: string) => {
-    setNotifs(prev => prev.filter(n => n.id !== id));
+    setSentHistory(prev => prev.filter(n => n.id !== id));
     setConfirmDeleteId(null);
     showToast('Notification deleted');
   };
 
-  const deleteTarget = notifications.find(n => n.id === confirmDeleteId);
+  const deleteTarget = sentHistory.find(n => n.id === confirmDeleteId);
 
   return (
     <div className="space-y-6 px-4 sm:px-6 pb-24 pt-6 text-white relative">
-      {/* Toast */}
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -90,14 +101,12 @@ export default function AdminNotifications() {
       <h1 className="text-2xl font-black tracking-tight">Notifications</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Compose */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 px-1">
             <Bell size={18} className="text-brand-blue" />
             <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Compose</h2>
           </div>
           <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
-            {/* Audience */}
             <div className="space-y-2">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">Audience</label>
               <div className="grid grid-cols-2 gap-2">
@@ -111,7 +120,6 @@ export default function AdminNotifications() {
               </div>
             </div>
 
-            {/* Username field — only shown for "Specific User" */}
             <AnimatePresence>
               {type === 'user' && (
                 <motion.div
@@ -128,7 +136,6 @@ export default function AdminNotifications() {
               )}
             </AnimatePresence>
 
-            {/* Title */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">Title</label>
               <input
@@ -138,7 +145,6 @@ export default function AdminNotifications() {
               />
             </div>
 
-            {/* Message */}
             <div className="space-y-1.5">
               <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">Message</label>
               <textarea
@@ -148,7 +154,6 @@ export default function AdminNotifications() {
               />
             </div>
 
-            {/* Schedule date/time */}
             <AnimatePresence>
               {showSchedule && (
                 <motion.div
@@ -168,7 +173,6 @@ export default function AdminNotifications() {
               )}
             </AnimatePresence>
 
-            {/* Actions */}
             <div className="flex gap-3">
               <Button onClick={handleSend} fullWidth className="rounded-xl flex items-center gap-2" disabled={sending}>
                 {sending ? (
@@ -191,15 +195,14 @@ export default function AdminNotifications() {
           </Card>
         </section>
 
-        {/* History */}
         <section className="space-y-4">
           <div className="flex items-center gap-2 px-1">
             <Bell size={18} className="text-brand-yellow" />
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Recent History</h2>
+            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Sent History</h2>
           </div>
           <div className="space-y-3">
             <AnimatePresence>
-              {notifications.map((n, i) => (
+              {sentHistory.map((n, i) => (
                 <motion.div key={n.id} initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }} transition={{ delay: i * 0.04 }}>
                   <Card className="p-4 bg-brand-card/40 border-white/5 space-y-2">
                     <div className="flex items-start justify-between gap-2">
@@ -225,14 +228,13 @@ export default function AdminNotifications() {
               ))}
             </AnimatePresence>
 
-            {notifications.length === 0 && (
+            {sentHistory.length === 0 && (
               <div className="py-10 text-center text-slate-500 text-sm font-bold">No notifications sent yet</div>
             )}
           </div>
         </section>
       </div>
 
-      {/* Delete confirm modal */}
       <AnimatePresence>
         {confirmDeleteId && deleteTarget && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
@@ -245,8 +247,8 @@ export default function AdminNotifications() {
                 <Trash2 size={24} className="text-red-400" />
               </div>
               <div>
-                <h2 className="text-lg font-black">Delete Notification?</h2>
-                <p className="text-sm text-slate-400 mt-1">"{deleteTarget.title}" will be permanently removed.</p>
+                <h2 className="text-lg font-black">Delete Record?</h2>
+                <p className="text-sm text-slate-400 mt-1">"{deleteTarget.title}" will be removed from history.</p>
               </div>
               <div className="flex gap-3">
                 <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-3 bg-white/5 rounded-xl text-sm font-bold text-slate-300 hover:bg-white/10 transition-all">Cancel</button>

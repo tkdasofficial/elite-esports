@@ -1,17 +1,20 @@
 import React from 'react';
 import { useMatchStore } from '@/src/store/matchStore';
+import { useGameStore } from '@/src/store/gameStore';
 import { MatchCard } from '@/src/components/matches/MatchCard';
 import { BannerCarousel } from '@/src/components/home/BannerCarousel';
 import { cn } from '@/src/utils/helpers';
 import { motion } from 'motion/react';
-import { Radio, Zap, CheckCircle2 } from 'lucide-react';
+import { Zap, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
-const GAMES = ['All', 'BGMI', 'Valorant', 'Free Fire', 'COD', 'PUBG'];
 
 export default function Home() {
   const { liveMatches, upcomingMatches, completedMatches, searchQuery } = useMatchStore();
+  const allGames = useGameStore(s => s.games);
+  const activeGames = allGames.filter(g => g.status === 'active');
   const now = new Date();
+
+  const GAMES = ['All', ...activeGames.map(g => g.name)];
 
   const filterMatches = (matches: any[]) =>
     matches.filter(m => {
@@ -95,6 +98,14 @@ export default function Home() {
           className="py-20 flex flex-col items-center gap-3">
           <p className="text-[17px] font-semibold text-text-primary">No results</p>
           <p className="text-[15px] text-text-secondary text-center">Try a different game or tournament name</p>
+        </motion.div>
+      )}
+
+      {!searchQuery && !live.length && !upcoming.length && !completed.length && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+          className="py-24 flex flex-col items-center gap-3 text-center">
+          <p className="text-[17px] font-semibold text-text-primary">No Tournaments Yet</p>
+          <p className="text-[15px] text-text-secondary">Admin will add tournaments soon. Check back later!</p>
         </motion.div>
       )}
 

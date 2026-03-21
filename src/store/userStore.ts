@@ -46,14 +46,15 @@ interface UserState {
   logout: () => void;
   updateProfile: (data: Partial<UserState['user']>) => void;
   updateCoins: (amount: number) => void;
-  addTransaction: (tx: Omit<UserState['transactions'][0], 'id' | 'date'>) => void;
+  addTransaction: (tx: Omit<UserState['transactions'][0], 'id' | 'date'> & { id?: string }) => void;
+  updateTransaction: (id: string, updates: Partial<Omit<UserState['transactions'][0], 'id'>>) => void;
   addGameProfile: (profile: { gameName: string; ign: string; uid: string }) => void;
   updateGameProfile: (id: string, profile: Partial<{ gameName: string; ign: string; uid: string }>) => void;
   removeGameProfile: (id: string) => void;
   joinMatch: (matchId: string) => void;
   leaveMatch: (matchId: string) => void;
   createTeam: (name: string, tag: string) => void;
-  joinTeam: (teamId: string) => void;
+  joinTeam: (teamId: string, teamName: string, teamTag: string) => void;
   leaveTeam: () => void;
 }
 
@@ -61,7 +62,7 @@ const DEFAULT_USER = {
   id: '1',
   username: 'EsportsPro',
   email: 'pro@elite.com',
-  avatar: 'https://picsum.photos/seed/avatar/200',
+  avatar: '',
   coins: 1250,
   rank: 'Diamond',
   bio: 'Professional Esports Player | Tournament Enthusiast',
@@ -72,19 +73,13 @@ const DEFAULT_GAME_PROFILES = [
   { id: '2', gameName: 'Free Fire', ign: 'Elite_FF_King', uid: '9876543210' },
 ];
 
-const DEFAULT_TRANSACTIONS = [
-  { id: '1', type: 'deposit' as const, amount: 500, date: '20 Mar, 10:30 AM', status: 'success' as const, title: 'Added to Wallet' },
-  { id: '2', type: 'entry' as const, amount: -50, date: '19 Mar, 08:15 PM', status: 'success' as const, title: 'Pro League Entry' },
-  { id: '3', type: 'win' as const, amount: 250, date: '18 Mar, 11:00 PM', status: 'success' as const, title: 'Elite Scrims Win' },
-];
-
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
       user: DEFAULT_USER,
       gameProfiles: DEFAULT_GAME_PROFILES,
       joinedMatchIds: [],
-      transactions: DEFAULT_TRANSACTIONS,
+      transactions: [],
       team: null,
       isAuthenticated: true,
       isAdmin: false,
@@ -109,15 +104,16 @@ export const useUserStore = create<UserState>()(
       updateCoins: (amount) =>
         set((state) => ({
           user: state.user
-            ? { ...state.user, coins: state.user.coins + amount }
+            ? { ...state.user, coins: Math.max(0, state.user.coins + amount) }
             : null,
         })),
 
       addTransaction: (tx) =>
         set((state) => {
+          const { id: providedId, ...rest } = tx as any;
           const newTx = {
-            ...tx,
-            id: Math.random().toString(36).substr(2, 9),
+            ...rest,
+            id: providedId ?? Math.random().toString(36).substr(2, 9),
             date: new Date().toLocaleString('en-IN', {
               day: '2-digit',
               month: 'short',
@@ -127,12 +123,33 @@ export const useUserStore = create<UserState>()(
           };
           const updatedCoins =
             tx.status === 'success' && state.user
-              ? { user: { ...state.user, coins: state.user.coins + tx.amount } }
+              ? { user: { ...state.user, coins: Math.max(0, state.user.coins + tx.amount) } }
               : {};
           return {
             transactions: [newTx, ...state.transactions],
             ...updatedCoins,
           };
+        }),
+
+      updateTransaction: (id, updates) =>
+        set((state) => {
+          const tx = state.transactions.find(t => t.id === id);
+          const newTransactions = state.transactions.map(t =>
+            t.id === id ? { ...t, ...updates } : t
+          );
+          let userUpdate = {};
+          if (
+            tx &&
+            updates.status === 'success' &&
+            tx.status !== 'success' &&
+            state.user
+          ) {
+            const coinDelta = tx.type === 'deposit' ? tx.amount : tx.amount;
+            userUpdate = {
+              user: { ...state.user, coins: Math.max(0, state.user.coins + coinDelta) },
+            };
+          }
+          return { transactions: newTransactions, ...userUpdate };
         }),
 
       addGameProfile: (profile) =>
@@ -182,14 +199,13 @@ export const useUserStore = create<UserState>()(
           },
         })),
 
-      joinTeam: (teamId) =>
+      joinTeam: (teamId, teamName, teamTag) =>
         set((state) => ({
           team: {
             id: teamId,
-            name: 'Elite Squad',
-            tag: 'ELITE',
+            name: teamName,
+            tag: teamTag,
             members: [
-              { id: '2', username: 'ProSlayer', role: 'Leader', rank: 'Master' },
               {
                 id: state.user?.id || '1',
                 username: state.user?.username || 'EsportsPro',
@@ -203,7 +219,7 @@ export const useUserStore = create<UserState>()(
       leaveTeam: () => set({ team: null }),
     }),
     {
-      name: 'elite-user-v1',
+      name: 'elite-user-v2',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,

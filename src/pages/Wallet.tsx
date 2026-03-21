@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useUserStore } from '@/src/store/userStore';
+import { usePlatformStore } from '@/src/store/platformStore';
 import { Button } from '@/src/components/ui/Button';
 import { Plus, ArrowUpRight, ArrowDownLeft, Trophy, Gamepad2, X, Copy, CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -8,6 +9,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Wallet() {
   const { user, transactions, addTransaction } = useUserStore();
+  const { addAdminTransaction, settings } = usePlatformStore();
   const navigate = useNavigate();
   const [showAdd, setShowAdd]   = useState(false);
   const [showWith, setShowWith] = useState(false);
@@ -17,24 +19,48 @@ export default function Wallet() {
   const [method, setMethod]     = useState<'upi'|'giftcard'>('upi');
   const [details, setDetails]   = useState('');
   const [status, setStatus]     = useState<'idle'|'success'>('idle');
-  const ADMIN_UPI = 'admin@upi';
+  const ADMIN_UPI = settings.upiId || 'admin@upi';
 
   const deposited = transactions.filter(t => t.type==='deposit'    && t.status==='success').reduce((a,t)=>a+t.amount,0);
   const winnings  = transactions.filter(t => t.type==='win'        && t.status==='success').reduce((a,t)=>a+t.amount,0);
 
   const handleAddCash = () => { if (Number(amount) < 10) return alert('Minimum ₹10'); setStep(2); };
+
   const submitDeposit = () => {
     if (!utr) return alert('Enter Transaction ID');
-    addTransaction({ type:'deposit', amount:Number(amount), status:'pending', method:'upi', details:utr, title:'Deposit Request' });
+    const userTxId = Math.random().toString(36).substr(2, 9);
+    addTransaction({ id: userTxId, type:'deposit', amount:Number(amount), status:'pending', method:'upi', details:utr, title:'Deposit Request' });
+    addAdminTransaction({
+      userId: user?.id ?? '1',
+      user: user?.username ?? 'User',
+      userTxId,
+      amount: Number(amount),
+      type: 'deposit',
+      status: 'pending',
+      method: 'upi',
+      details: utr,
+    });
     setStatus('success');
     setTimeout(() => { setShowAdd(false); setStep(1); setAmount(''); setUtr(''); setStatus('idle'); }, 2200);
   };
+
   const handleWithdraw = () => {
     const n = Number(amount);
     if (n < 50) return alert('Minimum ₹50');
     if (n > (user?.coins||0)) return alert('Insufficient balance');
     if (!details) return alert(`Enter ${method==='upi'?'UPI ID':'Email'}`);
-    addTransaction({ type:'withdrawal', amount:-n, status:'pending', method, details, title:`${method==='upi'?'UPI':'Gift Card'} Withdrawal` });
+    const userTxId = Math.random().toString(36).substr(2, 9);
+    addTransaction({ id: userTxId, type:'withdrawal', amount:-n, status:'pending', method, details, title:`${method==='upi'?'UPI':'Gift Card'} Withdrawal` });
+    addAdminTransaction({
+      userId: user?.id ?? '1',
+      user: user?.username ?? 'User',
+      userTxId,
+      amount: n,
+      type: 'withdrawal',
+      status: 'pending',
+      method,
+      details,
+    });
     setStatus('success');
     setTimeout(() => { setShowWith(false); setAmount(''); setDetails(''); setStatus('idle'); }, 2200);
   };

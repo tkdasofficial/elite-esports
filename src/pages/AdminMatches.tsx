@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMatchStore } from '@/src/store/matchStore';
+import { useGameStore } from '@/src/store/gameStore';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { Plus, Edit2, Trash2, Search, Users, Trophy, X, Check } from 'lucide-react';

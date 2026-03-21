@@ -1,8 +1,17 @@
 import { useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { ArrowLeft, Clock, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Clock, ChevronRight, Trophy, Wallet, User, Bell } from 'lucide-react';
 import { useNotificationStore } from '@/src/store/notificationStore';
+
+const getIcon = (iconType: string) => {
+  switch (iconType) {
+    case 'trophy': return Trophy;
+    case 'wallet': return Wallet;
+    case 'user': return User;
+    default: return Bell;
+  }
+};
 
 export default function NotificationDetail() {
   const { id } = useParams<{ id: string }>();
@@ -31,11 +40,10 @@ export default function NotificationDetail() {
     );
   }
 
-  const Icon = notification.icon;
+  const Icon = getIcon(notification.iconType);
 
   return (
     <div className="h-full flex flex-col bg-app-bg">
-      {/* Header */}
       <header className="h-[56px] px-5 flex items-center glass-dark border-b border-app-border sticky top-0 z-50">
         <button
           onClick={() => navigate('/notifications')}
@@ -47,7 +55,6 @@ export default function NotificationDetail() {
       </header>
 
       <div className="flex-1 scrollable-content px-4 pt-6 pb-10 space-y-5">
-        {/* Icon + Meta */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -68,7 +75,6 @@ export default function NotificationDetail() {
           </div>
         </motion.div>
 
-        {/* Full message */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -80,7 +86,6 @@ export default function NotificationDetail() {
           </p>
         </motion.div>
 
-        {/* CTA button if action available */}
         {notification.actionLabel && notification.actionPath && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -97,7 +102,6 @@ export default function NotificationDetail() {
           </motion.div>
         )}
 
-        {/* Back to all notifications */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

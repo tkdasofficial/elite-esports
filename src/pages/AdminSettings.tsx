@@ -4,6 +4,7 @@ import { Button } from '@/src/components/ui/Button';
 import { Settings, Shield, Wallet, Bell, Globe, Save, Lock, CheckCircle2, X, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
+import { usePlatformStore } from '@/src/store/platformStore';
 
 type Toast = { msg: string; ok: boolean } | null;
 
@@ -16,22 +17,20 @@ const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) =
 );
 
 export default function AdminSettings() {
+  const { settings, updateSettings } = usePlatformStore();
   const [toast, setToast]      = useState<Toast>(null);
   const [showPwForm, setShowPwForm] = useState(false);
   const [showPw, setShowPw]    = useState(false);
   const [password, setPassword] = useState({ current: '', next: '', confirm: '' });
   const [saving, setSaving]    = useState(false);
-
-  const [payment, setPayment]  = useState({ upiId: 'elite_admin@okaxis', bank: '9182736455', ifsc: 'HDFC0001234', minW: '100', maxW: '5000' });
-  const [security, setSecurity] = useState({ twofa: true, loginNotif: true });
-  const [platform, setPlatform] = useState({ name: 'Elite Esports', email: 'support@elite.com', maintenance: false });
-  const [notifications, setNotifications] = useState({ email: true, push: true, sms: false });
+  const [localSettings, setLocalSettings] = useState({ ...settings });
 
   const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2500); };
 
   const handleSave = async () => {
     setSaving(true);
     await new Promise(r => setTimeout(r, 900));
+    updateSettings(localSettings);
     setSaving(false);
     showToast('All settings saved successfully');
   };
@@ -45,11 +44,12 @@ export default function AdminSettings() {
     showToast('Password changed successfully');
   };
 
+  const set = (key: string, value: any) => setLocalSettings(prev => ({ ...prev, [key]: value }));
+
   const field = 'w-full bg-brand-card/40 border border-white/5 rounded-2xl py-3 px-4 text-sm font-bold focus:border-brand-blue outline-none transition-all placeholder:text-slate-600';
 
   return (
     <div className="space-y-8 px-4 sm:px-6 pb-24 pt-6 text-white relative">
-      {/* Toast */}
       <AnimatePresence>
         {toast && (
           <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
@@ -59,7 +59,6 @@ export default function AdminSettings() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-black tracking-tight">Admin Settings</h1>
         <Button onClick={handleSave} size="sm" disabled={saving}
@@ -72,7 +71,6 @@ export default function AdminSettings() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* Payment Details */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 px-1">
             <Wallet size={18} className="text-brand-blue flex-shrink-0" />
@@ -86,17 +84,17 @@ export default function AdminSettings() {
             ].map(f => (
               <div key={f.key} className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{f.label}</label>
-                <input value={(payment as any)[f.key]} placeholder={f.placeholder}
-                  onChange={e => setPayment(p => ({ ...p, [f.key]: e.target.value }))}
+                <input value={(localSettings as any)[f.key]} placeholder={f.placeholder}
+                  onChange={e => set(f.key, e.target.value)}
                   className={field} />
               </div>
             ))}
             <div className="grid grid-cols-2 gap-3">
-              {[['minW', 'Min Withdrawal', '₹100'], ['maxW', 'Max Withdrawal', '₹10,000']].map(([k, l, p]) => (
+              {[['minWithdrawal', 'Min Withdrawal', '100'], ['maxWithdrawal', 'Max Withdrawal', '5000']].map(([k, l, p]) => (
                 <div key={k} className="space-y-1.5">
                   <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{l}</label>
-                  <input value={(payment as any)[k]} placeholder={p}
-                    onChange={e => setPayment(p => ({ ...p, [k]: e.target.value }))}
+                  <input value={(localSettings as any)[k]} placeholder={`₹${p}`}
+                    onChange={e => set(k, e.target.value)}
                     className={field} />
                 </div>
               ))}
@@ -104,7 +102,6 @@ export default function AdminSettings() {
           </Card>
         </section>
 
-        {/* Security */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 px-1">
             <Shield size={18} className="text-brand-red flex-shrink-0" />
@@ -113,11 +110,11 @@ export default function AdminSettings() {
           <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
             <div className="flex items-center justify-between gap-4">
               <div><p className="text-sm font-bold">Two-Factor Auth</p><p className="text-xs text-slate-500">Require 2FA for admin login</p></div>
-              <Toggle value={security.twofa} onChange={() => setSecurity(s => ({ ...s, twofa: !s.twofa }))} />
+              <Toggle value={localSettings.twofa} onChange={() => set('twofa', !localSettings.twofa)} />
             </div>
             <div className="flex items-center justify-between gap-4">
               <div><p className="text-sm font-bold">Login Notifications</p><p className="text-xs text-slate-500">Alert on new admin login</p></div>
-              <Toggle value={security.loginNotif} onChange={() => setSecurity(s => ({ ...s, loginNotif: !s.loginNotif }))} />
+              <Toggle value={localSettings.loginNotif} onChange={() => set('loginNotif', !localSettings.loginNotif)} />
             </div>
 
             <AnimatePresence>
@@ -155,18 +152,17 @@ export default function AdminSettings() {
           </Card>
         </section>
 
-        {/* Platform */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 px-1">
             <Globe size={18} className="text-brand-green flex-shrink-0" />
             <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Platform</h2>
           </div>
           <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
-            {[['name', 'Platform Name', 'Elite Esports'], ['email', 'Support Email', 'support@elite.com']].map(([k, l, p]) => (
+            {[['platformName', 'Platform Name', 'Elite Esports'], ['supportEmail', 'Support Email', 'support@elite.com']].map(([k, l, p]) => (
               <div key={k} className="space-y-1.5">
                 <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{l}</label>
-                <input value={(platform as any)[k]} placeholder={p}
-                  onChange={e => setPlatform(p => ({ ...p, [k]: e.target.value }))}
+                <input value={(localSettings as any)[k]} placeholder={p}
+                  onChange={e => set(k, e.target.value)}
                   className={field} />
               </div>
             ))}
@@ -175,9 +171,9 @@ export default function AdminSettings() {
                 <p className="text-sm font-bold">Maintenance Mode</p>
                 <p className="text-xs text-slate-500">Temporarily disable user access</p>
               </div>
-              <Toggle value={platform.maintenance} onChange={() => setPlatform(p => ({ ...p, maintenance: !p.maintenance }))} />
+              <Toggle value={localSettings.maintenance} onChange={() => set('maintenance', !localSettings.maintenance)} />
             </div>
-            {platform.maintenance && (
+            {localSettings.maintenance && (
               <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                 className="text-xs text-brand-yellow font-bold bg-brand-yellow/10 px-3 py-2 rounded-xl border border-brand-yellow/20">
                 ⚠ Maintenance mode is ON — users cannot access the app.
@@ -186,7 +182,6 @@ export default function AdminSettings() {
           </Card>
         </section>
 
-        {/* Notifications */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 px-1">
             <Bell size={18} className="text-brand-yellow flex-shrink-0" />
@@ -194,13 +189,13 @@ export default function AdminSettings() {
           </div>
           <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
             {[
-              ['email', 'Email Alerts',      'Receive alerts on important events'],
-              ['push',  'Push Notifications','Send push alerts to users'],
-              ['sms',   'SMS Alerts',        'Send SMS for critical events'],
+              ['emailAlerts', 'Email Alerts',       'Receive alerts on important events'],
+              ['pushNotifs',  'Push Notifications', 'Send push alerts to users'],
+              ['smsAlerts',   'SMS Alerts',         'Send SMS for critical events'],
             ].map(([k, l, d]) => (
               <div key={k} className="flex items-center justify-between gap-4">
                 <div><p className="text-sm font-bold">{l}</p><p className="text-xs text-slate-500">{d}</p></div>
-                <Toggle value={(notifications as any)[k]} onChange={() => setNotifications(n => ({ ...n, [k]: !(n as any)[k] }))} />
+                <Toggle value={(localSettings as any)[k]} onChange={() => set(k, !(localSettings as any)[k])} />
               </div>
             ))}
           </Card>
