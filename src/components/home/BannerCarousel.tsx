@@ -4,7 +4,7 @@ import { useBannerStore } from '@/src/store/bannerStore';
 import { useNavigate } from 'react-router-dom';
 
 export function BannerCarousel() {
-  const { banners } = useBannerStore();
+  const { banners, autoRotate, mobileOnly } = useBannerStore();
   const active = banners.filter(b => b.isActive);
   const [index, setIndex] = useState(0);
   const [dir, setDir] = useState(1);
@@ -16,12 +16,15 @@ export function BannerCarousel() {
   }, [active.length]);
 
   useEffect(() => {
+    if (!autoRotate) return;
     const t = setInterval(() => go(1), 4500);
     return () => clearInterval(t);
-  }, [go]);
+  }, [go, autoRotate]);
 
   if (!active.length) return null;
-  const banner = active[index];
+  if (mobileOnly && typeof window !== 'undefined' && window.innerWidth >= 768) return null;
+
+  const banner = active[Math.min(index, active.length - 1)];
 
   return (
     <div className="relative w-full rounded-[20px] overflow-hidden"
@@ -55,7 +58,6 @@ export function BannerCarousel() {
 
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/25 to-transparent pointer-events-none" />
 
-        {/* Content */}
         <div className="absolute inset-0 flex flex-col justify-end p-4 gap-2.5">
           <div>
             <motion.h2
@@ -88,7 +90,6 @@ export function BannerCarousel() {
           </motion.button>
         </div>
 
-        {/* Dot indicators */}
         <div className="absolute bottom-3 right-4 flex items-center gap-1">
           {active.map((_, i) => (
             <button key={i}
