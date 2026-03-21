@@ -25,5 +25,23 @@ export default defineConfig(({mode}) => {
         'Cache-Control': 'no-store',
       },
     },
+    preview: {
+      host: '0.0.0.0',
+      port: 5000,
+      strictPort: true,
+      allowedHosts: true,
+    },
+    build: {
+      outDir: 'dist',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            vendor: ['react', 'react-dom', 'react-router-dom'],
+            motion: ['motion'],
+            zustand: ['zustand'],
+          },
+        },
+      },
+    },
   };
 });

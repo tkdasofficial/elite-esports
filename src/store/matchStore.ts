@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { Match } from '../types';
 
 interface MatchState {
@@ -99,45 +100,48 @@ const initialMatches: Match[] = [
   }
 ];
 
-export const useMatchStore = create<MatchState>((set, get) => ({
-  matches: initialMatches,
-  liveMatches: initialMatches.filter(m => m.status === 'live'),
-  upcomingMatches: initialMatches.filter(m => m.status === 'upcoming'),
-  completedMatches: initialMatches.filter(m => m.status === 'completed'),
-  searchQuery: '',
-  setMatches: (matches) => set({ 
-    matches,
-    liveMatches: matches.filter(m => m.status === 'live'),
-    upcomingMatches: matches.filter(m => m.status === 'upcoming'),
-    completedMatches: matches.filter(m => m.status === 'completed'),
-  }),
-  setSearchQuery: (query) => set({ searchQuery: query }),
-  getMatchById: (id) => get().matches.find(m => m.match_id === id),
-  addMatch: (match) => set((state) => {
-    const newMatches = [match, ...state.matches];
-    return {
-      matches: newMatches,
-      liveMatches: newMatches.filter(m => m.status === 'live'),
-      upcomingMatches: newMatches.filter(m => m.status === 'upcoming'),
-      completedMatches: newMatches.filter(m => m.status === 'completed'),
-    };
-  }),
-  updateMatch: (id, updatedMatch) => set((state) => {
-    const newMatches = state.matches.map(m => m.match_id === id ? { ...m, ...updatedMatch } : m);
-    return {
-      matches: newMatches,
-      liveMatches: newMatches.filter(m => m.status === 'live'),
-      upcomingMatches: newMatches.filter(m => m.status === 'upcoming'),
-      completedMatches: newMatches.filter(m => m.status === 'completed'),
-    };
-  }),
-  deleteMatch: (id) => set((state) => {
-    const newMatches = state.matches.filter(m => m.match_id !== id);
-    return {
-      matches: newMatches,
-      liveMatches: newMatches.filter(m => m.status === 'live'),
-      upcomingMatches: newMatches.filter(m => m.status === 'upcoming'),
-      completedMatches: newMatches.filter(m => m.status === 'completed'),
-    };
-  }),
-}));
+const deriveFiltered = (matches: Match[]) => ({
+  liveMatches: matches.filter(m => m.status === 'live'),
+  upcomingMatches: matches.filter(m => m.status === 'upcoming'),
+  completedMatches: matches.filter(m => m.status === 'completed'),
+});
+
+export const useMatchStore = create<MatchState>()(
+  persist(
+    (set, get) => ({
+      matches: initialMatches,
+      ...deriveFiltered(initialMatches),
+      searchQuery: '',
+
+      setMatches: (matches) => set({ matches, ...deriveFiltered(matches) }),
+      setSearchQuery: (query) => set({ searchQuery: query }),
+      getMatchById: (id) => get().matches.find(m => m.match_id === id),
+
+      addMatch: (match) => set((state) => {
+        const newMatches = [match, ...state.matches];
+        return { matches: newMatches, ...deriveFiltered(newMatches) };
+      }),
+
+      updateMatch: (id, updatedMatch) => set((state) => {
+        const newMatches = state.matches.map(m =>
+          m.match_id === id ? { ...m, ...updatedMatch } : m
+        );
+        return { matches: newMatches, ...deriveFiltered(newMatches) };
+      }),
+
+      deleteMatch: (id) => set((state) => {
+        const newMatches = state.matches.filter(m => m.match_id !== id);
+        return { matches: newMatches, ...deriveFiltered(newMatches) };
+      }),
+    }),
+    {
+      name: 'elite-matches-v1',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({ matches: state.matches }),
+      merge: (persisted, current) => {
+        const matches = (persisted as any).matches ?? current.matches;
+        return { ...current, matches, ...deriveFiltered(matches) };
+      },
+    }
+  )
+);

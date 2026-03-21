@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import { Trophy, Wallet, User, Bell } from 'lucide-react';
 
 export interface Notification {
@@ -69,15 +70,51 @@ interface NotificationState {
   markAllRead: () => void;
 }
 
-export const useNotificationStore = create<NotificationState>((set, get) => ({
-  notifications: INITIAL,
-  hasUnread: INITIAL.some(n => n.unread),
-  markRead: (id) => set((state) => {
-    const updated = state.notifications.map(n => n.id === id ? { ...n, unread: false } : n);
-    return { notifications: updated, hasUnread: updated.some(n => n.unread) };
-  }),
-  markAllRead: () => set((state) => {
-    const updated = state.notifications.map(n => ({ ...n, unread: false }));
-    return { notifications: updated, hasUnread: false };
-  }),
-}));
+export const useNotificationStore = create<NotificationState>()(
+  persist(
+    (set) => ({
+      notifications: INITIAL,
+      hasUnread: INITIAL.some(n => n.unread),
+
+      markRead: (id) =>
+        set((state) => {
+          const updated = state.notifications.map(n =>
+            n.id === id ? { ...n, unread: false } : n
+          );
+          return { notifications: updated, hasUnread: updated.some(n => n.unread) };
+        }),
+
+      markAllRead: () =>
+        set((state) => {
+          const updated = state.notifications.map(n => ({ ...n, unread: false }));
+          return { notifications: updated, hasUnread: false };
+        }),
+    }),
+    {
+      name: 'elite-notifications-v1',
+      storage: createJSONStorage(() => localStorage),
+      // Only persist the read/unread state per notification ID — icons are
+      // React components and cannot be JSON-serialised.
+      partialize: (state) => ({
+        readState: Object.fromEntries(
+          state.notifications.map(n => [n.id, n.unread])
+        ),
+        hasUnread: state.hasUnread,
+      }),
+      // On hydration, apply the saved read-state back onto the initial data.
+      merge: (persisted, current) => {
+        const readState = (persisted as any).readState as Record<string, boolean> | undefined;
+        if (!readState) return current;
+        const notifications = current.notifications.map(n => ({
+          ...n,
+          unread: n.id in readState ? readState[n.id] : n.unread,
+        }));
+        return {
+          ...current,
+          notifications,
+          hasUnread: notifications.some(n => n.unread),
+        };
+      },
+    }
+  )
+);
