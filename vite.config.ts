@@ -18,8 +18,12 @@ export default defineConfig(({mode}) => {
     server: {
       host: '0.0.0.0',
       port: 5000,
+      strictPort: true,
       allowedHosts: true,
       hmr: process.env.DISABLE_HMR !== 'true',
+      headers: {
+        'Cache-Control': 'no-store',
+      },
     },
   };
 });
