@@ -11,9 +11,11 @@ const NAV = [
   { icon: User,   label: 'Profile', path: '/profile' },
 ];
 
+const MAIN_PATHS = new Set(['/', '/leaderboard', '/live', '/wallet', '/profile']);
+
 export const BottomBar = () => {
   const location = useLocation();
-  if (location.pathname.startsWith('/match/') || location.pathname.startsWith('/admin')) return null;
+  if (!MAIN_PATHS.has(location.pathname)) return null;
 
   return (
     <nav className="glass-dark border-t border-app-border sticky bottom-0 z-50 w-full h-[64px]">

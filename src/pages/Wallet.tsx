@@ -35,7 +35,6 @@ export default function Wallet() {
     if (n > (user?.coins||0)) return alert('Insufficient balance');
     if (!details) return alert(`Enter ${method==='upi'?'UPI ID':'Email'}`);
     addTransaction({ type:'withdrawal', amount:-n, status:'pending', method, details, title:`${method==='upi'?'UPI':'Gift Card'} Withdrawal` });
-    useUserStore.getState().updateCoins(-n);
     setStatus('success');
     setTimeout(() => { setShowWith(false); setAmount(''); setDetails(''); setStatus('idle'); }, 2200);
   };

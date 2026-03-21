@@ -16,10 +16,14 @@ export default function EditProfile() {
     bio:      user?.bio      || '',
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSave = () => {
     updateProfile(form);
     navigate('/profile');
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSave();
   };
 
   const inputCls = 'w-full bg-app-fill rounded-[12px] py-3 px-4 text-[16px] text-text-primary placeholder:text-text-muted outline-none focus:bg-app-elevated transition-colors';
@@ -35,7 +39,7 @@ export default function EditProfile() {
       <header className="h-[56px] px-5 flex items-center glass-dark border-b border-app-border sticky top-0 z-50">
         <Link to="/profile" className="text-[17px] text-brand-primary font-normal">Cancel</Link>
         <h1 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-text-primary">Edit Profile</h1>
-        <button onClick={handleSubmit} className="ml-auto text-[17px] text-brand-primary font-semibold">Done</button>
+        <button onClick={handleSave} className="ml-auto text-[17px] text-brand-primary font-semibold">Done</button>
       </header>
 
       <div className="flex-1 scrollable-content px-4 py-6 pb-10">

@@ -15,7 +15,7 @@ export default function NotificationDetail() {
     if (id && notification?.unread) {
       markRead(id);
     }
-  }, [id]);
+  }, [id, notification, markRead]);
 
   if (!notification) {
     return (

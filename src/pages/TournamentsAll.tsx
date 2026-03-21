@@ -44,20 +44,6 @@ export default function TournamentsAll() {
 
   const setFilter = (f: Filter) => setSearchParams({ filter: f });
 
-  const statusBadge = (status: string) => {
-    if (status === 'live') return (
-      <span className="flex items-center gap-1 px-2 py-0.5 bg-brand-live/15 text-brand-live text-[11px] font-semibold rounded-full">
-        <span className="w-1.5 h-1.5 rounded-full bg-brand-live animate-pulse" /> LIVE
-      </span>
-    );
-    if (status === 'upcoming') return (
-      <span className="px-2 py-0.5 bg-brand-warning/15 text-brand-warning text-[11px] font-semibold rounded-full">UPCOMING</span>
-    );
-    return (
-      <span className="px-2 py-0.5 bg-app-fill text-text-muted text-[11px] font-semibold rounded-full">ENDED</span>
-    );
-  };
-
   return (
     <div className="h-full flex flex-col bg-app-bg">
       <header className="h-[56px] px-5 flex items-center glass-dark border-b border-app-border sticky top-0 z-50">

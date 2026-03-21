@@ -97,17 +97,22 @@ export default function AdminEconomy() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        {[
-          { label: 'Total Deposits',    value: `₹${totalDeposits.toLocaleString()}`,     color: 'brand-green' },
-          { label: 'Withdrawals',       value: `₹${totalWithdrawals.toLocaleString()}`,  color: 'brand-red' },
-          { label: 'Pending Payouts',   value: `₹${pendingWithdrawals.toLocaleString()}`,color: 'brand-yellow' },
-          { label: 'Platform Profit',   value: `₹${(totalDeposits - totalWithdrawals).toLocaleString()}`, color: 'brand-blue' },
-        ].map(s => (
-          <Card key={s.label} className={`p-4 bg-${s.color}/5 border-${s.color}/10`}>
-            <p className={`text-[10px] font-bold text-${s.color} uppercase tracking-widest`}>{s.label}</p>
-            <p className={`text-xl font-black text-${s.color} mt-1`}>{s.value}</p>
-          </Card>
-        ))}
+        <Card className="p-4 bg-brand-green/5 border-brand-green/10">
+          <p className="text-[10px] font-bold text-brand-green uppercase tracking-widest">Total Deposits</p>
+          <p className="text-xl font-black text-brand-green mt-1">₹{totalDeposits.toLocaleString()}</p>
+        </Card>
+        <Card className="p-4 bg-brand-red/5 border-brand-red/10">
+          <p className="text-[10px] font-bold text-brand-red uppercase tracking-widest">Withdrawals</p>
+          <p className="text-xl font-black text-brand-red mt-1">₹{totalWithdrawals.toLocaleString()}</p>
+        </Card>
+        <Card className="p-4 bg-brand-yellow/5 border-brand-yellow/10">
+          <p className="text-[10px] font-bold text-brand-yellow uppercase tracking-widest">Pending Payouts</p>
+          <p className="text-xl font-black text-brand-yellow mt-1">₹{pendingWithdrawals.toLocaleString()}</p>
+        </Card>
+        <Card className="p-4 bg-brand-blue/5 border-brand-blue/10">
+          <p className="text-[10px] font-bold text-brand-blue uppercase tracking-widest">Platform Profit</p>
+          <p className="text-xl font-black text-brand-blue mt-1">₹{(totalDeposits - totalWithdrawals).toLocaleString()}</p>
+        </Card>
       </div>
 
       {/* Filters */}
