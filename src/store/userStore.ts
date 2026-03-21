@@ -58,30 +58,15 @@ interface UserState {
   leaveTeam: () => void;
 }
 
-const DEFAULT_USER = {
-  id: '1',
-  username: 'EsportsPro',
-  email: 'pro@elite.com',
-  avatar: '',
-  coins: 1250,
-  rank: 'Diamond',
-  bio: 'Professional Esports Player | Tournament Enthusiast',
-};
-
-const DEFAULT_GAME_PROFILES = [
-  { id: '1', gameName: 'BGMI', ign: 'Elite_Pro_Gamer', uid: '5423198765' },
-  { id: '2', gameName: 'Free Fire', ign: 'Elite_FF_King', uid: '9876543210' },
-];
-
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
-      user: DEFAULT_USER,
-      gameProfiles: DEFAULT_GAME_PROFILES,
+      user: null,
+      gameProfiles: [],
       joinedMatchIds: [],
       transactions: [],
       team: null,
-      isAuthenticated: true,
+      isAuthenticated: false,
       isAdmin: false,
 
       login: (userData, isAdmin = false) =>
@@ -190,10 +175,10 @@ export const useUserStore = create<UserState>()(
             tag,
             members: [
               {
-                id: state.user?.id || '1',
-                username: state.user?.username || 'EsportsPro',
+                id: state.user?.id || '',
+                username: state.user?.username || '',
                 role: 'Leader',
-                rank: state.user?.rank || 'Diamond',
+                rank: state.user?.rank || 'Bronze',
               },
             ],
           },
@@ -207,10 +192,10 @@ export const useUserStore = create<UserState>()(
             tag: teamTag,
             members: [
               {
-                id: state.user?.id || '1',
-                username: state.user?.username || 'EsportsPro',
+                id: state.user?.id || '',
+                username: state.user?.username || '',
                 role: 'Member',
-                rank: state.user?.rank || 'Diamond',
+                rank: state.user?.rank || 'Bronze',
               },
             ],
           },
@@ -219,7 +204,7 @@ export const useUserStore = create<UserState>()(
       leaveTeam: () => set({ team: null }),
     }),
     {
-      name: 'elite-user-v2',
+      name: 'elite-user-v3',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,

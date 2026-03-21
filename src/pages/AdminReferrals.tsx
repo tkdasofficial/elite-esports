@@ -13,17 +13,12 @@ type Campaign = { id: string; user: string; email: string; code: string; totalRe
 type Modal    = { mode: 'add' | 'edit'; data: Partial<Campaign> } | null;
 type Toast    = { msg: string; ok: boolean } | null;
 
-const INITIAL: Campaign[] = [
-  { id: '1', user: 'EsportsPro',   email: 'pro@elite.com',    code: 'PRO50',    totalReferrals: 12, earned: 600, status: 'active',   joined: '15 Jan 2024' },
-  { id: '2', user: 'ProSlayer',     email: 'slayer@gmail.com', code: 'SLAYER10', totalReferrals: 8,  earned: 400, status: 'active',   joined: '10 Feb 2024' },
-  { id: '3', user: 'NoobMaster69', email: 'noob@yahoo.com',   code: 'NOOB20',   totalReferrals: 3,  earned: 150, status: 'inactive', joined: '01 Mar 2024' },
-];
 
 const randomCode = (prefix = '') =>
   (prefix.slice(0, 4).toUpperCase() || 'REF') + Math.floor(Math.random() * 900 + 100);
 
 export default function AdminReferrals() {
-  const [campaigns, setCampaigns]   = useState<Campaign[]>(INITIAL);
+  const [campaigns, setCampaigns]   = useState<Campaign[]>([]);
   const [settings, setSettings]     = useState({ referrerReward: '50', refereeBonus: '20', maxReferrals: '100', enabled: true });
   const [modal, setModal]           = useState<Modal>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);

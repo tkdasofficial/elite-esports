@@ -21,47 +21,6 @@ type Filter   = 'all' | Status;
 
 const now = () => new Date().toLocaleString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-const INITIAL: Ticket[] = [
-  {
-    id: '1', user: 'EsportsPro', email: 'pro@elite.com',
-    subject: 'Withdrawal Pending for 3 Days',
-    message: 'Hi, I requested a withdrawal of ₹1,500 on March 17th and it has been 3 days with no update. My bank account is correct and verified. Please look into this urgently.',
-    status: 'open', date: '20 Mar, 10:30 AM', priority: 'high',
-    messages: [
-      { id: 'm1', from: 'user', text: 'Hi, I requested a withdrawal of ₹1,500 on March 17th and it has been 3 days with no update. My bank account is correct and verified. Please look into this urgently.', time: '20 Mar, 10:30 AM' },
-    ],
-  },
-  {
-    id: '2', user: 'ProSlayer', email: 'slayer@gmail.com',
-    subject: 'Match Result Marked Incorrectly',
-    message: 'I won the BGMI match yesterday but the result shows a loss. My squad finished in top 3 with 8 kills. Screenshots are available. Please correct this.',
-    status: 'pending', date: '20 Mar, 09:15 AM', priority: 'medium',
-    messages: [
-      { id: 'm1', from: 'user', text: 'I won the BGMI match yesterday but the result shows a loss. My squad finished in top 3 with 8 kills. Screenshots are available. Please correct this.', time: '20 Mar, 09:15 AM' },
-      { id: 'm2', from: 'admin', text: 'Thank you for reaching out. We are reviewing the match logs and will update you within 24 hours.', time: '20 Mar, 11:00 AM' },
-    ],
-  },
-  {
-    id: '3', user: 'NoobMaster', email: 'noob@yahoo.com',
-    subject: 'Cannot Login to My Account',
-    message: 'My account seems to be locked. I tried resetting the password but the OTP never arrives on my phone. Please help me regain access.',
-    status: 'closed', date: '19 Mar, 08:00 PM', priority: 'low',
-    messages: [
-      { id: 'm1', from: 'user', text: 'My account seems to be locked. I tried resetting the password but the OTP never arrives on my phone. Please help me regain access.', time: '19 Mar, 08:00 PM' },
-      { id: 'm2', from: 'admin', text: 'We have unlocked your account and resent the OTP. Please try again now.', time: '19 Mar, 09:30 PM' },
-      { id: 'm3', from: 'user', text: 'It worked! Thank you so much.', time: '19 Mar, 10:00 PM' },
-    ],
-  },
-  {
-    id: '4', user: 'ShadowHunter', email: 'shadow@gmail.com',
-    subject: 'Prize Pool Not Credited After Win',
-    message: 'I won the Valorant 1v1 tournament last week (Tournament ID: VAL-1234). The prize of ₹2,000 has not been added to my wallet yet. It has been 5 days.',
-    status: 'open', date: '19 Mar, 06:00 PM', priority: 'high',
-    messages: [
-      { id: 'm1', from: 'user', text: 'I won the Valorant 1v1 tournament last week (Tournament ID: VAL-1234). The prize of ₹2,000 has not been added to my wallet yet. It has been 5 days.', time: '19 Mar, 06:00 PM' },
-    ],
-  },
-];
 
 const priorityMeta: Record<Priority, { color: string; bg: string; label: string }> = {
   high:   { color: 'text-brand-red',    bg: 'bg-brand-red/10',    label: 'High' },
@@ -76,7 +35,7 @@ const statusMeta: Record<Status, { color: string; bg: string; label: string }> =
 };
 
 export default function AdminSupport() {
-  const [tickets, setTickets]     = useState<Ticket[]>(INITIAL);
+  const [tickets, setTickets]     = useState<Ticket[]>([]);
   const [selected, setSelected]   = useState<Ticket | null>(null);
   const [reply, setReply]         = useState('');
   const [searchQuery, setSearchQuery] = useState('');

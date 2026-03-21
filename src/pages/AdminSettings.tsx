@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
-import { Settings, Shield, Wallet, Bell, Globe, Save, Lock, CheckCircle2, X, Eye, EyeOff } from 'lucide-react';
+import { Settings, Shield, Wallet, Bell, Globe, Save, CheckCircle2, X, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
 import { usePlatformStore } from '@/src/store/platformStore';
@@ -19,9 +19,7 @@ const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) =
 export default function AdminSettings() {
   const { settings, updateSettings } = usePlatformStore();
   const [toast, setToast]      = useState<Toast>(null);
-  const [showPwForm, setShowPwForm] = useState(false);
   const [showPw, setShowPw]    = useState(false);
-  const [password, setPassword] = useState({ current: '', next: '', confirm: '' });
   const [saving, setSaving]    = useState(false);
   const [localSettings, setLocalSettings] = useState({ ...settings });
 
@@ -33,15 +31,6 @@ export default function AdminSettings() {
     updateSettings(localSettings);
     setSaving(false);
     showToast('All settings saved successfully');
-  };
-
-  const handleChangePassword = () => {
-    if (!password.current) { showToast('Enter current password', false); return; }
-    if (password.next.length < 6) { showToast('New password must be 6+ chars', false); return; }
-    if (password.next !== password.confirm) { showToast('Passwords do not match', false); return; }
-    setPassword({ current: '', next: '', confirm: '' });
-    setShowPwForm(false);
-    showToast('Password changed successfully');
   };
 
   const set = (key: string, value: any) => setLocalSettings(prev => ({ ...prev, [key]: value }));
@@ -108,47 +97,33 @@ export default function AdminSettings() {
             <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Security</h2>
           </div>
           <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <div><p className="text-sm font-bold">Two-Factor Auth</p><p className="text-xs text-slate-500">Require 2FA for admin login</p></div>
-              <Toggle value={localSettings.twofa} onChange={() => set('twofa', !localSettings.twofa)} />
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">Admin Email</label>
+              <input value={localSettings.adminEmail} placeholder="admin@yourdomain.com"
+                onChange={e => set('adminEmail', e.target.value)}
+                className={field} />
             </div>
-            <div className="flex items-center justify-between gap-4">
-              <div><p className="text-sm font-bold">Login Notifications</p><p className="text-xs text-slate-500">Alert on new admin login</p></div>
-              <Toggle value={localSettings.loginNotif} onChange={() => set('loginNotif', !localSettings.loginNotif)} />
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">Admin Password</label>
+              <div className="relative">
+                <input type={showPw ? 'text' : 'password'} value={localSettings.adminPassword} placeholder="••••••••"
+                  onChange={e => set('adminPassword', e.target.value)}
+                  className={`${field} pr-11`} />
+                <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </div>
-
-            <AnimatePresence>
-              {showPwForm && (
-                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden space-y-3 pt-2 border-t border-white/5">
-                  {[['current', 'Current Password'], ['next', 'New Password'], ['confirm', 'Confirm Password']].map(([k, l]) => (
-                    <div key={k} className="space-y-1.5 relative">
-                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{l}</label>
-                      <input type={showPw ? 'text' : 'password'} value={(password as any)[k]}
-                        onChange={e => setPassword(p => ({ ...p, [k]: e.target.value }))}
-                        className={field} />
-                    </div>
-                  ))}
-                  <div className="flex gap-2">
-                    <button onClick={() => setShowPw(v => !v)} className="p-2.5 bg-white/5 rounded-xl text-slate-400">
-                      {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                    </button>
-                    <button onClick={handleChangePassword} className="flex-1 py-2.5 bg-brand-blue text-white rounded-xl text-xs font-black uppercase tracking-widest">
-                      Confirm Change
-                    </button>
-                    <button onClick={() => setShowPwForm(false)} className="p-2.5 bg-white/5 rounded-xl text-slate-400">
-                      <X size={16} />
-                    </button>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {!showPwForm && (
-              <Button variant="secondary" fullWidth onClick={() => setShowPwForm(true)} className="border-white/5 flex items-center justify-center gap-2">
-                <Lock size={16} /> Change Password
-              </Button>
-            )}
+            <div className="border-t border-white/5 pt-3 space-y-3">
+              <div className="flex items-center justify-between gap-4">
+                <div><p className="text-sm font-bold">Two-Factor Auth</p><p className="text-xs text-slate-500">Require 2FA for admin login</p></div>
+                <Toggle value={localSettings.twofa} onChange={() => set('twofa', !localSettings.twofa)} />
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <div><p className="text-sm font-bold">Login Notifications</p><p className="text-xs text-slate-500">Alert on new admin login</p></div>
+                <Toggle value={localSettings.loginNotif} onChange={() => set('loginNotif', !localSettings.loginNotif)} />
+              </div>
+            </div>
           </Card>
         </section>
 

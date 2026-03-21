@@ -14,49 +14,10 @@ interface GameState {
   getGameByName: (name: string) => Game | undefined;
 }
 
-const INITIAL_GAMES: Game[] = [
-  {
-    id: '1',
-    name: 'BGMI',
-    category: 'Battle Royale',
-    logo: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&q=80',
-    banner: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?w=800&q=80',
-    status: 'active',
-    matches: 0,
-  },
-  {
-    id: '2',
-    name: 'Free Fire',
-    category: 'Battle Royale',
-    logo: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=200&q=80',
-    banner: 'https://images.unsplash.com/photo-1493711662062-fa541adb3fc8?w=800&q=80',
-    status: 'active',
-    matches: 0,
-  },
-  {
-    id: '3',
-    name: 'Valorant',
-    category: 'FPS',
-    logo: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=200&q=80',
-    banner: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?w=800&q=80',
-    status: 'active',
-    matches: 0,
-  },
-  {
-    id: '4',
-    name: 'COD Mobile',
-    category: 'FPS',
-    logo: 'https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=200&q=80',
-    banner: 'https://images.unsplash.com/photo-1560253023-3ec5d502959f?w=800&q=80',
-    status: 'active',
-    matches: 0,
-  },
-];
-
 export const useGameStore = create<GameState>()(
   persist(
     (set, get) => ({
-      games: INITIAL_GAMES,
+      games: [],
 
       addGame: (game) =>
         set((state) => ({
@@ -101,7 +62,7 @@ export const useGameStore = create<GameState>()(
       getGameByName: (name) => get().games.find((g) => g.name === name),
     }),
     {
-      name: 'elite-games-v2',
+      name: 'elite-games-v3',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({ games: state.games }),
       merge: (persisted, current) => ({

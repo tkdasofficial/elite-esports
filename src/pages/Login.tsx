@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useUserStore } from '@/src/store/userStore';
+import { usePlatformStore } from '@/src/store/platformStore';
 import { motion } from 'motion/react';
 import { Logo } from '@/src/components/common/Logo';
 import { Eye, EyeOff } from 'lucide-react';
@@ -12,21 +13,69 @@ export default function Login() {
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
   const { login } = useUserStore();
+  const { registeredUsers, settings } = usePlatformStore();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter your email and password');
+      return;
+    }
+
     setLoading(true);
     await new Promise(r => setTimeout(r, 500));
-    if (email === 'admin' && password === '123') {
-      login({ id:'admin-001', username:'Admin', email:'admin@elite.com', avatar:'', coins:999999, rank:'Administrator' }, true);
-    } else if (!email.trim() || !password.trim()) {
-      setError('Please enter your email and password');
+
+    const emailLower = email.trim().toLowerCase();
+
+    if (
+      emailLower === settings.adminEmail.toLowerCase() &&
+      password === settings.adminPassword
+    ) {
+      login(
+        {
+          id: 'admin-001',
+          username: 'Admin',
+          email: settings.adminEmail,
+          avatar: '',
+          coins: 0,
+          rank: 'Administrator',
+        },
+        true
+      );
       setLoading(false);
       return;
-    } else {
-      login({ id:'1', username: email.split('@')[0] || 'EsportsPro', email, avatar:'', coins:1250, rank:'Diamond' });
     }
+
+    const user = registeredUsers.find(
+      u =>
+        (u.email.toLowerCase() === emailLower ||
+          u.username.toLowerCase() === emailLower) &&
+        u.password === password
+    );
+
+    if (!user) {
+      setError('Invalid email or password. Please try again.');
+      setLoading(false);
+      return;
+    }
+
+    if (user.status === 'banned') {
+      setError('Your account has been suspended. Please contact support.');
+      setLoading(false);
+      return;
+    }
+
+    login({
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      avatar: '',
+      coins: user.coins,
+      rank: user.rank,
+    });
+
     setLoading(false);
   };
 
@@ -98,31 +147,12 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-app-border" />
-            <span className="text-[13px] text-text-muted font-medium">or continue with</span>
-            <div className="flex-1 h-px bg-app-border" />
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {['Google', 'Apple'].map(p => (
-              <button key={p}
-                className="py-3 bg-app-elevated rounded-[14px] text-[15px] font-medium text-text-primary active:opacity-60 transition-opacity border border-app-border">
-                {p}
-              </button>
-            ))}
-          </div>
-
           <p className="text-center text-[15px] text-text-secondary">
             New to Elite?{' '}
             <Link to="/signup" className="text-brand-primary font-medium">Create Account</Link>
           </p>
         </motion.div>
       </div>
-
-      <p className="text-center text-[12px] text-text-muted pb-8 font-medium">
-        Use <span className="text-text-secondary">admin / 123</span> for admin access
-      </p>
     </div>
   );
 }

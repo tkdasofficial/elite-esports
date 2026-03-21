@@ -5,6 +5,7 @@ export interface PlatformUser {
   id: string;
   username: string;
   email: string;
+  password: string;
   rank: string;
   coins: number;
   status: 'active' | 'banned';
@@ -38,6 +39,8 @@ export interface PlatformSettings {
   emailAlerts: boolean;
   pushNotifs: boolean;
   smsAlerts: boolean;
+  adminEmail: string;
+  adminPassword: string;
 }
 
 interface PlatformState {
@@ -74,24 +77,14 @@ const DEFAULT_SETTINGS: PlatformSettings = {
   emailAlerts: true,
   pushNotifs: true,
   smsAlerts: false,
+  adminEmail: 'admin@elite.com',
+  adminPassword: 'Admin@123',
 };
-
-const DEFAULT_USERS: PlatformUser[] = [
-  {
-    id: '1',
-    username: 'EsportsPro',
-    email: 'pro@elite.com',
-    rank: 'Diamond',
-    coins: 1250,
-    status: 'active',
-    joined: '15 Jan 2024',
-  },
-];
 
 export const usePlatformStore = create<PlatformState>()(
   persist(
     (set) => ({
-      registeredUsers: DEFAULT_USERS,
+      registeredUsers: [],
       adminTransactions: [],
       settings: DEFAULT_SETTINGS,
 
@@ -175,7 +168,7 @@ export const usePlatformStore = create<PlatformState>()(
         })),
     }),
     {
-      name: 'elite-platform-v1',
+      name: 'elite-platform-v2',
       storage: createJSONStorage(() => localStorage),
     }
   )

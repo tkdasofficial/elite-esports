@@ -41,7 +41,8 @@ export default function AdminUsers() {
     if (!coinModal || !coinAmount || isNaN(Number(coinAmount))) return;
     const delta = coinMode === 'add' ? Number(coinAmount) : -Number(coinAmount);
     adjustCoins(coinModal.id, delta);
-    if (coinModal.id === '1') {
+    const { user } = useUserStore.getState();
+    if (user && coinModal.id === user.id) {
       updateCoins(delta);
     }
     showToast(`${coinMode === 'add' ? '+' : '-'}₹${coinAmount} applied to ${coinModal.username}`);

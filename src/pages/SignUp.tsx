@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useUserStore } from '@/src/store/userStore';
+import { usePlatformStore } from '@/src/store/platformStore';
 import { motion } from 'motion/react';
 import { Logo } from '@/src/components/common/Logo';
-import { Eye, EyeOff, ChevronLeft } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function SignUp() {
@@ -12,6 +13,7 @@ export default function SignUp() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { login } = useUserStore();
+  const { registeredUsers, registerUser } = usePlatformStore();
 
   const validate = () => {
     const e: Record<string, string> = {};
@@ -22,6 +24,17 @@ export default function SignUp() {
     if (!form.password) e.password = 'Password is required';
     else if (form.password.length < 6) e.password = 'At least 6 characters';
     if (form.password !== form.confirm) e.confirm = 'Passwords do not match';
+
+    const emailTaken = registeredUsers.some(
+      u => u.email.toLowerCase() === form.email.trim().toLowerCase()
+    );
+    if (emailTaken) e.email = 'An account with this email already exists';
+
+    const usernameTaken = registeredUsers.some(
+      u => u.username.toLowerCase() === form.username.trim().toLowerCase()
+    );
+    if (usernameTaken) e.username = 'This username is already taken';
+
     return e;
   };
 
@@ -32,7 +45,29 @@ export default function SignUp() {
     setErrors({});
     setLoading(true);
     await new Promise(r => setTimeout(r, 800));
-    login({ id: Date.now().toString(), username: form.username, email: form.email, avatar: '', coins: 500, rank: 'Bronze' });
+
+    const newUser = {
+      id: Date.now().toString(),
+      username: form.username.trim(),
+      email: form.email.trim(),
+      password: form.password,
+      avatar: '',
+      coins: 0,
+      rank: 'Bronze',
+      status: 'active' as const,
+      joined: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+    };
+
+    registerUser(newUser);
+    login({
+      id: newUser.id,
+      username: newUser.username,
+      email: newUser.email,
+      avatar: '',
+      coins: newUser.coins,
+      rank: newUser.rank,
+    });
+
     setLoading(false);
   };
 
