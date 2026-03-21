@@ -8,6 +8,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useBannerStore } from '@/src/store/bannerStore';
 import { Banner } from '@/src/types';
+import { ImageUpload } from '@/src/components/ui/ImageUpload';
 
 type EditingBanner = Omit<Banner, 'id'> & { id: string };
 
@@ -32,7 +33,6 @@ export default function AdminCampaign() {
   const [previewBanner, setPreviewBanner] = useState<Banner | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
-  const [imgError, setImgError] = useState(false);
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
@@ -262,35 +262,15 @@ export default function AdminCampaign() {
 
             {/* Scrollable body */}
             <div className="flex-1 overflow-y-auto overscroll-contain">
-              {/* Image preview */}
-              {editingBanner.image && !imgError ? (
-                <div className="relative aspect-video w-full bg-black overflow-hidden flex-shrink-0">
-                  <img
-                    src={editingBanner.image}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                    onError={() => setImgError(true)}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                  <div className="absolute bottom-3 left-4 right-4">
-                    <p className="text-white font-bold text-base leading-tight drop-shadow">{editingBanner.title || 'Banner Title'}</p>
-                    <p className="text-white/60 text-xs mt-0.5">{editingBanner.description || 'Description text'}</p>
-                    {editingBanner.buttonText && (
-                      <div className="mt-2 inline-block px-3 py-1 bg-brand-primary text-white text-xs font-bold rounded-lg">
-                        {editingBanner.buttonText}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="aspect-video w-full bg-white/5 flex flex-col items-center justify-center gap-2 text-slate-600 flex-shrink-0">
-                  <ImageOff size={28} />
-                  <span className="text-xs">{imgError ? 'Invalid image URL' : 'Enter an image URL to preview'}</span>
-                </div>
-              )}
-
               <form onSubmit={handleSave} className="p-5 space-y-4">
+                <ImageUpload
+                  label="Banner Image"
+                  value={editingBanner.image}
+                  onChange={v => setEditingBanner({ ...editingBanner, image: v })}
+                  aspect="wide"
+                  hint="Landscape image shown in the campaign carousel"
+                  required
+                />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <FormField
                     label="Campaign Title"
@@ -315,14 +295,6 @@ export default function AdminCampaign() {
                   value={editingBanner.description}
                   onChange={v => setEditingBanner({ ...editingBanner, description: v })}
                   placeholder="₹1,00,000 prize pool · 100 squads · Starts tonight"
-                />
-                <FormField
-                  label="Image URL"
-                  type="url"
-                  required
-                  value={editingBanner.image}
-                  onChange={v => { setImgError(false); setEditingBanner({ ...editingBanner, image: v }); }}
-                  placeholder="https://..."
                 />
                 <FormField
                   label="Redirect Link"

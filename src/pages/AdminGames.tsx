@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { CustomSelect } from '@/src/components/ui/CustomSelect';
-import { Plus, Edit2, Trash2, Search, CheckCircle2, X, Check, ImageOff, Image } from 'lucide-react';
+import { ImageUpload } from '@/src/components/ui/ImageUpload';
+import { Plus, Edit2, Trash2, Search, CheckCircle2, X, Check, Image } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
 import { useGameStore } from '@/src/store/gameStore';
@@ -27,56 +28,6 @@ const CATEGORY_OPTIONS = [
   { value: 'Strategy',      label: 'Strategy',      emoji: '🧠' },
 ];
 
-function ImagePreview({ url, aspect, label }: { url: string; aspect: 'square' | 'wide'; label: string }) {
-  const [err, setErr] = useState(false);
-
-  if (!url || err) {
-    return (
-      <div className={cn(
-        'w-full flex flex-col items-center justify-center gap-2 text-slate-600 border-2 border-dashed border-white/10 rounded-2xl',
-        aspect === 'square' ? 'h-28' : 'h-36'
-      )}>
-        <ImageOff size={22} />
-        <span className="text-[11px] font-bold">{err ? 'Invalid URL' : `Enter ${label} URL to preview`}</span>
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn(
-      'w-full rounded-2xl overflow-hidden border border-white/10',
-      aspect === 'square' ? 'h-28' : 'h-36'
-    )}>
-      <img
-        src={url}
-        alt={label}
-        className={cn('w-full h-full', aspect === 'square' ? 'object-contain bg-white/5' : 'object-cover')}
-        referrerPolicy="no-referrer"
-        onError={() => setErr(true)}
-      />
-    </div>
-  );
-}
-
-function UrlField({
-  label, value, onChange, placeholder, hint,
-}: {
-  label: string; value: string; onChange: (v: string) => void; placeholder?: string; hint?: string;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">{label}</label>
-      <input
-        type="url"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder || 'https://...'}
-        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-brand-blue transition-all placeholder:text-slate-600"
-      />
-      {hint && <p className="text-[10px] text-slate-600 px-1">{hint}</p>}
-    </div>
-  );
-}
 
 export default function AdminGames() {
   const { games, addGame, updateGame, deleteGame, toggleStatus } = useGameStore();
@@ -312,37 +263,23 @@ export default function AdminGames() {
                   variant="admin"
                 />
 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md bg-brand-blue/20 flex items-center justify-center flex-shrink-0">
-                      <Image size={11} className="text-brand-blue" />
-                    </div>
-                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Logo Image</p>
-                  </div>
-                  <ImagePreview url={modal.game.logo || ''} aspect="square" label="logo" />
-                  <UrlField
-                    label="Logo URL"
-                    value={modal.game.logo || ''}
-                    onChange={v => setField('logo', v)}
-                    hint="Square image · Shown in game selection dropdowns"
-                  />
-                </div>
+                <ImageUpload
+                  label="Logo Image"
+                  value={modal.game.logo || ''}
+                  onChange={v => setField('logo', v)}
+                  aspect="square"
+                  hint="Square image · Shown in game selection dropdowns"
+                  required
+                />
 
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2">
-                    <div className="w-5 h-5 rounded-md bg-brand-primary/20 flex items-center justify-center flex-shrink-0">
-                      <Image size={11} className="text-brand-primary" />
-                    </div>
-                    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Banner Image</p>
-                  </div>
-                  <ImagePreview url={modal.game.banner || ''} aspect="wide" label="banner" />
-                  <UrlField
-                    label="Banner URL"
-                    value={modal.game.banner || ''}
-                    onChange={v => setField('banner', v)}
-                    hint="Landscape image · Auto-used as match banner when this game is selected"
-                  />
-                </div>
+                <ImageUpload
+                  label="Banner Image"
+                  value={modal.game.banner || ''}
+                  onChange={v => setField('banner', v)}
+                  aspect="wide"
+                  hint="Landscape image · Auto-used as match banner when this game is selected"
+                  required
+                />
 
                 {modal.mode === 'edit' && (
                   <div className="flex items-center justify-between py-2 px-4 bg-white/5 rounded-xl">
