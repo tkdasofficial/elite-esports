@@ -18,10 +18,14 @@ export default function AdminCampaign() {
 
   const [editingBanner, setEditingBanner] = useState<any>(null);
 
+  const [confirmDeleteId, setConfirmDeleteId] = React.useState<string | null>(null);
+  const [toast, setToast] = React.useState<{ msg: string; ok: boolean } | null>(null);
+  const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2500); };
+
   const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this banner?')) {
-      setBanners(prev => prev.filter(b => b.id !== id));
-    }
+    setBanners(prev => prev.filter(b => b.id !== id));
+    setConfirmDeleteId(null);
+    showToast('Banner deleted');
   };
 
   const toggleStatus = (id: string) => {
@@ -51,7 +55,15 @@ export default function AdminCampaign() {
   };
 
   return (
-    <div className="space-y-8 px-4 sm:px-6 pb-24 pt-8 text-white">
+    <div className="space-y-8 px-4 sm:px-6 pb-24 pt-8 text-white relative">
+      <AnimatePresence>
+        {toast && (
+          <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
+            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl flex items-center gap-2 ${toast.ok ? 'bg-brand-green text-white' : 'bg-brand-red text-white'}`}>
+            {toast.ok ? <Check size={16} /> : <X size={16} />} {toast.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-black tracking-tight">Campaign Banners</h1>
         <Button onClick={startAdd} size="sm" className="rounded-xl px-4 flex items-center gap-2 w-full sm:w-auto justify-center">
@@ -93,8 +105,8 @@ export default function AdminCampaign() {
                   >
                     <Edit2 size={20} />
                   </button>
-                  <button 
-                    onClick={() => handleDelete(banner.id)}
+                  <button
+                    onClick={() => setConfirmDeleteId(banner.id)}
                     className="p-3 bg-brand-red text-white rounded-2xl active:scale-90 transition-all hover:shadow-lg hover:shadow-brand-red/20"
                   >
                     <Trash2 size={20} />
@@ -111,8 +123,15 @@ export default function AdminCampaign() {
                 </div>
                 <div className="flex items-center gap-2 sm:hidden">
                   <button onClick={() => setEditingBanner(banner)} className="p-2 bg-white/5 rounded-xl text-slate-400"><Edit2 size={14} /></button>
-                  <button onClick={() => handleDelete(banner.id)} className="p-2 bg-white/5 rounded-xl text-slate-400"><Trash2 size={14} /></button>
+                  <button onClick={() => setConfirmDeleteId(banner.id)} className="p-2 bg-white/5 rounded-xl text-slate-400"><Trash2 size={14} /></button>
                 </div>
+              {confirmDeleteId === banner.id && (
+                <div className="flex items-center gap-2 p-3 bg-brand-red/10 rounded-xl border border-brand-red/20 mt-3">
+                  <p className="flex-1 text-xs font-bold text-brand-red">Delete "{banner.title}"?</p>
+                  <button onClick={() => handleDelete(banner.id)} className="px-3 py-1.5 bg-brand-red text-white text-xs font-bold rounded-lg">Delete</button>
+                  <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 bg-white/10 text-slate-300 text-xs font-bold rounded-lg">Cancel</button>
+                </div>
+              )}
               </div>
             </Card>
           </motion.div>

@@ -171,11 +171,11 @@ export default function AdminMatchForm() {
           />
         </Card>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          <Button type="submit" fullWidth size="lg" className="h-12 sm:h-11">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Button type="submit" fullWidth size="md" className="rounded-xl">
             {isEditing ? 'Update Tournament' : 'Create Tournament'}
           </Button>
-          <Button type="button" variant="secondary" fullWidth size="lg" onClick={() => navigate('/admin/matches')} className="h-12 sm:h-11">
+          <Button type="button" variant="secondary" fullWidth size="md" onClick={() => navigate('/admin/matches')} className="rounded-xl border-white/5">
             Cancel
           </Button>
         </div>

@@ -1,18 +1,73 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
-import { Input } from '@/src/components/ui/Input';
 import { Button } from '@/src/components/ui/Button';
-import { Settings, Shield, Wallet, Bell, Globe, Save, Lock } from 'lucide-react';
-import { motion } from 'motion/react';
+import { Settings, Shield, Wallet, Bell, Globe, Save, Lock, CheckCircle2, X, Eye, EyeOff } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { cn } from '@/src/utils/helpers';
+
+type Toast = { msg: string; ok: boolean } | null;
+
+const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
+  <button onClick={onChange}
+    className={cn('w-12 h-6 rounded-full relative transition-colors duration-200 flex-shrink-0', value ? 'bg-brand-blue' : 'bg-white/10')}>
+    <motion.div animate={{ x: value ? 22 : 2 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow" />
+  </button>
+);
 
 export default function AdminSettings() {
+  const [toast, setToast]      = useState<Toast>(null);
+  const [showPwForm, setShowPwForm] = useState(false);
+  const [showPw, setShowPw]    = useState(false);
+  const [password, setPassword] = useState({ current: '', next: '', confirm: '' });
+  const [saving, setSaving]    = useState(false);
+
+  const [payment, setPayment]  = useState({ upiId: 'elite_admin@okaxis', bank: '9182736455', ifsc: 'HDFC0001234', minW: '100', maxW: '5000' });
+  const [security, setSecurity] = useState({ twofa: true, loginNotif: true });
+  const [platform, setPlatform] = useState({ name: 'Elite Esports', email: 'support@elite.com', maintenance: false });
+  const [notifications, setNotifications] = useState({ email: true, push: true, sms: false });
+
+  const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2500); };
+
+  const handleSave = async () => {
+    setSaving(true);
+    await new Promise(r => setTimeout(r, 900));
+    setSaving(false);
+    showToast('All settings saved successfully');
+  };
+
+  const handleChangePassword = () => {
+    if (!password.current) { showToast('Enter current password', false); return; }
+    if (password.next.length < 6) { showToast('New password must be 6+ chars', false); return; }
+    if (password.next !== password.confirm) { showToast('Passwords do not match', false); return; }
+    setPassword({ current: '', next: '', confirm: '' });
+    setShowPwForm(false);
+    showToast('Password changed successfully');
+  };
+
+  const field = 'w-full bg-brand-card/40 border border-white/5 rounded-2xl py-3 px-4 text-sm font-bold focus:border-brand-blue outline-none transition-all placeholder:text-slate-600';
+
   return (
-    <div className="space-y-8 px-4 sm:px-6 pb-24 pt-8 text-white">
+    <div className="space-y-8 px-4 sm:px-6 pb-24 pt-6 text-white relative">
+      {/* Toast */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
+            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl flex items-center gap-2 ${toast.ok ? 'bg-brand-green text-white' : 'bg-brand-red text-white'}`}>
+            {toast.ok ? <CheckCircle2 size={16} /> : <X size={16} />} {toast.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-black tracking-tight">Admin Settings</h1>
-        <Button size="sm" className="rounded-xl px-4 flex items-center gap-2 w-full sm:w-auto justify-center">
-          <Save size={16} />
-          Save Changes
+        <Button onClick={handleSave} size="sm" disabled={saving}
+          className="rounded-xl px-4 flex items-center gap-2 w-full sm:w-auto justify-center">
+          {saving ? (
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><Settings size={16} /></motion.div>
+          ) : <Save size={16} />}
+          {saving ? 'Saving…' : 'Save All'}
         </Button>
       </div>
 
@@ -20,98 +75,134 @@ export default function AdminSettings() {
         {/* Payment Details */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 px-1">
-            <Wallet size={20} className="text-brand-blue flex-shrink-0" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 truncate">Payment Details</h2>
+            <Wallet size={18} className="text-brand-blue flex-shrink-0" />
+            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Payment Details</h2>
           </div>
-          <Card className="p-4 sm:p-6 bg-brand-card/40 border-white/5 space-y-4">
-            <Input label="Admin UPI ID" placeholder="admin@upi" defaultValue="elite_admin@okaxis" />
-            <Input label="Bank Account Number" placeholder="000000000000" defaultValue="9182736455" />
-            <Input label="IFSC Code" placeholder="IFSC0000000" defaultValue="HDFC0001234" />
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Input label="Min Withdrawal" placeholder="₹100" defaultValue="₹100" />
-              <Input label="Max Withdrawal" placeholder="₹10,000" defaultValue="₹5,000" />
+          <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
+            {[
+              { label: 'Admin UPI ID',       key: 'upiId', placeholder: 'admin@upi' },
+              { label: 'Bank Account',       key: 'bank',  placeholder: '000000000000' },
+              { label: 'IFSC Code',          key: 'ifsc',  placeholder: 'IFSC0000000' },
+            ].map(f => (
+              <div key={f.key} className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{f.label}</label>
+                <input value={(payment as any)[f.key]} placeholder={f.placeholder}
+                  onChange={e => setPayment(p => ({ ...p, [f.key]: e.target.value }))}
+                  className={field} />
+              </div>
+            ))}
+            <div className="grid grid-cols-2 gap-3">
+              {[['minW', 'Min Withdrawal', '₹100'], ['maxW', 'Max Withdrawal', '₹10,000']].map(([k, l, p]) => (
+                <div key={k} className="space-y-1.5">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{l}</label>
+                  <input value={(payment as any)[k]} placeholder={p}
+                    onChange={e => setPayment(p => ({ ...p, [k]: e.target.value }))}
+                    className={field} />
+                </div>
+              ))}
             </div>
           </Card>
         </section>
 
-        {/* Security Settings */}
+        {/* Security */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 px-1">
-            <Shield size={20} className="text-brand-red flex-shrink-0" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 truncate">Security</h2>
+            <Shield size={18} className="text-brand-red flex-shrink-0" />
+            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Security</h2>
           </div>
-          <Card className="p-4 sm:p-6 bg-brand-card/40 border-white/5 space-y-4">
+          <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
             <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1 min-w-0">
-                <p className="text-sm font-bold truncate">Two-Factor Auth</p>
-                <p className="text-xs text-slate-500 line-clamp-2">Require 2FA for admin login</p>
-              </div>
-              <div className="w-12 h-6 bg-brand-blue rounded-full relative flex-shrink-0">
-                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
-              </div>
+              <div><p className="text-sm font-bold">Two-Factor Auth</p><p className="text-xs text-slate-500">Require 2FA for admin login</p></div>
+              <Toggle value={security.twofa} onChange={() => setSecurity(s => ({ ...s, twofa: !s.twofa }))} />
             </div>
             <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1 min-w-0">
-                <p className="text-sm font-bold truncate">Login Notifications</p>
-                <p className="text-xs text-slate-500 line-clamp-2">Alert on new admin login</p>
-              </div>
-              <div className="w-12 h-6 bg-brand-blue rounded-full relative flex-shrink-0">
-                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
-              </div>
+              <div><p className="text-sm font-bold">Login Notifications</p><p className="text-xs text-slate-500">Alert on new admin login</p></div>
+              <Toggle value={security.loginNotif} onChange={() => setSecurity(s => ({ ...s, loginNotif: !s.loginNotif }))} />
             </div>
-            <Button variant="secondary" fullWidth className="mt-4 border-white/5 h-11 sm:h-10">
-              <Lock size={16} className="mr-2" />
-              Change Password
-            </Button>
+
+            <AnimatePresence>
+              {showPwForm && (
+                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+                  className="overflow-hidden space-y-3 pt-2 border-t border-white/5">
+                  {[['current', 'Current Password'], ['next', 'New Password'], ['confirm', 'Confirm Password']].map(([k, l]) => (
+                    <div key={k} className="space-y-1.5 relative">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{l}</label>
+                      <input type={showPw ? 'text' : 'password'} value={(password as any)[k]}
+                        onChange={e => setPassword(p => ({ ...p, [k]: e.target.value }))}
+                        className={field} />
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <button onClick={() => setShowPw(v => !v)} className="p-2.5 bg-white/5 rounded-xl text-slate-400">
+                      {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                    </button>
+                    <button onClick={handleChangePassword} className="flex-1 py-2.5 bg-brand-blue text-white rounded-xl text-xs font-black uppercase tracking-widest">
+                      Confirm Change
+                    </button>
+                    <button onClick={() => setShowPwForm(false)} className="p-2.5 bg-white/5 rounded-xl text-slate-400">
+                      <X size={16} />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {!showPwForm && (
+              <Button variant="secondary" fullWidth onClick={() => setShowPwForm(true)} className="border-white/5 flex items-center justify-center gap-2">
+                <Lock size={16} /> Change Password
+              </Button>
+            )}
           </Card>
         </section>
 
-        {/* Platform Settings */}
+        {/* Platform */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 px-1">
-            <Globe size={20} className="text-brand-green flex-shrink-0" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 truncate">Platform</h2>
+            <Globe size={18} className="text-brand-green flex-shrink-0" />
+            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Platform</h2>
           </div>
-          <Card className="p-4 sm:p-6 bg-brand-card/40 border-white/5 space-y-4">
-            <Input label="Platform Name" defaultValue="Elite Esports" />
-            <Input label="Support Email" defaultValue="support@elite.com" />
+          <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
+            {[['name', 'Platform Name', 'Elite Esports'], ['email', 'Support Email', 'support@elite.com']].map(([k, l, p]) => (
+              <div key={k} className="space-y-1.5">
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{l}</label>
+                <input value={(platform as any)[k]} placeholder={p}
+                  onChange={e => setPlatform(p => ({ ...p, [k]: e.target.value }))}
+                  className={field} />
+              </div>
+            ))}
             <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1 min-w-0">
-                <p className="text-sm font-bold truncate">Maintenance Mode</p>
-                <p className="text-xs text-slate-500 line-clamp-2">Temporarily disable user access</p>
+              <div>
+                <p className="text-sm font-bold">Maintenance Mode</p>
+                <p className="text-xs text-slate-500">Temporarily disable user access</p>
               </div>
-              <div className="w-12 h-6 bg-white/10 rounded-full relative flex-shrink-0">
-                <div className="absolute left-1 top-1 w-4 h-4 bg-white/40 rounded-full" />
-              </div>
+              <Toggle value={platform.maintenance} onChange={() => setPlatform(p => ({ ...p, maintenance: !p.maintenance }))} />
             </div>
+            {platform.maintenance && (
+              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
+                className="text-xs text-brand-yellow font-bold bg-brand-yellow/10 px-3 py-2 rounded-xl border border-brand-yellow/20">
+                ⚠ Maintenance mode is ON — users cannot access the app.
+              </motion.p>
+            )}
           </Card>
         </section>
 
-        {/* Notification Settings */}
+        {/* Notifications */}
         <section className="space-y-4">
           <div className="flex items-center gap-3 px-1">
-            <Bell size={20} className="text-brand-yellow flex-shrink-0" />
-            <h2 className="text-sm font-black uppercase tracking-widest text-slate-500 truncate">Notifications</h2>
+            <Bell size={18} className="text-brand-yellow flex-shrink-0" />
+            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Notifications</h2>
           </div>
-          <Card className="p-4 sm:p-6 bg-brand-card/40 border-white/5 space-y-4">
-            <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1 min-w-0">
-                <p className="text-sm font-bold truncate">Email Alerts</p>
-                <p className="text-xs text-slate-500 line-clamp-2">Receive alerts on important events</p>
+          <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
+            {[
+              ['email', 'Email Alerts',      'Receive alerts on important events'],
+              ['push',  'Push Notifications','Send push alerts to users'],
+              ['sms',   'SMS Alerts',        'Send SMS for critical events'],
+            ].map(([k, l, d]) => (
+              <div key={k} className="flex items-center justify-between gap-4">
+                <div><p className="text-sm font-bold">{l}</p><p className="text-xs text-slate-500">{d}</p></div>
+                <Toggle value={(notifications as any)[k]} onChange={() => setNotifications(n => ({ ...n, [k]: !(n as any)[k] }))} />
               </div>
-              <div className="w-12 h-6 bg-brand-blue rounded-full relative flex-shrink-0">
-                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1 min-w-0">
-                <p className="text-sm font-bold truncate">Push Notifications</p>
-                <p className="text-xs text-slate-500 line-clamp-2">Send push alerts to users</p>
-              </div>
-              <div className="w-12 h-6 bg-brand-blue rounded-full relative flex-shrink-0">
-                <div className="absolute right-1 top-1 w-4 h-4 bg-white rounded-full" />
-              </div>
-            </div>
+            ))}
           </Card>
         </section>
       </div>

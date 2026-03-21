@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
-import { FileText, Plus, Edit2, Trash2, Save, Eye } from 'lucide-react';
-import { motion } from 'motion/react';
+import { FileText, Plus, Edit2, Trash2, Save, Eye, CheckCircle2, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function AdminRules() {
   const [rules, setRules] = useState([
@@ -13,6 +13,9 @@ export default function AdminRules() {
   ]);
   const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
+  const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2500); };
 
   const handleEdit = (rule: any) => {
     setSelectedRuleId(rule.id);
@@ -21,29 +24,26 @@ export default function AdminRules() {
 
   const handleSave = () => {
     if (!selectedRuleId) return;
-    setRules(prev => prev.map(r => 
-      r.id === selectedRuleId 
-        ? { ...r, content: editContent, lastUpdated: new Date().toLocaleString(), status: 'draft' } 
+    setRules(prev => prev.map(r =>
+      r.id === selectedRuleId
+        ? { ...r, content: editContent, lastUpdated: new Date().toLocaleString(), status: 'draft' }
         : r
     ));
-    alert('Draft saved!');
+    showToast('Draft saved successfully');
   };
 
   const handlePublish = (id: string) => {
-    setRules(prev => prev.map(r => 
+    setRules(prev => prev.map(r =>
       r.id === id ? { ...r, status: 'published', lastUpdated: new Date().toLocaleString() } : r
     ));
-    alert('Rule published!');
+    showToast('Policy published successfully');
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Delete this policy?')) {
-      setRules(prev => prev.filter(r => r.id !== id));
-      if (selectedRuleId === id) {
-        setSelectedRuleId(null);
-        setEditContent('');
-      }
-    }
+    setRules(prev => prev.filter(r => r.id !== id));
+    if (selectedRuleId === id) { setSelectedRuleId(null); setEditContent(''); }
+    setConfirmDeleteId(null);
+    showToast('Policy deleted');
   };
 
   const handleNew = () => {
@@ -59,7 +59,15 @@ export default function AdminRules() {
   };
 
   return (
-    <div className="space-y-8 px-4 sm:px-6 pb-24 pt-8 text-white">
+    <div className="space-y-8 px-4 sm:px-6 pb-24 pt-8 text-white relative">
+      <AnimatePresence>
+        {toast && (
+          <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
+            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl flex items-center gap-2 ${toast.ok ? 'bg-brand-green text-white' : 'bg-brand-red text-white'}`}>
+            {toast.ok ? <CheckCircle2 size={16} /> : <X size={16} />} {toast.msg}
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-black tracking-tight">Rules & Policies</h1>
         <Button onClick={handleNew} size="sm" className="rounded-xl px-4 flex items-center gap-2 w-full sm:w-auto justify-center">
@@ -95,23 +103,22 @@ export default function AdminRules() {
                   </div>
                 </div>
                 <div className="flex items-center gap-1 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                  <button 
-                    onClick={() => handleEdit(policy)}
-                    className="p-2.5 bg-white/5 rounded-xl text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 transition-all"
-                    title="Edit Policy"
-                  >
+                  <button onClick={() => handleEdit(policy)} className="p-2.5 bg-white/5 rounded-xl text-slate-400 hover:text-brand-blue hover:bg-brand-blue/10 transition-all">
                     <Edit2 size={16} />
                   </button>
-                  <button 
-                    onClick={() => handleDelete(policy.id)}
-                    className="p-2.5 bg-white/5 rounded-xl text-slate-400 hover:text-brand-red hover:bg-brand-red/10 transition-all"
-                    title="Delete Policy"
-                  >
+                  <button onClick={() => setConfirmDeleteId(policy.id)} className="p-2.5 bg-white/5 rounded-xl text-slate-400 hover:text-brand-red hover:bg-brand-red/10 transition-all">
                     <Trash2 size={16} />
                   </button>
                 </div>
               </div>
               
+              {confirmDeleteId === policy.id && (
+                <div className="flex items-center gap-2 p-3 bg-brand-red/10 rounded-xl border border-brand-red/20 mt-1">
+                  <p className="flex-1 text-xs font-bold text-brand-red">Delete "{policy.title}"?</p>
+                  <button onClick={() => handleDelete(policy.id)} className="px-3 py-1.5 bg-brand-red text-white text-xs font-bold rounded-lg">Delete</button>
+                  <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 bg-white/10 text-slate-300 text-xs font-bold rounded-lg">Cancel</button>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3">
                 <Button 
                   variant="secondary" 
