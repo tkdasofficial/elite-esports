@@ -24,3 +24,9 @@ id = "hHWzE2fLV4scL9BH7AX9N"
 uri = "file://public/apple-touch-icon.png"
 type = "image"
 title = "apple-touch-icon.png — 180×180 iOS Icon"
+
+[[outputs]]
+id = "mMPdOD0dd77Rcx_hq-wkE"
+uri = "file://README.md"
+type = "text"
+title = "README.md — Elite Esports"
