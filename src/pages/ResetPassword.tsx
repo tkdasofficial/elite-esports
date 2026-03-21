@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Lock, Eye, EyeOff, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/src/lib/supabase';
 
 export default function ResetPassword() {
-  const [form, setForm] = useState({ password: '', confirm: '' });
-  const [showPw, setShowPw] = useState(false);
+  const [form, setForm]         = useState({ password: '', confirm: '' });
+  const [showPw, setShowPw]     = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [done, setDone] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading]   = useState(false);
+  const [done, setDone]         = useState(false);
+  const [error, setError]       = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,9 +27,13 @@ export default function ResetPassword() {
     if (form.password !== form.confirm) { setError('Passwords do not match'); return; }
     setError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1000));
+    const { error: updateError } = await supabase.auth.updateUser({ password: form.password });
     setLoading(false);
-    setDone(true);
+    if (updateError) {
+      setError(updateError.message);
+    } else {
+      setDone(true);
+    }
   };
 
   const inputCls = 'w-full bg-app-fill rounded-[12px] py-3 px-4 text-[16px] text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-app-elevated';
@@ -28,7 +41,7 @@ export default function ResetPassword() {
   return (
     <div className="min-h-screen bg-app-bg flex flex-col">
       <div className="px-4 pt-4">
-        <button onClick={() => navigate(-1)}
+        <button onClick={() => navigate('/login')}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-app-elevated text-text-secondary active:opacity-60 transition-opacity">
           <ArrowLeft size={20} />
         </button>
@@ -61,6 +74,7 @@ export default function ResetPassword() {
                       value={form.password}
                       onChange={e => setForm({ ...form, password: e.target.value })}
                       placeholder="New Password"
+                      autoComplete="new-password"
                       required
                       className={`${inputCls} pr-12`}
                     />
@@ -76,6 +90,7 @@ export default function ResetPassword() {
                       value={form.confirm}
                       onChange={e => setForm({ ...form, confirm: e.target.value })}
                       placeholder="Confirm New Password"
+                      autoComplete="new-password"
                       required
                       className={`${inputCls} pr-12`}
                     />

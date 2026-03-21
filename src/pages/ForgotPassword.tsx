@@ -1,22 +1,30 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { Logo } from '@/src/components/common/Logo';
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '@/src/lib/supabase';
 
 export default function ForgotPassword() {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]   = useState('');
   const [loading, setLoading] = useState(false);
-  const [sent, setSent] = useState(false);
+  const [sent, setSent]     = useState(false);
+  const [error, setError]   = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim()) return;
+    setError('');
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1000));
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
     setLoading(false);
-    setSent(true);
+    if (resetError) {
+      setError(resetError.message);
+    } else {
+      setSent(true);
+    }
   };
 
   const inputCls = 'w-full bg-app-fill rounded-[12px] py-3 px-4 text-[16px] text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-app-elevated';
@@ -52,17 +60,19 @@ export default function ForgotPassword() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[13px] text-text-secondary font-normal px-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    placeholder="Enter your email"
-                    required
-                    className={inputCls}
-                  />
-                </div>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  placeholder="Email address"
+                  autoComplete="email"
+                  required
+                  className={inputCls}
+                />
+
+                {error && (
+                  <p className="text-[14px] text-brand-live font-normal px-1">{error}</p>
+                )}
 
                 <button
                   type="submit"

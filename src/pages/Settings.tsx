@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Bell, Shield, Eye, HelpCircle, Info, ChevronRight, Moon, Globe, Smartphone, LogOut, UserX } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useUserStore } from '@/src/store/userStore';
+import { useAuthStore } from '@/src/store/authStore';
 
 type SettingToggle = {
   darkMode: boolean;
@@ -16,7 +16,7 @@ const NOTIFICATION_OPTS = ['All', 'Matches Only', 'None'];
 
 export default function Settings() {
   const navigate = useNavigate();
-  const { logout } = useUserStore();
+  const { signOut } = useAuthStore();
 
   const [settings, setSettings] = useState<SettingToggle>({
     darkMode: true,
@@ -231,7 +231,7 @@ export default function Settings() {
 
         <section className="space-y-2">
           <div className="bg-app-card rounded-[16px] overflow-hidden">
-            <button onClick={() => { logout(); navigate('/login'); }}
+            <button onClick={async () => { await signOut(); navigate('/login'); }}
               className="w-full flex items-center gap-3.5 px-4 py-3.5 active:bg-app-elevated transition-colors">
               <div className="w-9 h-9 rounded-[10px] bg-brand-live/15 text-brand-live flex items-center justify-center shrink-0">
                 <LogOut size={17} />

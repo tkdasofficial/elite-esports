@@ -1,5 +1,5 @@
 import { Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
-import { useUserStore } from '@/src/store/userStore';
+import { useAuthStore } from '@/src/store/authStore';
 import { Header } from '@/src/components/layout/Header';
 import { BottomBar } from '@/src/components/layout/BottomBar';
 import { AnimatePresence, motion } from 'motion/react';
@@ -14,6 +14,7 @@ import Login from '@/src/pages/Login';
 import SignUp from '@/src/pages/SignUp';
 import ForgotPassword from '@/src/pages/ForgotPassword';
 import ResetPassword from '@/src/pages/ResetPassword';
+import VerifyEmail from '@/src/pages/VerifyEmail';
 import Notifications from '@/src/pages/Notifications';
 import NotificationDetail from '@/src/pages/NotificationDetail';
 import MatchDetails from '@/src/pages/MatchDetails';
@@ -79,8 +80,18 @@ const UserLayout = () => {
 };
 
 export const AppRouter = () => {
-  const { isAuthenticated, isAdmin } = useUserStore();
+  const { session, initialized } = useAuthStore();
   const location = useLocation();
+
+  if (!initialized) {
+    return (
+      <div className="h-full w-full bg-brand-dark flex items-center justify-center">
+        <span className="w-8 h-8 border-2 border-brand-primary/30 border-t-brand-primary rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  const isAuthenticated = !!session;
 
   if (!isAuthenticated) {
     return (
@@ -88,6 +99,7 @@ export const AppRouter = () => {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="*" element={<Navigate to="/login" replace />} />
@@ -95,6 +107,11 @@ export const AppRouter = () => {
       </div>
     );
   }
+
+  const userEmail = session.user?.email ?? '';
+  const isAdmin = userEmail === import.meta.env.VITE_ADMIN_EMAIL || 
+                  session.user?.app_metadata?.role === 'admin' ||
+                  session.user?.user_metadata?.role === 'admin';
 
   const isAdminPage = location.pathname.startsWith('/admin');
 
