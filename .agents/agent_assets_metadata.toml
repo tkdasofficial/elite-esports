@@ -1,0 +1,26 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "YhJo53wTCocZEKA_7wA8T"
+uri = "file://public/logo.png"
+type = "image"
+title = "logo.png — 512×512 App Icon"
+
+[[outputs]]
+id = "bolDASUr2EgkJ389CJiqy"
+uri = "file://public/favicon.ico"
+type = "unspecified"
+title = "favicon.ico — 16×16, 32×32, 48×48"
+
+[[outputs]]
+id = "Si5kTxSrec3fBWtzmEY1J"
+uri = "file://public/og-icon.png"
+type = "image"
+title = "og-icon.png — 1200×630 (16:9 Social Preview)"
+
+[[outputs]]
+id = "hHWzE2fLV4scL9BH7AX9N"
+uri = "file://public/apple-touch-icon.png"
+type = "image"
+title = "apple-touch-icon.png — 180×180 iOS Icon"
