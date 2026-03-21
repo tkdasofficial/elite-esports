@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from '@/src/components/common/Logo';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Mail, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { supabase } from '@/src/lib/supabase';
 
@@ -21,173 +21,171 @@ const AppleIcon = () => (
 );
 
 export default function Login() {
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [showPw, setShowPw]     = useState(false);
-  const [loading, setLoading]   = useState(false);
+  const [showEmail, setShowEmail]   = useState(false);
+  const [email, setEmail]           = useState('');
+  const [password, setPassword]     = useState('');
+  const [showPw, setShowPw]         = useState(false);
+  const [loading, setLoading]       = useState(false);
   const [socialLoading, setSocialLoading] = useState<'google' | 'apple' | null>(null);
-  const [error, setError]       = useState('');
-  const navigate = useNavigate();
+  const [error, setError]           = useState('');
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    if (!email.trim() || !password.trim()) {
-      setError('Please enter your email and password');
-      return;
-    }
+    if (!email.trim() || !password.trim()) { setError('Please enter your email and password'); return; }
     setLoading(true);
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    });
+    const { error: err } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
-    if (signInError) {
-      if (signInError.message.includes('Email not confirmed')) {
-        setError('Please verify your email before signing in. Check your inbox.');
-      } else if (signInError.message.includes('Invalid login credentials')) {
-        setError('Invalid email or password. Please try again.');
-      } else {
-        setError(signInError.message);
-      }
+    if (err) {
+      if (err.message.includes('Email not confirmed')) setError('Please verify your email first. Check your inbox.');
+      else if (err.message.includes('Invalid login credentials')) setError('Invalid email or password.');
+      else setError(err.message);
     }
   };
 
   const handleGoogle = async () => {
-    setSocialLoading('google');
-    setError('');
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
-    });
-    if (oauthError) {
-      setError(oauthError.message);
-      setSocialLoading(null);
-    }
+    setSocialLoading('google'); setError('');
+    const { error: err } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: `${window.location.origin}/` } });
+    if (err) { setError(err.message); setSocialLoading(null); }
   };
 
   const handleApple = async () => {
-    setSocialLoading('apple');
-    setError('');
-    const { error: oauthError } = await supabase.auth.signInWithOAuth({
-      provider: 'apple',
-      options: {
-        redirectTo: `${window.location.origin}/`,
-      },
-    });
-    if (oauthError) {
-      setError(oauthError.message);
-      setSocialLoading(null);
-    }
+    setSocialLoading('apple'); setError('');
+    const { error: err } = await supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: `${window.location.origin}/` } });
+    if (err) { setError(err.message); setSocialLoading(null); }
   };
 
-  const inputCls = 'w-full bg-app-fill rounded-[12px] py-3 px-4 text-[16px] text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-app-elevated';
+  const inputCls = 'w-full bg-app-fill rounded-[12px] py-3.5 px-4 text-[16px] text-text-primary placeholder:text-text-muted outline-none transition-colors focus:bg-app-elevated';
 
   return (
     <div className="min-h-screen bg-app-bg flex flex-col">
-      <div className="flex-1 flex flex-col items-center justify-center px-5 py-8">
+      <div className="flex-1 flex flex-col items-center justify-center px-5 py-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
-          className="w-full max-w-[360px] space-y-7"
+          className="w-full max-w-[360px] space-y-8"
         >
-          {/* Logo & Title */}
+          {/* Logo */}
           <div className="flex flex-col items-center gap-4">
             <div className="w-[72px] h-[72px] bg-brand-primary rounded-[22px] flex items-center justify-center shadow-xl shadow-brand-primary/30">
               <Logo size={44} />
             </div>
             <div className="text-center space-y-1">
               <h1 className="text-[28px] font-bold text-text-primary tracking-[-0.7px]">Welcome Back</h1>
-              <p className="text-[15px] text-text-secondary font-normal">Sign in to Elite Esports</p>
+              <p className="text-[15px] text-text-secondary">Sign in to Elite Esports</p>
             </div>
           </div>
 
-          {/* Social Buttons */}
+          {/* Auth Buttons */}
           <div className="space-y-3">
+            {/* Google */}
             <button
               onClick={handleGoogle}
               disabled={!!socialLoading || loading}
-              className="w-full flex items-center justify-center gap-3 py-3.5 bg-white rounded-[14px] text-[15px] font-semibold text-gray-800 transition-opacity active:opacity-75 disabled:opacity-50 shadow-sm"
+              className="w-full flex items-center gap-3.5 px-5 py-4 bg-white rounded-[14px] text-[16px] font-semibold text-gray-800 transition-opacity active:opacity-70 disabled:opacity-50 shadow-sm"
             >
-              {socialLoading === 'google' ? (
-                <span className="w-[18px] h-[18px] border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
-              ) : (
-                <GoogleIcon />
-              )}
+              {socialLoading === 'google'
+                ? <span className="w-5 h-5 border-2 border-gray-300 border-t-gray-700 rounded-full animate-spin" />
+                : <GoogleIcon />}
               Continue with Google
             </button>
 
+            {/* Apple */}
             <button
               onClick={handleApple}
               disabled={!!socialLoading || loading}
-              className="w-full flex items-center justify-center gap-3 py-3.5 bg-[#1C1C1E] border border-white/10 rounded-[14px] text-[15px] font-semibold text-white transition-opacity active:opacity-75 disabled:opacity-50"
+              className="w-full flex items-center gap-3.5 px-5 py-4 bg-[#1C1C1E] border border-white/10 rounded-[14px] text-[16px] font-semibold text-white transition-opacity active:opacity-70 disabled:opacity-50"
             >
-              {socialLoading === 'apple' ? (
-                <span className="w-[18px] h-[18px] border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <AppleIcon />
-              )}
+              {socialLoading === 'apple'
+                ? <span className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                : <AppleIcon />}
               Continue with Apple
             </button>
+
+            {/* Email toggle / form */}
+            <AnimatePresence initial={false}>
+              {!showEmail ? (
+                <motion.button
+                  key="email-btn"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setShowEmail(true)}
+                  disabled={!!socialLoading || loading}
+                  className="w-full flex items-center gap-3.5 px-5 py-4 bg-app-elevated border border-white/8 rounded-[14px] text-[16px] font-semibold text-text-primary transition-opacity active:opacity-70 disabled:opacity-50"
+                >
+                  <Mail size={20} className="text-text-secondary" />
+                  Continue with Email
+                </motion.button>
+              ) : (
+                <motion.div
+                  key="email-form"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25, ease: [0.25, 0.46, 0.45, 0.94] }}
+                  className="overflow-hidden"
+                >
+                  <form onSubmit={handleEmailSubmit} className="space-y-3 pt-1">
+                    {/* Back to options */}
+                    <button
+                      type="button"
+                      onClick={() => { setShowEmail(false); setError(''); setEmail(''); setPassword(''); }}
+                      className="flex items-center gap-1.5 text-[14px] text-text-muted active:opacity-60 transition-opacity mb-1"
+                    >
+                      <ArrowLeft size={14} />
+                      Other sign-in options
+                    </button>
+
+                    <input
+                      type="email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="Email address"
+                      autoComplete="email"
+                      autoFocus
+                      required
+                      className={inputCls}
+                    />
+                    <div className="relative">
+                      <input
+                        type={showPw ? 'text' : 'password'}
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        placeholder="Password"
+                        autoComplete="current-password"
+                        required
+                        className={`${inputCls} pr-12`}
+                      />
+                      <button type="button" onClick={() => setShowPw(!showPw)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted active:opacity-50">
+                        {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+
+                    {error && <p className="text-[14px] text-brand-live px-0.5">{error}</p>}
+
+                    <div className="flex justify-end">
+                      <Link to="/forgot-password" className="text-[14px] text-brand-primary">Forgot Password?</Link>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="w-full py-4 bg-brand-primary rounded-[14px] text-white text-[16px] font-semibold transition-opacity active:opacity-75 disabled:opacity-40 shadow-lg shadow-brand-primary/25 flex items-center justify-center gap-2"
+                    >
+                      {loading
+                        ? <><span className="w-[18px] h-[18px] border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in…</>
+                        : 'Sign In'}
+                    </button>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-white/8" />
-            <span className="text-[13px] text-text-muted font-normal">or sign in with email</span>
-            <div className="flex-1 h-px bg-white/8" />
-          </div>
-
-          {/* Email/Password Form */}
-          <form onSubmit={handleEmailSubmit} className="space-y-3">
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="Email address"
-              autoComplete="email"
-              required
-              className={inputCls}
-            />
-            <div className="relative">
-              <input
-                type={showPw ? 'text' : 'password'}
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="Password"
-                autoComplete="current-password"
-                required
-                className={`${inputCls} pr-12`}
-              />
-              <button type="button" onClick={() => setShowPw(!showPw)}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-text-muted active:opacity-50">
-                {showPw ? <EyeOff size={18} /> : <Eye size={18} />}
-              </button>
-            </div>
-
-            {error && (
-              <p className="text-[14px] text-brand-live font-normal px-1">{error}</p>
-            )}
-
-            <div className="flex justify-end">
-              <Link to="/forgot-password" className="text-[14px] text-brand-primary font-normal">
-                Forgot Password?
-              </Link>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading || !!socialLoading}
-              className="w-full py-4 bg-brand-primary rounded-[14px] text-white text-[17px] font-semibold transition-opacity active:opacity-75 disabled:opacity-40 shadow-lg shadow-brand-primary/25 flex items-center justify-center gap-2"
-            >
-              {loading ? (
-                <><span className="w-[18px] h-[18px] border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in…</>
-              ) : 'Sign In'}
-            </button>
-          </form>
+          {!showEmail && error && <p className="text-[14px] text-brand-live text-center">{error}</p>}
 
           <p className="text-center text-[15px] text-text-secondary">
             New to Elite?{' '}
