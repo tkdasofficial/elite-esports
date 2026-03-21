@@ -34,7 +34,7 @@ export default function AdminSupport() {
 
   const handleStatusChange = (id: string, status: string) => {
     updateTicketStatus(id, status);
-    if (activeTicket?.id === id) setActiveTicket(t => t ? { ...t, status } : t);
+    if (activeTicket?.id === id) setActiveTicket(t => t ? { ...t, status: status as SupportTicket['status'] } : t);
     showToast(`Ticket ${status.replace('_', ' ')}`);
   };
 

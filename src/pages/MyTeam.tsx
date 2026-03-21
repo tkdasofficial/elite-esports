@@ -19,7 +19,7 @@ export default function MyTeam() {
   };
   const handleJoin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (joinId) { joinTeam(joinId); setShowJoin(false); setJoinId(''); }
+    if (joinId) { joinTeam(joinId, '', ''); setShowJoin(false); setJoinId(''); }
   };
 
   const inputCls = 'w-full bg-app-fill rounded-[12px] py-3 px-4 text-[16px] text-text-primary placeholder:text-text-muted outline-none focus:bg-app-elevated transition-colors';
