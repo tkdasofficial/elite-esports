@@ -1,21 +1,27 @@
 import React, { useState, useEffect } from 'react';
 import { useUserStore } from '@/src/store/userStore';
 import { Button } from '@/src/components/ui/Button';
-import { ChevronLeft, Trash2 } from 'lucide-react';
+import { CustomSelect } from '@/src/components/ui/CustomSelect';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
-const GAMES = ['BGMI', 'Free Fire', 'COD Mobile', 'Valorant', 'PUBG New State'];
+const GAME_OPTIONS = [
+  { value: 'BGMI',           label: 'BGMI',            emoji: '🎯', description: 'Battlegrounds Mobile India' },
+  { value: 'Free Fire',      label: 'Free Fire',        emoji: '🔥', description: 'Garena Free Fire Max' },
+  { value: 'COD Mobile',     label: 'COD Mobile',       emoji: '🎮', description: 'Call of Duty: Mobile' },
+  { value: 'Valorant',       label: 'Valorant',         emoji: '⚡', description: 'Riot Games tactical FPS' },
+  { value: 'PUBG New State', label: 'PUBG New State',   emoji: '🛡️', description: 'Krafton battle royale' },
+];
 
 export default function EditGameProfile() {
   const { gameProfiles, updateGameProfile, removeGameProfile } = useUserStore();
   const navigate = useNavigate();
   const { id } = useParams();
 
-  const [form, setForm] = useState({ gameName:'', ign:'', uid:'' });
+  const [form, setForm] = useState({ gameName: '', ign: '', uid: '' });
 
   useEffect(() => {
     const p = gameProfiles.find(p => p.id === id);
-    if (p) setForm({ gameName:p.gameName, ign:p.ign, uid:p.uid });
+    if (p) setForm({ gameName: p.gameName, ign: p.ign, uid: p.uid });
     else navigate('/profile');
   }, [id, gameProfiles, navigate]);
 
@@ -43,27 +49,25 @@ export default function EditGameProfile() {
 
       <div className="flex-1 scrollable-content px-4 py-6 pb-10">
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-1.5">
-            <label className="text-[13px] text-text-secondary font-normal px-1">Select Game</label>
-            <div className="relative">
-              <select value={form.gameName} onChange={e=>setForm({...form,gameName:e.target.value})}
-                className={`${inputCls} appearance-none`}>
-                {GAMES.map(g=><option key={g} value={g}>{g}</option>)}
-              </select>
-              <ChevronLeft size={14} className="absolute right-4 top-1/2 -translate-y-1/2 -rotate-90 text-text-muted pointer-events-none"/>
-            </div>
-          </div>
+
+          <CustomSelect
+            label="Select Game"
+            value={form.gameName}
+            onChange={v => setForm({ ...form, gameName: v })}
+            options={GAME_OPTIONS}
+            variant="consumer"
+          />
 
           <div className="space-y-1.5">
             <label className="text-[13px] text-text-secondary font-normal px-1">In-Game Name (IGN)</label>
-            <input type="text" value={form.ign} onChange={e=>setForm({...form,ign:e.target.value})}
-              className={inputCls} placeholder="e.g. Elite_Gamer_99" required/>
+            <input type="text" value={form.ign} onChange={e => setForm({ ...form, ign: e.target.value })}
+              className={inputCls} placeholder="e.g. Elite_Gamer_99" required />
           </div>
 
           <div className="space-y-1.5">
             <label className="text-[13px] text-text-secondary font-normal px-1">Game UID</label>
-            <input type="text" value={form.uid} onChange={e=>setForm({...form,uid:e.target.value})}
-              className={inputCls} placeholder="e.g. 5423198765" required/>
+            <input type="text" value={form.uid} onChange={e => setForm({ ...form, uid: e.target.value })}
+              className={inputCls} placeholder="e.g. 5423198765" required />
           </div>
 
           <div className="pt-2">

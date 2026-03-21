@@ -3,6 +3,7 @@ import { Card } from '@/src/components/ui/Card';
 import { Search, Check, X, ArrowUpRight, ArrowDownLeft, Download, Trash2, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/src/components/ui/Button';
+import { CustomSelect } from '@/src/components/ui/CustomSelect';
 import { cn } from '@/src/utils/helpers';
 
 type Tx = {
@@ -118,15 +119,29 @@ export default function AdminEconomy() {
             className="w-full bg-brand-card/40 border border-white/5 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold focus:border-brand-blue outline-none transition-all placeholder:text-slate-600" />
         </div>
         <div className="flex gap-2">
-          {[
-            { value: typeFilter,   set: setTypeFilter,   opts: [['all','All Types'],['deposit','Deposits'],['withdrawal','Withdrawals']] },
-            { value: statusFilter, set: setStatusFilter, opts: [['all','All Status'],['pending','Pending'],['success','Success'],['rejected','Rejected']] },
-          ].map((f, fi) => (
-            <select key={fi} value={f.value} onChange={e => f.set(e.target.value)}
-              className="flex-1 md:flex-none bg-brand-card/40 border border-white/5 rounded-2xl py-3 px-3 text-sm font-bold outline-none focus:border-brand-blue transition-all">
-              {f.opts.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-          ))}
+          <CustomSelect
+            value={typeFilter}
+            onChange={setTypeFilter}
+            options={[
+              { value: 'all',        label: 'All Types'    },
+              { value: 'deposit',    label: 'Deposits',    emoji: '📥' },
+              { value: 'withdrawal', label: 'Withdrawals', emoji: '📤' },
+            ]}
+            variant="admin"
+            className="flex-1 md:flex-none md:w-40"
+          />
+          <CustomSelect
+            value={statusFilter}
+            onChange={setStatusFilter}
+            options={[
+              { value: 'all',      label: 'All Status' },
+              { value: 'pending',  label: 'Pending',   emoji: '🕐' },
+              { value: 'success',  label: 'Success',   emoji: '✅' },
+              { value: 'rejected', label: 'Rejected',  emoji: '❌' },
+            ]}
+            variant="admin"
+            className="flex-1 md:flex-none md:w-40"
+          />
         </div>
       </div>
 

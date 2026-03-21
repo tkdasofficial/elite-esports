@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
+import { CustomSelect } from '@/src/components/ui/CustomSelect';
 import { Code, Plus, Trash2, Edit2, Copy, Check, X, CheckCircle2, Minus, Globe, ToggleLeft, ToggleRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
@@ -320,16 +321,19 @@ export default function AdminTags() {
 
                 {/* Type + Status row */}
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Type</label>
-                    <select
-                      value={modal.tag.type}
-                      onChange={e => updateModal({ type: e.target.value as TagType })}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-3 text-sm font-bold outline-none focus:border-brand-blue transition-all"
-                    >
-                      {TAG_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                  </div>
+                  <CustomSelect
+                    label="Type"
+                    value={modal.tag.type}
+                    onChange={v => updateModal({ type: v as TagType })}
+                    options={[
+                      { value: 'HTML',    label: 'HTML',    emoji: '🏷️' },
+                      { value: 'JS',      label: 'JS',      emoji: '⚡' },
+                      { value: 'HTML/JS', label: 'HTML/JS', emoji: '🔗' },
+                      { value: 'CSS',     label: 'CSS',     emoji: '🎨' },
+                      { value: 'Other',   label: 'Other',   emoji: '📦' },
+                    ]}
+                    variant="admin"
+                  />
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Status</label>
                     <button
@@ -345,16 +349,20 @@ export default function AdminTags() {
                 </div>
 
                 {/* Placement */}
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Placement</label>
-                  <select
-                    value={modal.tag.placement}
-                    onChange={e => updateModal({ placement: e.target.value })}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-3 text-sm font-bold outline-none focus:border-brand-blue transition-all"
-                  >
-                    {PLACEMENTS.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
-                </div>
+                <CustomSelect
+                  label="Placement"
+                  value={modal.tag.placement}
+                  onChange={v => updateModal({ placement: v })}
+                  options={[
+                    { value: '<head>',                   label: '<head>',                   emoji: '📌' },
+                    { value: '<body>',                   label: '<body>',                   emoji: '📄' },
+                    { value: 'After opening <body>',     label: 'After opening <body>',     emoji: '⬇️' },
+                    { value: 'Before closing </body>',   label: 'Before closing </body>',   emoji: '⬆️' },
+                    { value: 'Sidebar',                  label: 'Sidebar',                  emoji: '📋' },
+                    { value: 'Footer',                   label: 'Footer',                   emoji: '🦶' },
+                  ]}
+                  variant="admin"
+                />
 
                 {/* Code */}
                 <div className="space-y-1.5">

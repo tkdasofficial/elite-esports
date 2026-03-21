@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
+import { CustomSelect } from '@/src/components/ui/CustomSelect';
 import { Plus, Edit2, Trash2, Search, CheckCircle2, X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
@@ -162,13 +163,19 @@ export default function AdminGames() {
                     placeholder="e.g. BGMI, Valorant..."
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-brand-blue transition-all" />
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Category</label>
-                  <select value={modal.game.category || ''} onChange={e => setModal(m => m ? { ...m, game: { ...m.game, category: e.target.value } } : m)}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm outline-none focus:border-brand-blue transition-all">
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
+                <CustomSelect
+                  label="Category"
+                  value={modal.game.category || ''}
+                  onChange={v => setModal(m => m ? { ...m, game: { ...m.game, category: v } } : m)}
+                  options={[
+                    { value: 'Battle Royale', label: 'Battle Royale', emoji: '🏆' },
+                    { value: 'FPS',           label: 'FPS',           emoji: '🎯' },
+                    { value: 'MOBA',          label: 'MOBA',          emoji: '⚔️'  },
+                    { value: 'Sports',        label: 'Sports',        emoji: '⚽' },
+                    { value: 'Strategy',      label: 'Strategy',      emoji: '🧠' },
+                  ]}
+                  variant="admin"
+                />
                 <div className="flex gap-3 pt-2">
                   <Button variant="secondary" onClick={() => setModal(null)} className="flex-1 rounded-xl border-white/10">Cancel</Button>
                   <Button onClick={handleSave} className="flex-1 rounded-xl flex items-center gap-2 justify-center">
