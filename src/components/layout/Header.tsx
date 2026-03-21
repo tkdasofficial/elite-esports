@@ -1,10 +1,12 @@
-import { Bell, Search, X, Mic } from 'lucide-react';
+import { Bell, Search, X, Mic, MicOff } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { Logo } from '../common/Logo';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMatchStore } from '@/src/store/matchStore';
 import { useNotificationStore } from '@/src/store/notificationStore';
 import { motion, AnimatePresence } from 'motion/react';
+import { useSpeechRecognition } from '@/src/hooks/useSpeechRecognition';
+import { cn } from '@/src/utils/helpers';
 
 const PAGE_TITLES: Record<string, string> = {
   '/':            'Discover',
@@ -24,13 +26,26 @@ export const Header = () => {
   const title = PAGE_TITLES[location.pathname] ?? 'Elite';
 
   useEffect(() => {
-    if (searchOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (searchOpen) setTimeout(() => inputRef.current?.focus(), 60);
   }, [searchOpen]);
 
-  const openSearch = () => setSearchOpen(true);
-  const closeSearch = () => { setSearchOpen(false); setSearchQuery(''); };
+  const openSearch  = () => setSearchOpen(true);
+  const closeSearch = () => { setSearchOpen(false); setSearchQuery(''); stop(); };
+
+  const handleVoiceResult = useCallback((text: string) => {
+    setSearchQuery(text);
+  }, [setSearchQuery]);
+
+  const { isListening, start, stop, supported } = useSpeechRecognition(handleVoiceResult);
+
+  const toggleVoice = () => {
+    if (isListening) {
+      stop();
+    } else {
+      setSearchQuery('');
+      start();
+    }
+  };
 
   return (
     <header className="h-[56px] px-4 flex items-center sticky top-0 z-50 glass-dark border-b border-app-border">
@@ -60,7 +75,10 @@ export const Header = () => {
                 <Search size={16} />
               </motion.button>
 
-              <Link to="/notifications" className="relative w-8 h-8 flex items-center justify-center rounded-full bg-app-elevated text-text-secondary active:opacity-60 transition-opacity">
+              <Link
+                to="/notifications"
+                className="relative w-8 h-8 flex items-center justify-center rounded-full bg-app-elevated text-text-secondary active:opacity-60 transition-opacity"
+              >
                 <Bell size={16} />
                 <AnimatePresence>
                   {hasUnread && (
@@ -86,34 +104,50 @@ export const Header = () => {
             transition={{ duration: 0.15 }}
             className="flex items-center gap-2.5 w-full"
           >
-            {/* iOS-style search pill */}
             <div className="flex-1 relative flex items-center">
               <div className="absolute left-3 flex items-center pointer-events-none">
                 <Search size={15} className="text-text-muted" />
               </div>
+
               <input
                 ref={inputRef}
                 type="text"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search tournaments…"
-                className="w-full bg-[rgba(118,118,128,0.18)] rounded-[10px] py-[7px] pl-[34px] pr-[34px] text-[15px] text-text-primary placeholder:text-text-muted outline-none caret-brand-primary"
+                placeholder={isListening ? 'Listening…' : 'Search tournaments…'}
+                className={cn(
+                  'w-full bg-[rgba(118,118,128,0.18)] rounded-[10px] py-[7px] pl-[34px] pr-[36px] text-[15px] text-text-primary placeholder:text-text-muted outline-none caret-brand-primary transition-all',
+                  isListening && 'bg-brand-live/8 placeholder:text-brand-live/60'
+                )}
               />
+
               {searchQuery ? (
                 <button
-                  onClick={() => setSearchQuery('')}
+                  onClick={() => { setSearchQuery(''); stop(); inputRef.current?.focus(); }}
                   className="absolute right-2.5 w-[18px] h-[18px] bg-text-muted/50 rounded-full flex items-center justify-center active:opacity-60"
                 >
                   <X size={10} className="text-app-bg font-bold" strokeWidth={3} />
                 </button>
-              ) : (
-                <div className="absolute right-3 flex items-center pointer-events-none">
-                  <Mic size={15} className="text-text-muted" />
-                </div>
-              )}
+              ) : supported ? (
+                <motion.button
+                  onClick={toggleVoice}
+                  animate={isListening ? { scale: [1, 1.15, 1] } : { scale: 1 }}
+                  transition={isListening ? { repeat: Infinity, duration: 1.2 } : {}}
+                  className={cn(
+                    'absolute right-2.5 w-6 h-6 rounded-full flex items-center justify-center transition-all active:opacity-70',
+                    isListening
+                      ? 'bg-brand-live text-white shadow-md shadow-brand-live/40'
+                      : 'bg-transparent text-text-muted'
+                  )}
+                >
+                  {isListening
+                    ? <MicOff size={13} strokeWidth={2.5} />
+                    : <Mic size={14} />
+                  }
+                </motion.button>
+              ) : null}
             </div>
 
-            {/* Cancel button — iOS style blue text */}
             <motion.button
               initial={{ opacity: 0, x: 10 }}
               animate={{ opacity: 1, x: 0 }}
