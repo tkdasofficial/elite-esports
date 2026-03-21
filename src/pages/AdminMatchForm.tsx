@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useMatchStore } from '@/src/store/matchStore';
+import { useGameStore } from '@/src/store/gameStore';
 import { Card } from '@/src/components/ui/Card';
 import { Input } from '@/src/components/ui/Input';
 import { Button } from '@/src/components/ui/Button';
@@ -7,13 +8,6 @@ import { CustomSelect } from '@/src/components/ui/CustomSelect';
 import { ArrowLeft, Save, ImageIcon } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Match } from '@/src/types';
-
-const GAME_OPTIONS = [
-  { value: 'BGMI',       label: 'BGMI',       emoji: '🎯', description: 'Battlegrounds Mobile India' },
-  { value: 'Valorant',   label: 'Valorant',   emoji: '⚡', description: 'Riot Games tactical FPS' },
-  { value: 'Free Fire',  label: 'Free Fire',  emoji: '🔥', description: 'Garena Free Fire Max' },
-  { value: 'COD Mobile', label: 'COD Mobile', emoji: '🎮', description: 'Call of Duty: Mobile' },
-];
 
 const STATUS_OPTIONS = [
   { value: 'upcoming',  label: 'Upcoming',  emoji: '🕐', description: 'Not started yet' },
@@ -32,13 +26,25 @@ export default function AdminMatchForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addMatch, updateMatch, getMatchById } = useMatchStore();
+  const activeGames = useGameStore(s => s.games.filter(g => g.status === 'active'));
+  const getGame = useGameStore(s => s.getGameByName);
   const isEditing = !!id;
 
+  const gameOptions = activeGames.map(g => ({
+    value: g.name,
+    label: g.name,
+    image: g.logo,
+    description: g.category,
+  }));
+
+  const defaultGameName = activeGames[0]?.name ?? 'BGMI';
+  const defaultBanner   = activeGames[0]?.banner ?? '';
+
   const [formData, setFormData] = useState<Partial<Match>>({
-    game_name: 'BGMI',
+    game_name: defaultGameName,
     title: '',
     mode: 'Squad',
-    banner_image: '',
+    banner_image: defaultBanner,
     status: 'upcoming',
     start_time: '',
     entry_fee: '₹50',
@@ -53,18 +59,31 @@ export default function AdminMatchForm() {
 
   useEffect(() => {
     if (isEditing) {
-      const match = getMatchById(id);
+      const match = getMatchById(id!);
       if (match) setFormData(match);
     }
   }, [id, isEditing, getMatchById]);
 
+  const handleGameChange = (gameName: string) => {
+    const game = getGame(gameName);
+    setFormData(prev => ({
+      ...prev,
+      game_name: gameName,
+      banner_image: game?.banner ?? prev.banner_image,
+    }));
+  };
+
+  const handleChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditing) {
-      updateMatch(id, formData);
+      updateMatch(id!, formData);
     } else {
       const newMatch: Match = {
-        ...formData as Match,
+        ...(formData as Match),
         match_id: Math.random().toString(36).substr(2, 9),
       };
       addMatch(newMatch);
@@ -72,24 +91,29 @@ export default function AdminMatchForm() {
     navigate('/admin/matches');
   };
 
-  const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-  };
-
   const labelClass = 'text-[10px] font-black uppercase tracking-widest text-slate-500';
+  const selectedGame = getGame(formData.game_name ?? '');
 
   return (
     <div className="space-y-8 px-4 sm:px-6 pb-24 pt-4 text-white">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
-          <button onClick={() => navigate('/admin/matches')} className="p-2 bg-white/5 rounded-xl text-slate-400 hover:bg-white/10 transition-colors">
+          <button
+            onClick={() => navigate('/admin/matches')}
+            className="p-2 bg-white/5 rounded-xl text-slate-400 hover:bg-white/10 transition-colors"
+          >
             <ArrowLeft size={20} />
           </button>
-          <h1 className="text-2xl font-black tracking-tight truncate">{isEditing ? 'Edit Tournament' : 'New Tournament'}</h1>
+          <h1 className="text-2xl font-black tracking-tight truncate">
+            {isEditing ? 'Edit Tournament' : 'New Tournament'}
+          </h1>
         </div>
-        <Button onClick={handleSubmit} size="sm" className="rounded-xl px-4 flex items-center gap-2 w-full sm:w-auto justify-center">
-          <Save size={16} />
-          Save
+        <Button
+          onClick={handleSubmit}
+          size="sm"
+          className="rounded-xl px-4 flex items-center gap-2 w-full sm:w-auto justify-center"
+        >
+          <Save size={16} /> Save
         </Button>
       </div>
 
@@ -100,9 +124,9 @@ export default function AdminMatchForm() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <CustomSelect
               label="Game"
-              value={formData.game_name ?? 'BGMI'}
-              onChange={v => handleChange('game_name', v)}
-              options={GAME_OPTIONS}
+              value={formData.game_name ?? defaultGameName}
+              onChange={handleGameChange}
+              options={gameOptions}
               variant="admin"
             />
             <CustomSelect
@@ -154,26 +178,45 @@ export default function AdminMatchForm() {
           </div>
         </Card>
 
-        <Card className="p-4 sm:p-6 space-y-5 bg-brand-card/40 border-white/5">
-          <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Banner Image</h2>
-          <Input
-            label="Image URL"
-            placeholder="https://example.com/banner.jpg"
-            value={formData.banner_image}
-            onChange={e => handleChange('banner_image', e.target.value)}
-          />
+        <Card className="p-4 sm:p-6 space-y-4 bg-brand-card/40 border-white/5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Match Banner</h2>
+            <span className="text-[10px] font-bold text-brand-blue bg-brand-blue/10 px-2.5 py-1 rounded-full">
+              Auto from game
+            </span>
+          </div>
+
           {formData.banner_image ? (
-            <div className="rounded-2xl overflow-hidden border border-white/10 w-full h-44">
-              <img src={formData.banner_image} alt="Banner preview" className="w-full h-full object-cover"
+            <div className="rounded-2xl overflow-hidden border border-white/10 w-full h-44 relative">
+              <img
+                src={formData.banner_image}
+                alt="Banner"
+                className="w-full h-full object-cover"
                 referrerPolicy="no-referrer"
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+              {selectedGame && (
+                <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-xl px-2.5 py-1.5">
+                  <img
+                    src={selectedGame.logo}
+                    alt={selectedGame.name}
+                    className="w-5 h-5 rounded-md object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                  <span className="text-[11px] font-black text-white">{selectedGame.name}</span>
+                </div>
+              )}
             </div>
           ) : (
             <div className="rounded-2xl border-2 border-dashed border-white/10 w-full h-44 flex flex-col items-center justify-center gap-2 text-slate-600">
               <ImageIcon size={32} />
-              <span className="text-xs font-bold">Enter a URL above to preview</span>
+              <span className="text-xs font-bold">Select a game above to load its banner</span>
             </div>
           )}
+
+          <p className="text-[11px] text-slate-600 font-bold">
+            The banner is set automatically from the selected game. To change it, update the game's banner in the Games section.
+          </p>
         </Card>
 
         {formData.status === 'completed' && (
@@ -201,7 +244,9 @@ export default function AdminMatchForm() {
                     {t.url ? (
                       <img src={t.url} alt={t.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-600"><ImageIcon size={18} /></div>
+                      <div className="w-full h-full flex items-center justify-center text-slate-600">
+                        <ImageIcon size={18} />
+                      </div>
                     )}
                   </div>
                   <span className="text-sm font-bold text-slate-400 truncate">{t.name}</span>
@@ -215,7 +260,14 @@ export default function AdminMatchForm() {
           <Button type="submit" fullWidth size="md" className="rounded-xl">
             {isEditing ? 'Update Tournament' : 'Create Tournament'}
           </Button>
-          <Button type="button" variant="secondary" fullWidth size="md" onClick={() => navigate('/admin/matches')} className="rounded-xl border-white/5">
+          <Button
+            type="button"
+            variant="secondary"
+            fullWidth
+            size="md"
+            onClick={() => navigate('/admin/matches')}
+            className="rounded-xl border-white/5"
+          >
             Cancel
           </Button>
         </div>

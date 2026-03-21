@@ -33,6 +33,16 @@ export interface User {
   rank: string;
 }
 
+export interface Game {
+  id: string;
+  name: string;
+  category: string;
+  logo: string;
+  banner: string;
+  status: 'active' | 'inactive';
+  matches: number;
+}
+
 export interface Banner {
   id: string;
   image: string;

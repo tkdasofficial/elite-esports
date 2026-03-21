@@ -28,7 +28,7 @@ A premium global esports tournament platform for live matches, leaderboards, and
 │   │   └── AppRouter.tsx  # All routing logic + auth guard
 │   ├── pages/          # Page components (Home, Leaderboard, Live, Wallet, Profile, Admin, etc.)
 │   ├── components/     # Shared UI components (layout, ui, matches, etc.)
-│   ├── store/          # Zustand stores (userStore, matchStore, bannerStore)
+│   ├── store/          # Zustand stores (userStore, matchStore, bannerStore, gameStore)
 │   └── utils/          # Helper utilities
 ```
 
@@ -48,7 +48,8 @@ The app runs on port 5000 via `npm run dev`. Vite is configured to:
 - Wallet management
 - User profile & game profiles
 - My Matches & My Team pages
-- Full admin panel (dashboard, matches, users, economy, etc.)
+- Full admin panel (dashboard, matches, users, economy, games, etc.)
+- Game management system: each game has a logo (for selectors) and banner (auto-used for matches)
 - Page transitions with Motion animations
 - Mobile-first responsive design
 

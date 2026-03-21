@@ -6,6 +6,7 @@ export interface SelectOption {
   value: string;
   label: string;
   emoji?: string;
+  image?: string;
   description?: string;
 }
 
@@ -74,9 +75,17 @@ export function CustomSelect({
         aria-expanded={open}
       >
         <span className="flex items-center gap-2.5 min-w-0">
-          {selected?.emoji && (
+          {selected?.image ? (
+            <img
+              src={selected.image}
+              alt={selected.label}
+              className="w-6 h-6 rounded-lg object-cover flex-shrink-0"
+              referrerPolicy="no-referrer"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          ) : selected?.emoji ? (
             <span className="text-[18px] leading-none flex-shrink-0">{selected.emoji}</span>
-          )}
+          ) : null}
           <span className={`truncate ${!selected ? (isAdmin ? 'text-slate-500' : 'text-text-muted') : ''}`}>
             {selected ? selected.label : placeholder}
           </span>
@@ -126,11 +135,19 @@ export function CustomSelect({
                       w-full text-left
                     `}
                   >
-                    {opt.emoji && (
+                    {opt.image ? (
+                      <img
+                        src={opt.image}
+                        alt={opt.label}
+                        className="w-7 h-7 rounded-lg object-cover flex-shrink-0"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : opt.emoji ? (
                       <span className="text-[18px] leading-none w-7 flex-shrink-0 flex items-center justify-center">
                         {opt.emoji}
                       </span>
-                    )}
+                    ) : null}
                     <span className="flex-1 min-w-0">
                       <span className="block truncate font-semibold">{opt.label}</span>
                       {opt.description && (
