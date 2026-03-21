@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Check, ChevronDown } from 'lucide-react';
+import { Check, ChevronDown, type LucideProps } from 'lucide-react';
 import { AnimatePresence, motion } from 'motion/react';
+import React from 'react';
 
 export interface SelectOption {
   value: string;
   label: string;
-  emoji?: string;
+  icon?: React.ComponentType<LucideProps>;
   image?: string;
   description?: string;
 }
@@ -56,6 +57,29 @@ export function CustomSelect({
     ? 'flex items-center gap-3 px-4 py-3 text-sm font-bold cursor-pointer transition-colors select-none'
     : 'flex items-center gap-3 px-4 py-[13px] text-[15px] cursor-pointer transition-colors select-none';
 
+  const renderLeading = (opt: SelectOption, size: number) => {
+    if (opt.image) {
+      return (
+        <img
+          src={opt.image}
+          alt={opt.label}
+          className={`w-${size === 6 ? 6 : 7} h-${size === 6 ? 6 : 7} rounded-lg object-cover flex-shrink-0`}
+          referrerPolicy="no-referrer"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+        />
+      );
+    }
+    if (opt.icon) {
+      const Icon = opt.icon;
+      return (
+        <span className="w-7 flex-shrink-0 flex items-center justify-center text-slate-400">
+          <Icon size={size} />
+        </span>
+      );
+    }
+    return null;
+  };
+
   return (
     <div ref={ref} className={`relative ${className}`}>
       {label && (
@@ -83,8 +107,10 @@ export function CustomSelect({
               referrerPolicy="no-referrer"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
-          ) : selected?.emoji ? (
-            <span className="text-[18px] leading-none flex-shrink-0">{selected.emoji}</span>
+          ) : selected?.icon ? (
+            <span className="flex-shrink-0 text-slate-400">
+              <selected.icon size={16} />
+            </span>
           ) : null}
           <span className={`truncate ${!selected ? (isAdmin ? 'text-slate-500' : 'text-text-muted') : ''}`}>
             {selected ? selected.label : placeholder}
@@ -135,19 +161,7 @@ export function CustomSelect({
                       w-full text-left
                     `}
                   >
-                    {opt.image ? (
-                      <img
-                        src={opt.image}
-                        alt={opt.label}
-                        className="w-7 h-7 rounded-lg object-cover flex-shrink-0"
-                        referrerPolicy="no-referrer"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    ) : opt.emoji ? (
-                      <span className="text-[18px] leading-none w-7 flex-shrink-0 flex items-center justify-center">
-                        {opt.emoji}
-                      </span>
-                    ) : null}
+                    {renderLeading(opt, 16)}
                     <span className="flex-1 min-w-0">
                       <span className="block truncate font-semibold">{opt.label}</span>
                       {opt.description && (

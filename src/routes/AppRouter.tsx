@@ -46,6 +46,7 @@ import AdminNotifications from '@/src/pages/AdminNotifications';
 import AdminSupport from '@/src/pages/AdminSupport';
 import AdminRules from '@/src/pages/AdminRules';
 import AdminReferrals from '@/src/pages/AdminReferrals';
+import AdminCategory from '@/src/pages/AdminCategory';
 
 const HEADER_PATHS = new Set(['/', '/leaderboard', '/live', '/wallet', '/profile']);
 
@@ -124,6 +125,7 @@ export const AppRouter = () => {
             <Route path="/admin/support" element={<AdminSupport />} />
             <Route path="/admin/rules" element={<AdminRules />} />
             <Route path="/admin/referrals" element={<AdminReferrals />} />
+            <Route path="/admin/categories" element={<AdminCategory />} />
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
           </Route>
           <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />

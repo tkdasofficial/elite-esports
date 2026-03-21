@@ -5,21 +5,21 @@ import { Card } from '@/src/components/ui/Card';
 import { Input } from '@/src/components/ui/Input';
 import { Button } from '@/src/components/ui/Button';
 import { CustomSelect } from '@/src/components/ui/CustomSelect';
-import { ArrowLeft, Save, ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, ImageIcon, Clock, Radio, CheckCircle2, Users, Sword, Swords, Trophy } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Match } from '@/src/types';
 
 const STATUS_OPTIONS = [
-  { value: 'upcoming',  label: 'Upcoming',  emoji: '🕐', description: 'Not started yet' },
-  { value: 'live',      label: 'Live',      emoji: '🔴', description: 'Currently in progress' },
-  { value: 'completed', label: 'Completed', emoji: '✅', description: 'Match has ended' },
+  { value: 'upcoming',  label: 'Upcoming',  icon: Clock,         description: 'Not started yet' },
+  { value: 'live',      label: 'Live',      icon: Radio,         description: 'Currently in progress' },
+  { value: 'completed', label: 'Completed', icon: CheckCircle2,  description: 'Match has ended' },
 ];
 
 const MODE_OPTIONS = [
-  { value: 'Squad', label: 'Squad', emoji: '👥', description: '4 players per team' },
-  { value: '1v1',   label: '1v1',   emoji: '⚔️',  description: 'Solo duel' },
-  { value: '2v2',   label: '2v2',   emoji: '🤝', description: 'Duo vs duo' },
-  { value: '4v4',   label: '4v4',   emoji: '🏆', description: 'Team battle' },
+  { value: 'Squad', label: 'Squad', icon: Users,  description: '4 players per team' },
+  { value: '1v1',   label: '1v1',   icon: Sword,  description: 'Solo duel' },
+  { value: '2v2',   label: '2v2',   icon: Swords, description: 'Duo vs duo' },
+  { value: '4v4',   label: '4v4',   icon: Trophy, description: 'Team battle' },
 ];
 
 export default function AdminMatchForm() {

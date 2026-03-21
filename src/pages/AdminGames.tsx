@@ -3,10 +3,12 @@ import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { CustomSelect } from '@/src/components/ui/CustomSelect';
 import { ImageUpload } from '@/src/components/ui/ImageUpload';
-import { Plus, Edit2, Trash2, Search, CheckCircle2, X, Check, Image } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, CheckCircle2, X, Check, Image, LayoutGrid } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
 import { useGameStore } from '@/src/store/gameStore';
+import { useCategoryStore } from '@/src/store/categoryStore';
+import { getIcon } from '@/src/utils/iconRegistry';
 import { Game } from '@/src/types';
 
 type ModalState = { mode: 'add' | 'edit'; game: Partial<Game> } | null;
@@ -14,34 +16,36 @@ type Toast = { msg: string; ok: boolean } | null;
 
 const EMPTY_GAME: Partial<Game> = {
   name: '',
-  category: 'Battle Royale',
+  category: '',
   logo: '',
   banner: '',
   status: 'active',
 };
 
-const CATEGORY_OPTIONS = [
-  { value: 'Battle Royale', label: 'Battle Royale', emoji: '🏆' },
-  { value: 'FPS',           label: 'FPS',           emoji: '🎯' },
-  { value: 'MOBA',          label: 'MOBA',          emoji: '⚔️'  },
-  { value: 'Sports',        label: 'Sports',        emoji: '⚽' },
-  { value: 'Strategy',      label: 'Strategy',      emoji: '🧠' },
-];
-
 
 export default function AdminGames() {
   const { games, addGame, updateGame, deleteGame, toggleStatus } = useGameStore();
+  const { categories } = useCategoryStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [modal, setModal] = useState<ModalState>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [toast, setToast] = useState<Toast>(null);
+
+  const categoryOptions = categories.map(c => ({
+    value: c.name,
+    label: c.name,
+    icon: getIcon(c.iconName),
+  }));
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 2500);
   };
 
-  const openAdd = () => setModal({ mode: 'add', game: { ...EMPTY_GAME } });
+  const openAdd = () => setModal({
+    mode: 'add',
+    game: { ...EMPTY_GAME, category: categories[0]?.name ?? '' },
+  });
   const openEdit = (g: Game) => setModal({ mode: 'edit', game: { ...g } });
 
   const handleSave = () => {
@@ -255,13 +259,22 @@ export default function AdminGames() {
                   />
                 </div>
 
-                <CustomSelect
-                  label="Category"
-                  value={modal.game.category || 'Battle Royale'}
-                  onChange={v => setField('category', v)}
-                  options={CATEGORY_OPTIONS}
-                  variant="admin"
-                />
+                {categoryOptions.length === 0 ? (
+                  <div className="flex items-center gap-3 p-4 bg-brand-yellow/10 border border-brand-yellow/20 rounded-xl">
+                    <LayoutGrid size={16} className="text-brand-yellow flex-shrink-0" />
+                    <p className="text-xs font-bold text-brand-yellow">
+                      No categories yet — go to <strong>Categories</strong> in the admin menu to add some first.
+                    </p>
+                  </div>
+                ) : (
+                  <CustomSelect
+                    label="Category"
+                    value={modal.game.category || categoryOptions[0]?.value || ''}
+                    onChange={v => setField('category', v)}
+                    options={categoryOptions}
+                    variant="admin"
+                  />
+                )}
 
                 <ImageUpload
                   label="Logo Image"

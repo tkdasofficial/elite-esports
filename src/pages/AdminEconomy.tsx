@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
-import { Search, Check, X, ArrowUpRight, ArrowDownLeft, Download, Trash2, CheckCircle2 } from 'lucide-react';
+import { Search, Check, X, ArrowUpRight, ArrowDownLeft, Download, Trash2, CheckCircle2, ArrowDownToLine, ArrowUpFromLine, Clock, CircleCheck, CircleX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Button } from '@/src/components/ui/Button';
 import { CustomSelect } from '@/src/components/ui/CustomSelect';
@@ -132,8 +132,8 @@ export default function AdminEconomy() {
             onChange={setTypeFilter}
             options={[
               { value: 'all',        label: 'All Types'    },
-              { value: 'deposit',    label: 'Deposits',    emoji: '📥' },
-              { value: 'withdrawal', label: 'Withdrawals', emoji: '📤' },
+              { value: 'deposit',    label: 'Deposits',    icon: ArrowDownToLine },
+              { value: 'withdrawal', label: 'Withdrawals', icon: ArrowUpFromLine },
             ]}
             variant="admin"
             className="flex-1 md:flex-none md:w-40"
@@ -143,9 +143,9 @@ export default function AdminEconomy() {
             onChange={setStatusFilter}
             options={[
               { value: 'all',      label: 'All Status' },
-              { value: 'pending',  label: 'Pending',   emoji: '🕐' },
-              { value: 'success',  label: 'Success',   emoji: '✅' },
-              { value: 'rejected', label: 'Rejected',  emoji: '❌' },
+              { value: 'pending',  label: 'Pending',   icon: Clock       },
+              { value: 'success',  label: 'Success',   icon: CircleCheck },
+              { value: 'rejected', label: 'Rejected',  icon: CircleX     },
             ]}
             variant="admin"
             className="flex-1 md:flex-none md:w-40"

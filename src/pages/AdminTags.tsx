@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { CustomSelect } from '@/src/components/ui/CustomSelect';
-import { Code, Plus, Trash2, Edit2, Copy, Check, X, CheckCircle2, Minus, Globe, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Code, Plus, Trash2, Edit2, Copy, Check, X, CheckCircle2, Minus, Globe, ToggleLeft, ToggleRight, FileCode2, Zap, Link2, Paintbrush, Package, Pin, FileText, ArrowDown, ArrowUp, PanelRight, PanelBottom } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
 
@@ -326,11 +326,11 @@ export default function AdminTags() {
                     value={modal.tag.type}
                     onChange={v => updateModal({ type: v as TagType })}
                     options={[
-                      { value: 'HTML',    label: 'HTML',    emoji: '🏷️' },
-                      { value: 'JS',      label: 'JS',      emoji: '⚡' },
-                      { value: 'HTML/JS', label: 'HTML/JS', emoji: '🔗' },
-                      { value: 'CSS',     label: 'CSS',     emoji: '🎨' },
-                      { value: 'Other',   label: 'Other',   emoji: '📦' },
+                      { value: 'HTML',    label: 'HTML',    icon: FileCode2  },
+                      { value: 'JS',      label: 'JS',      icon: Zap        },
+                      { value: 'HTML/JS', label: 'HTML/JS', icon: Link2      },
+                      { value: 'CSS',     label: 'CSS',     icon: Paintbrush },
+                      { value: 'Other',   label: 'Other',   icon: Package    },
                     ]}
                     variant="admin"
                   />
@@ -354,12 +354,12 @@ export default function AdminTags() {
                   value={modal.tag.placement}
                   onChange={v => updateModal({ placement: v })}
                   options={[
-                    { value: '<head>',                   label: '<head>',                   emoji: '📌' },
-                    { value: '<body>',                   label: '<body>',                   emoji: '📄' },
-                    { value: 'After opening <body>',     label: 'After opening <body>',     emoji: '⬇️' },
-                    { value: 'Before closing </body>',   label: 'Before closing </body>',   emoji: '⬆️' },
-                    { value: 'Sidebar',                  label: 'Sidebar',                  emoji: '📋' },
-                    { value: 'Footer',                   label: 'Footer',                   emoji: '🦶' },
+                    { value: '<head>',                   label: '<head>',                   icon: Pin        },
+                    { value: '<body>',                   label: '<body>',                   icon: FileText   },
+                    { value: 'After opening <body>',     label: 'After opening <body>',     icon: ArrowDown  },
+                    { value: 'Before closing </body>',   label: 'Before closing </body>',   icon: ArrowUp    },
+                    { value: 'Sidebar',                  label: 'Sidebar',                  icon: PanelRight },
+                    { value: 'Footer',                   label: 'Footer',                   icon: PanelBottom},
                   ]}
                   variant="admin"
                 />

@@ -3,7 +3,7 @@ import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import {
   Gamepad2, Bell, Share2, MessageSquare, FileText,
   LayoutDashboard, Users, Trophy, Wallet, Image as ImageIcon,
-  Code, Settings, LogOut, Menu, X
+  Code, Settings, LogOut, Menu, X, LayoutGrid
 } from 'lucide-react';
 import { useUserStore } from '@/src/store/userStore';
 import { Logo } from '@/src/components/common/Logo';
@@ -14,6 +14,7 @@ const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard',      path: '/admin/dashboard' },
   { icon: Trophy,          label: 'Matches',         path: '/admin/matches' },
   { icon: Gamepad2,        label: 'Games',           path: '/admin/games' },
+  { icon: LayoutGrid,      label: 'Categories',      path: '/admin/categories' },
   { icon: Users,           label: 'Users',           path: '/admin/users' },
   { icon: Wallet,          label: 'Economy',         path: '/admin/economy' },
   { icon: Bell,            label: 'Notifications',   path: '/admin/notifications' },
