@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { Card } from '@/src/components/ui/Card';
 import { Search, Check, X, ArrowUpRight, ArrowDownLeft, Download, Trash2, CheckCircle2, ArrowDownToLine, ArrowUpFromLine, Clock, CircleCheck, CircleX } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Button } from '@/src/components/ui/Button';
 import { CustomSelect } from '@/src/components/ui/CustomSelect';
 import { cn } from '@/src/utils/helpers';
 import { usePlatformStore } from '@/src/store/platformStore';
@@ -30,10 +28,8 @@ export default function AdminEconomy() {
     approveTransaction(id);
     adjustCoins(tx.userId, tx.type === 'deposit' ? tx.amount : -tx.amount);
     updateTransaction(tx.userTxId, { status: 'success' });
-    if (tx.type === 'deposit') {
-      updateCoins(tx.amount);
-    }
-    showToast('Transaction approved and coins updated');
+    if (tx.type === 'deposit') updateCoins(tx.amount);
+    showToast('Transaction approved');
   };
 
   const handleReject = (id: string) => {
@@ -47,7 +43,7 @@ export default function AdminEconomy() {
   const handleDelete = (id: string) => {
     deleteTransaction(id);
     setConfirmDeleteId(null);
-    showToast('Transaction record deleted');
+    showToast('Record deleted');
   };
 
   const exportCSV = () => {
@@ -61,7 +57,7 @@ export default function AdminEconomy() {
     a.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('CSV exported successfully');
+    showToast('CSV exported');
   };
 
   const filtered = adminTransactions.filter(tx => {
@@ -71,154 +67,200 @@ export default function AdminEconomy() {
     return matchesSearch && matchesType && matchesStatus;
   });
 
-  const totalDeposits     = adminTransactions.filter(t => t.type === 'deposit'    && t.status === 'success').reduce((s, t) => s + t.amount, 0);
-  const totalWithdrawals  = adminTransactions.filter(t => t.type === 'withdrawal' && t.status === 'success').reduce((s, t) => s + t.amount, 0);
-  const pendingWithdrawals= adminTransactions.filter(t => t.type === 'withdrawal' && t.status === 'pending').reduce((s, t) => s + t.amount, 0);
+  const totalDeposits    = adminTransactions.filter(t => t.type === 'deposit'    && t.status === 'success').reduce((s, t) => s + t.amount, 0);
+  const totalWithdrawals = adminTransactions.filter(t => t.type === 'withdrawal' && t.status === 'success').reduce((s, t) => s + t.amount, 0);
+  const pendingCount     = adminTransactions.filter(t => t.status === 'pending').length;
 
-  const deleteTarget = adminTransactions.find(tx => tx.id === confirmDeleteId);
+  const stats = [
+    { label: 'Deposits',      value: `₹${totalDeposits.toLocaleString()}`,    color: 'text-brand-success', bg: 'bg-brand-success/15', icon: ArrowDownLeft },
+    { label: 'Withdrawals',   value: `₹${totalWithdrawals.toLocaleString()}`, color: 'text-brand-live',    bg: 'bg-brand-live/15',    icon: ArrowUpRight },
+    { label: 'Profit',        value: `₹${(totalDeposits - totalWithdrawals).toLocaleString()}`, color: 'text-brand-primary', bg: 'bg-brand-primary/15', icon: ArrowDownToLine },
+    { label: 'Pending',       value: pendingCount.toString(),                  color: 'text-brand-warning', bg: 'bg-brand-warning/15', icon: Clock },
+  ];
+
+  const statusColor = (s: string) => {
+    if (s === 'pending')  return 'text-brand-warning';
+    if (s === 'success')  return 'text-brand-success';
+    if (s === 'rejected') return 'text-brand-live';
+    return 'text-text-muted';
+  };
 
   return (
-    <div className="space-y-6 px-4 sm:px-6 pb-24 pt-6 text-white relative">
+    <div className="pb-24 pt-2 space-y-5">
+      {/* Toast */}
       <AnimatePresence>
         {toast && (
           <motion.div
             initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
-            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl flex items-center gap-2 ${toast.ok ? 'bg-brand-green text-white' : 'bg-brand-red text-white'}`}
+            className={`fixed top-[72px] left-1/2 -translate-x-1/2 z-[300] px-5 py-3 rounded-[14px] text-[14px] font-medium shadow-xl flex items-center gap-2 pointer-events-none whitespace-nowrap ${toast.ok ? 'bg-brand-success text-white' : 'bg-brand-live text-white'}`}
           >
             {toast.ok ? <CheckCircle2 size={16} /> : <X size={16} />} {toast.msg}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header */}
+      <div className="px-4 pt-2 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Economy</h1>
-          <p className="text-xs text-slate-500 font-bold">{adminTransactions.filter(t => t.status === 'pending').length} pending actions</p>
+          <h1 className="text-[22px] font-bold text-text-primary tracking-[-0.5px]">Finance</h1>
+          <p className="text-[13px] text-text-muted font-normal mt-0.5">{pendingCount} pending actions</p>
         </div>
-        <Button variant="secondary" onClick={exportCSV} size="sm" className="rounded-xl flex items-center gap-2 w-full sm:w-auto justify-center border-white/10">
-          <Download size={16} /> Export CSV
-        </Button>
+        <button
+          onClick={exportCSV}
+          className="flex items-center gap-2 px-4 py-2.5 bg-app-elevated rounded-full text-text-secondary text-[14px] font-medium active:opacity-60 transition-opacity border border-ios-sep"
+        >
+          <Download size={15} /> Export
+        </button>
       </div>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <Card className="p-4 bg-brand-green/5 border-brand-green/10">
-          <p className="text-[10px] font-bold text-brand-green uppercase tracking-widest">Total Deposits</p>
-          <p className="text-xl font-black text-brand-green mt-1">₹{totalDeposits.toLocaleString()}</p>
-        </Card>
-        <Card className="p-4 bg-brand-red/5 border-brand-red/10">
-          <p className="text-[10px] font-bold text-brand-red uppercase tracking-widest">Withdrawals</p>
-          <p className="text-xl font-black text-brand-red mt-1">₹{totalWithdrawals.toLocaleString()}</p>
-        </Card>
-        <Card className="p-4 bg-brand-yellow/5 border-brand-yellow/10">
-          <p className="text-[10px] font-bold text-brand-yellow uppercase tracking-widest">Pending Payouts</p>
-          <p className="text-xl font-black text-brand-yellow mt-1">₹{pendingWithdrawals.toLocaleString()}</p>
-        </Card>
-        <Card className="p-4 bg-brand-blue/5 border-brand-blue/10">
-          <p className="text-[10px] font-bold text-brand-blue uppercase tracking-widest">Platform Profit</p>
-          <p className="text-xl font-black text-brand-blue mt-1">₹{(totalDeposits - totalWithdrawals).toLocaleString()}</p>
-        </Card>
-      </div>
+      {/* Stats grid */}
+      <section className="px-4">
+        <div className="grid grid-cols-2 gap-3">
+          {stats.map((s, i) => (
+            <motion.div
+              key={s.label}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.06 }}
+              className="bg-app-card rounded-[18px] p-4 space-y-3"
+            >
+              <div className={cn('w-10 h-10 rounded-[12px] flex items-center justify-center', s.bg)}>
+                <s.icon size={18} className={s.color} />
+              </div>
+              <div>
+                <p className="text-[22px] font-bold text-text-primary tracking-tight">{s.value}</p>
+                <p className="text-[12px] text-text-muted font-normal mt-0.5">{s.label}</p>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </section>
 
-      <div className="flex flex-col md:flex-row gap-3">
-        <div className="flex-1 relative">
-          <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input type="text" placeholder="Search by user or transaction ID..." value={searchQuery}
+      {/* Search */}
+      <div className="px-4">
+        <div className="relative">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
+          <input
+            type="text"
+            placeholder="Search by user or transaction ID..."
+            value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            className="w-full bg-brand-card/40 border border-white/5 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold focus:border-brand-blue outline-none transition-all placeholder:text-slate-600" />
-        </div>
-        <div className="flex gap-2">
-          <CustomSelect
-            value={typeFilter}
-            onChange={setTypeFilter}
-            options={[
-              { value: 'all',        label: 'All Types'    },
-              { value: 'deposit',    label: 'Deposits',    icon: ArrowDownToLine },
-              { value: 'withdrawal', label: 'Withdrawals', icon: ArrowUpFromLine },
-            ]}
-            variant="admin"
-            className="flex-1 md:flex-none md:w-40"
-          />
-          <CustomSelect
-            value={statusFilter}
-            onChange={setStatusFilter}
-            options={[
-              { value: 'all',      label: 'All Status' },
-              { value: 'pending',  label: 'Pending',   icon: Clock       },
-              { value: 'success',  label: 'Success',   icon: CircleCheck },
-              { value: 'rejected', label: 'Rejected',  icon: CircleX     },
-            ]}
-            variant="admin"
-            className="flex-1 md:flex-none md:w-40"
+            className="w-full bg-app-elevated rounded-[14px] py-3 pl-11 pr-4 text-[15px] text-text-primary placeholder:text-text-muted outline-none border border-ios-sep focus:border-brand-primary transition-all"
           />
         </div>
       </div>
 
-      <div className="space-y-3">
-        {filtered.map((tx, i) => (
-          <motion.div key={tx.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-            <Card className="p-4 bg-brand-card/40 border-white/5">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={`w-11 h-11 rounded-2xl flex-shrink-0 flex items-center justify-center ${tx.type === 'deposit' ? 'bg-brand-green/10 text-brand-green' : 'bg-brand-red/10 text-brand-red'}`}>
-                  {tx.type === 'deposit' ? <ArrowDownLeft size={22} /> : <ArrowUpRight size={22} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold text-sm">{tx.user}</h3>
-                    <span className="text-[10px] bg-white/5 px-2 py-0.5 rounded-full text-slate-500 font-bold">{tx.method}</span>
-                    <span className="text-[10px] text-slate-600 font-bold">#{tx.id}</span>
+      {/* Filters */}
+      <div className="px-4 flex gap-2">
+        <CustomSelect
+          value={typeFilter}
+          onChange={setTypeFilter}
+          options={[
+            { value: 'all',        label: 'All Types'   },
+            { value: 'deposit',    label: 'Deposits',    icon: ArrowDownToLine },
+            { value: 'withdrawal', label: 'Withdrawals', icon: ArrowUpFromLine },
+          ]}
+          variant="admin"
+          className="flex-1"
+        />
+        <CustomSelect
+          value={statusFilter}
+          onChange={setStatusFilter}
+          options={[
+            { value: 'all',      label: 'All Status' },
+            { value: 'pending',  label: 'Pending',   icon: Clock       },
+            { value: 'success',  label: 'Success',   icon: CircleCheck },
+            { value: 'rejected', label: 'Rejected',  icon: CircleX     },
+          ]}
+          variant="admin"
+          className="flex-1"
+        />
+      </div>
+
+      {/* Transactions */}
+      <section className="px-4 space-y-2">
+        <p className="text-[13px] text-text-secondary uppercase tracking-[0.06em] font-normal px-1">
+          {filtered.length} {filtered.length === 1 ? 'transaction' : 'transactions'}
+        </p>
+
+        {filtered.length === 0 ? (
+          <div className="bg-app-card rounded-[18px] py-14 text-center">
+            <p className="text-[15px] text-text-muted font-normal">
+              {adminTransactions.length === 0 ? 'No transactions yet' : 'No results match your filters'}
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filtered.map((tx, i) => (
+              <motion.div
+                key={tx.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="bg-app-card rounded-[18px] overflow-hidden"
+              >
+                <div className="flex items-center gap-3.5 px-4 py-3.5">
+                  <div className={cn(
+                    'w-11 h-11 rounded-full flex items-center justify-center shrink-0',
+                    tx.type === 'deposit' ? 'bg-brand-success/15 text-brand-success' : 'bg-brand-live/15 text-brand-live'
+                  )}>
+                    {tx.type === 'deposit' ? <ArrowDownLeft size={20} /> : <ArrowUpRight size={20} />}
                   </div>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{tx.date}</p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className={cn('text-[10px] font-black uppercase',
-                      tx.status === 'pending' ? 'text-brand-yellow' : tx.status === 'success' ? 'text-brand-green' : 'text-brand-red'
-                    )}>{tx.status}</span>
-                    <span className="text-[10px] font-black text-white">₹{tx.amount.toLocaleString()}</span>
-                    {tx.details && (
-                      <span className="text-[10px] text-slate-600 font-bold truncate max-w-[120px]">UTR: {tx.details}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-[15px] font-medium text-text-primary">{tx.user}</p>
+                      <span className="text-[11px] bg-app-elevated px-2 py-0.5 rounded-full text-text-muted border border-ios-sep">{tx.method}</span>
+                    </div>
+                    <p className="text-[12px] text-text-muted mt-0.5">{tx.date} · #{tx.id}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className={cn('text-[12px] font-semibold capitalize', statusColor(tx.status))}>{tx.status}</span>
+                      <span className="text-[12px] font-semibold text-text-primary">₹{tx.amount.toLocaleString()}</span>
+                      {tx.details && (
+                        <span className="text-[11px] text-text-muted truncate max-w-[120px]">UTR: {tx.details}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action row */}
+                {confirmDeleteId === tx.id ? (
+                  <div className="mx-4 mb-3 flex items-center gap-2 p-3 bg-brand-live/5 rounded-[12px] border border-brand-live/20">
+                    <p className="flex-1 text-[13px] text-brand-live">Delete record #{tx.id}?</p>
+                    <button onClick={() => handleDelete(tx.id)} className="px-3 py-1.5 bg-brand-live text-white text-[12px] font-medium rounded-[10px] active:opacity-70">Delete</button>
+                    <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 bg-app-elevated text-text-secondary text-[12px] font-medium rounded-[10px] active:opacity-70">Cancel</button>
+                  </div>
+                ) : (
+                  <div className="mx-4 mb-3 flex items-center gap-2">
+                    {tx.status === 'pending' ? (
+                      <>
+                        <button
+                          onClick={() => handleApprove(tx.id)}
+                          className="flex-1 py-2.5 bg-brand-success text-white rounded-[12px] text-[13px] font-medium flex items-center justify-center gap-1.5 active:opacity-80 transition-opacity"
+                        >
+                          <Check size={14} /> Approve
+                        </button>
+                        <button
+                          onClick={() => handleReject(tx.id)}
+                          className="flex-1 py-2.5 bg-brand-live text-white rounded-[12px] text-[13px] font-medium flex items-center justify-center gap-1.5 active:opacity-80 transition-opacity"
+                        >
+                          <X size={14} /> Reject
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(tx.id)}
+                        className="py-2.5 px-4 bg-app-elevated rounded-[12px] text-[13px] font-medium text-text-secondary active:opacity-70 transition-opacity flex items-center gap-1.5 border border-ios-sep"
+                      >
+                        <Trash2 size={13} /> Delete Record
+                      </button>
                     )}
                   </div>
-                </div>
-              </div>
-
-              {confirmDeleteId === tx.id ? (
-                <div className="mt-3 flex items-center gap-2 p-3 bg-brand-red/10 rounded-xl border border-brand-red/20">
-                  <p className="flex-1 text-xs font-bold text-brand-red">Delete record #{tx.id}?</p>
-                  <button onClick={() => handleDelete(tx.id)} className="px-3 py-1.5 bg-brand-red text-white text-xs font-bold rounded-lg">Delete</button>
-                  <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 bg-white/10 text-slate-300 text-xs font-bold rounded-lg">Cancel</button>
-                </div>
-              ) : (
-                <div className="mt-3 flex items-center gap-2">
-                  {tx.status === 'pending' ? (
-                    <>
-                      <button onClick={() => handleApprove(tx.id)}
-                        className="flex-1 py-2 bg-brand-green text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:opacity-70 transition-opacity">
-                        <Check size={14} /> Approve
-                      </button>
-                      <button onClick={() => handleReject(tx.id)}
-                        className="flex-1 py-2 bg-brand-red text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-1.5 active:opacity-70 transition-opacity">
-                        <X size={14} /> Reject
-                      </button>
-                    </>
-                  ) : (
-                    <button onClick={() => setConfirmDeleteId(tx.id)}
-                      className="py-2 px-4 bg-white/5 hover:bg-brand-red/10 hover:text-brand-red text-slate-400 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-1.5">
-                      <Trash2 size={13} /> Delete Record
-                    </button>
-                  )}
-                </div>
-              )}
-            </Card>
-          </motion.div>
-        ))}
-
-        {filtered.length === 0 && (
-          <div className="py-12 text-center text-slate-500 text-sm font-bold">
-            {adminTransactions.length === 0
-              ? 'No transactions yet. Users will appear here when they deposit or withdraw.'
-              : 'No transactions match your filters.'}
+                )}
+              </motion.div>
+            ))}
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

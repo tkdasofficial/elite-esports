@@ -1,180 +1,197 @@
 import React, { useState } from 'react';
-import { Card } from '@/src/components/ui/Card';
-import { Button } from '@/src/components/ui/Button';
-import { Settings, Shield, Wallet, Bell, Globe, Save, CheckCircle2, X, Eye, EyeOff } from 'lucide-react';
+import { Save, CheckCircle2, X, Shield, Coins, Users, Bell, Globe, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '@/src/utils/helpers';
 import { usePlatformStore } from '@/src/store/platformStore';
+import { cn } from '@/src/utils/helpers';
 
 type Toast = { msg: string; ok: boolean } | null;
 
-const Toggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
-  <button onClick={onChange}
-    className={cn('w-12 h-6 rounded-full relative transition-colors duration-200 flex-shrink-0', value ? 'bg-brand-blue' : 'bg-white/10')}>
-    <motion.div animate={{ x: value ? 22 : 2 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow" />
+const IOSToggle = ({ value, onChange }: { value: boolean; onChange: () => void }) => (
+  <button
+    onClick={onChange}
+    className={cn('w-[51px] h-[31px] rounded-full relative transition-colors duration-200 flex-shrink-0', value ? 'bg-brand-success' : 'bg-app-elevated border border-ios-sep')}
+  >
+    <motion.div
+      animate={{ x: value ? 22 : 2 }}
+      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+      className="absolute top-[3px] w-[25px] h-[25px] bg-white rounded-full shadow-md"
+    />
   </button>
 );
 
 export default function AdminSettings() {
-  const { settings, updateSettings } = usePlatformStore();
-  const [toast, setToast]      = useState<Toast>(null);
-  const [showPw, setShowPw]    = useState(false);
-  const [saving, setSaving]    = useState(false);
-  const [localSettings, setLocalSettings] = useState({ ...settings });
+  const { platformSettings, updatePlatformSettings } = usePlatformStore();
+  const [settings, setSettings] = useState({
+    platformName:         platformSettings?.platformName         ?? 'Elite Esports',
+    maintenanceMode:      platformSettings?.maintenanceMode      ?? false,
+    registrationOpen:     platformSettings?.registrationOpen     ?? true,
+    minWithdrawal:        platformSettings?.minWithdrawal        ?? 100,
+    maxWithdrawal:        platformSettings?.maxWithdrawal        ?? 10000,
+    withdrawalFee:        platformSettings?.withdrawalFee        ?? 2,
+    referralEnabled:      platformSettings?.referralEnabled      ?? true,
+    notificationsEnabled: platformSettings?.notificationsEnabled ?? true,
+    autoApproveDeposits:  platformSettings?.autoApproveDeposits  ?? false,
+    maxTeamSize:          platformSettings?.maxTeamSize          ?? 4,
+    supportEmail:         platformSettings?.supportEmail         ?? 'support@eliteesports.com',
+  });
+  const [toast, setToast] = useState<Toast>(null);
 
-  const showToast = (msg: string, ok = true) => { setToast({ msg, ok }); setTimeout(() => setToast(null), 2500); };
-
-  const handleSave = async () => {
-    setSaving(true);
-    await new Promise(r => setTimeout(r, 900));
-    updateSettings(localSettings);
-    setSaving(false);
-    showToast('All settings saved successfully');
+  const showToast = (msg: string, ok = true) => {
+    setToast({ msg, ok });
+    setTimeout(() => setToast(null), 2500);
   };
 
-  const set = (key: string, value: any) => setLocalSettings(prev => ({ ...prev, [key]: value }));
+  const set = (key: string, value: any) => setSettings(s => ({ ...s, [key]: value }));
 
-  const field = 'w-full bg-brand-card/40 border border-white/5 rounded-2xl py-3 px-4 text-sm font-bold focus:border-brand-blue outline-none transition-all placeholder:text-slate-600';
+  const handleSave = () => {
+    updatePlatformSettings(settings);
+    showToast('Settings saved');
+  };
+
+  const sections = [
+    {
+      title: 'Platform',
+      icon: Globe,
+      color: 'text-brand-primary',
+      bg: 'bg-brand-primary/15',
+      fields: [
+        { type: 'text',   key: 'platformName', label: 'Platform Name', placeholder: 'Elite Esports' },
+        { type: 'text',   key: 'supportEmail', label: 'Support Email',  placeholder: 'support@example.com' },
+      ],
+      toggles: [
+        { key: 'maintenanceMode',  label: 'Maintenance Mode', desc: 'Locks the app for all non-admins', danger: true },
+        { key: 'registrationOpen', label: 'Registrations Open', desc: 'Allow new players to register' },
+      ],
+    },
+    {
+      title: 'Economy',
+      icon: Coins,
+      color: 'text-brand-success',
+      bg: 'bg-brand-success/15',
+      fields: [
+        { type: 'number', key: 'minWithdrawal', label: 'Min Withdrawal (₹)', placeholder: '100'   },
+        { type: 'number', key: 'maxWithdrawal', label: 'Max Withdrawal (₹)', placeholder: '10000' },
+        { type: 'number', key: 'withdrawalFee', label: 'Withdrawal Fee (%)', placeholder: '2'     },
+      ],
+      toggles: [
+        { key: 'autoApproveDeposits', label: 'Auto-approve Deposits', desc: 'Approve deposits without manual review' },
+      ],
+    },
+    {
+      title: 'Features',
+      icon: Zap,
+      color: 'text-brand-warning',
+      bg: 'bg-brand-warning/15',
+      fields: [
+        { type: 'number', key: 'maxTeamSize', label: 'Max Team Size', placeholder: '4' },
+      ],
+      toggles: [
+        { key: 'referralEnabled',      label: 'Referral Program',    desc: 'Enable the referral system' },
+        { key: 'notificationsEnabled', label: 'Push Notifications',  desc: 'Enable app notifications' },
+      ],
+    },
+  ];
 
   return (
-    <div className="space-y-8 px-4 sm:px-6 pb-24 pt-6 text-white relative">
+    <div className="pb-24 pt-2 space-y-6">
+      {/* Toast */}
       <AnimatePresence>
         {toast && (
-          <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
-            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[200] px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl flex items-center gap-2 ${toast.ok ? 'bg-brand-green text-white' : 'bg-brand-red text-white'}`}>
+          <motion.div
+            initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
+            className={`fixed top-[72px] left-1/2 -translate-x-1/2 z-[300] px-5 py-3 rounded-[14px] text-[14px] font-medium shadow-xl flex items-center gap-2 pointer-events-none whitespace-nowrap ${toast.ok ? 'bg-brand-success text-white' : 'bg-brand-live text-white'}`}
+          >
             {toast.ok ? <CheckCircle2 size={16} /> : <X size={16} />} {toast.msg}
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h1 className="text-2xl font-black tracking-tight">Admin Settings</h1>
-        <Button onClick={handleSave} size="sm" disabled={saving}
-          className="rounded-xl px-4 flex items-center gap-2 w-full sm:w-auto justify-center">
-          {saving ? (
-            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}><Settings size={16} /></motion.div>
-          ) : <Save size={16} />}
-          {saving ? 'Saving…' : 'Save All'}
-        </Button>
+      {/* Header */}
+      <div className="px-4 pt-2">
+        <h1 className="text-[22px] font-bold text-text-primary tracking-[-0.5px]">Settings</h1>
+        <p className="text-[13px] text-text-muted font-normal mt-0.5">Platform configuration</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <section className="space-y-4">
-          <div className="flex items-center gap-3 px-1">
-            <Wallet size={18} className="text-brand-blue flex-shrink-0" />
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Payment Details</h2>
+      {/* Settings sections */}
+      {sections.map((section, si) => (
+        <motion.section
+          key={section.title}
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: si * 0.07 }}
+          className="px-4 space-y-3"
+        >
+          {/* Section header */}
+          <div className="flex items-center gap-2.5 px-1">
+            <div className={cn('w-7 h-7 rounded-[8px] flex items-center justify-center', section.bg)}>
+              <section.icon size={14} className={section.color} />
+            </div>
+            <p className="text-[13px] text-text-secondary uppercase tracking-[0.06em] font-normal">{section.title}</p>
           </div>
-          <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
-            {[
-              { label: 'Admin UPI ID',       key: 'upiId', placeholder: 'admin@upi' },
-              { label: 'Bank Account',       key: 'bank',  placeholder: '000000000000' },
-              { label: 'IFSC Code',          key: 'ifsc',  placeholder: 'IFSC0000000' },
-            ].map(f => (
-              <div key={f.key} className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{f.label}</label>
-                <input value={(localSettings as any)[f.key]} placeholder={f.placeholder}
-                  onChange={e => set(f.key, e.target.value)}
-                  className={field} />
-              </div>
-            ))}
-            <div className="grid grid-cols-2 gap-3">
-              {[['minWithdrawal', 'Min Withdrawal', '100'], ['maxWithdrawal', 'Max Withdrawal', '5000']].map(([k, l, p]) => (
-                <div key={k} className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{l}</label>
-                  <input value={(localSettings as any)[k]} placeholder={`₹${p}`}
-                    onChange={e => set(k, e.target.value)}
-                    className={field} />
+
+          {/* Text / number inputs */}
+          {section.fields.length > 0 && (
+            <div className="bg-app-card rounded-[18px] overflow-hidden divide-y divide-app-border">
+              {section.fields.map(field => (
+                <div key={field.key} className="flex items-center gap-4 px-4 py-3.5">
+                  <label className="text-[15px] font-normal text-text-primary flex-1 min-w-0">{field.label}</label>
+                  <input
+                    type={field.type}
+                    value={(settings as any)[field.key] ?? ''}
+                    onChange={e => set(field.key, field.type === 'number' ? Number(e.target.value) : e.target.value)}
+                    placeholder={field.placeholder}
+                    className="bg-app-elevated border border-ios-sep rounded-[12px] py-2 px-3.5 text-[14px] font-medium text-text-primary placeholder:text-text-muted outline-none focus:border-brand-primary transition-all text-right w-[140px]"
+                  />
                 </div>
               ))}
             </div>
-          </Card>
-        </section>
+          )}
 
-        <section className="space-y-4">
-          <div className="flex items-center gap-3 px-1">
-            <Shield size={18} className="text-brand-red flex-shrink-0" />
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Security</h2>
-          </div>
-          <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">Admin Email</label>
-              <input value={localSettings.adminEmail} placeholder="admin@yourdomain.com"
-                onChange={e => set('adminEmail', e.target.value)}
-                className={field} />
+          {/* Toggle rows */}
+          {section.toggles.length > 0 && (
+            <div className="bg-app-card rounded-[18px] overflow-hidden divide-y divide-app-border">
+              {section.toggles.map(toggle => (
+                <div key={toggle.key} className="flex items-center gap-4 px-4 py-3.5">
+                  <div className="flex-1 min-w-0">
+                    <p className={cn('text-[15px] font-normal', (toggle as any).danger && (settings as any)[toggle.key] ? 'text-brand-live' : 'text-text-primary')}>
+                      {toggle.label}
+                    </p>
+                    <p className="text-[12px] text-text-muted mt-0.5">{toggle.desc}</p>
+                  </div>
+                  <IOSToggle
+                    value={!!(settings as any)[toggle.key]}
+                    onChange={() => set(toggle.key, !(settings as any)[toggle.key])}
+                  />
+                </div>
+              ))}
             </div>
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">Admin Password</label>
-              <div className="relative">
-                <input type={showPw ? 'text' : 'password'} value={localSettings.adminPassword} placeholder="••••••••"
-                  onChange={e => set('adminPassword', e.target.value)}
-                  className={`${field} pr-11`} />
-                <button type="button" onClick={() => setShowPw(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
-                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
-            <div className="border-t border-white/5 pt-3 space-y-3">
-              <div className="flex items-center justify-between gap-4">
-                <div><p className="text-sm font-bold">Two-Factor Auth</p><p className="text-xs text-slate-500">Require 2FA for admin login</p></div>
-                <Toggle value={localSettings.twofa} onChange={() => set('twofa', !localSettings.twofa)} />
-              </div>
-              <div className="flex items-center justify-between gap-4">
-                <div><p className="text-sm font-bold">Login Notifications</p><p className="text-xs text-slate-500">Alert on new admin login</p></div>
-                <Toggle value={localSettings.loginNotif} onChange={() => set('loginNotif', !localSettings.loginNotif)} />
-              </div>
-            </div>
-          </Card>
-        </section>
+          )}
+        </motion.section>
+      ))}
 
-        <section className="space-y-4">
-          <div className="flex items-center gap-3 px-1">
-            <Globe size={18} className="text-brand-green flex-shrink-0" />
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Platform</h2>
-          </div>
-          <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
-            {[['platformName', 'Platform Name', 'Elite Esports'], ['supportEmail', 'Support Email', 'support@elite.com']].map(([k, l, p]) => (
-              <div key={k} className="space-y-1.5">
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-1">{l}</label>
-                <input value={(localSettings as any)[k]} placeholder={p}
-                  onChange={e => set(k, e.target.value)}
-                  className={field} />
-              </div>
-            ))}
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <p className="text-sm font-bold">Maintenance Mode</p>
-                <p className="text-xs text-slate-500">Temporarily disable user access</p>
-              </div>
-              <Toggle value={localSettings.maintenance} onChange={() => set('maintenance', !localSettings.maintenance)} />
-            </div>
-            {localSettings.maintenance && (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                className="text-xs text-brand-yellow font-bold bg-brand-yellow/10 px-3 py-2 rounded-xl border border-brand-yellow/20">
-                ⚠ Maintenance mode is ON — users cannot access the app.
-              </motion.p>
-            )}
-          </Card>
-        </section>
+      {/* Maintenance warning */}
+      <AnimatePresence>
+        {settings.maintenanceMode && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 8 }}
+            className="mx-4 p-4 bg-brand-live/5 border border-brand-live/20 rounded-[16px] flex items-start gap-3"
+          >
+            <Shield size={18} className="text-brand-live shrink-0 mt-0.5" />
+            <p className="text-[13px] text-brand-live leading-relaxed">
+              Maintenance mode is <strong>ON</strong>. Regular users cannot access the platform. Only admins can log in.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <section className="space-y-4">
-          <div className="flex items-center gap-3 px-1">
-            <Bell size={18} className="text-brand-yellow flex-shrink-0" />
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Notifications</h2>
-          </div>
-          <Card className="p-5 bg-brand-card/40 border-white/5 space-y-4">
-            {[
-              ['emailAlerts', 'Email Alerts',       'Receive alerts on important events'],
-              ['pushNotifs',  'Push Notifications', 'Send push alerts to users'],
-              ['smsAlerts',   'SMS Alerts',         'Send SMS for critical events'],
-            ].map(([k, l, d]) => (
-              <div key={k} className="flex items-center justify-between gap-4">
-                <div><p className="text-sm font-bold">{l}</p><p className="text-xs text-slate-500">{d}</p></div>
-                <Toggle value={(localSettings as any)[k]} onChange={() => set(k, !(localSettings as any)[k])} />
-              </div>
-            ))}
-          </Card>
-        </section>
+      {/* Save button */}
+      <div className="px-4">
+        <button
+          onClick={handleSave}
+          className="w-full py-4 bg-brand-primary rounded-[16px] text-[16px] font-semibold text-white active:opacity-80 transition-opacity flex items-center justify-center gap-2"
+        >
+          <Save size={18} /> Save All Settings
+        </button>
       </div>
     </div>
   );

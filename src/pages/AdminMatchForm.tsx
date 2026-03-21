@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useMatchStore } from '@/src/store/matchStore';
 import { useGameStore } from '@/src/store/gameStore';
-import { Card } from '@/src/components/ui/Card';
-import { Input } from '@/src/components/ui/Input';
-import { Button } from '@/src/components/ui/Button';
 import { CustomSelect } from '@/src/components/ui/CustomSelect';
-import { ArrowLeft, Save, ImageIcon, Clock, Radio, CheckCircle2, Users, Sword, Swords, Trophy } from 'lucide-react';
+import { ArrowLeft, Save, ImageIcon, Clock, Radio, CheckCircle2, Users, Sword, Swords, Trophy, Check } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { Match } from '@/src/types';
+import { cn } from '@/src/utils/helpers';
 
 const STATUS_OPTIONS = [
-  { value: 'upcoming',  label: 'Upcoming',  icon: Clock,         description: 'Not started yet' },
-  { value: 'live',      label: 'Live',      icon: Radio,         description: 'Currently in progress' },
-  { value: 'completed', label: 'Completed', icon: CheckCircle2,  description: 'Match has ended' },
+  { value: 'upcoming',  label: 'Upcoming',  icon: Clock,        description: 'Not started yet' },
+  { value: 'live',      label: 'Live',      icon: Radio,        description: 'Currently in progress' },
+  { value: 'completed', label: 'Completed', icon: CheckCircle2, description: 'Match has ended' },
 ];
 
 const MODE_OPTIONS = [
@@ -22,15 +21,18 @@ const MODE_OPTIONS = [
   { value: '4v4',   label: '4v4',   icon: Trophy, description: 'Team battle' },
 ];
 
+const labelClass = 'text-[12px] text-text-secondary uppercase tracking-[0.06em] font-normal px-1';
+const inputClass = 'w-full bg-app-elevated border border-ios-sep rounded-[14px] py-3 px-4 text-[15px] text-text-primary placeholder:text-text-muted outline-none focus:border-brand-primary transition-all';
+
 export default function AdminMatchForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addMatch, updateMatch, getMatchById } = useMatchStore();
-  const allGames = useGameStore(s => s.games);
-  const activeGames = allGames.filter(g => g.status === 'active');
-  const getGame = useGameStore(s => s.getGameByName);
+  const allGames         = useGameStore(s => s.games);
+  const activeGames      = allGames.filter(g => g.status === 'active');
+  const getGame          = useGameStore(s => s.getGameByName);
   const incrementMatches = useGameStore(s => s.incrementMatches);
-  const isEditing = !!id;
+  const isEditing        = !!id;
 
   const gameOptions = activeGames.map(g => ({
     value: g.name,
@@ -94,185 +96,256 @@ export default function AdminMatchForm() {
     navigate('/admin/matches');
   };
 
-  const labelClass = 'text-[10px] font-black uppercase tracking-widest text-slate-500';
   const selectedGame = getGame(formData.game_name ?? '');
 
   return (
-    <div className="space-y-8 px-4 sm:px-6 pb-24 pt-4 text-white">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-4 min-w-0">
+    <div className="pb-24 pt-2 space-y-5">
+      {/* Header */}
+      <div className="px-4 pt-2 flex items-center justify-between">
+        <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/admin/matches')}
-            className="p-2 bg-white/5 rounded-xl text-slate-400 hover:bg-white/10 transition-colors"
+            className="w-10 h-10 bg-app-elevated rounded-full flex items-center justify-center text-text-secondary active:opacity-60 transition-opacity border border-ios-sep"
           >
-            <ArrowLeft size={20} />
+            <ArrowLeft size={18} />
           </button>
-          <h1 className="text-2xl font-black tracking-tight truncate">
-            {isEditing ? 'Edit Tournament' : 'New Tournament'}
-          </h1>
+          <div>
+            <h1 className="text-[22px] font-bold text-text-primary tracking-[-0.5px]">
+              {isEditing ? 'Edit Tournament' : 'New Tournament'}
+            </h1>
+            <p className="text-[13px] text-text-muted font-normal mt-0.5">
+              {isEditing ? 'Update tournament details' : 'Set up a new tournament'}
+            </p>
+          </div>
         </div>
-        <Button
+        <button
+          type="button"
           onClick={handleSubmit}
-          size="sm"
-          className="rounded-xl px-4 flex items-center gap-2 w-full sm:w-auto justify-center"
+          className="flex items-center gap-2 px-4 py-2.5 bg-brand-primary rounded-full text-white text-[14px] font-medium active:opacity-80 transition-opacity"
         >
-          <Save size={16} /> Save
-        </Button>
+          <Save size={15} /> Save
+        </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="p-4 sm:p-6 space-y-5 bg-brand-card/40 border-white/5">
-          <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Basic Info</h2>
+      <form onSubmit={handleSubmit} className="space-y-5 px-4">
+        {/* Basic Info */}
+        <section className="space-y-4">
+          <p className={labelClass}>Basic Info</p>
+          <div className="bg-app-card rounded-[18px] p-4 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <CustomSelect
+                label="Game"
+                value={formData.game_name ?? defaultGameName}
+                onChange={handleGameChange}
+                options={gameOptions}
+                variant="admin"
+              />
+              <CustomSelect
+                label="Status"
+                value={formData.status ?? 'upcoming'}
+                onChange={v => handleChange('status', v)}
+                options={STATUS_OPTIONS}
+                variant="admin"
+              />
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <CustomSelect
-              label="Game"
-              value={formData.game_name ?? defaultGameName}
-              onChange={handleGameChange}
-              options={gameOptions}
-              variant="admin"
-            />
-            <CustomSelect
-              label="Status"
-              value={formData.status ?? 'upcoming'}
-              onChange={v => handleChange('status', v)}
-              options={STATUS_OPTIONS}
-              variant="admin"
-            />
-          </div>
-
-          <Input
-            label="Tournament Title"
-            placeholder="e.g. Pro Scrims: Elite Division"
-            value={formData.title}
-            onChange={e => handleChange('title', e.target.value)}
-            required
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <CustomSelect
-              label="Game Mode"
-              value={formData.mode ?? 'Squad'}
-              onChange={v => handleChange('mode', v)}
-              options={MODE_OPTIONS}
-              variant="admin"
-            />
             <div className="space-y-2">
-              <label className={labelClass}>Start Date & Time</label>
+              <label className={labelClass}>Tournament Title</label>
               <input
-                type="datetime-local"
-                value={formData.start_time}
-                onChange={e => handleChange('start_time', e.target.value)}
+                placeholder="e.g. Pro Scrims: Elite Division"
+                value={formData.title ?? ''}
+                onChange={e => handleChange('title', e.target.value)}
                 required
-                className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm font-bold focus:border-brand-blue outline-none transition-all text-white"
-                style={{ colorScheme: 'dark' }}
+                className={inputClass}
               />
             </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Entry Fee" placeholder="₹50" value={formData.entry_fee} onChange={e => handleChange('entry_fee', e.target.value)} required />
-            <Input label="Prize Pool" placeholder="₹5,000" value={formData.prize} onChange={e => handleChange('prize', e.target.value)} required />
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input label="Total Slots" type="number" value={formData.slots_total} onChange={e => handleChange('slots_total', parseInt(e.target.value))} required />
-            <Input label="Filled Slots" type="number" value={formData.slots_filled} onChange={e => handleChange('slots_filled', parseInt(e.target.value))} required />
-          </div>
-        </Card>
-
-        <Card className="p-4 sm:p-6 space-y-4 bg-brand-card/40 border-white/5">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Match Banner</h2>
-            <span className="text-[10px] font-bold text-brand-blue bg-brand-blue/10 px-2.5 py-1 rounded-full">
-              Auto from game
-            </span>
-          </div>
-
-          {formData.banner_image ? (
-            <div className="rounded-2xl overflow-hidden border border-white/10 w-full h-44 relative">
-              <img
-                src={formData.banner_image}
-                alt="Banner"
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <CustomSelect
+                label="Game Mode"
+                value={formData.mode ?? 'Squad'}
+                onChange={v => handleChange('mode', v)}
+                options={MODE_OPTIONS}
+                variant="admin"
               />
-              {selectedGame && (
-                <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-xl px-2.5 py-1.5">
-                  <img
-                    src={selectedGame.logo}
-                    alt={selectedGame.name}
-                    className="w-5 h-5 rounded-md object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                  <span className="text-[11px] font-black text-white">{selectedGame.name}</span>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="rounded-2xl border-2 border-dashed border-white/10 w-full h-44 flex flex-col items-center justify-center gap-2 text-slate-600">
-              <ImageIcon size={32} />
-              <span className="text-xs font-bold">Select a game above to load its banner</span>
-            </div>
-          )}
-
-          <p className="text-[11px] text-slate-600 font-bold">
-            The banner is set automatically from the selected game. To change it, update the game's banner in the Games section.
-          </p>
-        </Card>
-
-        {formData.status === 'completed' && (
-          <Card className="p-4 sm:p-6 space-y-5 bg-brand-card/40 border-white/5">
-            <h2 className="text-xs font-black uppercase tracking-widest text-slate-500">Match Result</h2>
-            <div className="grid grid-cols-2 gap-6">
-              <div className="space-y-4">
-                <Input label="Team 1 Name" value={formData.team1_name} onChange={e => handleChange('team1_name', e.target.value)} />
-                <Input label="Team 1 Logo URL" placeholder="https://..." value={formData.team1_logo} onChange={e => handleChange('team1_logo', e.target.value)} />
-                <Input label="Team 1 Score" type="number" placeholder="0" value={(formData as any).team1_score ?? ''} onChange={e => handleChange('team1_score', parseInt(e.target.value))} />
-              </div>
-              <div className="space-y-4">
-                <Input label="Team 2 Name" value={formData.team2_name} onChange={e => handleChange('team2_name', e.target.value)} />
-                <Input label="Team 2 Logo URL" placeholder="https://..." value={formData.team2_logo} onChange={e => handleChange('team2_logo', e.target.value)} />
-                <Input label="Team 2 Score" type="number" placeholder="0" value={(formData as any).team2_score ?? ''} onChange={e => handleChange('team2_score', parseInt(e.target.value))} />
+              <div className="space-y-2">
+                <label className={labelClass}>Start Date & Time</label>
+                <input
+                  type="datetime-local"
+                  value={formData.start_time ?? ''}
+                  onChange={e => handleChange('start_time', e.target.value)}
+                  required
+                  className={cn(inputClass)}
+                  style={{ colorScheme: 'dark' }}
+                />
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { url: formData.team1_logo, name: formData.team1_name },
-                { url: formData.team2_logo, name: formData.team2_name },
-              ].map((t, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-xl border border-white/10 overflow-hidden flex-shrink-0 bg-white/5">
-                    {t.url ? (
-                      <img src={t.url} alt={t.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-600">
-                        <ImageIcon size={18} />
-                      </div>
-                    )}
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className={labelClass}>Entry Fee</label>
+                <input
+                  placeholder="₹50"
+                  value={formData.entry_fee ?? ''}
+                  onChange={e => handleChange('entry_fee', e.target.value)}
+                  required
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className={labelClass}>Prize Pool</label>
+                <input
+                  placeholder="₹5,000"
+                  value={formData.prize ?? ''}
+                  onChange={e => handleChange('prize', e.target.value)}
+                  required
+                  className={inputClass}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-2">
+                <label className={labelClass}>Total Slots</label>
+                <input
+                  type="number"
+                  value={formData.slots_total ?? ''}
+                  onChange={e => handleChange('slots_total', parseInt(e.target.value))}
+                  required
+                  className={inputClass}
+                />
+              </div>
+              <div className="space-y-2">
+                <label className={labelClass}>Filled Slots</label>
+                <input
+                  type="number"
+                  value={formData.slots_filled ?? ''}
+                  onChange={e => handleChange('slots_filled', parseInt(e.target.value))}
+                  required
+                  className={inputClass}
+                />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Banner Preview */}
+        <section className="space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <p className={labelClass}>Match Banner</p>
+            <span className="text-[10px] font-semibold text-brand-primary bg-brand-primary/10 px-2.5 py-1 rounded-full">Auto from game</span>
+          </div>
+          <div className="bg-app-card rounded-[18px] overflow-hidden">
+            {formData.banner_image ? (
+              <div className="relative h-44">
+                <img
+                  src={formData.banner_image}
+                  alt="Banner"
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
+                {selectedGame && (
+                  <div className="absolute bottom-3 left-3 flex items-center gap-2 bg-black/60 backdrop-blur-sm rounded-[12px] px-3 py-1.5">
+                    <img src={selectedGame.logo} alt={selectedGame.name} className="w-5 h-5 rounded-[6px] object-cover" referrerPolicy="no-referrer" />
+                    <span className="text-[11px] font-semibold text-white">{selectedGame.name}</span>
                   </div>
-                  <span className="text-sm font-bold text-slate-400 truncate">{t.name}</span>
-                </div>
-              ))}
+                )}
+              </div>
+            ) : (
+              <div className="h-44 flex flex-col items-center justify-center gap-2 text-text-muted">
+                <ImageIcon size={28} />
+                <span className="text-[13px] font-normal">Select a game above to load banner</span>
+              </div>
+            )}
+            <p className="text-[12px] text-text-muted font-normal px-4 py-3 border-t border-ios-sep">
+              Banner is auto-set from the selected game. Edit in the Games section to change it.
+            </p>
+          </div>
+        </section>
+
+        {/* Match Result (only for completed) */}
+        {formData.status === 'completed' && (
+          <motion.section
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-3"
+          >
+            <p className={labelClass}>Match Result</p>
+            <div className="bg-app-card rounded-[18px] p-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                {[
+                  { label: 'Team 1', nameKey: 'team1_name', logoKey: 'team1_logo', scoreKey: 'team1_score' },
+                  { label: 'Team 2', nameKey: 'team2_name', logoKey: 'team2_logo', scoreKey: 'team2_score' },
+                ].map(team => (
+                  <div key={team.label} className="space-y-3">
+                    <p className="text-[12px] font-semibold text-text-secondary uppercase tracking-[0.06em]">{team.label}</p>
+                    <div className="space-y-2.5">
+                      <input
+                        placeholder="Team name"
+                        value={(formData as any)[team.nameKey] ?? ''}
+                        onChange={e => handleChange(team.nameKey, e.target.value)}
+                        className={cn(inputClass, 'py-2.5 text-[14px]')}
+                      />
+                      <input
+                        placeholder="Logo URL"
+                        value={(formData as any)[team.logoKey] ?? ''}
+                        onChange={e => handleChange(team.logoKey, e.target.value)}
+                        className={cn(inputClass, 'py-2.5 text-[13px]')}
+                      />
+                      <input
+                        type="number"
+                        placeholder="Score"
+                        value={(formData as any)[team.scoreKey] ?? ''}
+                        onChange={e => handleChange(team.scoreKey, parseInt(e.target.value))}
+                        className={cn(inputClass, 'py-2.5 text-[14px]')}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Logo preview */}
+              <div className="flex items-center justify-center gap-6 pt-2 border-t border-ios-sep">
+                {[
+                  { url: formData.team1_logo, name: formData.team1_name },
+                  { url: formData.team2_logo, name: formData.team2_name },
+                ].map((t, i) => (
+                  <React.Fragment key={i}>
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-14 h-14 rounded-[14px] border border-ios-sep overflow-hidden bg-app-elevated flex items-center justify-center">
+                        {t.url ? (
+                          <img src={t.url} alt={t.name ?? 'team'} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                        ) : (
+                          <ImageIcon size={18} className="text-text-muted" />
+                        )}
+                      </div>
+                      <span className="text-[12px] font-medium text-text-secondary truncate max-w-[70px] text-center">{t.name || `Team ${i + 1}`}</span>
+                    </div>
+                    {i === 0 && <span className="text-[16px] font-bold text-text-muted">vs</span>}
+                  </React.Fragment>
+                ))}
+              </div>
             </div>
-          </Card>
+          </motion.section>
         )}
 
+        {/* Action buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <Button type="submit" fullWidth size="md" className="rounded-xl">
-            {isEditing ? 'Update Tournament' : 'Create Tournament'}
-          </Button>
-          <Button
+          <button
+            type="submit"
+            className="flex-1 py-4 bg-brand-primary rounded-[14px] text-[16px] font-semibold text-white active:opacity-80 transition-opacity flex items-center justify-center gap-2"
+          >
+            <Check size={18} /> {isEditing ? 'Update Tournament' : 'Create Tournament'}
+          </button>
+          <button
             type="button"
-            variant="secondary"
-            fullWidth
-            size="md"
             onClick={() => navigate('/admin/matches')}
-            className="rounded-xl border-white/5"
+            className="flex-1 py-4 bg-app-elevated rounded-[14px] text-[16px] font-medium text-text-secondary active:opacity-70 transition-opacity border border-ios-sep"
           >
             Cancel
-          </Button>
+          </button>
         </div>
       </form>
     </div>

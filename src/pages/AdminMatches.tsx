@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import { useMatchStore } from '@/src/store/matchStore';
-import { useGameStore } from '@/src/store/gameStore';
-import { Card } from '@/src/components/ui/Card';
-import { Button } from '@/src/components/ui/Button';
-import { Plus, Edit2, Trash2, Search, Users, Trophy, X, Check } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Users, X, Check, ChevronRight } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Tag } from '@/src/components/ui/Tag';
@@ -44,16 +41,23 @@ export default function AdminMatches() {
     completed: matches.filter(m => m.status === 'completed').length,
   };
 
+  const filters = [
+    { value: 'all',       label: `All (${counts.all})` },
+    { value: 'live',      label: `Live (${counts.live})` },
+    { value: 'upcoming',  label: `Upcoming (${counts.upcoming})` },
+    { value: 'completed', label: `Completed (${counts.completed})` },
+  ];
+
   const deleteTarget = matches.find(m => m.match_id === confirmDeleteId);
 
   return (
-    <div className="space-y-6 px-4 sm:px-6 pb-24 pt-4 text-white relative">
+    <div className="pb-24 pt-2 space-y-5">
       {/* Toast */}
       <AnimatePresence>
         {toast && (
           <motion.div
             initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
-            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[300] px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl flex items-center gap-2 pointer-events-none ${toast.ok ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
+            className={`fixed top-[72px] left-1/2 -translate-x-1/2 z-[300] px-5 py-3 rounded-[14px] text-[14px] font-medium shadow-xl flex items-center gap-2 pointer-events-none whitespace-nowrap ${toast.ok ? 'bg-brand-success text-white' : 'bg-brand-live text-white'}`}
           >
             {toast.ok ? <Check size={16} /> : <X size={16} />} {toast.msg}
           </motion.div>
@@ -61,129 +65,141 @@ export default function AdminMatches() {
       </AnimatePresence>
 
       {/* Header */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="px-4 pt-2 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Tournaments</h1>
-          <p className="text-xs text-slate-500 font-bold mt-0.5">{matches.length} total</p>
+          <h1 className="text-[22px] font-bold text-text-primary tracking-[-0.5px]">Tournaments</h1>
+          <p className="text-[13px] text-text-muted font-normal mt-0.5">{matches.length} total</p>
         </div>
-        <Link to="/admin/matches/new" className="flex-shrink-0">
-          <Button size="sm" className="rounded-xl px-4 flex items-center gap-2">
-            <Plus size={16} />
-            <span className="hidden sm:inline">Create</span>
-          </Button>
+        <Link to="/admin/matches/new">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-brand-primary rounded-full text-white text-[14px] font-medium active:opacity-80 transition-opacity">
+            <Plus size={16} /> Create
+          </button>
         </Link>
       </div>
 
-      {/* Status filter tabs */}
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {([
-          ['all', `All (${counts.all})`],
-          ['live', `Live (${counts.live})`],
-          ['upcoming', `Upcoming (${counts.upcoming})`],
-          ['completed', `Completed (${counts.completed})`],
-        ] as const).map(([val, label]) => (
-          <button key={val} onClick={() => setStatusFilter(val)}
+      {/* Filter tabs */}
+      <div className="flex gap-2 px-4 overflow-x-auto pb-1 scrollable-content">
+        {filters.map(f => (
+          <button
+            key={f.value}
+            onClick={() => setStatusFilter(f.value)}
             className={cn(
-              'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all flex-shrink-0',
-              statusFilter === val ? 'bg-blue-500 text-white' : 'bg-white/5 text-slate-400 hover:bg-white/10'
-            )}>
-            {label}
+              'px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all shrink-0',
+              statusFilter === f.value ? 'bg-brand-primary text-white' : 'bg-app-elevated text-text-secondary'
+            )}
+          >
+            {f.label}
           </button>
         ))}
       </div>
 
       {/* Search */}
-      <div className="relative">
-        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-        <input
-          type="text"
-          placeholder="Search by title or game..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full bg-brand-card/40 border border-white/5 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold focus:border-blue-500 outline-none transition-all placeholder:text-slate-600"
-        />
+      <div className="px-4">
+        <div className="relative">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
+          <input
+            type="text"
+            placeholder="Search by title or game..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full bg-app-elevated rounded-[14px] py-3 pl-11 pr-4 text-[15px] text-text-primary placeholder:text-text-muted outline-none border border-ios-sep focus:border-brand-primary transition-all"
+          />
+        </div>
       </div>
 
       {/* Match list */}
-      <div className="space-y-3">
-        {filteredMatches.length === 0 && (
-          <div className="py-14 text-center text-slate-500 text-sm font-bold">No tournaments found</div>
-        )}
-        {filteredMatches.map((match, i) => {
-          const slotPct = Math.round((match.slots_filled / match.slots_total) * 100);
-          return (
-            <motion.div
-              key={match.match_id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <Card className="p-4 bg-brand-card/40 border-white/5 group">
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-16 h-16 rounded-2xl overflow-hidden border border-white/5 flex-shrink-0">
-                    <img src={match.banner_image} alt={match.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Tag variant={match.status as any}>{match.status}</Tag>
-                      <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest">{match.game_name}</span>
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{match.mode}</span>
-                    </div>
-                    <h3 className="font-bold text-sm truncate">{match.title}</h3>
-                    <div className="flex items-center gap-3 flex-wrap">
-                      <span className="text-[10px] font-black text-green-400">{match.prize}</span>
-                      <span className="text-[10px] font-bold text-slate-500">Entry: {match.entry_fee}</span>
-                    </div>
-                    {/* Slot progress */}
-                    <div className="flex items-center gap-2 mt-1">
-                      <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden max-w-[120px]">
-                        <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${slotPct}%` }} />
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
-                        <Users size={9} /> {match.slots_filled}/{match.slots_total}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity flex-shrink-0">
-                    <button
-                      onClick={() => navigate(`/admin/matches/edit/${match.match_id}`)}
-                      className="p-2.5 bg-white/5 rounded-xl text-slate-400 hover:bg-blue-500/10 hover:text-blue-400 transition-all"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteId(match.match_id)}
-                      className="p-2.5 bg-white/5 rounded-xl text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          );
-        })}
-      </div>
+      <section className="px-4 space-y-2">
+        <p className="text-[13px] text-text-secondary uppercase tracking-[0.06em] font-normal px-1">
+          {filteredMatches.length} {filteredMatches.length === 1 ? 'tournament' : 'tournaments'}
+        </p>
 
-      {/* Delete confirm modal */}
+        {filteredMatches.length === 0 ? (
+          <div className="bg-app-card rounded-[18px] py-14 text-center">
+            <p className="text-[15px] text-text-muted font-normal">No tournaments found</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filteredMatches.map((match, i) => {
+              const slotPct = Math.round((match.slots_filled / match.slots_total) * 100);
+              return (
+                <motion.div
+                  key={match.match_id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.04 }}
+                  className="bg-app-card rounded-[18px] overflow-hidden"
+                >
+                  <div className="flex items-center gap-3.5 p-4">
+                    {/* Banner thumb */}
+                    <div className="w-16 h-16 rounded-[14px] overflow-hidden border border-app-border shrink-0">
+                      <img src={match.banner_image} alt={match.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    </div>
+
+                    {/* Info */}
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Tag variant={match.status as any}>{match.status}</Tag>
+                        <span className="text-[11px] font-semibold text-brand-primary">{match.game_name}</span>
+                        <span className="text-[11px] text-text-muted">{match.mode}</span>
+                      </div>
+                      <p className="text-[15px] font-medium text-text-primary truncate">{match.title}</p>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[12px] font-semibold text-brand-success">{match.prize}</span>
+                        <span className="text-[12px] text-text-muted">Entry: {match.entry_fee}</span>
+                      </div>
+                      {/* Slot bar */}
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="flex-1 h-1.5 bg-app-elevated rounded-full overflow-hidden max-w-[100px]">
+                          <div className="h-full bg-brand-primary rounded-full" style={{ width: `${slotPct}%` }} />
+                        </div>
+                        <span className="text-[11px] text-text-muted flex items-center gap-1">
+                          <Users size={10} /> {match.slots_filled}/{match.slots_total}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => navigate(`/admin/matches/edit/${match.match_id}`)}
+                        className="w-9 h-9 bg-brand-primary/10 rounded-[12px] text-brand-primary flex items-center justify-center active:opacity-60 transition-opacity"
+                      >
+                        <Edit2 size={15} />
+                      </button>
+                      <button
+                        onClick={() => setConfirmDeleteId(match.match_id)}
+                        className="w-9 h-9 bg-brand-live/10 rounded-[12px] text-brand-live flex items-center justify-center active:opacity-60 transition-opacity"
+                      >
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Delete confirm — iOS alert style */}
       <AnimatePresence>
         {confirmDeleteId && deleteTarget && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
             <motion.div
               initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.92 }}
-              className="w-full max-w-sm bg-[#0f0f14] border border-white/10 rounded-3xl overflow-hidden shadow-2xl p-6 space-y-4 text-center"
+              className="w-full max-w-[280px] bg-app-card rounded-[18px] overflow-hidden shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-                <Trash2 size={24} className="text-red-400" />
+              <div className="px-6 pt-6 pb-4 text-center space-y-2">
+                <div className="w-14 h-14 bg-brand-live/10 rounded-full flex items-center justify-center mx-auto">
+                  <Trash2 size={24} className="text-brand-live" />
+                </div>
+                <h2 className="text-[17px] font-semibold text-text-primary">Delete Tournament?</h2>
+                <p className="text-[13px] text-text-muted">"{deleteTarget.title}" will be permanently removed.</p>
               </div>
-              <div>
-                <h2 className="text-lg font-black">Delete Tournament?</h2>
-                <p className="text-sm text-slate-400 mt-1">"{deleteTarget.title}" will be permanently removed.</p>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-3 bg-white/5 rounded-xl text-sm font-bold text-slate-300 hover:bg-white/10 transition-all">Cancel</button>
-                <button onClick={handleDelete} className="flex-1 py-3 bg-red-500 rounded-xl text-sm font-bold text-white hover:bg-red-600 transition-all">Delete</button>
+              <div className="border-t border-ios-sep grid grid-cols-2 divide-x divide-ios-sep">
+                <button onClick={() => setConfirmDeleteId(null)} className="py-4 text-[17px] text-brand-primary font-normal active:bg-app-elevated transition-colors">Cancel</button>
+                <button onClick={handleDelete} className="py-4 text-[17px] text-brand-live font-medium active:bg-app-elevated transition-colors">Delete</button>
               </div>
             </motion.div>
           </div>

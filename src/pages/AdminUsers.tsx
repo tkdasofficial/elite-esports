@@ -1,17 +1,26 @@
 import React, { useState } from 'react';
-import { Card } from '@/src/components/ui/Card';
-import { Search, User, Ban, CheckCircle2, Coins, Trash2, X, Check, Plus, Minus } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Search, User, Ban, CheckCircle2, Coins, Trash2, X, Check, Plus, Minus, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Button } from '@/src/components/ui/Button';
 import { cn } from '@/src/utils/helpers';
 import { usePlatformStore, PlatformUser } from '@/src/store/platformStore';
 import { useUserStore } from '@/src/store/userStore';
 
 type Toast = { msg: string; ok: boolean } | null;
 
+const IOSToast = ({ toast }: { toast: Toast }) => (
+  <AnimatePresence>
+    {toast && (
+      <motion.div
+        initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
+        className={`fixed top-[72px] left-1/2 -translate-x-1/2 z-[300] px-5 py-3 rounded-[14px] text-[14px] font-medium shadow-xl flex items-center gap-2 pointer-events-none whitespace-nowrap ${toast.ok ? 'bg-brand-success text-white' : 'bg-brand-live text-white'}`}
+      >
+        {toast.ok ? <CheckCircle2 size={16} /> : <X size={16} />} {toast.msg}
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
 export default function AdminUsers() {
-  const navigate = useNavigate();
   const { registeredUsers, banUser, unbanUser, adjustCoins, deleteUser } = usePlatformStore();
   const { updateCoins } = useUserStore();
   const [searchQuery, setSearchQuery]     = useState('');
@@ -30,10 +39,10 @@ export default function AdminUsers() {
   const handleToggleStatus = (user: PlatformUser) => {
     if (user.status === 'active') {
       banUser(user.id);
-      showToast(`${user.username} banned successfully`);
+      showToast(`${user.username} banned`);
     } else {
       unbanUser(user.id);
-      showToast(`${user.username} unbanned successfully`);
+      showToast(`${user.username} unbanned`);
     }
   };
 
@@ -42,9 +51,7 @@ export default function AdminUsers() {
     const delta = coinMode === 'add' ? Number(coinAmount) : -Number(coinAmount);
     adjustCoins(coinModal.id, delta);
     const { user } = useUserStore.getState();
-    if (user && coinModal.id === user.id) {
-      updateCoins(delta);
-    }
+    if (user && coinModal.id === user.id) updateCoins(delta);
     showToast(`${coinMode === 'add' ? '+' : '-'}₹${coinAmount} applied to ${coinModal.username}`);
     setCoinModal(null);
     setCoinAmount('');
@@ -74,200 +81,235 @@ export default function AdminUsers() {
 
   const deleteTarget = registeredUsers.find(u => u.id === confirmDeleteId);
 
-  return (
-    <div className="space-y-6 px-4 sm:px-6 pb-24 pt-4 text-white relative">
-      <AnimatePresence>
-        {toast && (
-          <motion.div
-            initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }}
-            className={`fixed top-4 left-1/2 -translate-x-1/2 z-[300] px-5 py-3 rounded-2xl text-sm font-bold shadow-2xl flex items-center gap-2 pointer-events-none ${toast.ok ? 'bg-green-500 text-white' : 'bg-red-500 text-white'}`}
-          >
-            {toast.ok ? <CheckCircle2 size={16} /> : <X size={16} />} {toast.msg}
-          </motion.div>
-        )}
-      </AnimatePresence>
+  const filters = [
+    { value: 'all',    label: `All (${counts.all})` },
+    { value: 'active', label: `Active (${counts.active})` },
+    { value: 'banned', label: `Banned (${counts.banned})` },
+  ];
 
-      <div className="flex items-center gap-4">
-        <button onClick={() => navigate('/admin')} className="p-2 bg-white/5 rounded-xl text-slate-400 hover:bg-white/10 transition-colors">
-          <span className="sr-only">Back</span>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        </button>
-        <div>
-          <h1 className="text-2xl font-black tracking-tight">Users</h1>
-          <p className="text-xs text-slate-500 font-bold">{registeredUsers.length} total players</p>
-        </div>
+  return (
+    <div className="pb-24 pt-2 space-y-5">
+      <IOSToast toast={toast} />
+
+      {/* Header */}
+      <div className="px-4 pt-2">
+        <h1 className="text-[22px] font-bold text-text-primary tracking-[-0.5px]">Players</h1>
+        <p className="text-[13px] text-text-muted font-normal mt-0.5">{registeredUsers.length} total registered</p>
       </div>
 
-      <div className="flex gap-2">
-        {([
-          ['all', `All (${counts.all})`],
-          ['active', `Active (${counts.active})`],
-          ['banned', `Banned (${counts.banned})`],
-        ] as const).map(([val, label]) => (
-          <button key={val} onClick={() => setStatusFilter(val)}
+      {/* Filter tabs */}
+      <div className="flex gap-2 px-4 overflow-x-auto pb-1 scrollable-content">
+        {filters.map(f => (
+          <button
+            key={f.value}
+            onClick={() => setStatusFilter(f.value)}
             className={cn(
-              'px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all flex-shrink-0',
-              statusFilter === val
-                ? val === 'banned' ? 'bg-red-500 text-white' : 'bg-blue-500 text-white'
-                : 'bg-white/5 text-slate-400 hover:bg-white/10'
-            )}>
-            {label}
+              'px-4 py-2 rounded-full text-[13px] font-medium whitespace-nowrap transition-all shrink-0',
+              statusFilter === f.value ? 'bg-brand-primary text-white' : 'bg-app-elevated text-text-secondary'
+            )}
+          >
+            {f.label}
           </button>
         ))}
       </div>
 
-      <div className="relative">
-        <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
-        <input
-          type="text"
-          placeholder="Search by username or email..."
-          value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)}
-          className="w-full bg-brand-card/40 border border-white/5 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold focus:border-brand-blue outline-none transition-all placeholder:text-slate-600"
-        />
+      {/* Search */}
+      <div className="px-4">
+        <div className="relative">
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
+          <input
+            type="text"
+            placeholder="Search by username or email..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full bg-app-elevated rounded-[14px] py-3 pl-11 pr-4 text-[15px] text-text-primary placeholder:text-text-muted outline-none border border-ios-sep focus:border-brand-primary transition-all"
+          />
+        </div>
       </div>
 
-      <div className="space-y-3">
-        {filtered.map((user, i) => (
-          <motion.div key={user.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-            <Card className="p-4 bg-brand-card/40 border-white/5">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className={cn('w-11 h-11 rounded-2xl flex-shrink-0 flex items-center justify-center', user.status === 'banned' ? 'bg-red-500/10 text-red-400' : 'bg-white/5 text-slate-400')}>
-                  <User size={22} />
+      {/* User list */}
+      <section className="px-4 space-y-2">
+        <p className="text-[13px] text-text-secondary uppercase tracking-[0.06em] font-normal px-1">
+          {filtered.length} {filtered.length === 1 ? 'player' : 'players'}
+        </p>
+
+        {filtered.length === 0 ? (
+          <div className="bg-app-card rounded-[18px] py-14 flex flex-col items-center gap-3">
+            <div className="w-14 h-14 rounded-full bg-app-elevated flex items-center justify-center">
+              <User size={24} className="text-text-muted" />
+            </div>
+            <p className="text-[15px] text-text-muted font-normal">No players found</p>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {filtered.map((user, i) => (
+              <motion.div
+                key={user.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.04 }}
+                className="bg-app-card rounded-[18px] overflow-hidden"
+              >
+                {/* User info row */}
+                <div className="flex items-center gap-3 px-4 py-3.5">
+                  <div className={cn(
+                    'w-11 h-11 rounded-full flex items-center justify-center shrink-0 font-semibold text-[16px]',
+                    user.status === 'banned' ? 'bg-brand-live/10 text-brand-live' : 'bg-brand-primary/10 text-brand-primary'
+                  )}>
+                    {user.username?.[0]?.toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[15px] font-medium text-text-primary truncate">{user.username}</p>
+                      {user.status === 'banned' && (
+                        <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-brand-live/10 text-brand-live shrink-0">Banned</span>
+                      )}
+                    </div>
+                    <p className="text-[12px] text-text-muted truncate">{user.email}</p>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <span className="text-[11px] font-semibold text-brand-primary">{user.rank}</span>
+                      <span className="text-[11px] font-semibold text-brand-success">₹{user.coins.toLocaleString()}</span>
+                      <span className="text-[11px] text-text-muted">{user.joined}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-bold text-sm truncate">{user.username}</h3>
-                    {user.status === 'banned' && (
-                      <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 flex-shrink-0">Banned</span>
+
+                {/* Actions row */}
+                <div className="flex items-center gap-2 px-4 pb-3.5">
+                  <button
+                    onClick={() => { setCoinModal(user); setCoinAmount(''); setCoinMode('add'); }}
+                    className="flex-1 py-2 bg-brand-success/10 rounded-[12px] text-[12px] font-medium text-brand-success active:opacity-70 transition-opacity flex items-center justify-center gap-1.5"
+                  >
+                    <Coins size={14} /> Coins
+                  </button>
+                  <button
+                    onClick={() => handleToggleStatus(user)}
+                    className={cn(
+                      'flex-1 py-2 rounded-[12px] text-[12px] font-medium transition-opacity active:opacity-70 flex items-center justify-center gap-1.5',
+                      user.status === 'banned'
+                        ? 'bg-brand-success/10 text-brand-success'
+                        : 'bg-app-elevated text-text-secondary'
                     )}
-                  </div>
-                  <p className="text-[11px] text-slate-500 truncate">{user.email}</p>
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="text-[10px] font-black text-brand-blue uppercase">{user.rank}</span>
-                    <span className="text-[10px] font-black text-green-400">₹{user.coins.toLocaleString()}</span>
-                    <span className="text-[10px] text-slate-600 font-bold">{user.joined}</span>
-                  </div>
+                  >
+                    {user.status === 'banned' ? <><Check size={14} /> Unban</> : <><Ban size={14} /> Ban</>}
+                  </button>
+                  <button
+                    onClick={() => setConfirmDeleteId(user.id)}
+                    className="py-2 px-3 bg-brand-live/10 rounded-[12px] text-brand-live active:opacity-70 transition-opacity"
+                  >
+                    <Trash2 size={15} />
+                  </button>
                 </div>
-              </div>
-
-              <div className="mt-3 flex items-center gap-2">
-                <button
-                  onClick={() => { setCoinModal(user); setCoinAmount(''); setCoinMode('add'); }}
-                  className="flex-1 py-2 bg-white/5 hover:bg-green-500/10 hover:text-green-400 text-slate-400 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5"
-                >
-                  <Coins size={14} /> Coins
-                </button>
-                <button
-                  onClick={() => handleToggleStatus(user)}
-                  className={cn(
-                    'flex-1 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5',
-                    user.status === 'banned'
-                      ? 'bg-green-500/10 text-green-400 hover:bg-green-500/20'
-                      : 'bg-white/5 text-slate-400 hover:bg-red-500/10 hover:text-red-400'
-                  )}
-                >
-                  {user.status === 'banned' ? <><Check size={14} /> Unban</> : <><Ban size={14} /> Ban</>}
-                </button>
-                <button
-                  onClick={() => setConfirmDeleteId(user.id)}
-                  className="p-2.5 bg-white/5 hover:bg-red-500/10 hover:text-red-400 text-slate-400 rounded-xl transition-all"
-                >
-                  <Trash2 size={15} />
-                </button>
-              </div>
-            </Card>
-          </motion.div>
-        ))}
-
-        {filtered.length === 0 && (
-          <div className="py-12 text-center text-slate-500 text-sm font-bold">No users found</div>
+              </motion.div>
+            ))}
+          </div>
         )}
-      </div>
+      </section>
 
+      {/* Delete Confirm — iOS alert style */}
       <AnimatePresence>
         {confirmDeleteId && deleteTarget && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
             <motion.div
               initial={{ opacity: 0, scale: 0.92 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.92 }}
-              className="w-full max-w-sm bg-[#0f0f14] border border-white/10 rounded-3xl p-6 space-y-4 text-center shadow-2xl"
+              className="w-full max-w-[280px] bg-app-card rounded-[18px] overflow-hidden shadow-2xl"
               onClick={e => e.stopPropagation()}
             >
-              <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto">
-                <Trash2 size={24} className="text-red-400" />
+              <div className="px-6 pt-6 pb-4 text-center space-y-2">
+                <div className="w-14 h-14 bg-brand-live/10 rounded-full flex items-center justify-center mx-auto">
+                  <Trash2 size={24} className="text-brand-live" />
+                </div>
+                <h2 className="text-[17px] font-semibold text-text-primary">Delete Player?</h2>
+                <p className="text-[13px] text-text-muted">"{deleteTarget.username}" will be permanently removed.</p>
               </div>
-              <div>
-                <h2 className="text-lg font-black">Delete User?</h2>
-                <p className="text-sm text-slate-400 mt-1">"{deleteTarget.username}" will be permanently removed.</p>
-              </div>
-              <div className="flex gap-3">
-                <button onClick={() => setConfirmDeleteId(null)} className="flex-1 py-3 bg-white/5 rounded-xl text-sm font-bold text-slate-300 hover:bg-white/10 transition-all">Cancel</button>
-                <button onClick={handleDeleteUser} className="flex-1 py-3 bg-red-500 rounded-xl text-sm font-bold text-white hover:bg-red-600 transition-all">Delete</button>
+              <div className="border-t border-ios-sep grid grid-cols-2 divide-x divide-ios-sep">
+                <button onClick={() => setConfirmDeleteId(null)} className="py-4 text-[17px] text-brand-primary font-normal active:bg-app-elevated transition-colors">Cancel</button>
+                <button onClick={handleDeleteUser} className="py-4 text-[17px] text-brand-live font-medium active:bg-app-elevated transition-colors">Delete</button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
+      {/* Coins bottom sheet */}
       <AnimatePresence>
         {coinModal && (
           <div className="fixed inset-0 z-[100] flex items-end justify-center">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setCoinModal(null)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setCoinModal(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
             <motion.div
               initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="relative w-full max-w-[440px] bg-[#1a1a2e] border border-white/10 rounded-t-[28px] p-6 space-y-5"
+              transition={{ type: 'spring', stiffness: 300, damping: 32 }}
+              className="relative w-full max-w-[440px] bg-app-card rounded-t-[28px] pb-8"
             >
-              <div className="flex items-center justify-between">
+              <div className="flex justify-center pt-3 pb-2">
+                <div className="w-10 h-[5px] bg-app-elevated rounded-full" />
+              </div>
+
+              <div className="flex items-center justify-between px-5 pb-4 border-b border-ios-sep">
                 <div>
-                  <h3 className="text-lg font-black">Adjust Coins</h3>
-                  <p className="text-xs text-slate-500 font-bold mt-0.5">{coinModal.username} · Current: ₹{coinModal.coins.toLocaleString()}</p>
+                  <h3 className="text-[18px] font-semibold text-text-primary">Adjust Coins</h3>
+                  <p className="text-[13px] text-text-muted mt-0.5">{coinModal.username} · ₹{coinModal.coins.toLocaleString()} balance</p>
                 </div>
-                <button onClick={() => setCoinModal(null)} className="p-2 bg-white/5 rounded-full text-slate-400 hover:bg-white/10 transition-colors">
-                  <X size={16} />
+                <button onClick={() => setCoinModal(null)} className="w-8 h-8 bg-app-elevated rounded-full flex items-center justify-center text-text-secondary active:opacity-60">
+                  <X size={15} />
                 </button>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                {(['add', 'deduct'] as const).map(m => (
-                  <button
-                    key={m}
-                    onClick={() => setCoinMode(m)}
-                    className={cn(
-                      'py-2.5 rounded-xl text-sm font-bold capitalize transition-all flex items-center justify-center gap-2',
-                      coinMode === m
-                        ? m === 'add' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-                        : 'bg-white/5 text-slate-400'
-                    )}
-                  >
-                    {m === 'add' ? <Plus size={14} /> : <Minus size={14} />} {m}
-                  </button>
-                ))}
-              </div>
+              <div className="p-5 space-y-5">
+                {/* Mode selector */}
+                <div className="flex gap-2">
+                  {(['add', 'deduct'] as const).map(m => (
+                    <button
+                      key={m}
+                      onClick={() => setCoinMode(m)}
+                      className={cn(
+                        'flex-1 py-3 rounded-[14px] text-[14px] font-medium capitalize transition-all flex items-center justify-center gap-2',
+                        coinMode === m
+                          ? m === 'add' ? 'bg-brand-success text-white' : 'bg-brand-live text-white'
+                          : 'bg-app-elevated text-text-secondary'
+                      )}
+                    >
+                      {m === 'add' ? <Plus size={15} /> : <Minus size={15} />} {m === 'add' ? 'Add' : 'Deduct'}
+                    </button>
+                  ))}
+                </div>
 
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-bold text-slate-400">₹</span>
-                <input
-                  type="number"
-                  value={coinAmount}
-                  onChange={e => setCoinAmount(e.target.value)}
-                  placeholder="0"
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 pl-9 pr-4 text-xl font-black focus:border-brand-blue outline-none transition-all"
-                />
-              </div>
+                {/* Amount input */}
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[18px] font-medium text-text-muted">₹</span>
+                  <input
+                    type="number"
+                    value={coinAmount}
+                    onChange={e => setCoinAmount(e.target.value)}
+                    placeholder="0"
+                    className="w-full bg-app-elevated border border-ios-sep rounded-[14px] py-3.5 pl-9 pr-4 text-[22px] font-semibold text-text-primary placeholder:text-text-muted outline-none focus:border-brand-primary transition-all"
+                  />
+                </div>
 
-              <div className="grid grid-cols-4 gap-2">
-                {[50, 100, 200, 500].map(v => (
-                  <button key={v} onClick={() => setCoinAmount(v.toString())}
-                    className="py-2 bg-white/5 rounded-xl text-xs font-bold text-slate-400 hover:bg-white/10 transition-colors">
-                    {coinMode === 'add' ? '+' : '-'}₹{v}
-                  </button>
-                ))}
-              </div>
+                {/* Quick amounts */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[50, 100, 200, 500].map(v => (
+                    <button
+                      key={v}
+                      onClick={() => setCoinAmount(v.toString())}
+                      className="py-2.5 bg-app-elevated rounded-[12px] text-[13px] font-medium text-text-secondary active:opacity-60 transition-opacity"
+                    >
+                      {coinMode === 'add' ? '+' : '-'}₹{v}
+                    </button>
+                  ))}
+                </div>
 
-              <Button onClick={applyCoins} fullWidth className={cn('rounded-xl', coinMode === 'deduct' ? 'bg-red-500 shadow-red-500/20' : '')}>
-                {coinMode === 'add' ? 'Add' : 'Deduct'} ₹{coinAmount || '0'} Coins
-              </Button>
+                {/* Apply button */}
+                <button
+                  onClick={applyCoins}
+                  className={cn(
+                    'w-full py-4 rounded-[14px] text-[16px] font-semibold text-white transition-all active:opacity-80',
+                    coinMode === 'add' ? 'bg-brand-success' : 'bg-brand-live'
+                  )}
+                >
+                  {coinMode === 'add' ? 'Add' : 'Deduct'} ₹{coinAmount || '0'}
+                </button>
+              </div>
             </motion.div>
           </div>
         )}
