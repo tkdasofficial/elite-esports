@@ -26,28 +26,18 @@ export const BottomBar = () => {
               <Link
                 key={item.path}
                 to={item.path}
-                className="flex-1 flex flex-col items-center gap-[3px] pt-1"
+                className="flex-1 flex items-center justify-center"
               >
                 <motion.div
                   whileTap={{ scale: 0.82 }}
-                  className="flex flex-col items-center gap-[3px]"
+                  className={cn(
+                    'w-[38px] h-[38px] rounded-full flex items-center justify-center transition-all duration-200',
+                    active
+                      ? 'bg-red-600 shadow-lg shadow-red-600/40'
+                      : 'bg-red-500 shadow-md shadow-red-500/30'
+                  )}
                 >
-                  <div
-                    className={cn(
-                      'w-[38px] h-[38px] rounded-full flex items-center justify-center transition-all duration-200',
-                      active
-                        ? 'bg-red-600 shadow-lg shadow-red-600/40'
-                        : 'bg-red-500 shadow-md shadow-red-500/30'
-                    )}
-                  >
-                    <Play size={17} fill="white" className="text-white ml-0.5" />
-                  </div>
-                  <span className={cn(
-                    'text-[10px] tracking-tight font-medium leading-none',
-                    active ? 'text-red-400' : 'text-text-muted'
-                  )}>
-                    Live
-                  </span>
+                  <Play size={17} fill="white" className="text-white ml-0.5" />
                 </motion.div>
               </Link>
             );
