@@ -84,7 +84,7 @@ export default function Settings() {
 
   return (
     <div className="h-full flex flex-col bg-app-bg">
-      <header className="h-[56px] px-5 flex items-center glass-dark border-b border-app-border sticky top-0 z-50">
+      <header className="h-[56px] px-5 flex items-center bg-app-bg/90 backdrop-blur-md border-b border-app-border sticky top-0 z-50">
         <Link to="/profile" className="text-[17px] text-brand-primary font-normal">‹ Account</Link>
         <h1 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-text-primary">Settings</h1>
       </header>

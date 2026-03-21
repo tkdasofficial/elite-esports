@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useUserStore } from '@/src/store/userStore';
-import { Button } from '@/src/components/ui/Button';
 import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
 import { Users, UserPlus, ChevronLeft, Trash2, MessageCircle, Plus, Search, ChevronRight, Crown } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -47,7 +46,7 @@ export default function MyTeam() {
 
   return (
     <div className="h-full flex flex-col bg-app-bg">
-      <header className="h-[56px] px-5 flex items-center glass-dark border-b border-app-border sticky top-0 z-50">
+      <header className="h-[56px] px-5 flex items-center bg-app-bg/90 backdrop-blur-md border-b border-app-border sticky top-0 z-50">
         <Link to="/profile" className="text-[17px] text-brand-primary font-normal mr-auto">‹ Account</Link>
         <h1 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-text-primary">My Team</h1>
       </header>
@@ -171,8 +170,14 @@ export default function MyTeam() {
           <div className="space-y-1"><label className="text-[13px] text-text-secondary font-normal">Team Tag (max 5)</label>
             <input type="text" value={teamTag} onChange={e=>setTeamTag(e.target.value.toUpperCase())} maxLength={5} className={inputCls} placeholder="e.g. ELITE" required/></div>
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" fullWidth onClick={()=>setShowCreate(false)}>Cancel</Button>
-            <Button type="submit" fullWidth>Create</Button>
+            <button type="button" onClick={()=>setShowCreate(false)}
+              className="flex-1 py-3.5 bg-app-elevated rounded-[14px] text-text-primary text-[16px] font-medium active:opacity-70 transition-opacity border border-app-border">
+              Cancel
+            </button>
+            <button type="submit"
+              className="flex-1 py-3.5 bg-brand-primary rounded-[14px] text-white text-[16px] font-semibold active:opacity-75 transition-opacity shadow-lg shadow-brand-primary/20">
+              Create
+            </button>
           </div>
         </form>
       </SheetModal>
@@ -183,8 +188,14 @@ export default function MyTeam() {
           <div className="space-y-1"><label className="text-[13px] text-text-secondary font-normal">Team ID</label>
             <input type="text" value={joinId} onChange={e=>setJoinId(e.target.value.toUpperCase())} className={inputCls} placeholder="e.g. ELITE-9921" required/></div>
           <div className="flex gap-3 pt-2">
-            <Button type="button" variant="secondary" fullWidth onClick={()=>setShowJoin(false)}>Cancel</Button>
-            <Button type="submit" fullWidth>Join</Button>
+            <button type="button" onClick={()=>setShowJoin(false)}
+              className="flex-1 py-3.5 bg-app-elevated rounded-[14px] text-text-primary text-[16px] font-medium active:opacity-70 transition-opacity border border-app-border">
+              Cancel
+            </button>
+            <button type="submit"
+              className="flex-1 py-3.5 bg-brand-primary rounded-[14px] text-white text-[16px] font-semibold active:opacity-75 transition-opacity shadow-lg shadow-brand-primary/20">
+              Join
+            </button>
           </div>
         </form>
       </SheetModal>

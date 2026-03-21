@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useUserStore } from '@/src/store/userStore';
-import { Button } from '@/src/components/ui/Button';
 import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -35,7 +34,7 @@ export default function EditProfile() {
 
   return (
     <div className="h-full flex flex-col bg-app-bg">
-      <header className="h-[56px] px-5 flex items-center glass-dark border-b border-app-border sticky top-0 z-50">
+      <header className="h-[56px] px-5 flex items-center bg-app-bg/90 backdrop-blur-md border-b border-app-border sticky top-0 z-50">
         <Link to="/profile" className="text-[17px] text-brand-primary font-normal">Cancel</Link>
         <h1 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-text-primary">Edit Profile</h1>
         <button onClick={handleSave} className="ml-auto text-[17px] text-brand-primary font-semibold">Done</button>

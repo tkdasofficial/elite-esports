@@ -5,7 +5,6 @@ import { ArrowLeft, Trophy, Users, Clock, Coins, ShieldCheck, Share2, UserCheck,
 import { useMatchStore } from '@/src/store/matchStore';
 import { useUserStore } from '@/src/store/userStore';
 import { useAdEngineStore } from '@/src/store/adEngineStore';
-import { Button } from '@/src/components/ui/Button';
 import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
 import { cn } from '@/src/utils/helpers';
 
@@ -33,7 +32,10 @@ export default function MatchDetails() {
   if (!match) return (
     <div className="flex flex-col items-center justify-center h-[80vh] gap-5 px-6">
       <p className="text-[17px] text-text-secondary font-normal">Match not found.</p>
-      <Button onClick={() => navigate('/')}>Go Back</Button>
+      <button onClick={() => navigate('/')}
+        className="px-6 py-3 bg-brand-primary rounded-[14px] text-white text-[16px] font-semibold active:opacity-75 transition-opacity shadow-lg shadow-brand-primary/25">
+        Go Back
+      </button>
     </div>
   );
 
@@ -67,14 +69,14 @@ export default function MatchDetails() {
 
         <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-4 pt-4">
           <button onClick={() => navigate(-1)}
-            className="w-10 h-10 rounded-full glass-dark flex items-center justify-center text-white border border-white/15 active:opacity-70">
+            className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white border border-white/15 active:opacity-70">
             <ArrowLeft size={20}/>
           </button>
           <span className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-semibold backdrop-blur-md', sc.cls)}>
             {sc.dot && <span className="w-1.5 h-1.5 rounded-full bg-brand-live animate-pulse"/>}
             {sc.label}
           </span>
-          <button className="w-10 h-10 rounded-full glass-dark flex items-center justify-center text-white border border-white/15 active:opacity-70">
+          <button className="w-10 h-10 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white border border-white/15 active:opacity-70">
             <Share2 size={18}/>
           </button>
         </div>
@@ -195,17 +197,17 @@ export default function MatchDetails() {
         </section>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 px-4 py-4 glass-dark border-t border-app-border z-[60]">
+      <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-app-bg/95 backdrop-blur-md border-t border-app-border z-[60]">
         <div className="max-w-[768px] mx-auto flex items-center gap-4">
           <div>
             <p className="text-[11px] text-text-muted font-medium uppercase tracking-wide">Entry Fee</p>
             <p className="text-[22px] font-bold text-text-primary tabular">{match.entry_fee}</p>
           </div>
-          <Button
+          <button
             onClick={handleJoinLeave}
             disabled={!isJoinable || (isFull && !isJoined)}
             className={cn(
-              'flex-1 h-[52px] text-[16px] font-semibold rounded-[14px] transition-opacity active:opacity-75',
+              'flex-1 h-[52px] text-white text-[16px] font-semibold rounded-[14px] transition-opacity active:opacity-75',
               isJoined
                 ? 'bg-brand-live shadow-lg shadow-brand-live/20'
                 : 'bg-brand-success shadow-lg shadow-brand-success/20',
@@ -216,7 +218,7 @@ export default function MatchDetails() {
               : isJoined ? 'Leave Tournament'
               : isFull ? 'Tournament Full'
               : 'Join Tournament'}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

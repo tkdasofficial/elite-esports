@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useUserStore } from '@/src/store/userStore';
 import { usePlatformStore } from '@/src/store/platformStore';
-import { Button } from '@/src/components/ui/Button';
+
 import { Plus, ArrowUpRight, ArrowDownLeft, Trophy, Gamepad2, X, Copy, CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
@@ -112,14 +112,14 @@ export default function Wallet() {
               </div>
             </div>
             <div className="flex gap-3">
-              <div className="flex-1 bg-white/8 rounded-2xl p-3.5 border border-white/8">
+              <div className="flex-1 bg-white/10 rounded-2xl p-3.5 border border-white/10">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <ArrowDownLeft size={12} className="text-brand-success"/>
                   <p className="text-[11px] font-medium text-white/40 uppercase tracking-wide">Deposited</p>
                 </div>
                 <p className="text-[15px] font-semibold text-white tabular">₹{deposited}</p>
               </div>
-              <div className="flex-1 bg-white/8 rounded-2xl p-3.5 border border-white/8">
+              <div className="flex-1 bg-white/10 rounded-2xl p-3.5 border border-white/10">
                 <div className="flex items-center gap-1.5 mb-1.5">
                   <TrendingUp size={12} className="text-brand-warning"/>
                   <p className="text-[11px] font-medium text-white/40 uppercase tracking-wide">Winnings</p>
@@ -232,7 +232,10 @@ export default function Wallet() {
                   </button>
                 ))}
               </div>
-              <Button onClick={handleAddCash} fullWidth size="md">Continue</Button>
+              <button onClick={handleAddCash}
+                className="w-full py-3.5 bg-brand-primary rounded-[14px] text-white text-[16px] font-semibold active:opacity-75 transition-opacity shadow-lg shadow-brand-primary/25">
+                Continue
+              </button>
             </div>
           ) : (
             <div className="space-y-4">
@@ -262,8 +265,14 @@ export default function Wallet() {
                   className={inputCls}/>
               </div>
               <div className="flex gap-3">
-                <Button variant="secondary" size="sm" onClick={()=>setStep(1)} className="flex-1">Back</Button>
-                <Button size="sm" onClick={submitDeposit} className="flex-[2]">Submit</Button>
+                <button onClick={()=>setStep(1)}
+                  className="flex-1 py-3.5 bg-app-elevated rounded-[14px] text-text-primary text-[15px] font-medium active:opacity-70 transition-opacity border border-app-border">
+                  Back
+                </button>
+                <button onClick={submitDeposit}
+                  className="flex-[2] py-3.5 bg-brand-primary rounded-[14px] text-white text-[15px] font-semibold active:opacity-75 transition-opacity shadow-lg shadow-brand-primary/25">
+                  Submit
+                </button>
               </div>
             </div>
           )}
@@ -322,7 +331,10 @@ export default function Wallet() {
                   Withdrawals are processed manually and may take up to 24 hours.
                 </p>
               </div>
-              <Button onClick={handleWithdraw} fullWidth size="md">Withdraw Now</Button>
+              <button onClick={handleWithdraw}
+                className="w-full py-3.5 bg-brand-primary rounded-[14px] text-white text-[16px] font-semibold active:opacity-75 transition-opacity shadow-lg shadow-brand-primary/25">
+                Withdraw Now
+              </button>
             </div>
           )}
         </div>

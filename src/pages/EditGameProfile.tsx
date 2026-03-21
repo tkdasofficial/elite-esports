@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useUserStore } from '@/src/store/userStore';
 import { useGameStore } from '@/src/store/gameStore';
-import { Button } from '@/src/components/ui/Button';
 import { CustomSelect } from '@/src/components/ui/CustomSelect';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -42,7 +41,7 @@ export default function EditGameProfile() {
 
   return (
     <div className="h-full flex flex-col bg-app-bg">
-      <header className="h-[56px] px-5 flex items-center glass-dark border-b border-app-border sticky top-0 z-50">
+      <header className="h-[56px] px-5 flex items-center bg-app-bg/90 backdrop-blur-md border-b border-app-border sticky top-0 z-50">
         <Link to="/profile" className="text-[17px] text-brand-primary font-normal">‹ Back</Link>
         <h1 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-text-primary">Edit Game</h1>
         <button
@@ -88,7 +87,10 @@ export default function EditGameProfile() {
           </div>
 
           <div className="pt-2">
-            <Button type="submit" fullWidth size="lg">Save Changes</Button>
+            <button type="submit"
+              className="w-full py-4 bg-brand-primary rounded-[14px] text-white text-[17px] font-semibold active:opacity-75 transition-opacity shadow-lg shadow-brand-primary/25">
+              Save Changes
+            </button>
           </div>
         </form>
       </div>

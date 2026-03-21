@@ -4,7 +4,6 @@ import { MatchCard } from '@/src/components/matches/MatchCard';
 import { motion } from 'motion/react';
 import { ChevronLeft, Swords } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { Button } from '@/src/components/ui/Button';
 import { useNavigate } from 'react-router-dom';
 
 export default function MyMatches() {
@@ -17,7 +16,7 @@ export default function MyMatches() {
 
   return (
     <div className="h-full flex flex-col bg-app-bg">
-      <header className="h-[56px] px-5 flex items-center glass-dark border-b border-app-border sticky top-0 z-50">
+      <header className="h-[56px] px-5 flex items-center bg-app-bg/90 backdrop-blur-md border-b border-app-border sticky top-0 z-50">
         <Link to="/profile" className="text-[17px] text-brand-primary font-normal mr-auto">‹ Account</Link>
         <h1 className="absolute left-1/2 -translate-x-1/2 text-[17px] font-semibold text-text-primary">My Matches</h1>
         {mine.length > 0 && (
@@ -48,7 +47,10 @@ export default function MyMatches() {
                 Join tournaments to track your competitive journey
               </p>
             </div>
-            <Button onClick={() => navigate('/')} size="lg">Browse Tournaments</Button>
+            <button onClick={() => navigate('/')}
+              className="px-8 py-4 bg-brand-primary rounded-[14px] text-white text-[17px] font-semibold active:opacity-75 transition-opacity shadow-lg shadow-brand-primary/25">
+              Browse Tournaments
+            </button>
           </div>
         )}
       </div>
