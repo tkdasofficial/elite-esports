@@ -1,6 +1,6 @@
 import { useUserStore } from '@/src/store/userStore';
 import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
-import { Trophy, Users, Settings, LogOut, ChevronRight, Edit3, Gamepad2, Plus, Star } from 'lucide-react';
+import { Trophy, Users, Settings, LogOut, ChevronRight, Gamepad2, Plus, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -41,12 +41,6 @@ export default function Profile() {
             <div className="p-[3px] rounded-full bg-app-bg">
               <LetterAvatar name={user.username} size="xl" />
             </div>
-            <Link to="/edit-profile"
-              className="absolute bottom-0.5 right-0.5 w-7 h-7 bg-app-bg rounded-full border-2 border-app-bg flex items-center justify-center shadow-lg">
-              <div className="w-6 h-6 bg-brand-primary rounded-full flex items-center justify-center">
-                <Edit3 size={11} className="text-white" />
-              </div>
-            </Link>
           </div>
           <div className="pb-2">
             <span className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-primary/15 rounded-full text-[13px] font-medium text-brand-primary-light">

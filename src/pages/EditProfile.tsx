@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useUserStore } from '@/src/store/userStore';
 import { Button } from '@/src/components/ui/Button';
 import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
-import { Camera } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 export default function EditProfile() {
@@ -45,13 +44,7 @@ export default function EditProfile() {
       <div className="flex-1 scrollable-content px-4 py-6 pb-10">
         {/* Avatar */}
         <div className="flex flex-col items-center gap-2 mb-8">
-          <div className="relative">
-            <LetterAvatar name={form.username || 'U'} size="xl" />
-            <button className="absolute bottom-0 right-0 w-8 h-8 bg-brand-primary rounded-full flex items-center justify-center border-2 border-app-bg shadow-md active:opacity-70">
-              <Camera size={14} className="text-white" />
-            </button>
-          </div>
-          <p className="text-[14px] text-brand-primary font-normal">Edit Photo</p>
+          <LetterAvatar name={form.username || 'U'} size="xl" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
