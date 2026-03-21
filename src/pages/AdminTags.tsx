@@ -7,13 +7,16 @@ import {
   Search, Code2, Globe, Smartphone, Monitor, Layers,
   Clock, MousePointer, Timer, AlertTriangle, Power,
   ShieldOff, Zap, ToggleLeft, ToggleRight, ExternalLink,
-  Megaphone, Filter,
+  Megaphone, Filter, TestTube2, Eye, EyeOff, Shield,
+  RefreshCw, Settings2, ChevronDown, ChevronUp,
+  Gauge, Ban, WifiOff, LayoutGrid,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
 import {
   useTagStore,
   AdTag, AdType, AdPlatform, AdPlacement, TriggerType,
+  ScriptLoadMode, FallbackBehavior,
 } from '@/src/store/tagStore';
 
 type Toast = { msg: string; ok: boolean } | null;
@@ -91,10 +94,21 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 
 export default function AdminTags() {
   const {
-    tags, killSwitch, adBlockDetection, frequencyCap,
+    tags, killSwitch, testMode, safeBrowsing, adBlockDetection, adBlockMessage,
+    lazyLoad, scriptLoadMode, fallbackBehavior,
+    frequencyCap, sessionResetHours, enabledPlacements,
     addTag, updateTag, deleteTag, toggleStatus,
-    setKillSwitch, setAdBlockDetection, setFrequencyCap,
+    setKillSwitch, setTestMode, setSafeBrowsing, setAdBlockDetection, setAdBlockMessage,
+    setLazyLoad, setScriptLoadMode, setFallbackBehavior,
+    setFrequencyCap, setSessionResetHours, setPlacementEnabled,
   } = useTagStore();
+
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>({
+    global: true, loading: false, frequency: false, placements: false,
+  });
+
+  const toggleSection = (key: string) =>
+    setOpenSections(s => ({ ...s, [key]: !s[key] }));
 
   const [search, setSearch]             = useState('');
   const [filterType, setFilterType]     = useState('all');
@@ -505,59 +519,208 @@ export default function AdminTags() {
 
       {/* Global Settings */}
       <div className="space-y-3">
-        <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">Global Ad Settings</h2>
-        <Card className="p-5 bg-brand-card/40 border-white/5 divide-y divide-white/5 space-y-0">
+        <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">Ad Settings</h2>
 
-          {/* Kill Switch */}
-          <div className="flex items-center justify-between gap-4 py-4 first:pt-0">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <ShieldOff size={15} className={killSwitch ? 'text-brand-red' : 'text-slate-500'} />
-                <p className="text-sm font-bold">Global Kill Switch</p>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">Instantly disable ALL ads across every platform</p>
-            </div>
-            <Toggle value={killSwitch} onChange={v => { setKillSwitch(v); showToast(v ? 'All ads disabled globally' : 'Global kill switch off', !v); }} />
-          </div>
+        {/* Section 1 — Global Controls */}
+        <SettingSection
+          title="Global Controls"
+          icon={<Settings2 size={14} />}
+          open={openSections.global}
+          onToggle={() => toggleSection('global')}
+          danger={killSwitch}
+        >
+          <SettingRow
+            icon={<ShieldOff size={15} className={killSwitch ? 'text-brand-red' : 'text-slate-500'} />}
+            label="Global Kill Switch"
+            desc="Instantly disable ALL ads across every platform"
+            danger={killSwitch}
+          >
+            <Toggle value={killSwitch} onChange={v => { setKillSwitch(v); showToast(v ? 'All ads disabled globally' : 'Kill switch off', !v); }} />
+          </SettingRow>
 
-          {/* Ad-Block Detection */}
-          <div className="flex items-center justify-between gap-4 py-4">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <AlertTriangle size={15} className="text-slate-500" />
-                <p className="text-sm font-bold">Ad-Block Detection</p>
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5">Show a message to users with ad-blockers enabled</p>
-            </div>
+          <SettingRow
+            icon={<TestTube2 size={15} className={testMode ? 'text-yellow-400' : 'text-slate-500'} />}
+            label="Test Mode"
+            desc="Serve dummy test ads instead of live ad codes"
+          >
+            <Toggle value={testMode} onChange={v => { setTestMode(v); showToast(`Test mode ${v ? 'enabled' : 'disabled'}`); }} />
+          </SettingRow>
+
+          <SettingRow
+            icon={<Shield size={15} className="text-slate-500" />}
+            label="Safe Browsing Filter"
+            desc="Block ads flagged as unsafe or malicious"
+          >
+            <Toggle value={safeBrowsing} onChange={v => { setSafeBrowsing(v); showToast(`Safe browsing ${v ? 'on' : 'off'}`); }} />
+          </SettingRow>
+        </SettingSection>
+
+        {/* Section 2 — Ad-Block Detection */}
+        <SettingSection
+          title="Ad-Block Detection"
+          icon={<Ban size={14} />}
+          open={openSections.adblock}
+          onToggle={() => toggleSection('adblock')}
+        >
+          <SettingRow
+            icon={<WifiOff size={15} className="text-slate-500" />}
+            label="Detect Ad Blockers"
+            desc="Show a message to users with ad blockers enabled"
+          >
             <Toggle value={adBlockDetection} onChange={v => { setAdBlockDetection(v); showToast(`Ad-block detection ${v ? 'enabled' : 'disabled'}`); }} />
+          </SettingRow>
+
+          {adBlockDetection && (
+            <div className="space-y-1.5 pt-1">
+              <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Custom Message</label>
+              <input
+                value={adBlockMessage}
+                onChange={e => setAdBlockMessage(e.target.value)}
+                placeholder="Message shown to users with ad blockers"
+                className="w-full bg-black/30 border border-white/10 rounded-xl py-2.5 px-4 text-sm font-bold outline-none focus:border-brand-blue transition-all placeholder:text-slate-600"
+              />
+            </div>
+          )}
+        </SettingSection>
+
+        {/* Section 3 — Loading Behaviour */}
+        <SettingSection
+          title="Loading Behaviour"
+          icon={<RefreshCw size={14} />}
+          open={openSections.loading}
+          onToggle={() => toggleSection('loading')}
+        >
+          <SettingRow
+            icon={<Eye size={15} className="text-slate-500" />}
+            label="Lazy Load Ads"
+            desc="Only load ad scripts when they scroll into view"
+          >
+            <Toggle value={lazyLoad} onChange={v => { setLazyLoad(v); showToast(`Lazy load ${v ? 'enabled' : 'disabled'}`); }} />
+          </SettingRow>
+
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Script Load Mode</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['async', 'defer', 'sync'] as ScriptLoadMode[]).map(mode => (
+                <button
+                  key={mode}
+                  onClick={() => { setScriptLoadMode(mode); showToast(`Scripts load ${mode}`); }}
+                  className={cn(
+                    'py-2 rounded-xl text-[11px] font-black uppercase tracking-widest border transition-all',
+                    scriptLoadMode === mode
+                      ? 'bg-brand-blue/15 border-brand-blue/40 text-brand-blue'
+                      : 'bg-white/5 border-white/5 text-slate-500 hover:border-white/15'
+                  )}
+                >
+                  {mode}
+                </button>
+              ))}
+            </div>
+            <p className="text-[10px] text-slate-600 px-1">
+              {scriptLoadMode === 'async' && 'Scripts load without blocking page render (recommended)'}
+              {scriptLoadMode === 'defer' && 'Scripts execute after HTML is fully parsed'}
+              {scriptLoadMode === 'sync' && 'Scripts block render — use only if required by the ad network'}
+            </p>
           </div>
 
-          {/* Frequency Cap */}
-          <div className="flex items-center justify-between gap-4 py-4 last:pb-0">
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <Timer size={15} className="text-slate-500" />
-                <p className="text-sm font-bold">Global Frequency Cap</p>
-              </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Fallback Behaviour</label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { v: 'hide',        label: 'Hide',        desc: 'Remove the slot entirely' },
+                { v: 'placeholder', label: 'Placeholder', desc: 'Show an empty box' },
+                { v: 'house-ad',    label: 'House Ad',    desc: 'Show an internal promo' },
+              ] as { v: FallbackBehavior; label: string; desc: string }[]).map(opt => (
+                <button
+                  key={opt.v}
+                  onClick={() => { setFallbackBehavior(opt.v); showToast(`Fallback: ${opt.label}`); }}
+                  className={cn(
+                    'py-2 px-2 rounded-xl border text-left transition-all',
+                    fallbackBehavior === opt.v
+                      ? 'bg-brand-blue/15 border-brand-blue/40 text-brand-blue'
+                      : 'bg-white/5 border-white/5 text-slate-500 hover:border-white/15'
+                  )}
+                >
+                  <p className="text-[11px] font-black uppercase tracking-widest">{opt.label}</p>
+                  <p className="text-[9px] mt-0.5 leading-tight opacity-70">{opt.desc}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        </SettingSection>
+
+        {/* Section 4 — Frequency & Session */}
+        <SettingSection
+          title="Frequency & Session"
+          icon={<Gauge size={14} />}
+          open={openSections.frequency}
+          onToggle={() => toggleSection('frequency')}
+        >
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold">Global Frequency Cap</p>
               <p className="text-xs text-slate-500 mt-0.5">Max ads shown per user per session</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
-              <button
-                onClick={() => setFrequencyCap(Math.max(1, frequencyCap - 1))}
-                className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-300 transition-colors active:scale-90"
-              >
+              <button onClick={() => setFrequencyCap(Math.max(1, frequencyCap - 1))}
+                className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-300 transition-colors active:scale-90">
                 <Minus size={14} />
               </button>
               <span className="w-8 text-center text-sm font-black">{frequencyCap}</span>
-              <button
-                onClick={() => setFrequencyCap(Math.min(20, frequencyCap + 1))}
-                className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-300 transition-colors active:scale-90"
-              >
+              <button onClick={() => setFrequencyCap(Math.min(20, frequencyCap + 1))}
+                className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-300 transition-colors active:scale-90">
                 <Plus size={14} />
               </button>
             </div>
           </div>
-        </Card>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm font-bold">Session Reset</p>
+              <p className="text-xs text-slate-500 mt-0.5">Hours before frequency cap resets</p>
+            </div>
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <button onClick={() => setSessionResetHours(Math.max(1, sessionResetHours - 1))}
+                className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-300 transition-colors active:scale-90">
+                <Minus size={14} />
+              </button>
+              <span className="w-8 text-center text-sm font-black">{sessionResetHours}h</span>
+              <button onClick={() => setSessionResetHours(Math.min(72, sessionResetHours + 1))}
+                className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-300 transition-colors active:scale-90">
+                <Plus size={14} />
+              </button>
+            </div>
+          </div>
+        </SettingSection>
+
+        {/* Section 5 — Placement Controls */}
+        <SettingSection
+          title="Placement Controls"
+          icon={<LayoutGrid size={14} />}
+          open={openSections.placements}
+          onToggle={() => toggleSection('placements')}
+        >
+          <p className="text-xs text-slate-500 -mt-1">Enable or disable each ad placement independently</p>
+          {(['Splash Screen', 'Home Banner', 'Match Details', 'Reward Button', 'Interstitial'] as AdPlacement[]).map(p => (
+            <SettingRow
+              key={p}
+              icon={<Layers size={14} className="text-slate-500" />}
+              label={p}
+              desc={
+                p === 'Splash Screen' ? 'Ads shown on app open' :
+                p === 'Home Banner'   ? 'Banner area on the home feed' :
+                p === 'Match Details' ? 'Ads within match detail pages' :
+                p === 'Reward Button' ? 'Ad shown before reward is credited' :
+                'Full-screen interstitial placements'
+              }
+            >
+              <Toggle
+                value={enabledPlacements[p]}
+                onChange={v => { setPlacementEnabled(p, v); showToast(`${p} ${v ? 'enabled' : 'disabled'}`); }}
+              />
+            </SettingRow>
+          ))}
+        </SettingSection>
       </div>
 
       {/* Add / Edit Modal */}
@@ -744,6 +907,73 @@ export default function AdminTags() {
           </div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+function SettingSection({
+  title, icon, open, onToggle, danger, children,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  open: boolean;
+  onToggle: () => void;
+  danger?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className={cn('bg-brand-card/40 border-white/5 overflow-hidden', danger && 'border-brand-red/20 bg-brand-red/5')}>
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-5 py-4 gap-3 hover:bg-white/3 transition-colors"
+      >
+        <div className="flex items-center gap-2.5">
+          <span className={cn('flex-shrink-0', danger ? 'text-brand-red' : 'text-slate-400')}>{icon}</span>
+          <p className={cn('text-sm font-black', danger ? 'text-brand-red' : 'text-white')}>{title}</p>
+        </div>
+        <span className="text-slate-600 flex-shrink-0">
+          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        </span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-5 space-y-4 border-t border-white/5 pt-4">
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </Card>
+  );
+}
+
+function SettingRow({
+  icon, label, desc, danger, children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  desc?: string;
+  danger?: boolean;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex items-start gap-2.5 min-w-0">
+        <span className="flex-shrink-0 mt-0.5">{icon}</span>
+        <div className="min-w-0">
+          <p className={cn('text-sm font-bold', danger ? 'text-brand-red' : '')}>{label}</p>
+          {desc && <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">{desc}</p>}
+        </div>
+      </div>
+      <div className="flex-shrink-0">{children}</div>
     </div>
   );
 }
