@@ -108,12 +108,12 @@ export default function Wallet() {
 
       <div className="grid grid-cols-2 gap-3 mx-4">
         <button onClick={() => setShowAdd(true)}
-          className="flex items-center justify-center gap-2 py-4 bg-brand-primary rounded-[16px] text-white text-[16px] font-semibold active:opacity-75 transition-opacity shadow-lg shadow-brand-primary/20">
-          <Plus size={19} /> Add Cash
+          className="flex items-center justify-center gap-1.5 py-2.5 bg-brand-primary rounded-[12px] text-white text-[14px] font-semibold active:opacity-75 transition-opacity shadow-md shadow-brand-primary/20">
+          <Plus size={16} /> Add Cash
         </button>
         <button onClick={() => setShowWith(true)}
-          className="flex items-center justify-center gap-2 py-4 bg-app-elevated rounded-[16px] text-text-primary text-[16px] font-semibold active:opacity-75 transition-opacity border border-app-border">
-          <ArrowUpRight size={19} /> Withdraw
+          className="flex items-center justify-center gap-1.5 py-2.5 bg-app-elevated rounded-[12px] text-text-primary text-[14px] font-semibold active:opacity-75 transition-opacity border border-app-border">
+          <ArrowUpRight size={16} /> Withdraw
         </button>
       </div>
 
