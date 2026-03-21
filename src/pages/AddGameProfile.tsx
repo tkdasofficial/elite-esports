@@ -7,7 +7,8 @@ import { Link, useNavigate } from 'react-router-dom';
 
 export default function AddGameProfile() {
   const { addGameProfile } = useUserStore();
-  const activeGames = useGameStore(s => s.games.filter(g => g.status === 'active'));
+  const games = useGameStore(s => s.games);
+  const activeGames = games.filter(g => g.status === 'active');
   const navigate = useNavigate();
 
   const gameOptions = activeGames.map(g => ({

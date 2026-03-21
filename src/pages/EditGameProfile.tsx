@@ -7,7 +7,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 
 export default function EditGameProfile() {
   const { gameProfiles, updateGameProfile, removeGameProfile } = useUserStore();
-  const activeGames = useGameStore(s => s.games.filter(g => g.status === 'active'));
+  const games = useGameStore(s => s.games);
+  const activeGames = games.filter(g => g.status === 'active');
   const navigate = useNavigate();
   const { id } = useParams();
 

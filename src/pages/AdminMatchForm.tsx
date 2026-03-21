@@ -26,7 +26,8 @@ export default function AdminMatchForm() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addMatch, updateMatch, getMatchById } = useMatchStore();
-  const activeGames = useGameStore(s => s.games.filter(g => g.status === 'active'));
+  const allGames = useGameStore(s => s.games);
+  const activeGames = allGames.filter(g => g.status === 'active');
   const getGame = useGameStore(s => s.getGameByName);
   const isEditing = !!id;
 

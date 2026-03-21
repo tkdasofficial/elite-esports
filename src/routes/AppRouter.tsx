@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useUserStore } from '@/src/store/userStore';
 import { Header } from '@/src/components/layout/Header';
 import { BottomBar } from '@/src/components/layout/BottomBar';
@@ -47,7 +47,35 @@ import AdminSupport from '@/src/pages/AdminSupport';
 import AdminRules from '@/src/pages/AdminRules';
 import AdminReferrals from '@/src/pages/AdminReferrals';
 
-const PUBLIC_PATHS = ['/login', '/signup', '/forgot-password', '/reset-password'];
+const HEADER_PATHS = new Set(['/', '/leaderboard', '/live', '/wallet', '/profile']);
+
+const UserLayout = () => {
+  const location = useLocation();
+  const showHeader = HEADER_PATHS.has(location.pathname);
+
+  return (
+    <div className="h-full w-full bg-black flex justify-center">
+      <div className="h-full w-full md:max-w-[768px] lg:max-w-[1024px] bg-brand-dark relative flex flex-col shadow-2xl overflow-hidden md:border-x md:border-white/5">
+        {showHeader && <Header />}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+              className="flex-1 scrollable-content flex flex-col"
+            >
+              <Outlet />
+            </motion.div>
+          </AnimatePresence>
+        </div>
+        <BottomBar />
+      </div>
+    </div>
+  );
+};
 
 export const AppRouter = () => {
   const { isAuthenticated, isAdmin } = useUserStore();
@@ -67,7 +95,6 @@ export const AppRouter = () => {
     );
   }
 
-  const showGlobalHeader = ['/', '/leaderboard', '/live', '/wallet', '/profile'].includes(location.pathname);
   const isAdminPage = location.pathname.startsWith('/admin');
 
   if (isAdmin && !isAdminPage) {
@@ -106,54 +133,31 @@ export const AppRouter = () => {
   }
 
   return (
-    <div className="h-full w-full bg-black flex justify-center">
-      <div className="h-full w-full md:max-w-[768px] lg:max-w-[1024px] bg-brand-dark relative flex flex-col shadow-2xl overflow-hidden md:border-x md:border-white/5">
-        <Routes>
-          <Route path="/notifications" element={<Notifications />} />
-          <Route path="/notifications/:id" element={<NotificationDetail />} />
-          <Route path="*" element={
-            <>
-              {showGlobalHeader && <Header />}
-              <div className="flex-1 flex flex-col overflow-hidden">
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={location.pathname}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
-                    className="flex-1 scrollable-content flex flex-col"
-                  >
-                    <Routes location={location}>
-                      <Route path="/" element={<Home />} />
-                      <Route path="/leaderboard" element={<Leaderboard />} />
-                      <Route path="/live" element={<Live />} />
-                      <Route path="/wallet" element={<Wallet />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/match/:id" element={<MatchDetails />} />
-                      <Route path="/my-matches" element={<MyMatches />} />
-                      <Route path="/my-team" element={<MyTeam />} />
-                      <Route path="/settings" element={<Settings />} />
-                      <Route path="/edit-profile" element={<EditProfile />} />
-                      <Route path="/add-game" element={<AddGameProfile />} />
-                      <Route path="/edit-game/:id" element={<EditGameProfile />} />
-                      <Route path="/tournaments" element={<TournamentsAll />} />
-                      <Route path="/transactions" element={<AllTransactions />} />
-                      <Route path="/terms" element={<TermsAndConditions />} />
-                      <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                      <Route path="/help-center" element={<HelpCenter />} />
-                      <Route path="/about" element={<About />} />
-                      <Route path="/blocked-users" element={<BlockedUsers />} />
-                      <Route path="*" element={<Navigate to="/" replace />} />
-                    </Routes>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-              <BottomBar />
-            </>
-          } />
-        </Routes>
-      </div>
-    </div>
+    <Routes>
+      <Route element={<UserLayout />}>
+        <Route path="/" element={<Home />} />
+        <Route path="/leaderboard" element={<Leaderboard />} />
+        <Route path="/live" element={<Live />} />
+        <Route path="/wallet" element={<Wallet />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/notifications/:id" element={<NotificationDetail />} />
+        <Route path="/match/:id" element={<MatchDetails />} />
+        <Route path="/my-matches" element={<MyMatches />} />
+        <Route path="/my-team" element={<MyTeam />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="/edit-profile" element={<EditProfile />} />
+        <Route path="/add-game" element={<AddGameProfile />} />
+        <Route path="/edit-game/:id" element={<EditGameProfile />} />
+        <Route path="/tournaments" element={<TournamentsAll />} />
+        <Route path="/transactions" element={<AllTransactions />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/help-center" element={<HelpCenter />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/blocked-users" element={<BlockedUsers />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Route>
+    </Routes>
   );
 };
