@@ -3,7 +3,12 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 export type AdType = 'AdMob' | 'AdSense' | 'Custom Script' | 'URL Redirect';
 export type AdPlatform = 'Web' | 'Android' | 'iOS' | 'All';
-export type AdPlacement = 'Splash Screen' | 'Home Banner' | 'Match Details' | 'Reward Button' | 'Interstitial';
+export type AdPlacement =
+  | 'join_button_ad'
+  | 'leave_button_ad'
+  | 'welcome_ad'
+  | 'get_reward_ad'
+  | 'timer_ad';
 export type TriggerType = 'On Load' | 'On Click' | 'Timed';
 export type ScriptLoadMode = 'async' | 'defer' | 'sync';
 export type FallbackBehavior = 'hide' | 'placeholder' | 'house-ad';
@@ -63,11 +68,11 @@ interface TagState {
 }
 
 const DEFAULT_PLACEMENTS: Record<AdPlacement, boolean> = {
-  'Splash Screen':  true,
-  'Home Banner':    true,
-  'Match Details':  true,
-  'Reward Button':  true,
-  'Interstitial':   true,
+  join_button_ad:  true,
+  leave_button_ad: true,
+  welcome_ad:      true,
+  get_reward_ad:   true,
+  timer_ad:        true,
 };
 
 export const useTagStore = create<TagState>()(

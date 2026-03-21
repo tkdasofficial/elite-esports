@@ -24,7 +24,21 @@ type ModalState = { isNew: boolean; tag: Partial<AdTag> } | null;
 
 const AD_TYPES: AdType[] = ['AdMob', 'AdSense', 'Custom Script', 'URL Redirect'];
 const PLATFORMS: AdPlatform[] = ['All', 'Web', 'Android', 'iOS'];
-const PLACEMENTS: AdPlacement[] = ['Splash Screen', 'Home Banner', 'Match Details', 'Reward Button', 'Interstitial'];
+const PLACEMENTS: AdPlacement[] = [
+  'join_button_ad',
+  'leave_button_ad',
+  'welcome_ad',
+  'get_reward_ad',
+  'timer_ad',
+];
+
+const PLACEMENT_META: Record<AdPlacement, { label: string; desc: string; category: string }> = {
+  join_button_ad:  { label: 'Join Button Ad',  desc: 'Triggered when user joins a match',             category: 'User Action' },
+  leave_button_ad: { label: 'Leave Button Ad', desc: 'Triggered when user leaves a match',            category: 'User Action' },
+  welcome_ad:      { label: 'Welcome Ad',      desc: 'Shown when app opens or user enters',           category: 'System'      },
+  get_reward_ad:   { label: 'Get Reward Ad',   desc: 'Triggered when user claims a reward',           category: 'Reward'      },
+  timer_ad:        { label: 'Timer Ad',        desc: 'Auto-shown based on admin-defined time interval', category: 'Timer'       },
+};
 const TRIGGERS: TriggerType[] = ['On Load', 'On Click', 'Timed'];
 
 const FREQ_PRESETS = ['Once per session', '1 per hour', '3 per day', '5 per day', 'Unlimited'];
@@ -33,7 +47,7 @@ const EMPTY_TAG: Partial<AdTag> = {
   name: '',
   type: 'AdSense',
   platform: 'All',
-  placement: 'Home Banner',
+  placement: 'welcome_ad',
   code: '',
   triggerType: 'On Load',
   delay: 0,
@@ -162,7 +176,7 @@ export default function AdminTags() {
         name: t.name!.trim(),
         type: t.type ?? 'AdSense',
         platform: t.platform ?? 'All',
-        placement: t.placement ?? 'Home Banner',
+        placement: t.placement ?? 'welcome_ad',
         code: t.code!.trim(),
         triggerType: t.triggerType ?? 'On Load',
         delay: t.delay ?? 0,
@@ -325,7 +339,7 @@ export default function AdminTags() {
                   onChange={setFilterPlacement}
                   options={[
                     { value: 'all',            label: 'All Placements'  },
-                    ...PLACEMENTS.map(p => ({ value: p, label: p })),
+                    ...PLACEMENTS.map(p => ({ value: p, label: PLACEMENT_META[p].label })),
                   ]}
                   placeholder="Placement"
                   variant="admin"
@@ -424,7 +438,7 @@ export default function AdminTags() {
                           {platformIcon[tag.platform]} {tag.platform}
                         </span>
                         <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
-                          <Layers size={10} /> {tag.placement}
+                          <Layers size={10} /> {PLACEMENT_META[tag.placement]?.label ?? tag.placement}
                         </span>
                         <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
                           {triggerIcon[tag.triggerType]} {tag.triggerType}
@@ -701,22 +715,26 @@ export default function AdminTags() {
           onToggle={() => toggleSection('placements')}
         >
           <p className="text-xs text-slate-500 -mt-1">Enable or disable each ad placement independently</p>
-          {(['Splash Screen', 'Home Banner', 'Match Details', 'Reward Button', 'Interstitial'] as AdPlacement[]).map(p => (
+          {PLACEMENTS.map(p => (
             <SettingRow
               key={p}
-              icon={<Layers size={14} className="text-slate-500" />}
-              label={p}
-              desc={
-                p === 'Splash Screen' ? 'Ads shown on app open' :
-                p === 'Home Banner'   ? 'Banner area on the home feed' :
-                p === 'Match Details' ? 'Ads within match detail pages' :
-                p === 'Reward Button' ? 'Ad shown before reward is credited' :
-                'Full-screen interstitial placements'
+              icon={
+                <span className={cn(
+                  'text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-md border',
+                  PLACEMENT_META[p].category === 'User Action' ? 'text-brand-blue border-brand-blue/30 bg-brand-blue/10' :
+                  PLACEMENT_META[p].category === 'System'      ? 'text-green-400 border-green-400/30 bg-green-400/10' :
+                  PLACEMENT_META[p].category === 'Reward'      ? 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10' :
+                                                                  'text-brand-orange border-brand-orange/30 bg-brand-orange/10'
+                )}>
+                  {PLACEMENT_META[p].category}
+                </span>
               }
+              label={PLACEMENT_META[p].label}
+              desc={`${p} — ${PLACEMENT_META[p].desc}`}
             >
               <Toggle
-                value={enabledPlacements[p]}
-                onChange={v => { setPlacementEnabled(p, v); showToast(`${p} ${v ? 'enabled' : 'disabled'}`); }}
+                value={enabledPlacements[p] ?? true}
+                onChange={v => { setPlacementEnabled(p, v); showToast(`${PLACEMENT_META[p].label} ${v ? 'enabled' : 'disabled'}`); }}
               />
             </SettingRow>
           ))}
@@ -755,7 +773,7 @@ export default function AdminTags() {
                   <input
                     value={modal.tag.name ?? ''}
                     onChange={e => updateModal({ name: e.target.value })}
-                    placeholder="e.g. Home Banner AdSense"
+                    placeholder="e.g. Welcome Ad – AdSense"
                     autoFocus
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm font-bold outline-none focus:border-brand-blue transition-all placeholder:text-slate-600"
                   />
@@ -787,9 +805,9 @@ export default function AdminTags() {
                 {/* Placement */}
                 <CustomSelect
                   label="Placement *"
-                  value={modal.tag.placement ?? 'Home Banner'}
+                  value={modal.tag.placement ?? 'welcome_ad'}
                   onChange={v => updateModal({ placement: v as AdPlacement })}
-                  options={PLACEMENTS.map(p => ({ value: p, label: p }))}
+                  options={PLACEMENTS.map(p => ({ value: p, label: PLACEMENT_META[p].label }))}
                   variant="admin"
                 />
 
