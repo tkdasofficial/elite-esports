@@ -1,0 +1,229 @@
+BUILD A COMPLETE "AD TAG MANAGEMENT SYSTEM" PAGE FOR A GLOBAL ESPORTS PLATFORM NAMED "ELITE ESPORTS"
+
+GOAL:
+Create a fully functional system where ADMIN can add, manage, and control advertisement tags (AdMob, AdSense, custom scripts, links) dynamically from backend WITHOUT modifying the app codebase. This system must work for Web + React Native App using API-based dynamic rendering.
+
+---
+
+🔷 FRONTEND (UI/UX REQUIREMENTS)
+
+PAGE NAME: "Ad Tags Manager"
+
+DESIGN STYLE:
+
+- Clean modern UI
+- Use Poppins font
+- Dark + Light mode support
+- Mobile-first responsive design
+
+HEADER:
+
+- Title: "Ad Tags Manager"
+- Right side: Add New Tag button (+)
+
+MAIN SECTION:
+Display all tags in a card/list format
+
+EACH TAG CARD SHOULD INCLUDE:
+
+- Tag Name
+- Tag Type (AdMob / AdSense / Custom Script / Redirect Link)
+- Placement (Home Banner / Match Screen / Reward Button / Splash / Interstitial)
+- Status Toggle (Active / Inactive)
+- Platform (Web / Android / iOS / All)
+- Last Updated Time
+- Actions:
+  - Edit
+  - Delete
+  - Preview/Test
+
+FILTERS:
+
+- Filter by Tag Type
+- Filter by Placement
+- Filter by Status
+- Search bar (search by tag name)
+
+---
+
+🔷 ADD / EDIT TAG MODAL
+
+FIELDS:
+
+- Tag Name (text)
+- Tag Type (dropdown):
+  - AdMob
+  - AdSense
+  - Custom Script
+  - URL Redirect
+- Platform:
+  - Web
+  - Android
+  - iOS
+  - All
+- Placement:
+  - Splash Screen
+  - Home Banner
+  - Match Details
+  - Reward Button
+  - Interstitial
+- Ad Code (textarea) OR Ad Unit ID (for AdMob)
+- Trigger Type:
+  - On Load
+  - On Click
+  - Timed (after X seconds)
+- Delay Time (optional)
+- Priority (number for multiple ads)
+- Frequency Limit (e.g. once per session)
+- Status Toggle (Active/Inactive)
+
+BUTTONS:
+
+- Save
+- Cancel
+
+---
+
+🔷 BACKEND (TYPECRIPT + API DESIGN)
+
+TECH STACK:
+
+- Node.js + Express (or Next.js API)
+- TypeScript
+- Database: PostgreSQL / Supabase
+
+DATABASE TABLE: ad_tags
+
+FIELDS:
+
+- id (uuid)
+- name (string)
+- type (enum: admob, adsense, custom, redirect)
+- platform (enum: web, android, ios, all)
+- placement (string)
+- code (text)  // script or ad unit id
+- trigger_type (enum: load, click, timed)
+- delay (integer)
+- priority (integer)
+- frequency_limit (string)
+- status (boolean)
+- created_at
+- updated_at
+
+---
+
+🔷 API ENDPOINTS
+
+POST /api/ad-tags
+→ Create new tag
+
+GET /api/ad-tags
+→ Get all tags
+
+GET /api/ad-tags?placement=home_banner
+→ Filter tags by placement
+
+PUT /api/ad-tags/:id
+→ Update tag
+
+DELETE /api/ad-tags/:id
+→ Delete tag
+
+GET /api/ad-tags/active?placement=reward_button&platform=android
+→ Fetch only active tags for runtime usage
+
+---
+
+🔷 CORE SYSTEM LOGIC
+
+IMPORTANT:
+
+- Ads MUST NOT be hardcoded in app
+- App will FETCH ads dynamically from backend
+
+FLOW:
+
+1. App opens
+2. App calls API:
+   GET /api/ad-tags/active
+3. Backend returns only ACTIVE tags based on:
+   - platform
+   - placement
+4. App decides WHEN to show ad based on:
+   - trigger_type
+   - delay
+5. If user clicks button → trigger ad
+6. If timed → run after delay
+
+---
+
+🔷 REACT NATIVE IMPLEMENTATION LOGIC
+
+CREATE A FUNCTION:
+
+function loadAds(placement) {
+call API → /api/ad-tags/active?placement=placement
+store ads in state
+}
+
+DISPLAY LOGIC:
+
+IF type = admob:
+→ use react-native-google-mobile-ads SDK
+→ load using Ad Unit ID
+
+IF type = adsense:
+→ only for WebView (not direct RN support)
+
+IF type = custom script:
+→ render inside WebView
+
+IF type = redirect:
+→ open external link
+
+---
+
+🔷 IMPORTANT LIMITATIONS (VERY IMPORTANT)
+
+- AdMob CANNOT run from raw script → needs SDK integration
+- AdSense does NOT work natively in React Native → only via WebView
+- You CANNOT inject arbitrary JS into native app runtime (security restriction)
+- So:
+  ✔ Backend controls WHAT ad to show
+  ✔ App controls HOW to render it using pre-integrated SDK
+
+---
+
+🔷 VERIFICATION SYSTEM (ADSENSE / ADMOB)
+
+FOR WEB:
+
+- Add verification meta tag manually in root HTML (one-time)
+
+FOR APP:
+
+- Use official SDK setup (AdMob)
+- Tag system only controls dynamic behavior, not verification
+
+---
+
+🔷 BONUS FEATURES
+
+- Ad performance tracking (views, clicks)
+- Admin analytics dashboard
+- A/B testing (multiple ads per placement)
+- Auto-disable low performance ads
+- Global kill switch (disable all ads instantly)
+
+---
+
+🔷 FINAL GOAL
+
+Build a system where:
+
+- Admin controls ads fully from dashboard
+- No need to update app for ad changes
+- Works across Web + Mobile
+- Scalable + production-ready
+
+END OF PROMPT

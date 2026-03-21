@@ -1,109 +1,198 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card } from '@/src/components/ui/Card';
 import { Button } from '@/src/components/ui/Button';
 import { CustomSelect } from '@/src/components/ui/CustomSelect';
-import { Code, Plus, Trash2, Edit2, Copy, Check, X, CheckCircle2, Minus, Globe, ToggleLeft, ToggleRight, FileCode2, Zap, Link2, Paintbrush, Package, Pin, FileText, ArrowDown, ArrowUp, PanelRight, PanelBottom } from 'lucide-react';
+import {
+  Plus, Trash2, Edit2, Copy, Check, X, CheckCircle2, Minus,
+  Search, Code2, Globe, Smartphone, Monitor, Layers,
+  Clock, MousePointer, Timer, AlertTriangle, Power,
+  ShieldOff, Zap, ToggleLeft, ToggleRight, ExternalLink,
+  Megaphone, Filter,
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
+import {
+  useTagStore,
+  AdTag, AdType, AdPlatform, AdPlacement, TriggerType,
+} from '@/src/store/tagStore';
 
-type TagType = 'HTML' | 'JS' | 'HTML/JS' | 'CSS' | 'Other';
-type Tag = { id: string; name: string; type: TagType; content: string; status: 'active' | 'inactive'; placement: string };
 type Toast = { msg: string; ok: boolean } | null;
+type ModalState = { isNew: boolean; tag: Partial<AdTag> } | null;
 
-const TAG_TYPES: TagType[] = ['HTML', 'JS', 'HTML/JS', 'CSS', 'Other'];
-const PLACEMENTS = ['<head>', '<body>', 'After opening <body>', 'Before closing </body>', 'Sidebar', 'Footer'];
+const AD_TYPES: AdType[] = ['AdMob', 'AdSense', 'Custom Script', 'URL Redirect'];
+const PLATFORMS: AdPlatform[] = ['All', 'Web', 'Android', 'iOS'];
+const PLACEMENTS: AdPlacement[] = ['Splash Screen', 'Home Banner', 'Match Details', 'Reward Button', 'Interstitial'];
+const TRIGGERS: TriggerType[] = ['On Load', 'On Click', 'Timed'];
 
-const INITIAL: Tag[] = [
-  {
-    id: '1', name: 'Google Ads Sidebar', type: 'HTML/JS', status: 'active', placement: 'Sidebar',
-    content: '<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXX" crossorigin="anonymous"></script>\n<!-- Ad slot -->\n<ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXX" data-ad-slot="XXXXXXXXXX"></ins>',
-  },
-  {
-    id: '2', name: 'Facebook Pixel', type: 'JS', status: 'active', placement: '<head>',
-    content: '!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?\nn.callMethod.apply(n,arguments):n.queue.push(arguments)};\nf._fbq=n;n.push=n;n.loaded=!0;n.version="2.0";\nn.queue=[];t=b.createElement(e);t.async=!0;\nt.src=v;s=b.getElementsByTagName(e)[0];\ns.parentNode.insertBefore(t,s)}(window,document,"script",\n"https://connect.facebook.net/en_US/fbevents.js");\nfbq("init","123456789012345");\nfbq("track","PageView");',
-  },
-  {
-    id: '3', name: 'Affiliate Banner', type: 'HTML', status: 'inactive', placement: 'Footer',
-    content: '<a href="https://affiliate.partner.com/ref/elite" target="_blank" rel="noopener">\n  <img src="https://cdn.partner.com/banner_728x90.png" width="728" height="90" alt="Partner Ad" />\n</a>',
-  },
-];
+const FREQ_PRESETS = ['Once per session', '1 per hour', '3 per day', '5 per day', 'Unlimited'];
 
-const typeColor: Record<TagType, string> = {
-  'HTML':    'bg-orange-500/10 text-orange-400',
-  'JS':      'bg-yellow-500/10 text-yellow-400',
-  'HTML/JS': 'bg-brand-blue/10 text-brand-blue',
-  'CSS':     'bg-brand-secondary/10 text-brand-secondary',
-  'Other':   'bg-slate-500/10 text-slate-400',
+const EMPTY_TAG: Partial<AdTag> = {
+  name: '',
+  type: 'AdSense',
+  platform: 'All',
+  placement: 'Home Banner',
+  code: '',
+  triggerType: 'On Load',
+  delay: 0,
+  priority: 1,
+  frequencyLimit: 'Once per session',
+  status: 'inactive',
 };
 
+const typeStyle: Record<AdType, { bg: string; text: string; border: string }> = {
+  'AdMob':         { bg: 'bg-green-500/10',   text: 'text-green-400',   border: 'border-green-500/20'   },
+  'AdSense':       { bg: 'bg-brand-blue/10',   text: 'text-brand-blue',  border: 'border-brand-blue/20'  },
+  'Custom Script': { bg: 'bg-yellow-500/10',   text: 'text-yellow-400',  border: 'border-yellow-500/20'  },
+  'URL Redirect':  { bg: 'bg-purple-500/10',   text: 'text-purple-400',  border: 'border-purple-500/20'  },
+};
+
+const platformIcon: Record<AdPlatform, React.ReactNode> = {
+  'All':     <Layers size={11} />,
+  'Web':     <Monitor size={11} />,
+  'Android': <Smartphone size={11} />,
+  'iOS':     <Smartphone size={11} />,
+};
+
+const triggerIcon: Record<TriggerType, React.ReactNode> = {
+  'On Load':  <Clock size={11} />,
+  'On Click': <MousePointer size={11} />,
+  'Timed':    <Timer size={11} />,
+};
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'Just now';
+  if (m < 60) return `${m}m ago`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">{children}</label>;
+}
+
+function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onChange(!value)}
+      className={cn('w-12 h-6 rounded-full relative transition-colors duration-200 flex-shrink-0', value ? 'bg-brand-green' : 'bg-white/10')}
+    >
+      <motion.div
+        animate={{ x: value ? 22 : 2 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow"
+      />
+    </button>
+  );
+}
+
 export default function AdminTags() {
-  const [tags, setTags]         = useState<Tag[]>(INITIAL);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const {
+    tags, killSwitch, adBlockDetection, frequencyCap,
+    addTag, updateTag, deleteTag, toggleStatus,
+    setKillSwitch, setAdBlockDetection, setFrequencyCap,
+  } = useTagStore();
+
+  const [search, setSearch]             = useState('');
+  const [filterType, setFilterType]     = useState('all');
+  const [filterPlacement, setFilterPlacement] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterPlatform, setFilterPlatform] = useState('all');
+  const [copiedId, setCopiedId]         = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [modal, setModal]       = useState<{ isNew: boolean; tag: Tag } | null>(null);
-  const [toast, setToast]       = useState<Toast>(null);
-  const [adblock, setAdblock]   = useState(false);
-  const [freqCap, setFreqCap]   = useState(3);
+  const [modal, setModal]               = useState<ModalState>(null);
+  const [toast, setToast]               = useState<Toast>(null);
+  const [showFilters, setShowFilters]   = useState(false);
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 2500);
   };
 
-  const handleCopy = (id: string, content: string) => {
-    navigator.clipboard.writeText(content).catch(() => {});
+  const handleCopy = (id: string, code: string) => {
+    navigator.clipboard.writeText(code).catch(() => {});
     setCopiedId(id);
     setTimeout(() => setCopiedId(null), 2000);
     showToast('Code copied to clipboard');
   };
 
   const handleDelete = (id: string) => {
-    setTags(prev => prev.filter(t => t.id !== id));
+    const tag = tags.find(t => t.id === id);
+    deleteTag(id);
     setConfirmDeleteId(null);
-    showToast('Tag deleted');
+    showToast(`"${tag?.name}" deleted`);
   };
 
-  const toggleStatus = (id: string) => {
+  const handleToggle = (id: string) => {
     const tag = tags.find(t => t.id === id);
-    setTags(prev => prev.map(t => t.id === id ? { ...t, status: t.status === 'active' ? 'inactive' : 'active' } : t));
+    toggleStatus(id);
     showToast(`${tag?.name} ${tag?.status === 'active' ? 'deactivated' : 'activated'}`);
   };
 
-  const openNew = () => {
-    setModal({
-      isNew: true,
-      tag: { id: Math.random().toString(36).slice(2), name: '', type: 'HTML', content: '', status: 'inactive', placement: '<head>' },
-    });
-  };
+  const openNew = () => setModal({ isNew: true, tag: { ...EMPTY_TAG } });
+  const openEdit = (tag: AdTag) => setModal({ isNew: false, tag: { ...tag } });
 
-  const openEdit = (tag: Tag) => {
-    setModal({ isNew: false, tag: { ...tag } });
-  };
+  const updateModal = (patch: Partial<AdTag>) =>
+    setModal(m => m ? { ...m, tag: { ...m.tag, ...patch } } : m);
 
   const handleSave = () => {
     if (!modal) return;
-    if (!modal.tag.name.trim()) { showToast('Tag name is required', false); return; }
-    if (!modal.tag.content.trim()) { showToast('Tag code cannot be empty', false); return; }
-
+    const t = modal.tag;
+    if (!t.name?.trim()) { showToast('Tag name is required', false); return; }
+    if (!t.code?.trim()) { showToast('Ad code / unit ID is required', false); return; }
     if (modal.isNew) {
-      setTags(prev => [...prev, modal.tag]);
+      addTag({
+        name: t.name!.trim(),
+        type: t.type ?? 'AdSense',
+        platform: t.platform ?? 'All',
+        placement: t.placement ?? 'Home Banner',
+        code: t.code!.trim(),
+        triggerType: t.triggerType ?? 'On Load',
+        delay: t.delay ?? 0,
+        priority: t.priority ?? 1,
+        frequencyLimit: t.frequencyLimit ?? 'Once per session',
+        status: t.status ?? 'inactive',
+      });
       showToast('Tag added successfully');
     } else {
-      setTags(prev => prev.map(t => t.id === modal.tag.id ? modal.tag : t));
+      updateTag(t.id!, {
+        name: t.name!.trim(),
+        type: t.type,
+        platform: t.platform,
+        placement: t.placement,
+        code: t.code!.trim(),
+        triggerType: t.triggerType,
+        delay: t.delay,
+        priority: t.priority,
+        frequencyLimit: t.frequencyLimit,
+        status: t.status,
+      });
       showToast('Tag updated successfully');
     }
     setModal(null);
   };
 
-  const updateModal = (patch: Partial<Tag>) =>
-    setModal(m => m ? { ...m, tag: { ...m.tag, ...patch } } : m);
+  const filtered = useMemo(() => tags.filter(t => {
+    const q = search.toLowerCase();
+    if (q && !t.name.toLowerCase().includes(q) && !t.type.toLowerCase().includes(q)) return false;
+    if (filterType !== 'all' && t.type !== filterType) return false;
+    if (filterPlacement !== 'all' && t.placement !== filterPlacement) return false;
+    if (filterStatus !== 'all' && t.status !== filterStatus) return false;
+    if (filterPlatform !== 'all' && t.platform !== filterPlatform) return false;
+    return true;
+  }), [tags, search, filterType, filterPlacement, filterStatus, filterPlatform]);
 
   const active   = tags.filter(t => t.status === 'active').length;
   const inactive = tags.filter(t => t.status === 'inactive').length;
 
+  const activeFilters = [filterType, filterPlacement, filterStatus, filterPlatform].filter(f => f !== 'all').length;
+
   return (
     <div className="space-y-6 px-4 sm:px-6 pb-24 pt-6 text-white relative">
-      {/* Toast */}
+
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -115,270 +204,535 @@ export default function AdminTags() {
         )}
       </AnimatePresence>
 
+      {/* Kill Switch Banner */}
+      <AnimatePresence>
+        {killSwitch && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }}
+            className="flex items-center gap-3 px-4 py-3 bg-brand-red/15 border border-brand-red/30 rounded-2xl"
+          >
+            <ShieldOff size={18} className="text-brand-red flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-black text-brand-red">Global Kill Switch is ON</p>
+              <p className="text-xs text-brand-red/70">All ads are disabled across every platform</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Ad Tags & Links</h1>
-          <p className="text-xs text-slate-500 font-bold mt-0.5">{active} active · {inactive} inactive</p>
+          <h1 className="text-2xl font-black tracking-tight">Ad Tags Manager</h1>
+          <p className="text-xs text-slate-500 font-bold mt-0.5">
+            {active} active · {inactive} inactive · {tags.length} total
+          </p>
         </div>
-        <Button onClick={openNew} size="sm" className="rounded-xl px-4 flex items-center gap-2">
+        <Button onClick={openNew} size="sm" className="rounded-xl px-4 flex items-center gap-2 flex-shrink-0">
           <Plus size={16} /> New Tag
         </Button>
       </div>
 
-      {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3">
-        <Card className="p-4 bg-brand-green/5 border-brand-green/10 text-center">
-          <p className="text-[10px] font-black text-brand-green uppercase tracking-widest opacity-70">Active</p>
-          <p className="text-2xl font-black text-brand-green mt-1">{active}</p>
+      {/* Stats */}
+      <div className="grid grid-cols-4 gap-3">
+        <Card className="p-3 bg-brand-green/5 border-brand-green/10 text-center">
+          <p className="text-[9px] font-black text-brand-green uppercase tracking-widest">Active</p>
+          <p className="text-xl font-black text-brand-green mt-0.5">{active}</p>
         </Card>
-        <Card className="p-4 bg-white/5 border-white/5 text-center">
-          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest opacity-70">Inactive</p>
-          <p className="text-2xl font-black text-slate-400 mt-1">{inactive}</p>
+        <Card className="p-3 bg-white/5 border-white/5 text-center">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Inactive</p>
+          <p className="text-xl font-black text-slate-400 mt-0.5">{inactive}</p>
         </Card>
-        <Card className="p-4 bg-brand-blue/5 border-brand-blue/10 text-center">
-          <p className="text-[10px] font-black text-brand-blue uppercase tracking-widest opacity-70">Total</p>
-          <p className="text-2xl font-black text-brand-blue mt-1">{tags.length}</p>
+        <Card className="p-3 bg-brand-blue/5 border-brand-blue/10 text-center">
+          <p className="text-[9px] font-black text-brand-blue uppercase tracking-widest">Total</p>
+          <p className="text-xl font-black text-brand-blue mt-0.5">{tags.length}</p>
         </Card>
+        <Card className={cn('p-3 text-center border', killSwitch ? 'bg-brand-red/10 border-brand-red/20' : 'bg-white/3 border-white/5')}>
+          <p className={cn('text-[9px] font-black uppercase tracking-widest', killSwitch ? 'text-brand-red' : 'text-slate-500')}>Kill Sw.</p>
+          <p className={cn('text-[11px] font-black mt-0.5', killSwitch ? 'text-brand-red' : 'text-slate-500')}>
+            {killSwitch ? 'ON' : 'OFF'}
+          </p>
+        </Card>
+      </div>
+
+      {/* Search + Filters */}
+      <div className="space-y-3">
+        <div className="flex gap-2">
+          <div className="flex-1 relative">
+            <Search size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+            <input
+              type="text"
+              placeholder="Search by name or type..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-brand-card/40 border border-white/5 rounded-2xl py-3 pl-11 pr-4 text-sm font-bold focus:border-brand-blue outline-none transition-all placeholder:text-slate-600"
+            />
+          </div>
+          <button
+            onClick={() => setShowFilters(v => !v)}
+            className={cn(
+              'flex items-center gap-2 px-4 py-2.5 rounded-2xl border text-sm font-black transition-all',
+              showFilters || activeFilters > 0
+                ? 'bg-brand-blue/15 border-brand-blue/30 text-brand-blue'
+                : 'bg-brand-card/40 border-white/5 text-slate-400 hover:text-white'
+            )}
+          >
+            <Filter size={15} />
+            {activeFilters > 0 && (
+              <span className="w-4 h-4 bg-brand-blue text-white rounded-full text-[9px] font-black flex items-center justify-center">
+                {activeFilters}
+              </span>
+            )}
+          </button>
+        </div>
+
+        <AnimatePresence>
+          {showFilters && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                <CustomSelect
+                  value={filterType}
+                  onChange={setFilterType}
+                  options={[
+                    { value: 'all',           label: 'All Types'      },
+                    { value: 'AdMob',         label: 'AdMob'          },
+                    { value: 'AdSense',       label: 'AdSense'        },
+                    { value: 'Custom Script', label: 'Custom Script'  },
+                    { value: 'URL Redirect',  label: 'URL Redirect'   },
+                  ]}
+                  placeholder="Type"
+                  variant="admin"
+                />
+                <CustomSelect
+                  value={filterPlacement}
+                  onChange={setFilterPlacement}
+                  options={[
+                    { value: 'all',            label: 'All Placements'  },
+                    ...PLACEMENTS.map(p => ({ value: p, label: p })),
+                  ]}
+                  placeholder="Placement"
+                  variant="admin"
+                />
+                <CustomSelect
+                  value={filterStatus}
+                  onChange={setFilterStatus}
+                  options={[
+                    { value: 'all',      label: 'All Status',  },
+                    { value: 'active',   label: 'Active',      icon: Zap       },
+                    { value: 'inactive', label: 'Inactive',    icon: Power     },
+                  ]}
+                  placeholder="Status"
+                  variant="admin"
+                />
+                <CustomSelect
+                  value={filterPlatform}
+                  onChange={setFilterPlatform}
+                  options={[
+                    { value: 'all',     label: 'All Platforms', },
+                    { value: 'Web',     label: 'Web',     icon: Monitor     },
+                    { value: 'Android', label: 'Android', icon: Smartphone  },
+                    { value: 'iOS',     label: 'iOS',     icon: Smartphone  },
+                    { value: 'All',     label: 'All',     icon: Layers      },
+                  ]}
+                  placeholder="Platform"
+                  variant="admin"
+                />
+              </div>
+              {activeFilters > 0 && (
+                <button
+                  onClick={() => { setFilterType('all'); setFilterPlacement('all'); setFilterStatus('all'); setFilterPlatform('all'); }}
+                  className="mt-2 text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-brand-red transition-colors px-1"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Tag List */}
       <div className="space-y-3">
-        {tags.length === 0 && (
-          <div className="py-14 text-center text-slate-500 text-sm font-bold">No tags yet. Add your first ad tag.</div>
+        {filtered.length === 0 && (
+          <div className="py-16 flex flex-col items-center gap-3 text-center text-slate-600">
+            <Megaphone size={36} />
+            <div>
+              <p className="font-bold text-sm">
+                {tags.length === 0 ? 'No ad tags yet' : 'No tags match your filters'}
+              </p>
+              {tags.length === 0 && (
+                <p className="text-xs mt-1">Add your first ad tag to start managing ads dynamically</p>
+              )}
+            </div>
+          </div>
         )}
+
         <AnimatePresence>
-          {tags.map((tag, i) => (
-            <motion.div key={tag.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 20 }} transition={{ delay: i * 0.04 }}>
-              <Card className="p-4 bg-brand-card/40 border-white/5 space-y-3">
-                {/* Tag header */}
-                <div className="flex items-start gap-3">
-                  <div className={cn('w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0', typeColor[tag.type])}>
-                    <Code size={20} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h3 className="font-bold text-sm">{tag.name}</h3>
-                      <span className={cn('text-[9px] font-black uppercase px-2 py-0.5 rounded-full', typeColor[tag.type])}>
-                        {tag.type}
-                      </span>
+          {filtered.map((tag, i) => {
+            const st = typeStyle[tag.type];
+            return (
+              <motion.div
+                key={tag.id}
+                initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 20 }}
+                transition={{ delay: i * 0.04 }}
+              >
+                <Card className={cn(
+                  'p-4 bg-brand-card/40 border-white/5 space-y-3',
+                  killSwitch && tag.status === 'active' && 'opacity-50'
+                )}>
+                  {/* Header */}
+                  <div className="flex items-start gap-3">
+                    <div className={cn('w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 border', st.bg, st.text, st.border)}>
+                      <Code2 size={18} />
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-                      <span className="text-[10px] text-slate-500 font-bold">Placement: {tag.placement}</span>
-                      <span className={cn('text-[9px] font-black uppercase px-2 py-0.5 rounded-full',
-                        tag.status === 'active' ? 'bg-brand-green/10 text-brand-green' : 'bg-white/5 text-slate-500')}>
-                        {tag.status}
-                      </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h3 className="font-black text-sm">{tag.name}</h3>
+                        <span className={cn('text-[9px] font-black uppercase px-2 py-0.5 rounded-full border', st.bg, st.text, st.border)}>
+                          {tag.type}
+                        </span>
+                        <span className={cn(
+                          'text-[9px] font-black uppercase px-2 py-0.5 rounded-full',
+                          tag.status === 'active'
+                            ? 'bg-brand-green/10 text-brand-green'
+                            : 'bg-white/5 text-slate-500'
+                        )}>
+                          {tag.status}
+                        </span>
+                      </div>
+
+                      {/* Meta pills */}
+                      <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
+                          {platformIcon[tag.platform]} {tag.platform}
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
+                          <Layers size={10} /> {tag.placement}
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-slate-500 bg-white/5 px-2 py-0.5 rounded-full">
+                          {triggerIcon[tag.triggerType]} {tag.triggerType}
+                          {tag.triggerType === 'Timed' && tag.delay > 0 && ` (${tag.delay}s)`}
+                        </span>
+                        <span className="text-[10px] font-bold text-slate-600">P{tag.priority}</span>
+                      </div>
                     </div>
+
+                    {/* Quick toggle */}
+                    <button
+                      onClick={() => handleToggle(tag.id)}
+                      title={tag.status === 'active' ? 'Deactivate' : 'Activate'}
+                      className={cn(
+                        'flex-shrink-0 p-1.5 rounded-xl transition-all',
+                        tag.status === 'active'
+                          ? 'text-brand-green hover:bg-brand-red/10 hover:text-brand-red'
+                          : 'text-slate-600 hover:bg-brand-green/10 hover:text-brand-green'
+                      )}
+                    >
+                      {tag.status === 'active' ? <ToggleRight size={20} /> : <ToggleLeft size={20} />}
+                    </button>
                   </div>
-                </div>
 
-                {/* Code preview */}
-                <div className="relative">
-                  <pre className="bg-black/50 p-3 rounded-xl text-[10px] font-mono text-slate-400 overflow-x-auto border border-white/5 max-h-[90px] scrollable-content leading-relaxed">
-                    {tag.content}
-                  </pre>
-                  <button
-                    onClick={() => handleCopy(tag.id, tag.content)}
-                    className="absolute top-2 right-2 p-1.5 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-all active:scale-90 backdrop-blur-md border border-white/10"
-                    title="Copy code"
-                  >
-                    {copiedId === tag.id ? <Check size={13} className="text-brand-green" /> : <Copy size={13} />}
-                  </button>
-                </div>
+                  {/* Code preview */}
+                  <div className="relative">
+                    <pre className="bg-black/50 p-3 pr-10 rounded-xl text-[10px] font-mono text-slate-400 overflow-x-auto border border-white/5 max-h-[80px] scrollable-content leading-relaxed whitespace-pre-wrap break-all">
+                      {tag.code}
+                    </pre>
+                    <button
+                      onClick={() => handleCopy(tag.id, tag.code)}
+                      className="absolute top-2 right-2 p-1.5 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-all active:scale-90 backdrop-blur-md border border-white/10"
+                      title="Copy code"
+                    >
+                      {copiedId === tag.id ? <Check size={12} className="text-brand-green" /> : <Copy size={12} />}
+                    </button>
+                  </div>
 
-                {/* Action buttons — always visible, not hidden on hover */}
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => openEdit(tag)}
-                    className="py-2 bg-brand-blue/10 text-brand-blue hover:bg-brand-blue/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <Edit2 size={12} /> Edit
-                  </button>
-                  <button
-                    onClick={() => toggleStatus(tag.id)}
-                    className={cn(
-                      'py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5',
-                      tag.status === 'active'
-                        ? 'bg-white/5 text-slate-400 hover:bg-brand-yellow/10 hover:text-brand-yellow'
-                        : 'bg-brand-green/10 text-brand-green hover:bg-brand-green/20'
+                  {/* Footer meta */}
+                  <div className="flex items-center justify-between text-[10px] text-slate-600 font-bold px-0.5">
+                    <span>Freq: {tag.frequencyLimit}</span>
+                    <span>Updated {timeAgo(tag.updatedAt)}</span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="grid grid-cols-3 gap-2">
+                    <button
+                      onClick={() => openEdit(tag)}
+                      className="py-2 bg-brand-blue/10 text-brand-blue hover:bg-brand-blue/20 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <Edit2 size={11} /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleToggle(tag.id)}
+                      className={cn(
+                        'py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5',
+                        tag.status === 'active'
+                          ? 'bg-white/5 text-slate-400 hover:bg-brand-yellow/10 hover:text-brand-yellow'
+                          : 'bg-brand-green/10 text-brand-green hover:bg-brand-green/20'
+                      )}
+                    >
+                      {tag.status === 'active' ? <ToggleRight size={11} /> : <ToggleLeft size={11} />}
+                      {tag.status === 'active' ? 'Disable' : 'Enable'}
+                    </button>
+                    <button
+                      onClick={() => setConfirmDeleteId(tag.id)}
+                      className="py-2 bg-white/5 hover:bg-brand-red/10 hover:text-brand-red text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5"
+                    >
+                      <Trash2 size={11} /> Delete
+                    </button>
+                  </div>
+
+                  {/* Delete confirm */}
+                  <AnimatePresence>
+                    {confirmDeleteId === tag.id && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+                        className="flex items-center gap-2 p-3 bg-brand-red/10 rounded-xl border border-brand-red/20"
+                      >
+                        <p className="flex-1 text-xs font-bold text-brand-red">Delete "{tag.name}"?</p>
+                        <button onClick={() => handleDelete(tag.id)} className="px-3 py-1.5 bg-brand-red text-white text-xs font-bold rounded-lg">Delete</button>
+                        <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 bg-white/10 text-slate-300 text-xs font-bold rounded-lg">Cancel</button>
+                      </motion.div>
                     )}
-                  >
-                    {tag.status === 'active' ? <ToggleRight size={12} /> : <ToggleLeft size={12} />}
-                    {tag.status === 'active' ? 'Disable' : 'Enable'}
-                  </button>
-                  <button
-                    onClick={() => setConfirmDeleteId(tag.id)}
-                    className="py-2 bg-white/5 hover:bg-brand-red/10 hover:text-brand-red text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-1.5"
-                  >
-                    <Trash2 size={12} /> Delete
-                  </button>
-                </div>
-
-                {/* Inline delete confirm */}
-                {confirmDeleteId === tag.id && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                    className="flex items-center gap-2 p-3 bg-brand-red/10 rounded-xl border border-brand-red/20"
-                  >
-                    <p className="flex-1 text-xs font-bold text-brand-red">Delete "{tag.name}"?</p>
-                    <button onClick={() => handleDelete(tag.id)} className="px-3 py-1.5 bg-brand-red text-white text-xs font-bold rounded-lg">Delete</button>
-                    <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 bg-white/10 text-slate-300 text-xs font-bold rounded-lg">Cancel</button>
-                  </motion.div>
-                )}
-              </Card>
-            </motion.div>
-          ))}
+                  </AnimatePresence>
+                </Card>
+              </motion.div>
+            );
+          })}
         </AnimatePresence>
       </div>
 
-      {/* Global Ad Settings */}
-      <div className="space-y-4">
+      {/* Global Settings */}
+      <div className="space-y-3">
         <h2 className="text-xs font-black uppercase tracking-widest text-slate-500 px-1">Global Ad Settings</h2>
-        <Card className="p-5 bg-brand-card/40 border-white/5 space-y-5">
-          {/* Ad-Block Detection */}
-          <div className="flex items-center justify-between gap-4">
+        <Card className="p-5 bg-brand-card/40 border-white/5 divide-y divide-white/5 space-y-0">
+
+          {/* Kill Switch */}
+          <div className="flex items-center justify-between gap-4 py-4 first:pt-0">
             <div className="min-w-0">
-              <p className="text-sm font-bold">Enable Ad-Block Detection</p>
-              <p className="text-xs text-slate-500">Show a message to users with ad-blockers</p>
+              <div className="flex items-center gap-2">
+                <ShieldOff size={15} className={killSwitch ? 'text-brand-red' : 'text-slate-500'} />
+                <p className="text-sm font-bold">Global Kill Switch</p>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">Instantly disable ALL ads across every platform</p>
             </div>
-            <button
-              onClick={() => { setAdblock(v => !v); showToast(`Ad-block detection ${!adblock ? 'enabled' : 'disabled'}`); }}
-              className={cn('w-12 h-6 rounded-full relative transition-colors duration-200 flex-shrink-0', adblock ? 'bg-brand-blue' : 'bg-white/10')}
-            >
-              <motion.div
-                animate={{ x: adblock ? 22 : 2 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 30 }}
-                className="absolute top-1 w-4 h-4 bg-white rounded-full shadow"
-              />
-            </button>
+            <Toggle value={killSwitch} onChange={v => { setKillSwitch(v); showToast(v ? 'All ads disabled globally' : 'Global kill switch off', !v); }} />
+          </div>
+
+          {/* Ad-Block Detection */}
+          <div className="flex items-center justify-between gap-4 py-4">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={15} className="text-slate-500" />
+                <p className="text-sm font-bold">Ad-Block Detection</p>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">Show a message to users with ad-blockers enabled</p>
+            </div>
+            <Toggle value={adBlockDetection} onChange={v => { setAdBlockDetection(v); showToast(`Ad-block detection ${v ? 'enabled' : 'disabled'}`); }} />
           </div>
 
           {/* Frequency Cap */}
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 py-4 last:pb-0">
             <div className="min-w-0">
-              <p className="text-sm font-bold">Ad Frequency Cap</p>
-              <p className="text-xs text-slate-500">Max ads shown per user per session</p>
+              <div className="flex items-center gap-2">
+                <Timer size={15} className="text-slate-500" />
+                <p className="text-sm font-bold">Global Frequency Cap</p>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">Max ads shown per user per session</p>
             </div>
             <div className="flex items-center gap-2 flex-shrink-0">
               <button
-                onClick={() => setFreqCap(v => Math.max(1, v - 1))}
+                onClick={() => setFrequencyCap(Math.max(1, frequencyCap - 1))}
                 className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-300 transition-colors active:scale-90"
               >
                 <Minus size={14} />
               </button>
-              <span className="w-10 text-center text-sm font-black">{freqCap}</span>
+              <span className="w-8 text-center text-sm font-black">{frequencyCap}</span>
               <button
-                onClick={() => setFreqCap(v => Math.min(20, v + 1))}
+                onClick={() => setFrequencyCap(Math.min(20, frequencyCap + 1))}
                 className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-xl flex items-center justify-center text-slate-300 transition-colors active:scale-90"
               >
                 <Plus size={14} />
               </button>
             </div>
           </div>
-
-          <Button
-            onClick={() => showToast('Ad settings saved')}
-            size="sm"
-            className="rounded-xl w-full flex items-center gap-2 justify-center"
-          >
-            <Check size={15} /> Save Ad Settings
-          </Button>
         </Card>
       </div>
 
       {/* Add / Edit Modal */}
       <AnimatePresence>
         {modal && (
-          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setModal(null)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+          <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center sm:p-4">
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setModal(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
             <motion.div
               initial={{ y: '100%', opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '100%', opacity: 0 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="relative w-full sm:max-w-lg bg-[#1a1a2e] border border-white/10 rounded-t-[28px] sm:rounded-3xl overflow-hidden shadow-2xl max-h-[90vh] flex flex-col"
+              className="relative w-full sm:max-w-lg bg-[#0f0f14] border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[92vh] flex flex-col"
+              onClick={e => e.stopPropagation()}
             >
-              {/* Modal header */}
-              <div className="flex items-center justify-between p-5 border-b border-white/5 flex-shrink-0">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-white/5 flex-shrink-0">
                 <h2 className="text-lg font-black">{modal.isNew ? 'Add New Tag' : 'Edit Tag'}</h2>
                 <button onClick={() => setModal(null)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
                   <X size={18} />
                 </button>
               </div>
 
-              {/* Modal body — scrollable */}
-              <div className="overflow-y-auto flex-1 p-5 space-y-4">
-                {/* Name */}
+              {/* Modal Body */}
+              <div className="overflow-y-auto flex-1 p-5 space-y-4 overscroll-contain">
+
+                {/* Tag Name */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tag Name *</label>
+                  <FieldLabel>Tag Name *</FieldLabel>
                   <input
-                    value={modal.tag.name}
+                    value={modal.tag.name ?? ''}
                     onChange={e => updateModal({ name: e.target.value })}
-                    placeholder="e.g. Google Ads Sidebar"
+                    placeholder="e.g. Home Banner AdSense"
+                    autoFocus
                     className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm font-bold outline-none focus:border-brand-blue transition-all placeholder:text-slate-600"
                   />
                 </div>
 
-                {/* Type + Status row */}
+                {/* Type + Platform */}
                 <div className="grid grid-cols-2 gap-3">
                   <CustomSelect
-                    label="Type"
-                    value={modal.tag.type}
-                    onChange={v => updateModal({ type: v as TagType })}
+                    label="Ad Type *"
+                    value={modal.tag.type ?? 'AdSense'}
+                    onChange={v => updateModal({ type: v as AdType })}
+                    options={AD_TYPES.map(t => ({ value: t, label: t }))}
+                    variant="admin"
+                  />
+                  <CustomSelect
+                    label="Platform *"
+                    value={modal.tag.platform ?? 'All'}
+                    onChange={v => updateModal({ platform: v as AdPlatform })}
                     options={[
-                      { value: 'HTML',    label: 'HTML',    icon: FileCode2  },
-                      { value: 'JS',      label: 'JS',      icon: Zap        },
-                      { value: 'HTML/JS', label: 'HTML/JS', icon: Link2      },
-                      { value: 'CSS',     label: 'CSS',     icon: Paintbrush },
-                      { value: 'Other',   label: 'Other',   icon: Package    },
+                      { value: 'All',     label: 'All',     icon: Layers     },
+                      { value: 'Web',     label: 'Web',     icon: Monitor    },
+                      { value: 'Android', label: 'Android', icon: Smartphone },
+                      { value: 'iOS',     label: 'iOS',     icon: Smartphone },
                     ]}
                     variant="admin"
                   />
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Status</label>
-                    <button
-                      onClick={() => updateModal({ status: modal.tag.status === 'active' ? 'inactive' : 'active' })}
-                      className={cn(
-                        'w-full rounded-xl py-3 px-3 text-sm font-bold transition-all text-left',
-                        modal.tag.status === 'active' ? 'bg-brand-green/10 text-brand-green' : 'bg-white/5 text-slate-400'
-                      )}
-                    >
-                      {modal.tag.status === 'active' ? '● Active' : '○ Inactive'}
-                    </button>
-                  </div>
                 </div>
 
                 {/* Placement */}
                 <CustomSelect
-                  label="Placement"
-                  value={modal.tag.placement}
-                  onChange={v => updateModal({ placement: v })}
-                  options={[
-                    { value: '<head>',                   label: '<head>',                   icon: Pin        },
-                    { value: '<body>',                   label: '<body>',                   icon: FileText   },
-                    { value: 'After opening <body>',     label: 'After opening <body>',     icon: ArrowDown  },
-                    { value: 'Before closing </body>',   label: 'Before closing </body>',   icon: ArrowUp    },
-                    { value: 'Sidebar',                  label: 'Sidebar',                  icon: PanelRight },
-                    { value: 'Footer',                   label: 'Footer',                   icon: PanelBottom},
-                  ]}
+                  label="Placement *"
+                  value={modal.tag.placement ?? 'Home Banner'}
+                  onChange={v => updateModal({ placement: v as AdPlacement })}
+                  options={PLACEMENTS.map(p => ({ value: p, label: p }))}
                   variant="admin"
                 />
 
-                {/* Code */}
+                {/* Trigger + Delay */}
+                <div className="grid grid-cols-2 gap-3">
+                  <CustomSelect
+                    label="Trigger Type"
+                    value={modal.tag.triggerType ?? 'On Load'}
+                    onChange={v => updateModal({ triggerType: v as TriggerType })}
+                    options={[
+                      { value: 'On Load',  label: 'On Load',  icon: Clock         },
+                      { value: 'On Click', label: 'On Click', icon: MousePointer  },
+                      { value: 'Timed',    label: 'Timed',    icon: Timer         },
+                    ]}
+                    variant="admin"
+                  />
+                  <div className="space-y-1.5">
+                    <FieldLabel>Delay (seconds)</FieldLabel>
+                    <input
+                      type="number"
+                      min={0}
+                      max={120}
+                      value={modal.tag.delay ?? 0}
+                      onChange={e => updateModal({ delay: Number(e.target.value) })}
+                      disabled={modal.tag.triggerType !== 'Timed'}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm font-bold outline-none focus:border-brand-blue transition-all disabled:opacity-30"
+                    />
+                  </div>
+                </div>
+
+                {/* Priority + Frequency */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <FieldLabel>Priority (1 = highest)</FieldLabel>
+                    <input
+                      type="number"
+                      min={1}
+                      max={99}
+                      value={modal.tag.priority ?? 1}
+                      onChange={e => updateModal({ priority: Number(e.target.value) })}
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm font-bold outline-none focus:border-brand-blue transition-all"
+                    />
+                  </div>
+                  <CustomSelect
+                    label="Frequency Limit"
+                    value={modal.tag.frequencyLimit ?? 'Once per session'}
+                    onChange={v => updateModal({ frequencyLimit: v })}
+                    options={FREQ_PRESETS.map(f => ({ value: f, label: f }))}
+                    variant="admin"
+                  />
+                </div>
+
+                {/* Ad Code / Unit ID */}
                 <div className="space-y-1.5">
-                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-500">Tag Code *</label>
-                  <textarea
-                    value={modal.tag.content}
-                    onChange={e => updateModal({ content: e.target.value })}
-                    placeholder="Paste your ad tag / tracking code here..."
-                    className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-[12px] font-mono outline-none focus:border-brand-blue transition-all resize-none placeholder:text-slate-600 scrollable-content"
-                    style={{ minHeight: '140px' }}
+                  <FieldLabel>
+                    {modal.tag.type === 'AdMob' ? 'Ad Unit ID *' : modal.tag.type === 'URL Redirect' ? 'Redirect URL *' : 'Ad Code *'}
+                  </FieldLabel>
+                  {modal.tag.type === 'URL Redirect' ? (
+                    <div className="relative">
+                      <ExternalLink size={14} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                      <input
+                        type="url"
+                        value={modal.tag.code ?? ''}
+                        onChange={e => updateModal({ code: e.target.value })}
+                        placeholder="https://..."
+                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-bold outline-none focus:border-brand-blue transition-all placeholder:text-slate-600"
+                      />
+                    </div>
+                  ) : modal.tag.type === 'AdMob' ? (
+                    <input
+                      value={modal.tag.code ?? ''}
+                      onChange={e => updateModal({ code: e.target.value })}
+                      placeholder="ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
+                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-sm font-mono outline-none focus:border-brand-blue transition-all placeholder:text-slate-600"
+                    />
+                  ) : (
+                    <textarea
+                      value={modal.tag.code ?? ''}
+                      onChange={e => updateModal({ code: e.target.value })}
+                      placeholder={modal.tag.type === 'AdSense'
+                        ? '<ins class="adsbygoogle"...'
+                        : '<!-- Paste your script or HTML here -->'}
+                      className="w-full bg-black/30 border border-white/10 rounded-xl p-4 text-[12px] font-mono outline-none focus:border-brand-blue transition-all resize-none placeholder:text-slate-600 scrollable-content"
+                      style={{ minHeight: '120px' }}
+                    />
+                  )}
+                  {modal.tag.type === 'AdMob' && (
+                    <p className="text-[10px] text-slate-500 px-1">AdMob uses the SDK — enter only the Ad Unit ID, not a script tag</p>
+                  )}
+                </div>
+
+                {/* Status */}
+                <div className="flex items-center justify-between py-3 px-4 bg-white/5 rounded-xl">
+                  <div>
+                    <p className="text-sm font-bold">Active Status</p>
+                    <p className="text-[10px] text-slate-500">Enable to serve this ad immediately</p>
+                  </div>
+                  <Toggle
+                    value={modal.tag.status === 'active'}
+                    onChange={v => updateModal({ status: v ? 'active' : 'inactive' })}
                   />
                 </div>
               </div>
 
-              {/* Modal footer */}
-              <div className="flex gap-3 p-5 border-t border-white/5 flex-shrink-0">
+              {/* Modal Footer */}
+              <div className="flex gap-3 px-5 py-4 border-t border-white/5 flex-shrink-0">
                 <Button variant="secondary" onClick={() => setModal(null)} className="flex-1 rounded-xl border-white/10">
                   Cancel
                 </Button>
