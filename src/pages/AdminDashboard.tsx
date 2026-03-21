@@ -12,7 +12,7 @@ const QUICK_ACTIONS = [
   { label: 'Users',         desc: 'View and manage player accounts',        icon: Users,     color: 'text-brand-green',  bg: 'bg-brand-green/10',  path: '/admin/users' },
   { label: 'Economy',       desc: 'Approve withdrawals & deposits',         icon: Wallet,    color: 'text-brand-yellow', bg: 'bg-brand-yellow/10', path: '/admin/economy' },
   { label: 'Notifications', desc: 'Push alerts to users',                   icon: Play,      color: 'text-brand-red',    bg: 'bg-brand-red/10',    path: '/admin/notifications' },
-  { label: 'Support',       desc: 'Manage user support tickets',            icon: Users,     color: 'text-purple-400',   bg: 'bg-purple-400/10',   path: '/admin/support' },
+  { label: 'Support',       desc: 'Manage user support tickets',            icon: Users,     color: 'text-brand-secondary',   bg: 'bg-brand-secondary/10',   path: '/admin/support' },
   { label: 'Campaigns',     desc: 'Manage home banners & promotions',       icon: TrendingUp,color: 'text-brand-blue',   bg: 'bg-brand-blue/10',   path: '/admin/campaign' },
 ];
 
@@ -44,7 +44,7 @@ const statusBadge = (status: string) => {
   if (status === 'success')   return 'bg-brand-green/15 text-brand-green';
   if (status === 'completed') return 'bg-white/10 text-slate-400';
   if (status === 'active')    return 'bg-brand-blue/15 text-brand-blue';
-  return 'bg-purple-400/15 text-purple-400';
+  return 'bg-brand-secondary/15 text-brand-secondary';
 };
 
 export default function AdminDashboard() {

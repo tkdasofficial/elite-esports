@@ -31,7 +31,7 @@ const typeColor: Record<TagType, string> = {
   'HTML':    'bg-orange-500/10 text-orange-400',
   'JS':      'bg-yellow-500/10 text-yellow-400',
   'HTML/JS': 'bg-brand-blue/10 text-brand-blue',
-  'CSS':     'bg-purple-400/10 text-purple-400',
+  'CSS':     'bg-brand-secondary/10 text-brand-secondary',
   'Other':   'bg-slate-500/10 text-slate-400',
 };
 

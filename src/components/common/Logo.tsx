@@ -15,7 +15,7 @@ export const Logo: React.FC<LogoProps> = ({ className, size = 32 }) => {
         viewBox="0 0 32 32"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        style={{ filter: 'drop-shadow(0 0 10px rgba(99,102,241,0.55))' }}
+        style={{ filter: 'drop-shadow(0 0 10px rgba(255,69,0,0.6))' }}
       >
         <rect width="32" height="32" rx="10" fill="url(#logoGradBg)" />
         <path
@@ -29,12 +29,12 @@ export const Logo: React.FC<LogoProps> = ({ className, size = 32 }) => {
         />
         <defs>
           <linearGradient id="logoGradBg" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#312E81" />
-            <stop offset="1" stopColor="#1E1B4B" />
+            <stop stopColor="#7C1500" />
+            <stop offset="1" stopColor="#1D3A8A" />
           </linearGradient>
           <linearGradient id="logoGrad" x1="15.5" y1="4" x2="15.5" y2="28" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#A5B4FC" />
-            <stop offset="1" stopColor="#6366F1" />
+            <stop stopColor="#FF6B35" />
+            <stop offset="1" stopColor="#FF4500" />
           </linearGradient>
         </defs>
       </svg>

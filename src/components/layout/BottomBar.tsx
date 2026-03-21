@@ -33,8 +33,8 @@ export const BottomBar = () => {
                   className={cn(
                     'w-[38px] h-[38px] rounded-full flex items-center justify-center transition-all duration-200',
                     active
-                      ? 'bg-red-600 shadow-lg shadow-red-600/40'
-                      : 'bg-red-500 shadow-md shadow-red-500/30'
+                      ? 'bg-brand-primary shadow-lg shadow-brand-primary/40'
+                      : 'bg-brand-primary shadow-md shadow-brand-primary/30'
                   )}
                 >
                   <Play size={17} fill="white" className="text-white ml-0.5" />
