@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { ArrowLeft, Trophy, Users, Clock, Coins, ShieldCheck, Share2, UserCheck, CheckCircle } from 'lucide-react';
 import { useMatchStore } from '@/src/store/matchStore';
 import { useUserStore } from '@/src/store/userStore';
+import { useAdEngineStore } from '@/src/store/adEngineStore';
 import { Button } from '@/src/components/ui/Button';
 import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
 import { cn } from '@/src/utils/helpers';
@@ -13,9 +14,21 @@ export default function MatchDetails() {
   const navigate = useNavigate();
   const { getMatchById } = useMatchStore();
   const { user, joinedMatchIds, joinMatch, leaveMatch } = useUserStore();
+  const { triggerAd } = useAdEngineStore();
 
   const match = getMatchById(id || '');
   const isJoined = joinedMatchIds.includes(id || '');
+
+  const handleJoinLeave = async () => {
+    if (!match) return;
+    if (isJoined) {
+      await triggerAd('Leave');
+      leaveMatch(match.match_id);
+    } else {
+      await triggerAd('Join');
+      joinMatch(match.match_id);
+    }
+  };
 
   if (!match) return (
     <div className="flex flex-col items-center justify-center h-[80vh] gap-5 px-6">
@@ -189,7 +202,7 @@ export default function MatchDetails() {
             <p className="text-[22px] font-bold text-text-primary tabular">{match.entry_fee}</p>
           </div>
           <Button
-            onClick={() => isJoined ? leaveMatch(match.match_id) : joinMatch(match.match_id)}
+            onClick={handleJoinLeave}
             disabled={!isJoinable || (isFull && !isJoined)}
             className={cn(
               'flex-1 h-[52px] text-[16px] font-semibold rounded-[14px] transition-opacity active:opacity-75',

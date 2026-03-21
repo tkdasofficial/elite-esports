@@ -1,0 +1,85 @@
+Build a complete Ad Tag Management System for a professional eSports tournament platform with the following requirements:
+
+1. Core Concept:
+- Do NOT create a separate banner management page.
+- All ads (including banners) must be controlled through a single "Campaign" system.
+- Admin manages everything from ONE page: "Campaign Management".
+
+2. Campaign Page (Admin Panel):
+- Create a single page called "Campaign".
+- Admin can create, edit, delete, enable/disable campaigns.
+- Each campaign contains:
+  - Campaign Name
+  - Ad Type (Video / Image / Banner)
+  - Trigger Type (where the ad will show)
+  - Ad URL or Media Upload
+  - Duration (for video ads)
+  - Status (Active / Inactive)
+
+3. Ad Trigger Types (VERY IMPORTANT):
+Implement these 4 main triggers:
+
+A. Reward Ad (Reward Gating)
+- Trigger: When user receives reward after winning a match.
+- Flow:
+  User wins match → clicks "Get Reward" → Ad shows → After ad completes → Reward is credited.
+
+B. Join / Leave Ad
+- Trigger when user joins or leaves a match.
+- Flow:
+  Click "Join Match" → Ad plays → After completion → User joins match.
+  Click "Leave Match" → Ad plays → After completion → User leaves match.
+
+C. Welcome Ad (Daily Login Ad)
+- Trigger: When user opens app (once per day).
+- Show only once per day per user.
+- Flow:
+  User opens app → If not shown today → Show ad → Continue to app.
+
+D. Timer Ads (Interval Ads)
+- Trigger ads automatically after a time interval.
+- Admin can set:
+  - Interval time (e.g. 10 min, 30 min, 1 hour)
+- Flow:
+  User active in app → Timer runs → Show ad after interval → Reset timer.
+
+4. Important Restrictions:
+- DO NOT show ads in:
+  - Main content area
+  - Sidebar
+- Ads must feel professional and non-intrusive.
+
+5. Ad Display Types:
+- Fullscreen Interstitial Ads (for Join, Leave, Welcome, Reward)
+- Optional Banner inside safe sections (like between match cards if needed via campaign)
+
+6. Admin Controls:
+- Enable/disable each trigger separately
+- Control frequency (especially for timer ads)
+- Control which campaign is used for which trigger
+- Priority system (if multiple ads available)
+
+7. User Experience Rules:
+- Ads must be skippable or non-skippable based on admin setting
+- Ensure smooth transitions (no lag/crash)
+- Never show multiple ads back-to-back unnecessarily
+- Maintain premium/professional UI feel
+
+8. Backend Requirements:
+- Store campaigns in database:
+  - id, name, type, trigger_type, media_url, duration, status, interval_time
+- Track user ad history:
+  - last_shown_welcome_ad
+  - last_timer_ad_timestamp
+- Ensure logic-based triggering system
+
+9. Frontend Logic:
+- Detect event triggers (join, leave, reward, app open, timer)
+- Call ad system before completing action
+- Only proceed after ad completion
+
+10. Goal:
+- Build a clean, professional, controlled ad system
+- Fully managed from admin panel
+- No messy UI ads
+- Smart, event-based monetization system
