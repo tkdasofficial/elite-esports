@@ -207,7 +207,7 @@ export default function Wallet() {
                   </button>
                 ))}
               </div>
-              <Button onClick={handleAddCash} fullWidth size="lg">Continue</Button>
+              <Button onClick={handleAddCash} fullWidth size="md">Continue</Button>
             </div>
           ) : (
             <div className="space-y-4">
@@ -237,8 +237,8 @@ export default function Wallet() {
                   className={inputCls}/>
               </div>
               <div className="flex gap-3">
-                <Button variant="secondary" onClick={()=>setStep(1)} className="flex-1">Back</Button>
-                <Button onClick={submitDeposit} className="flex-[2]">Submit</Button>
+                <Button variant="secondary" size="sm" onClick={()=>setStep(1)} className="flex-1">Back</Button>
+                <Button size="sm" onClick={submitDeposit} className="flex-[2]">Submit</Button>
               </div>
             </div>
           )}
@@ -297,7 +297,7 @@ export default function Wallet() {
                   Withdrawals are processed manually and may take up to 24 hours.
                 </p>
               </div>
-              <Button onClick={handleWithdraw} fullWidth size="lg">Withdraw Now</Button>
+              <Button onClick={handleWithdraw} fullWidth size="md">Withdraw Now</Button>
             </div>
           )}
         </div>
