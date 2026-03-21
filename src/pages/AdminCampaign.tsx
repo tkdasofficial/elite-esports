@@ -252,105 +252,109 @@ export default function AdminCampaign() {
       <AnimatePresence>
         {editingBanner && (
           <Modal onClose={() => setEditingBanner(null)} wide>
-            <div className="p-6 border-b border-white/5 flex items-center justify-between">
+            {/* Sticky header — never scrolls */}
+            <div className="flex-shrink-0 p-5 border-b border-white/5 flex items-center justify-between">
               <h2 className="text-lg font-black">{editingBanner.id === 'new' ? 'Add Banner' : 'Edit Banner'}</h2>
               <button onClick={() => setEditingBanner(null)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
                 <X size={20} />
               </button>
             </div>
 
-            {/* Image preview */}
-            {editingBanner.image && !imgError ? (
-              <div className="relative aspect-video w-full bg-black overflow-hidden">
-                <img
-                  src={editingBanner.image}
-                  alt="Preview"
-                  className="w-full h-full object-cover"
-                  referrerPolicy="no-referrer"
-                  onError={() => setImgError(true)}
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
-                <div className="absolute bottom-3 left-4 right-4">
-                  <p className="text-white font-bold text-base leading-tight drop-shadow">{editingBanner.title || 'Banner Title'}</p>
-                  <p className="text-white/60 text-xs mt-0.5">{editingBanner.description || 'Description text'}</p>
-                  {editingBanner.buttonText && (
-                    <div className="mt-2 inline-block px-3 py-1 bg-blue-500 text-white text-xs font-bold rounded-lg">
-                      {editingBanner.buttonText}
-                    </div>
-                  )}
+            {/* Scrollable body */}
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+              {/* Image preview */}
+              {editingBanner.image && !imgError ? (
+                <div className="relative aspect-video w-full bg-black overflow-hidden flex-shrink-0">
+                  <img
+                    src={editingBanner.image}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={() => setImgError(true)}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
+                  <div className="absolute bottom-3 left-4 right-4">
+                    <p className="text-white font-bold text-base leading-tight drop-shadow">{editingBanner.title || 'Banner Title'}</p>
+                    <p className="text-white/60 text-xs mt-0.5">{editingBanner.description || 'Description text'}</p>
+                    {editingBanner.buttonText && (
+                      <div className="mt-2 inline-block px-3 py-1 bg-brand-primary text-white text-xs font-bold rounded-lg">
+                        {editingBanner.buttonText}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <div className="aspect-video w-full bg-white/5 flex flex-col items-center justify-center gap-2 text-slate-600">
-                <ImageOff size={28} />
-                <span className="text-xs">{imgError ? 'Invalid image URL' : 'Enter an image URL to preview'}</span>
-              </div>
-            )}
+              ) : (
+                <div className="aspect-video w-full bg-white/5 flex flex-col items-center justify-center gap-2 text-slate-600 flex-shrink-0">
+                  <ImageOff size={28} />
+                  <span className="text-xs">{imgError ? 'Invalid image URL' : 'Enter an image URL to preview'}</span>
+                </div>
+              )}
 
-            <form onSubmit={handleSave} className="p-6 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <form onSubmit={handleSave} className="p-5 space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <FormField
+                    label="Campaign Title"
+                    type="text"
+                    required
+                    value={editingBanner.title}
+                    onChange={v => setEditingBanner({ ...editingBanner, title: v })}
+                    placeholder="Elite Pro Series S4"
+                  />
+                  <FormField
+                    label="Button Text"
+                    type="text"
+                    required
+                    value={editingBanner.buttonText}
+                    onChange={v => setEditingBanner({ ...editingBanner, buttonText: v })}
+                    placeholder="Register Now"
+                  />
+                </div>
                 <FormField
-                  label="Campaign Title"
+                  label="Description"
                   type="text"
-                  required
-                  value={editingBanner.title}
-                  onChange={v => setEditingBanner({ ...editingBanner, title: v })}
-                  placeholder="Elite Pro Series S4"
+                  value={editingBanner.description}
+                  onChange={v => setEditingBanner({ ...editingBanner, description: v })}
+                  placeholder="₹1,00,000 prize pool · 100 squads · Starts tonight"
                 />
                 <FormField
-                  label="Button Text"
+                  label="Image URL"
+                  type="url"
+                  required
+                  value={editingBanner.image}
+                  onChange={v => { setImgError(false); setEditingBanner({ ...editingBanner, image: v }); }}
+                  placeholder="https://..."
+                />
+                <FormField
+                  label="Redirect Link"
                   type="text"
                   required
-                  value={editingBanner.buttonText}
-                  onChange={v => setEditingBanner({ ...editingBanner, buttonText: v })}
-                  placeholder="Register Now"
+                  value={editingBanner.link}
+                  onChange={v => setEditingBanner({ ...editingBanner, link: v })}
+                  placeholder="/match/1"
                 />
-              </div>
-              <FormField
-                label="Description"
-                type="text"
-                value={editingBanner.description}
-                onChange={v => setEditingBanner({ ...editingBanner, description: v })}
-                placeholder="₹1,00,000 prize pool · 100 squads · Starts tonight"
-              />
-              <FormField
-                label="Image URL"
-                type="url"
-                required
-                value={editingBanner.image}
-                onChange={v => { setImgError(false); setEditingBanner({ ...editingBanner, image: v }); }}
-                placeholder="https://..."
-              />
-              <FormField
-                label="Redirect Link"
-                type="text"
-                required
-                value={editingBanner.link}
-                onChange={v => setEditingBanner({ ...editingBanner, link: v })}
-                placeholder="/match/1"
-              />
 
-              {/* Active toggle in modal */}
-              <div className="flex items-center justify-between py-2 px-4 bg-white/5 rounded-xl">
-                <span className="text-sm font-bold">Active on launch</span>
-                <button
-                  type="button"
-                  onClick={() => setEditingBanner({ ...editingBanner, isActive: !editingBanner.isActive })}
-                  className={`w-12 h-6 rounded-full relative transition-colors ${editingBanner.isActive ? 'bg-blue-500' : 'bg-white/10'}`}
-                >
-                  <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${editingBanner.isActive ? 'right-1' : 'left-1'}`} />
-                </button>
-              </div>
+                {/* Active toggle */}
+                <div className="flex items-center justify-between py-2 px-4 bg-white/5 rounded-xl">
+                  <span className="text-sm font-bold">Active on launch</span>
+                  <button
+                    type="button"
+                    onClick={() => setEditingBanner({ ...editingBanner, isActive: !editingBanner.isActive })}
+                    className={`w-12 h-6 rounded-full relative transition-colors ${editingBanner.isActive ? 'bg-brand-primary' : 'bg-white/10'}`}
+                  >
+                    <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${editingBanner.isActive ? 'right-1' : 'left-1'}`} />
+                  </button>
+                </div>
 
-              <div className="flex gap-3 pt-2">
-                <Button type="button" variant="secondary" onClick={() => setEditingBanner(null)} className="flex-1 rounded-xl">
-                  Cancel
-                </Button>
-                <Button type="submit" className="flex-1 rounded-xl">
-                  {editingBanner.id === 'new' ? 'Add Banner' : 'Save Changes'}
-                </Button>
-              </div>
-            </form>
+                <div className="flex gap-3 pt-2 pb-2">
+                  <Button type="button" variant="secondary" onClick={() => setEditingBanner(null)} className="flex-1 rounded-xl">
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="flex-1 rounded-xl">
+                    {editingBanner.id === 'new' ? 'Add Banner' : 'Save Changes'}
+                  </Button>
+                </div>
+              </form>
+            </div>
           </Modal>
         )}
       </AnimatePresence>
@@ -359,35 +363,37 @@ export default function AdminCampaign() {
       <AnimatePresence>
         {previewBanner && (
           <Modal onClose={() => setPreviewBanner(null)} wide>
-            <div className="p-4 border-b border-white/5 flex items-center justify-between">
+            <div className="flex-shrink-0 p-4 border-b border-white/5 flex items-center justify-between">
               <h2 className="text-sm font-black uppercase tracking-widest text-slate-400">Banner Preview</h2>
               <button onClick={() => setPreviewBanner(null)} className="p-2 hover:bg-white/5 rounded-full transition-colors">
                 <X size={18} />
               </button>
             </div>
-            <div className="relative aspect-video w-full bg-black overflow-hidden">
-              <img
-                src={previewBanner.image}
-                alt={previewBanner.title}
-                className="w-full h-full object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
-              <div className="absolute bottom-4 left-5 right-5 flex flex-col gap-2.5">
-                <div>
-                  <h2 className="text-xl font-bold text-white leading-tight drop-shadow">{previewBanner.title}</h2>
-                  <p className="text-white/60 text-sm mt-0.5">{previewBanner.description}</p>
-                </div>
-                <div className="inline-block self-start px-4 py-2 bg-blue-500 text-white text-sm font-semibold rounded-xl shadow-lg shadow-blue-500/30">
-                  {previewBanner.buttonText}
+            <div className="flex-1 overflow-y-auto overscroll-contain">
+              <div className="relative aspect-video w-full bg-black overflow-hidden">
+                <img
+                  src={previewBanner.image}
+                  alt={previewBanner.title}
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+                <div className="absolute bottom-4 left-5 right-5 flex flex-col gap-2.5">
+                  <div>
+                    <h2 className="text-xl font-bold text-white leading-tight drop-shadow">{previewBanner.title}</h2>
+                    <p className="text-white/60 text-sm mt-0.5">{previewBanner.description}</p>
+                  </div>
+                  <div className="inline-block self-start px-4 py-2 bg-brand-primary text-white text-sm font-semibold rounded-xl shadow-lg shadow-brand-primary/30">
+                    {previewBanner.buttonText}
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="p-4 flex items-center justify-between text-xs text-slate-500">
-              <span className="flex items-center gap-1.5"><ExternalLink size={12} />{previewBanner.link}</span>
-              <span className={`font-bold px-2 py-0.5 rounded-full ${previewBanner.isActive ? 'bg-green-500/10 text-green-400' : 'bg-white/5 text-slate-500'}`}>
-                {previewBanner.isActive ? 'Active' : 'Inactive'}
-              </span>
+              <div className="p-4 flex items-center justify-between text-xs text-slate-500">
+                <span className="flex items-center gap-1.5"><ExternalLink size={12} />{previewBanner.link}</span>
+                <span className={`font-bold px-2 py-0.5 rounded-full ${previewBanner.isActive ? 'bg-green-500/10 text-green-400' : 'bg-white/5 text-slate-500'}`}>
+                  {previewBanner.isActive ? 'Active' : 'Inactive'}
+                </span>
+              </div>
             </div>
           </Modal>
         )}
@@ -398,13 +404,16 @@ export default function AdminCampaign() {
 
 function Modal({ children, onClose, wide }: { children: React.ReactNode; onClose: () => void; wide?: boolean }) {
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center sm:p-4 bg-black/80 backdrop-blur-sm"
+      onClick={onClose}
+    >
       <motion.div
-        initial={{ opacity: 0, scale: 0.92 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.92 }}
-        transition={{ duration: 0.18 }}
-        className={`w-full ${wide ? 'max-w-lg' : 'max-w-sm'} bg-[#0f0f14] border border-white/10 rounded-3xl overflow-hidden shadow-2xl`}
+        initial={{ opacity: 0, y: 40, scale: 0.97 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 40, scale: 0.97 }}
+        transition={{ duration: 0.22, ease: [0.32, 0, 0.67, 0] }}
+        className={`w-full ${wide ? 'sm:max-w-lg' : 'sm:max-w-sm'} bg-[#0f0f14] border border-white/10 rounded-t-3xl sm:rounded-3xl shadow-2xl flex flex-col max-h-[92vh]`}
         onClick={e => e.stopPropagation()}
       >
         {children}
