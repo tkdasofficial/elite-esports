@@ -29,14 +29,20 @@ export default function Settings() {
   const [showNotifPicker, setShowNotifPicker]   = useState(false);
 
   const Toggle = ({ on, onToggle }: { on: boolean; onToggle: () => void }) => (
-    <button
+    <motion.button
       onClick={onToggle}
-      className={`relative w-12 h-7 rounded-full transition-colors duration-200 ${on ? 'bg-brand-primary' : 'bg-app-elevated'}`}
+      animate={{ backgroundColor: on ? '#FF4500' : '#2C2C2E' }}
+      transition={{ duration: 0.18 }}
+      className="relative w-[51px] h-[31px] rounded-full flex-shrink-0 focus:outline-none"
+      style={{ minWidth: 51 }}
     >
-      <span
-        className={`absolute top-1 w-5 h-5 bg-white rounded-full shadow transition-transform duration-200 ${on ? 'translate-x-6' : 'translate-x-1'}`}
+      <motion.span
+        animate={{ x: on ? 22 : 2 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 35, mass: 0.8 }}
+        className="absolute top-[3px] w-[25px] h-[25px] bg-white rounded-full shadow-md"
+        style={{ left: 0 }}
       />
-    </button>
+    </motion.button>
   );
 
   const Picker = ({ visible, options, current, onSelect, onClose }: {
