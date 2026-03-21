@@ -57,15 +57,15 @@ const UserLayout = () => {
     <div className="h-full w-full bg-black flex justify-center">
       <div className="h-full w-full md:max-w-[768px] lg:max-w-[1024px] bg-brand-dark relative flex flex-col shadow-2xl overflow-hidden md:border-x md:border-white/5">
         {showHeader && <Header />}
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <AnimatePresence mode="wait">
+        <div className="flex-1 relative overflow-hidden">
+          <AnimatePresence initial={false}>
             <motion.div
               key={location.pathname}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1 scrollable-content flex flex-col"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: 'easeInOut' }}
+              className="absolute inset-0 scrollable-content flex flex-col"
             >
               <Outlet />
             </motion.div>
