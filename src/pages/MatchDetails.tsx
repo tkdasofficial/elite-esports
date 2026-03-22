@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { ArrowLeft, Trophy, Users, Clock, Coins, ShieldCheck, Share2, UserCheck, CheckCircle } from 'lucide-react';
 import { useMatchStore } from '@/src/store/matchStore';
 import { useUserStore } from '@/src/store/userStore';
+import { MatchParticipant } from '@/src/types';
 import { useAdEngineStore } from '@/src/store/adEngineStore';
 import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
 import { cn } from '@/src/utils/helpers';
@@ -11,7 +12,7 @@ import { cn } from '@/src/utils/helpers';
 export default function MatchDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getMatchById } = useMatchStore();
+  const { getMatchById, addParticipant, removeParticipant } = useMatchStore();
   const { user, joinedMatchIds, joinMatch, leaveMatch } = useUserStore();
   const { triggerAd } = useAdEngineStore();
 
@@ -19,13 +20,20 @@ export default function MatchDetails() {
   const isJoined = joinedMatchIds.includes(id || '');
 
   const handleJoinLeave = async () => {
-    if (!match) return;
+    if (!match || !user) return;
     if (isJoined) {
       await triggerAd('Leave');
       leaveMatch(match.match_id);
+      removeParticipant(match.match_id, user.id);
     } else {
       await triggerAd('Join');
       joinMatch(match.match_id);
+      const participant: MatchParticipant = {
+        id: user.id,
+        username: user.username,
+        joinedAt: new Date().toISOString(),
+      };
+      addParticipant(match.match_id, participant);
     }
   };
 
@@ -44,7 +52,7 @@ export default function MatchDetails() {
   const isFull     = slotsLeft <= 0;
   const fillPct    = Math.min((match.slots_filled / match.slots_total) * 100, 100);
 
-  const joinedPlayers = isJoined && user ? [user] : [];
+  const joinedPlayers = match?.participants ?? [];
 
   const statusCfg = {
     live:      { cls: 'bg-brand-live/15 text-brand-live',       dot: true,  label: 'LIVE' },
@@ -141,15 +149,17 @@ export default function MatchDetails() {
             <p className="ios-section-header">Registered Players</p>
             <div className="bg-app-card rounded-[16px] overflow-hidden divide-y divide-app-border">
               {joinedPlayers.map(p => (
-                <div key={p?.id} className="flex items-center justify-between px-4 py-3.5 active:bg-app-elevated transition-colors">
+                <div key={p.id} className="flex items-center justify-between px-4 py-3.5 active:bg-app-elevated transition-colors">
                   <div className="flex items-center gap-3">
-                    <LetterAvatar name={p?.username || 'P'} size="sm"/>
+                    <LetterAvatar name={p.username || 'P'} size="sm"/>
                     <div>
-                      <p className="text-[15px] font-normal text-text-primary">{p?.username}</p>
-                      <p className="text-[13px] text-text-muted font-normal">{p?.rank}</p>
+                      <p className="text-[15px] font-normal text-text-primary">{p.username}</p>
+                      <p className="text-[13px] text-text-muted font-normal">
+                        Joined {new Date(p.joinedAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                      </p>
                     </div>
                   </div>
-                  {p?.id === user?.id && (
+                  {p.id === user?.id && (
                     <span className="flex items-center gap-1 px-2.5 py-1 bg-brand-primary/15 rounded-full text-[11px] font-medium text-brand-primary-light">
                       <UserCheck size={10}/> You
                     </span>

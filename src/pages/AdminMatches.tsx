@@ -161,6 +161,18 @@ export default function AdminMatches() {
                     {/* Action buttons */}
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
+                        onClick={() => navigate(`/admin/matches/${match.match_id}/participants`)}
+                        className="w-9 h-9 bg-app-elevated rounded-[12px] text-text-secondary flex items-center justify-center active:opacity-60 transition-opacity relative"
+                        title="View Participants"
+                      >
+                        <Users size={15} />
+                        {match.participants && match.participants.length > 0 && (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 bg-brand-primary rounded-full text-[9px] font-bold text-white flex items-center justify-center">
+                            {match.participants.length}
+                          </span>
+                        )}
+                      </button>
+                      <button
                         onClick={() => navigate(`/admin/matches/edit/${match.match_id}`)}
                         className="w-9 h-9 bg-brand-primary/10 rounded-[12px] text-brand-primary flex items-center justify-center active:opacity-60 transition-opacity"
                       >

@@ -57,7 +57,7 @@ The app runs on port 5000 via `npm run dev`. Vite is configured to:
 - User authentication with admin/user roles (Supabase)
 - Home feed with match listings
 - Live match viewer
-- Leaderboard
+- Leaderboard (Rankings tab + Tournaments tab showing match winners)
 - Wallet management
 - User profile & game profiles
 - My Matches & My Team pages
@@ -65,6 +65,14 @@ The app runs on port 5000 via `npm run dev`. Vite is configured to:
 - Game management system: each game has a logo (for selectors) and banner (auto-used for matches)
 - Page transitions with Motion animations
 - Mobile-first responsive design
+
+## Match Participants & Winners Flow
+
+- When a user joins/leaves a match, their profile is saved as a participant on the match object (`Match.participants`)
+- Admin can open `/admin/matches/:id/participants` to see all joined users for a specific match
+- Once a match is marked **Completed**, admin can assign 1st / 2nd / 3rd place winners from the participant list
+- Saving winners calls `matchStore.setMatchWinners()`, persisted to localStorage
+- The **Leaderboard → Tournaments tab** automatically renders a podium for every completed match that has winners set
 
 ## Deployment
 

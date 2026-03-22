@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { Match } from '../types';
+import { Match, MatchParticipant, MatchWinners } from '../types';
 
 interface MatchState {
   matches: Match[];
@@ -14,6 +14,9 @@ interface MatchState {
   addMatch: (match: Match) => void;
   updateMatch: (id: string, match: Partial<Match>) => void;
   deleteMatch: (id: string) => void;
+  addParticipant: (matchId: string, participant: MatchParticipant) => void;
+  removeParticipant: (matchId: string, userId: string) => void;
+  setMatchWinners: (matchId: string, winners: MatchWinners) => void;
 }
 
 const deriveFiltered = (matches: Match[]) => ({
@@ -49,6 +52,31 @@ export const useMatchStore = create<MatchState>()(
 
       deleteMatch: (id) => set((state) => {
         const newMatches = state.matches.filter(m => m.match_id !== id);
+        return { matches: newMatches, ...deriveFiltered(newMatches) };
+      }),
+
+      addParticipant: (matchId, participant) => set((state) => {
+        const newMatches = state.matches.map(m => {
+          if (m.match_id !== matchId) return m;
+          const existing = m.participants ?? [];
+          if (existing.some(p => p.id === participant.id)) return m;
+          return { ...m, participants: [...existing, participant] };
+        });
+        return { matches: newMatches, ...deriveFiltered(newMatches) };
+      }),
+
+      removeParticipant: (matchId, userId) => set((state) => {
+        const newMatches = state.matches.map(m => {
+          if (m.match_id !== matchId) return m;
+          return { ...m, participants: (m.participants ?? []).filter(p => p.id !== userId) };
+        });
+        return { matches: newMatches, ...deriveFiltered(newMatches) };
+      }),
+
+      setMatchWinners: (matchId, winners) => set((state) => {
+        const newMatches = state.matches.map(m =>
+          m.match_id === matchId ? { ...m, winners } : m
+        );
         return { matches: newMatches, ...deriveFiltered(newMatches) };
       }),
     }),

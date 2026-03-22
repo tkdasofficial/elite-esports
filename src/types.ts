@@ -1,5 +1,17 @@
 export type MatchStatus = 'live' | 'upcoming' | 'completed';
 
+export interface MatchParticipant {
+  id: string;
+  username: string;
+  joinedAt: string;
+}
+
+export interface MatchWinners {
+  first?: MatchParticipant;
+  second?: MatchParticipant;
+  third?: MatchParticipant;
+}
+
 export interface Match {
   match_id: string;
   game_name: string;
@@ -20,8 +32,10 @@ export interface Match {
   team1_score?: number;
   team2_score?: number;
   completed_at?: string;
-  show_until?: string; // Admin set time to show completed matches
-  delete_at?: string;   // Admin set time to delete matches automatically
+  show_until?: string;
+  delete_at?: string;
+  participants?: MatchParticipant[];
+  winners?: MatchWinners;
 }
 
 export interface User {
