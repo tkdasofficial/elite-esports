@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
+  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -42,9 +42,7 @@ export default function SignUp() {
         </TouchableOpacity>
 
         <View style={styles.brand}>
-          <View style={styles.logoBox}>
-            <Ionicons name="flash" size={36} color={Colors.white} />
-          </View>
+          <Image source={require('@/assets/logo.png')} style={styles.logo} resizeMode="contain" />
           <Text style={styles.title}>Create Account</Text>
           <Text style={styles.subtitle}>Join the Elite eSports community</Text>
         </View>
@@ -113,10 +111,7 @@ const styles = StyleSheet.create({
   backBtn: { flexDirection: 'row', alignItems: 'center', height: 44, marginTop: 4 },
   backText: { color: Colors.brandPrimary, fontSize: 17 },
   brand: { alignItems: 'center', paddingTop: 24, paddingBottom: 36 },
-  logoBox: {
-    width: 64, height: 64, backgroundColor: Colors.brandPrimary,
-    borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 20,
-  },
+  logo: { width: 72, height: 72, borderRadius: 18, marginBottom: 20 },
   title: { fontSize: 28, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.6, marginBottom: 4 },
   subtitle: { fontSize: 15, color: Colors.textSecondary },
   form: { gap: 12 },

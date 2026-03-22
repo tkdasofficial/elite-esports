@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
+  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Alert, Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -57,9 +57,7 @@ export default function ProfileSetup() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.brand}>
-          <View style={styles.logoBox}>
-            <Ionicons name="flash" size={36} color={Colors.white} />
-          </View>
+          <Image source={require('@/assets/logo.png')} style={styles.logo} resizeMode="contain" />
           <Text style={styles.title}>Set Up Profile</Text>
           <Text style={styles.subtitle}>Choose a username to get started</Text>
         </View>
@@ -92,10 +90,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.appBg },
   scroll: { flexGrow: 1, paddingHorizontal: 24 },
   brand: { alignItems: 'center', paddingTop: 60, paddingBottom: 40 },
-  logoBox: {
-    width: 72, height: 72, backgroundColor: Colors.brandPrimary,
-    borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 24,
-  },
+  logo: { width: 80, height: 80, borderRadius: 20, marginBottom: 24 },
   title: { fontSize: 28, fontWeight: '700', color: Colors.textPrimary, marginBottom: 6 },
   subtitle: { fontSize: 15, color: Colors.textSecondary },
   form: { gap: 12 },

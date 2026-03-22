@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator,
+  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Image,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -50,9 +50,7 @@ export default function Login() {
 
         {/* Brand */}
         <View style={styles.brand}>
-          <View style={styles.logoBox}>
-            <Ionicons name="flash" size={36} color={Colors.white} />
-          </View>
+          <Image source={require('@/assets/logo.png')} style={styles.logo} resizeMode="contain" />
           <Text style={styles.title}>{showEmail ? 'Sign In' : 'Welcome Back'}</Text>
           <Text style={styles.subtitle}>
             {showEmail ? 'Enter your email and password' : 'Sign in to Elite eSports'}
@@ -154,17 +152,10 @@ const styles = StyleSheet.create({
   backBtn: { flexDirection: 'row', alignItems: 'center', height: 44, marginTop: 4 },
   backText: { color: Colors.brandPrimary, fontSize: 17 },
   brand: { alignItems: 'center', paddingTop: 32, paddingBottom: 40 },
-  logoBox: {
-    width: 64, height: 64,
-    backgroundColor: Colors.brandPrimary,
+  logo: {
+    width: 72, height: 72,
     borderRadius: 18,
-    alignItems: 'center', justifyContent: 'center',
     marginBottom: 20,
-    shadowColor: Colors.brandPrimary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 8,
   },
   title: { fontSize: 30, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.8, marginBottom: 4 },
   subtitle: { fontSize: 15, color: Colors.textSecondary },
