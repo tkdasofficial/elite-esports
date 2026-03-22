@@ -32,6 +32,7 @@
     "clsx": "^2.1.1",
     "dotenv": "^17.3.1",
     "expo": "~53.0.0",
+    "expo-clipboard": "~7.1.5",
     "expo-constants": "~17.0.8",
     "expo-dev-client": "~5.2.0",
     "expo-font": "~13.3.0",

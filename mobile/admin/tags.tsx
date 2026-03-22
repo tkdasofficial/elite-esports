@@ -53,14 +53,14 @@ export default function AdminTags() {
     form: { name: t.name, type: t.type, code_type: t.code_type, code: t.code ?? '', position: t.position, is_active: t.is_active, priority: t.priority ?? 0 },
   });
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!modal) return;
     const { form, mode, id } = modal;
     if (!form.name.trim()) { Alert.alert('Name required'); return; }
     if (!form.code.trim()) { Alert.alert('Code/URL required'); return; }
     setSaving(true);
-    if (mode === 'add') await addTag({ ...form, notes: '' });
-    else if (id) await updateTag(id, { ...form });
+    if (mode === 'add') await addTag({ ...form, notes: '' } as any);
+    else if (id) await updateTag(id, { ...form } as any);
     setSaving(false);
     setModal(null);
   };

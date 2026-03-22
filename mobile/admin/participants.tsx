@@ -87,7 +87,7 @@ export default function AdminParticipants() {
           const winnerSlot = Object.entries(winners).find(([, w]) => w?.username === item.username)?.[0];
           return (
             <View style={styles.row}>
-              <LetterAvatar name={item.username ?? '?'} size={38} />
+              <LetterAvatar name={item.username ?? '?'} size="md" />
               <View style={styles.rowInfo}>
                 <Text style={styles.rowName}>{item.username}</Text>
                 <Text style={styles.rowEmail}>{item.email ?? item.uid ?? '—'}</Text>
@@ -132,7 +132,7 @@ export default function AdminParticipants() {
                     setSelecting(null);
                   }}
                 >
-                  <LetterAvatar name={p.username ?? '?'} size={36} />
+                  <LetterAvatar name={p.username ?? '?'} size="sm" />
                   <Text style={styles.participantName}>{p.username}</Text>
                 </TouchableOpacity>
               ))}

@@ -10,7 +10,7 @@ import { useMatchStore } from '@/src/store/matchStore';
 import { useGameStore } from '@/src/store/gameStore';
 import { Colors } from '@/src/theme/colors';
 
-const MODES = ['Solo', 'Duo', 'Squad', '5v5'];
+const MODES: Array<'1v1' | '2v2' | '4v4' | 'Squad'> = ['1v1', '2v2', '4v4', 'Squad'];
 const STATUSES = ['upcoming', 'live', 'completed'];
 
 export default function AdminMatchForm() {
@@ -25,13 +25,17 @@ export default function AdminMatchForm() {
   const [form, setForm] = useState({
     title: existing?.title || '',
     game_name: existing?.game_name || '',
-    mode: existing?.mode || 'Solo',
+    mode: (existing?.mode as '1v1' | '2v2' | '4v4' | 'Squad') || '1v1' as const,
     prize: existing?.prize || '',
     entry_fee: existing?.entry_fee || '',
     start_time: existing?.start_time || '',
     slots_total: existing?.slots_total?.toString() || '100',
     banner_image: existing?.banner_image || '',
     status: existing?.status || 'upcoming',
+    team1_name: existing?.team1_name || '',
+    team2_name: existing?.team2_name || '',
+    team1_logo: existing?.team1_logo || '',
+    team2_logo: existing?.team2_logo || '',
     room_id: (existing as any)?.room_id || '',
     room_password: (existing as any)?.room_password || '',
   });
@@ -49,9 +53,9 @@ export default function AdminMatchForm() {
       slots_filled: existing?.slots_filled || 0,
     };
     if (id) {
-      await updateMatch(id, payload);
+      await updateMatch(id, payload as any);
     } else {
-      await addMatch(payload);
+      await addMatch(payload as any);
     }
     setLoading(false);
     router.back();

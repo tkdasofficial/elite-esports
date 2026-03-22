@@ -10,6 +10,7 @@ import { useMatchStore } from '@/src/store/matchStore';
 import { useGameStore } from '@/src/store/gameStore';
 import { useUserStore } from '@/src/store/userStore';
 import { MatchCard } from '@/components/MatchCard';
+import { BannerCarousel } from '@/components/BannerCarousel';
 import { Colors } from '@/src/theme/colors';
 
 export default function Home() {
@@ -95,6 +96,9 @@ export default function Home() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
+        {/* Banner Carousel */}
+        <BannerCarousel />
+
         {/* Game filter chips */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
           {GAMES.map(g => {

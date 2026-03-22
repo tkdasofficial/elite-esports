@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput,
-  Modal, ActivityIndicator, Alert, Clipboard,
+  Modal, ActivityIndicator, Alert,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -203,7 +204,7 @@ export default function Wallet() {
                       <Text style={styles.upiLabel}>Pay via UPI</Text>
                       <Text style={styles.upiId}>{ADMIN_UPI}</Text>
                     </View>
-                    <TouchableOpacity style={styles.copyBtn} onPress={() => { Clipboard.setString(ADMIN_UPI); Alert.alert('Copied!'); }}>
+                    <TouchableOpacity style={styles.copyBtn} onPress={() => { Clipboard.setStringAsync(ADMIN_UPI).then(() => Alert.alert('Copied!')); }}>
                       <Ionicons name="copy" size={16} color={Colors.white} />
                     </TouchableOpacity>
                   </View>
