@@ -34,7 +34,7 @@ export default defineConfig(({mode}) => {
         'Cache-Control': 'no-store',
       },
       watch: {
-        ignored: ['**/.local/**', '**/node_modules/**'],
+        ignored: ['**/.local/**', '**/node_modules/**', '**/.cache/**', '**/.expo/**'],
       },
     },
     preview: {
