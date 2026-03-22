@@ -1,0 +1,141 @@
+You are an expert React Native + Expo (EAS) engineer.
+
+I already have a fully built web application created using React (TypeScript) with Vite as the build tool. The app is production-ready as a web platform. Your task is to convert this entire web app into a fully functional native mobile application using Expo (EAS Build) for BOTH Android and iOS.
+
+Project Details:
+
+- App Name: Elite eSports
+- Company Name: Elite eSports
+- Version Name: 1.0.0
+- Version Code: 1
+
+Package Configuration:
+
+- Android Package Name: com.elite.esports.mobile
+- iOS Bundle Identifier: ios.elite.esports.mobile
+
+Main Objective:
+Convert the COMPLETE web platform into a native mobile app. I DO NOT need the web version anymore — the goal is a FULL mobile-native application.
+
+CRITICAL ARCHITECTURE RULES (VERY IMPORTANT):
+
+1. DO NOT create a separate "mobile" folder or duplicate project structure.
+2. DO NOT rebuild everything from scratch in a new directory.
+3. Use the EXISTING project structure as the base.
+4. Convert existing web components into React Native components directly.
+5. Reuse existing logic, structure, and workflows wherever possible.
+
+Component Conversion Rules:
+
+1. Convert all web components into React Native equivalents:
+   - div → View
+   - span / p → Text
+   - img → Image
+   - button → Pressable / TouchableOpacity
+2. Remove ALL web-only APIs:
+   - window
+   - document
+   - localStorage (replace with AsyncStorage if needed)
+3. Replace CSS/SCSS with React Native styling (StyleSheet / inline styles).
+4. Ensure proper mobile responsiveness and touch interactions.
+5. If additional components or helper files are REQUIRED, you are allowed to create them — but ONLY when necessary.
+6. DO NOT create duplicate mobile versions of the same components in separate folders — directly transform existing ones.
+
+Dependency & Build Stability (CRITICAL):
+
+1. Deeply analyze and FIX all issues in:
+   - package.json
+   - package-lock.json
+2. These two files are EXTREMELY IMPORTANT. Any small mismatch can break the build.
+3. Resolve:
+   - Dependency conflicts
+   - Deprecated packages
+   - Unsupported web-only libraries
+   - Version mismatches
+4. Ensure all dependencies are compatible with Expo and React Native.
+5. Remove unused or broken dependencies.
+6. Ensure clean, minimal, and production-ready dependency structure.
+
+Expo & EAS Setup:
+
+1. Properly integrate Expo into the existing project.
+
+2. Create and configure the following files:
+   
+   A. eas.json
+   
+   - Define build profiles: development, preview, production
+   - Configure Android build type (apk/aab)
+   - Ensure correct CLI version and environment setup
+   
+   B. app.json (or app.config.js)
+   
+   - name: Elite eSports
+   - slug: elite-esports
+   - version: 1.0.0
+   - android.package: com.elite.esports.mobile
+   - android.versionCode: 1
+   - ios.bundleIdentifier: ios.elite.esports.mobile
+   - Configure icons, splash screen, permissions
+   
+   C. package.json
+   
+   - Clean and fully optimized for Expo
+   - Correct scripts (start, android, ios, build)
+   - No invalid dependencies
+   
+   D. package-lock.json
+   
+   - Fully aligned with package.json
+   - No corruption or broken resolutions
+
+3. Install and configure required dependencies:
+   
+   - expo
+   - react-native
+   - expo-dev-client (if needed)
+   - react-native-safe-area-context
+   - react-native-screens
+   - @react-navigation/native (if navigation is needed)
+
+4. Ensure the project runs locally:
+   
+   - npx expo start
+
+Navigation & App Structure:
+
+1. Implement mobile-friendly navigation (stack/tab) if required.
+2. Maintain existing page structure but convert to mobile screens.
+3. Ensure smooth transitions and performance optimization.
+
+Build Process:
+
+1. Configure EAS CLI properly.
+
+2. Run:
+   
+   - npx expo prebuild (if required)
+   - npx expo run:android
+   - npx expo run:ios
+
+3. Prepare cloud build:
+   
+   - npx expo login
+   - eas build --platform android
+   - eas build --platform ios
+
+4. Ensure ZERO build errors:
+   
+   - Fix ALL warnings
+   - Fix ALL dependency issues
+   - Ensure Gradle & iOS build compatibility
+
+Final Expectation:
+
+- Fully working native mobile app (Android + iOS)
+- NO web dependencies remaining
+- Clean, optimized, and stable project
+- Successful EAS build (APK/AAB + iOS build) with ZERO errors
+
+Mindset:
+Think deeply before every change. Do not ignore even the smallest warning. Validate everything step-by-step. The goal is a PERFECT mobile build with no failures.
