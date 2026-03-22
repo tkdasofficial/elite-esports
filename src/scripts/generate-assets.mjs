@@ -6,56 +6,18 @@ const publicDir = path.resolve('public');
 if (!fs.existsSync(publicDir)) fs.mkdirSync(publicDir, { recursive: true });
 
 /* ── Logo SVG (512×512) ────────────────────────────────────────────────── */
-const logoSvg = `<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+const logoSvg = `<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#1a0800"/>
-      <stop offset="100%" stop-color="#0a1a3a"/>
+    <linearGradient id="bolt" x1="320" y1="42" x2="193" y2="470" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#FF6B35"/>
+      <stop offset="55%"  stop-color="#FF4500"/>
+      <stop offset="100%" stop-color="#CC3700"/>
     </linearGradient>
-    <linearGradient id="bolt" x1="256" y1="80" x2="256" y2="432" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#FF6B35"/>
-      <stop offset="100%" stop-color="#FF4500"/>
-    </linearGradient>
-    <linearGradient id="accent" x1="256" y1="80" x2="256" y2="432" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#3B82F6"/>
-      <stop offset="100%" stop-color="#2563EB"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="12" result="coloredBlur"/>
-      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
-    <filter id="glowBlue">
-      <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
-      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
-    </filter>
   </defs>
-
-  <!-- Background rounded rect -->
-  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
-
-  <!-- Subtle grid lines -->
-  <line x1="0" y1="170" x2="512" y2="170" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-  <line x1="0" y1="340" x2="512" y2="340" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-  <line x1="170" y1="0" x2="170" y2="512" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-  <line x1="340" y1="0" x2="340" y2="512" stroke="rgba(255,255,255,0.03)" stroke-width="1"/>
-
-  <!-- Glow halo behind bolt -->
-  <ellipse cx="256" cy="270" rx="130" ry="160" fill="rgba(255,69,0,0.12)" filter="url(#glow)"/>
-
-  <!-- Blue accent streak -->
-  <path d="M310 200 L220 310 L270 310 L260 420 L350 280 L295 280 Z"
-        fill="url(#accent)" opacity="0.18" filter="url(#glowBlue)"/>
-
-  <!-- Main lightning bolt -->
-  <path d="M296 80 L150 295 H236 L216 432 L362 215 H276 Z"
-        fill="url(#bolt)" filter="url(#glow)"/>
-
-  <!-- Inner highlight -->
-  <path d="M296 80 L165 290 H240 L224 410 L348 228 H268 Z"
-        fill="white" fill-opacity="0.10"/>
-
-  <!-- Bottom border accent line -->
-  <rect x="180" y="460" width="152" height="4" rx="2" fill="url(#accent)" opacity="0.6"/>
+  <rect width="512" height="512" fill="#000000"/>
+  <g transform="translate(109.65, 26) scale(5.227)">
+    <path d="M 40 3 L 6 52 L 24 52 L 14 85 L 50 36 L 32 36 Z" fill="url(#bolt)"/>
+  </g>
 </svg>`;
 
 /* ── Favicon SVG (32×32) ───────────────────────────────────────────────── */
