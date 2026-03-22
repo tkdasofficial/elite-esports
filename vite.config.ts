@@ -9,6 +9,15 @@ export default defineConfig(({mode}) => {
     plugins: [react(), tailwindcss()],
     define: {
       'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || env.VITE_GEMINI_API_KEY),
+      'process.env.EXPO_PUBLIC_SUPABASE_URL': JSON.stringify(
+        env.EXPO_PUBLIC_SUPABASE_URL || env.VITE_SUPABASE_URL
+      ),
+      'process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY': JSON.stringify(
+        env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY
+      ),
+      'process.env.EXPO_PUBLIC_SUPABASE_PROJECT_ID': JSON.stringify(
+        env.EXPO_PUBLIC_SUPABASE_PROJECT_ID || env.VITE_SUPABASE_PROJECT_ID
+      ),
     },
     resolve: {
       alias: {

@@ -1,7 +1,8 @@
 {
-  "name": "react-example",
+  "name": "elite-esports",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,6 +12,7 @@
     "lint": "tsc --noEmit",
     "expo": "expo start --port 8080",
     "start": "expo start --port 8080",
+    "web": "EXPO_NO_TELEMETRY=1 expo start --web --port 5000",
     "android": "expo run:android",
     "ios": "expo run:ios"
   },

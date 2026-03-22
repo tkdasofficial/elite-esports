@@ -2,12 +2,9 @@
 
 A premium competitive mobile gaming platform built with Expo + React Native for Android & iOS. Features real-money tournaments, leaderboards, wallet management, and admin controls.
 
-## Architecture: Dual App Structure
+## Architecture
 
-This project runs TWO apps from the same codebase:
-
-1. **Expo Mobile App** (primary) — `app/` directory, served via `npx expo start --port 8080`
-2. **Web App** (preserved) — `src/pages/` + Vite, served via `npm run dev` on port 5000
+This is a **React Native / Expo** mobile-first app. The primary application is the Expo app in `app/`, served via Metro's web bundler on port 5000 for preview. The `src/` directory contains shared stores, the Supabase client, theme, and TypeScript types used by all screens.
 
 ## Tech Stack — Mobile (Expo)
 
@@ -19,13 +16,6 @@ This project runs TWO apps from the same codebase:
 - **State Management**: Zustand (same stores as web app — `src/store/`)
 - **Backend/Auth/DB**: Supabase with AsyncStorage session persistence
 - **SafeArea**: react-native-safe-area-context
-
-## Tech Stack — Web (Vite, preserved)
-
-- **Framework**: React 19 + TypeScript
-- **Build**: Vite 6 + Tailwind CSS v4
-- **Routing**: React Router DOM v7
-- **Animations**: Motion (Framer Motion)
 
 ## Project Structure
 
@@ -86,12 +76,22 @@ All env vars use `EXPO_PUBLIC_` prefix for mobile:
 ## Running the App
 
 ```bash
-# Mobile (Expo) — scan QR code with Expo Go
-npx expo start --port 8080
+# Expo web (browser preview, port 5000) — primary workflow
+npm run web
 
-# Web (Vite, preserved)
+# Expo mobile (QR code for Expo Go / dev build)
+npm run expo
+
+# Vite web app (legacy)
 npm run dev
 ```
+
+## Key Configuration
+
+- **`package.json`**: `"main": "expo-router/entry"` — tells Metro to use Expo Router, not App.tsx
+- **`src/lib/supabase.ts`**: Uses `process.env.EXPO_PUBLIC_*` — works in both Metro (native/web) and Vite (define config)
+- **`vite.config.ts`**: Defines `process.env.EXPO_PUBLIC_*` vars from environment so Vite builds also resolve Supabase credentials
+- **`metro.config.js`**: Minimal, uses `getDefaultConfig` from expo/metro-config
 
 ## Mobile Screen Map
 
