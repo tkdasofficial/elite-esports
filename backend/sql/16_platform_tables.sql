@@ -44,6 +44,8 @@ CREATE POLICY "settings_admin_update"
   USING ((SELECT is_admin FROM public.profiles WHERE id = auth.uid()));
 
 -- ── CAMPAIGNS ──────────────────────────────────────────────────
+-- Table may already exist from 10_campaigns.sql with a different schema.
+-- Create it if missing, then add any new columns that 10_campaigns.sql lacked.
 CREATE TABLE IF NOT EXISTS public.campaigns (
   id               UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   name             TEXT NOT NULL,
@@ -66,6 +68,20 @@ CREATE TABLE IF NOT EXISTS public.campaigns (
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Add new columns to existing campaigns table if they are missing
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS ad_type          TEXT NOT NULL DEFAULT 'Image';
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS trigger_type     TEXT NOT NULL DEFAULT 'Welcome';
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS media_url        TEXT DEFAULT '';
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS duration         INTEGER DEFAULT 5;
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS is_skippable     BOOLEAN DEFAULT TRUE;
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS skip_after       INTEGER DEFAULT 3;
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS interval_minutes INTEGER DEFAULT 5;
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS status           TEXT DEFAULT 'active';
+ALTER TABLE public.campaigns ADD COLUMN IF NOT EXISTS link_url         TEXT DEFAULT '';
+
+-- Drop trigger before recreating (already exists from 10_campaigns.sql)
+DROP TRIGGER IF EXISTS campaigns_updated_at ON public.campaigns;
 
 CREATE TRIGGER campaigns_updated_at
   BEFORE UPDATE ON public.campaigns
@@ -94,6 +110,8 @@ CREATE POLICY "campaigns_admin_delete"
   USING ((SELECT is_admin FROM public.profiles WHERE id = auth.uid()));
 
 -- ── NOTIFICATIONS ──────────────────────────────────────────────
+-- Table may already exist from 09_notifications.sql with a different schema.
+-- Create it if missing, then add any new columns that 09_notifications.sql lacked.
 CREATE TABLE IF NOT EXISTS public.notifications (
   id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   user_id      UUID REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -109,6 +127,16 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   unread       BOOLEAN DEFAULT TRUE,
   created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Add new columns to existing notifications table if they are missing
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS full_message TEXT DEFAULT '';
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS time         TEXT DEFAULT '';
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS icon_type    TEXT DEFAULT 'bell';
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS icon_color   TEXT DEFAULT '';
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS icon_bg      TEXT DEFAULT '';
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS action_label TEXT DEFAULT '';
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS action_path  TEXT DEFAULT '';
+ALTER TABLE public.notifications ADD COLUMN IF NOT EXISTS unread       BOOLEAN DEFAULT TRUE;
 
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON public.notifications(user_id);
 
