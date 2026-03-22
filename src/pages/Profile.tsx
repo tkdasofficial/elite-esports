@@ -1,8 +1,7 @@
 import { useUserStore } from '@/src/store/userStore';
 import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
 import { Trophy, Users, Settings, LogOut, ChevronRight, Gamepad2, Plus, Star } from 'lucide-react';
-import { motion } from 'motion/react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 const ROW = ({ icon: Icon, label, sub, color, to, onPress, danger }: any) => (
   <Link to={to || '#'} onClick={onPress || undefined}>
@@ -20,15 +19,18 @@ const ROW = ({ icon: Icon, label, sub, color, to, onPress, danger }: any) => (
 );
 
 export default function Profile() {
-  const { user, logout, gameProfiles, isAdmin } = useUserStore();
-  const navigate = useNavigate();
+  const { user, logout, gameProfiles, isAdmin, joinedMatchIds, transactions } = useUserStore();
   if (!user) return null;
 
+  const played = joinedMatchIds.length;
+  const wins   = transactions.filter(t => t.type === 'win' && t.status === 'success').length;
+  const winPct = played > 0 ? Math.round((wins / played) * 100) : 0;
+
   const stats = [
-    { label: 'Played', value: '24' },
-    { label: 'Wins',   value: '9' },
-    { label: 'Win %',  value: '37%' },
-    { label: 'Rank',   value: '#127' },
+    { label: 'Played', value: played.toString() },
+    { label: 'Wins',   value: wins.toString() },
+    { label: 'Win %',  value: `${winPct}%` },
+    { label: 'Rank',   value: user.rank },
   ];
 
   return (

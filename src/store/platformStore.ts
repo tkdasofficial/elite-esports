@@ -190,7 +190,7 @@ const DEFAULT_SETTINGS: PlatformSettings = {
   bank: '',
   ifsc: '',
   platformName: 'Elite Esports',
-  supportEmail: 'support@elite.com',
+  supportEmail: '',
   maintenanceMode: false,
   registrationOpen: true,
   minWithdrawal: 100,
