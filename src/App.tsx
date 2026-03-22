@@ -7,6 +7,7 @@ import { useCampaignStore } from './store/campaignStore';
 import { useAdEngineStore } from './store/adEngineStore';
 import { useAuthStore } from './store/authStore';
 import { useUserStore } from './store/userStore';
+import { useAdTagStore } from './store/adTagStore';
 import { supabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
 
@@ -41,10 +42,14 @@ export default function App() {
 
   const { session, setSession, setInitialized } = useAuthStore();
   const { login: loginUser, logout: logoutUser } = useUserStore();
+  const { fetchActiveTags } = useAdTagStore();
   const { shouldShowWelcomeAd, recordWelcomeAd, shouldShowTimerAd, recordTimerAd } = useCampaignStore();
   const { activeCampaign, triggerAd, completeAd } = useAdEngineStore();
 
   useEffect(() => {
+    // Pre-load active ad tags (with localStorage fallback) immediately on app start
+    fetchActiveTags();
+
     // On mount: restore existing session and load profile
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);

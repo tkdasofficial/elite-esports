@@ -7,6 +7,7 @@ import { cn } from '@/src/utils/helpers';
 import { motion } from 'motion/react';
 import { Zap, CheckCircle2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { AdSlot } from '@/src/components/AdTagRenderer';
 
 export default function Home() {
   const { liveMatches, upcomingMatches, completedMatches, searchQuery } = useMatchStore();
@@ -60,6 +61,9 @@ export default function Home() {
       {!searchQuery && (
         <section><BannerCarousel /></section>
       )}
+
+      {/* Home-position ad slot — renders tags set to 'home' or 'global' */}
+      <AdSlot position="home" />
 
       <section>
         <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">
