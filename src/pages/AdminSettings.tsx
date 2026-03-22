@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Save, CheckCircle2, X, Shield, Coins, Users, Bell, Globe, Zap } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Save, CheckCircle2, X, Shield, Coins, Globe, Zap } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { usePlatformStore } from '@/src/store/platformStore';
 import { cn } from '@/src/utils/helpers';
@@ -20,7 +20,7 @@ const IOSToggle = ({ value, onChange }: { value: boolean; onChange: () => void }
 );
 
 export default function AdminSettings() {
-  const { platformSettings, updatePlatformSettings } = usePlatformStore();
+  const { platformSettings, fetchSettings, updatePlatformSettings } = usePlatformStore();
   const [settings, setSettings] = useState({
     platformName:         platformSettings?.platformName         ?? 'Elite Esports',
     maintenanceMode:      platformSettings?.maintenanceMode      ?? false,
@@ -32,9 +32,28 @@ export default function AdminSettings() {
     notificationsEnabled: platformSettings?.notificationsEnabled ?? true,
     autoApproveDeposits:  platformSettings?.autoApproveDeposits  ?? false,
     maxTeamSize:          platformSettings?.maxTeamSize          ?? 4,
-    supportEmail:         platformSettings?.supportEmail         ?? 'support@eliteesports.com',
+    supportEmail:         platformSettings?.supportEmail         ?? '',
   });
   const [toast, setToast] = useState<Toast>(null);
+
+  useEffect(() => {
+    fetchSettings().then(() => {
+      const s = usePlatformStore.getState().platformSettings;
+      setSettings({
+        platformName:         s.platformName,
+        maintenanceMode:      s.maintenanceMode,
+        registrationOpen:     s.registrationOpen,
+        minWithdrawal:        s.minWithdrawal,
+        maxWithdrawal:        s.maxWithdrawal,
+        withdrawalFee:        s.withdrawalFee,
+        referralEnabled:      s.referralEnabled,
+        notificationsEnabled: s.notificationsEnabled,
+        autoApproveDeposits:  s.autoApproveDeposits,
+        maxTeamSize:          s.maxTeamSize,
+        supportEmail:         s.supportEmail,
+      });
+    });
+  }, []);
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });

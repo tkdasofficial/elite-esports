@@ -1,47 +1,39 @@
-import React, { useState } from 'react';
-import { Search, Check, X, ArrowUpRight, ArrowDownLeft, Download, Trash2, CheckCircle2, ArrowDownToLine, ArrowUpFromLine, Clock, CircleCheck, CircleX } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, Check, X, ArrowUpRight, ArrowDownLeft, Download, Trash2, CheckCircle2, ArrowDownToLine, ArrowUpFromLine, Clock, CircleCheck, CircleX, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { CustomSelect } from '@/src/components/ui/CustomSelect';
 import { cn } from '@/src/utils/helpers';
 import { usePlatformStore } from '@/src/store/platformStore';
-import { useUserStore } from '@/src/store/userStore';
 
 type Toast = { msg: string; ok: boolean } | null;
 
 export default function AdminEconomy() {
-  const { adminTransactions, approveTransaction, rejectTransaction, deleteTransaction, adjustCoins } = usePlatformStore();
-  const { updateTransaction, updateCoins } = useUserStore();
-  const [searchQuery, setSearchQuery]   = useState('');
-  const [typeFilter, setTypeFilter]     = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const { adminTransactions, fetchTransactions, approveTransaction, rejectTransaction, deleteTransaction } = usePlatformStore();
+  const [searchQuery, setSearchQuery]         = useState('');
+  const [typeFilter, setTypeFilter]           = useState('all');
+  const [statusFilter, setStatusFilter]       = useState('all');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [toast, setToast]               = useState<Toast>(null);
+  const [toast, setToast]                     = useState<Toast>(null);
+
+  useEffect(() => { fetchTransactions(); }, []);
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 2500);
   };
 
-  const handleApprove = (id: string) => {
-    const tx = adminTransactions.find(t => t.id === id);
-    if (!tx) return;
-    approveTransaction(id);
-    adjustCoins(tx.userId, tx.type === 'deposit' ? tx.amount : -tx.amount);
-    updateTransaction(tx.userTxId, { status: 'success' });
-    if (tx.type === 'deposit') updateCoins(tx.amount);
+  const handleApprove = async (id: string) => {
+    await approveTransaction(id);
     showToast('Transaction approved');
   };
 
-  const handleReject = (id: string) => {
-    const tx = adminTransactions.find(t => t.id === id);
-    if (!tx) return;
-    rejectTransaction(id);
-    updateTransaction(tx.userTxId, { status: 'rejected' });
-    showToast('Transaction rejected');
+  const handleReject = async (id: string) => {
+    await rejectTransaction(id);
+    showToast('Transaction rejected', false);
   };
 
-  const handleDelete = (id: string) => {
-    deleteTransaction(id);
+  const handleDelete = async (id: string) => {
+    await deleteTransaction(id);
     setConfirmDeleteId(null);
     showToast('Record deleted');
   };
@@ -72,10 +64,10 @@ export default function AdminEconomy() {
   const pendingCount     = adminTransactions.filter(t => t.status === 'pending').length;
 
   const stats = [
-    { label: 'Deposits',      value: `₹${totalDeposits.toLocaleString()}`,    color: 'text-brand-success', bg: 'bg-brand-success/15', icon: ArrowDownLeft },
-    { label: 'Withdrawals',   value: `₹${totalWithdrawals.toLocaleString()}`, color: 'text-brand-live',    bg: 'bg-brand-live/15',    icon: ArrowUpRight },
-    { label: 'Profit',        value: `₹${(totalDeposits - totalWithdrawals).toLocaleString()}`, color: 'text-brand-primary', bg: 'bg-brand-primary/15', icon: ArrowDownToLine },
-    { label: 'Pending',       value: pendingCount.toString(),                  color: 'text-brand-warning', bg: 'bg-brand-warning/15', icon: Clock },
+    { label: 'Deposits',    value: `₹${totalDeposits.toLocaleString()}`,                      color: 'text-brand-success', bg: 'bg-brand-success/15', icon: ArrowDownLeft   },
+    { label: 'Withdrawals', value: `₹${totalWithdrawals.toLocaleString()}`,                   color: 'text-brand-live',    bg: 'bg-brand-live/15',    icon: ArrowUpRight    },
+    { label: 'Profit',      value: `₹${(totalDeposits - totalWithdrawals).toLocaleString()}`, color: 'text-brand-primary', bg: 'bg-brand-primary/15', icon: ArrowDownToLine },
+    { label: 'Pending',     value: pendingCount.toString(),                                    color: 'text-brand-warning', bg: 'bg-brand-warning/15', icon: Clock           },
   ];
 
   const statusColor = (s: string) => {
@@ -87,7 +79,6 @@ export default function AdminEconomy() {
 
   return (
     <div className="pb-24 pt-2 space-y-5">
-      {/* Toast */}
       <AnimatePresence>
         {toast && (
           <motion.div
@@ -99,31 +90,28 @@ export default function AdminEconomy() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
       <div className="px-4 pt-2 flex items-center justify-between">
         <div>
           <h1 className="text-[22px] font-bold text-text-primary tracking-[-0.5px]">Finance</h1>
           <p className="text-[13px] text-text-muted font-normal mt-0.5">{pendingCount} pending actions</p>
         </div>
-        <button
-          onClick={exportCSV}
-          className="flex items-center gap-2 px-4 py-2.5 bg-app-elevated rounded-full text-text-secondary text-[14px] font-medium active:opacity-60 transition-opacity border border-ios-sep"
-        >
-          <Download size={15} /> Export
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => fetchTransactions()}
+            className="w-9 h-9 bg-app-elevated rounded-full flex items-center justify-center border border-ios-sep active:opacity-60 transition-opacity">
+            <RefreshCw size={15} className="text-text-secondary" />
+          </button>
+          <button onClick={exportCSV}
+            className="flex items-center gap-2 px-4 py-2.5 bg-app-elevated rounded-full text-text-secondary text-[14px] font-medium active:opacity-60 transition-opacity border border-ios-sep">
+            <Download size={15} /> Export
+          </button>
+        </div>
       </div>
 
-      {/* Stats grid */}
       <section className="px-4">
         <div className="grid grid-cols-2 gap-3">
           {stats.map((s, i) => (
-            <motion.div
-              key={s.label}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06 }}
-              className="bg-app-card rounded-[18px] p-4 space-y-3"
-            >
+            <motion.div key={s.label} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.06 }}
+              className="bg-app-card rounded-[18px] p-4 space-y-3">
               <div className={cn('w-10 h-10 rounded-[12px] flex items-center justify-center', s.bg)}>
                 <s.icon size={18} className={s.color} />
               </div>
@@ -136,7 +124,6 @@ export default function AdminEconomy() {
         </div>
       </section>
 
-      {/* Search */}
       <div className="px-4">
         <div className="relative">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -150,34 +137,26 @@ export default function AdminEconomy() {
         </div>
       </div>
 
-      {/* Filters */}
       <div className="px-4 flex gap-2">
-        <CustomSelect
-          value={typeFilter}
-          onChange={setTypeFilter}
+        <CustomSelect value={typeFilter} onChange={setTypeFilter}
           options={[
             { value: 'all',        label: 'All Types'   },
             { value: 'deposit',    label: 'Deposits',    icon: ArrowDownToLine },
             { value: 'withdrawal', label: 'Withdrawals', icon: ArrowUpFromLine },
           ]}
-          variant="admin"
-          className="flex-1"
+          variant="admin" className="flex-1"
         />
-        <CustomSelect
-          value={statusFilter}
-          onChange={setStatusFilter}
+        <CustomSelect value={statusFilter} onChange={setStatusFilter}
           options={[
             { value: 'all',      label: 'All Status' },
             { value: 'pending',  label: 'Pending',   icon: Clock       },
             { value: 'success',  label: 'Success',   icon: CircleCheck },
             { value: 'rejected', label: 'Rejected',  icon: CircleX     },
           ]}
-          variant="admin"
-          className="flex-1"
+          variant="admin" className="flex-1"
         />
       </div>
 
-      {/* Transactions */}
       <section className="px-4 space-y-2">
         <p className="text-[13px] text-text-secondary uppercase tracking-[0.06em] font-normal px-1">
           {filtered.length} {filtered.length === 1 ? 'transaction' : 'transactions'}
@@ -192,13 +171,8 @@ export default function AdminEconomy() {
         ) : (
           <div className="space-y-2">
             {filtered.map((tx, i) => (
-              <motion.div
-                key={tx.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="bg-app-card rounded-[18px] overflow-hidden"
-              >
+              <motion.div key={tx.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                className="bg-app-card rounded-[18px] overflow-hidden">
                 <div className="flex items-center gap-3.5 px-4 py-3.5">
                   <div className={cn(
                     'w-11 h-11 rounded-full flex items-center justify-center shrink-0',
@@ -209,9 +183,9 @@ export default function AdminEconomy() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-[15px] font-medium text-text-primary">{tx.user}</p>
-                      <span className="text-[11px] bg-app-elevated px-2 py-0.5 rounded-full text-text-muted border border-ios-sep">{tx.method}</span>
+                      {tx.method && <span className="text-[11px] bg-app-elevated px-2 py-0.5 rounded-full text-text-muted border border-ios-sep">{tx.method}</span>}
                     </div>
-                    <p className="text-[12px] text-text-muted mt-0.5">{tx.date} · #{tx.id}</p>
+                    <p className="text-[12px] text-text-muted mt-0.5">{tx.date} · #{tx.id.slice(0, 8)}</p>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className={cn('text-[12px] font-semibold capitalize', statusColor(tx.status))}>{tx.status}</span>
                       <span className="text-[12px] font-semibold text-text-primary">₹{tx.amount.toLocaleString()}</span>
@@ -222,10 +196,9 @@ export default function AdminEconomy() {
                   </div>
                 </div>
 
-                {/* Action row */}
                 {confirmDeleteId === tx.id ? (
                   <div className="mx-4 mb-3 flex items-center gap-2 p-3 bg-brand-live/5 rounded-[12px] border border-brand-live/20">
-                    <p className="flex-1 text-[13px] text-brand-live">Delete record #{tx.id}?</p>
+                    <p className="flex-1 text-[13px] text-brand-live">Delete this record?</p>
                     <button onClick={() => handleDelete(tx.id)} className="px-3 py-1.5 bg-brand-live text-white text-[12px] font-medium rounded-[10px] active:opacity-70">Delete</button>
                     <button onClick={() => setConfirmDeleteId(null)} className="px-3 py-1.5 bg-app-elevated text-text-secondary text-[12px] font-medium rounded-[10px] active:opacity-70">Cancel</button>
                   </div>
@@ -233,24 +206,18 @@ export default function AdminEconomy() {
                   <div className="mx-4 mb-3 flex items-center gap-2">
                     {tx.status === 'pending' ? (
                       <>
-                        <button
-                          onClick={() => handleApprove(tx.id)}
-                          className="flex-1 py-2.5 bg-brand-success text-white rounded-[12px] text-[13px] font-medium flex items-center justify-center gap-1.5 active:opacity-80 transition-opacity"
-                        >
+                        <button onClick={() => handleApprove(tx.id)}
+                          className="flex-1 py-2.5 bg-brand-success text-white rounded-[12px] text-[13px] font-medium flex items-center justify-center gap-1.5 active:opacity-80 transition-opacity">
                           <Check size={14} /> Approve
                         </button>
-                        <button
-                          onClick={() => handleReject(tx.id)}
-                          className="flex-1 py-2.5 bg-brand-live text-white rounded-[12px] text-[13px] font-medium flex items-center justify-center gap-1.5 active:opacity-80 transition-opacity"
-                        >
+                        <button onClick={() => handleReject(tx.id)}
+                          className="flex-1 py-2.5 bg-brand-live text-white rounded-[12px] text-[13px] font-medium flex items-center justify-center gap-1.5 active:opacity-80 transition-opacity">
                           <X size={14} /> Reject
                         </button>
                       </>
                     ) : (
-                      <button
-                        onClick={() => setConfirmDeleteId(tx.id)}
-                        className="py-2.5 px-4 bg-app-elevated rounded-[12px] text-[13px] font-medium text-text-secondary active:opacity-70 transition-opacity flex items-center gap-1.5 border border-ios-sep"
-                      >
+                      <button onClick={() => setConfirmDeleteId(tx.id)}
+                        className="py-2.5 px-4 bg-app-elevated rounded-[12px] text-[13px] font-medium text-text-secondary active:opacity-70 transition-opacity flex items-center gap-1.5 border border-ios-sep">
                         <Trash2 size={13} /> Delete Record
                       </button>
                     )}

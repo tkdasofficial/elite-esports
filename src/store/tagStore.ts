@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
 
 export type AdType = 'AdMob' | 'AdSense' | 'Custom Script' | 'URL Redirect';
 export type AdPlatform = 'Web' | 'Android' | 'iOS' | 'All';
@@ -75,74 +74,66 @@ const DEFAULT_PLACEMENTS: Record<AdPlacement, boolean> = {
   timer_ad:        true,
 };
 
-export const useTagStore = create<TagState>()(
-  persist(
-    (set) => ({
-      tags: [],
+export const useTagStore = create<TagState>()((set) => ({
+  tags: [],
 
-      killSwitch: false,
-      testMode: false,
-      safeBrowsing: true,
-      adBlockDetection: false,
-      adBlockMessage: 'Please disable your ad blocker to support Elite Esports.',
+  killSwitch: false,
+  testMode: false,
+  safeBrowsing: true,
+  adBlockDetection: false,
+  adBlockMessage: 'Please disable your ad blocker to support Elite Esports.',
 
-      lazyLoad: true,
-      scriptLoadMode: 'async',
-      fallbackBehavior: 'hide',
+  lazyLoad: true,
+  scriptLoadMode: 'async',
+  fallbackBehavior: 'hide',
 
-      frequencyCap: 3,
-      sessionResetHours: 24,
+  frequencyCap: 3,
+  sessionResetHours: 24,
 
-      enabledPlacements: { ...DEFAULT_PLACEMENTS },
+  enabledPlacements: { ...DEFAULT_PLACEMENTS },
 
-      addTag: (tag) =>
-        set((state) => ({
-          tags: [
-            ...state.tags,
-            { ...tag, id: Math.random().toString(36).slice(2, 10), updatedAt: new Date().toISOString() },
-          ],
-        })),
+  addTag: (tag) =>
+    set((state) => ({
+      tags: [
+        ...state.tags,
+        { ...tag, id: Math.random().toString(36).slice(2, 10), updatedAt: new Date().toISOString() },
+      ],
+    })),
 
-      updateTag: (id, updates) =>
-        set((state) => ({
-          tags: state.tags.map((t) =>
-            t.id === id ? { ...t, ...updates, updatedAt: new Date().toISOString() } : t
-          ),
-        })),
+  updateTag: (id, updates) =>
+    set((state) => ({
+      tags: state.tags.map((t) =>
+        t.id === id ? { ...t, ...updates, updatedAt: new Date().toISOString() } : t
+      ),
+    })),
 
-      deleteTag: (id) =>
-        set((state) => ({ tags: state.tags.filter((t) => t.id !== id) })),
+  deleteTag: (id) =>
+    set((state) => ({ tags: state.tags.filter((t) => t.id !== id) })),
 
-      toggleStatus: (id) =>
-        set((state) => ({
-          tags: state.tags.map((t) =>
-            t.id === id
-              ? { ...t, status: t.status === 'active' ? 'inactive' : 'active', updatedAt: new Date().toISOString() }
-              : t
-          ),
-        })),
+  toggleStatus: (id) =>
+    set((state) => ({
+      tags: state.tags.map((t) =>
+        t.id === id
+          ? { ...t, status: t.status === 'active' ? 'inactive' : 'active', updatedAt: new Date().toISOString() }
+          : t
+      ),
+    })),
 
-      setKillSwitch: (v) => set({ killSwitch: v }),
-      setTestMode: (v) => set({ testMode: v }),
-      setSafeBrowsing: (v) => set({ safeBrowsing: v }),
-      setAdBlockDetection: (v) => set({ adBlockDetection: v }),
-      setAdBlockMessage: (v) => set({ adBlockMessage: v }),
+  setKillSwitch:        (v) => set({ killSwitch: v }),
+  setTestMode:          (v) => set({ testMode: v }),
+  setSafeBrowsing:      (v) => set({ safeBrowsing: v }),
+  setAdBlockDetection:  (v) => set({ adBlockDetection: v }),
+  setAdBlockMessage:    (v) => set({ adBlockMessage: v }),
 
-      setLazyLoad: (v) => set({ lazyLoad: v }),
-      setScriptLoadMode: (v) => set({ scriptLoadMode: v }),
-      setFallbackBehavior: (v) => set({ fallbackBehavior: v }),
+  setLazyLoad:          (v) => set({ lazyLoad: v }),
+  setScriptLoadMode:    (v) => set({ scriptLoadMode: v }),
+  setFallbackBehavior:  (v) => set({ fallbackBehavior: v }),
 
-      setFrequencyCap: (v) => set({ frequencyCap: v }),
-      setSessionResetHours: (v) => set({ sessionResetHours: v }),
+  setFrequencyCap:      (v) => set({ frequencyCap: v }),
+  setSessionResetHours: (v) => set({ sessionResetHours: v }),
 
-      setPlacementEnabled: (placement, enabled) =>
-        set((state) => ({
-          enabledPlacements: { ...state.enabledPlacements, [placement]: enabled },
-        })),
-    }),
-    {
-      name: 'elite-tags-v2',
-      storage: createJSONStorage(() => localStorage),
-    }
-  )
-);
+  setPlacementEnabled: (placement, enabled) =>
+    set((state) => ({
+      enabledPlacements: { ...state.enabledPlacements, [placement]: enabled },
+    })),
+}));

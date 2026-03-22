@@ -11,7 +11,7 @@ import { useNavigate } from 'react-router-dom';
 
 export default function Wallet() {
   const { user, transactions, addTransaction } = useUserStore();
-  const { addAdminTransaction, settings } = usePlatformStore();
+  const { settings } = usePlatformStore();
   const { triggerTagAd } = useAdTagStore();
   const { triggerAd } = useAdEngineStore();
   const navigate = useNavigate();
@@ -32,17 +32,13 @@ export default function Wallet() {
 
   const submitDeposit = async () => {
     if (!utr) return alert('Enter Transaction ID');
-    const userTxId = Math.random().toString(36).substr(2, 9);
-    addTransaction({ id: userTxId, type:'deposit', amount:Number(amount), status:'pending', method:'upi', details:utr, title:'Deposit Request' });
-    addAdminTransaction({
-      userId: user?.id ?? '1',
-      user: user?.username ?? 'User',
-      userTxId,
-      amount: Number(amount),
+    await addTransaction({
       type: 'deposit',
+      amount: Number(amount),
       status: 'pending',
       method: 'upi',
       details: utr,
+      title: 'Deposit Request',
     });
     setStatus('success');
     await triggerTagAd('get_reward_ad');
@@ -55,17 +51,13 @@ export default function Wallet() {
     if (n < 50) return alert('Minimum ₹50');
     if (n > (user?.coins||0)) return alert('Insufficient balance');
     if (!details) return alert(`Enter ${method==='upi'?'UPI ID':'Email'}`);
-    const userTxId = Math.random().toString(36).substr(2, 9);
-    addTransaction({ id: userTxId, type:'withdrawal', amount:-n, status:'pending', method, details, title:`${method==='upi'?'UPI':'Gift Card'} Withdrawal` });
-    addAdminTransaction({
-      userId: user?.id ?? '1',
-      user: user?.username ?? 'User',
-      userTxId,
-      amount: n,
+    await addTransaction({
       type: 'withdrawal',
+      amount: -n,
       status: 'pending',
       method,
       details,
+      title: `${method==='upi'?'UPI':'Gift Card'} Withdrawal`,
     });
     setStatus('success');
     await triggerTagAd('get_reward_ad');

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { supabase } from '@/src/lib/supabase';
 
 export interface Category {
   id: string;
@@ -9,40 +9,70 @@ export interface Category {
 
 interface CategoryState {
   categories: Category[];
-  addCategory: (cat: Omit<Category, 'id'>) => void;
-  updateCategory: (id: string, updates: Partial<Omit<Category, 'id'>>) => void;
-  deleteCategory: (id: string) => void;
+  loading: boolean;
+  fetchCategories: () => Promise<void>;
+  addCategory: (cat: Omit<Category, 'id'>) => Promise<void>;
+  updateCategory: (id: string, updates: Partial<Omit<Category, 'id'>>) => Promise<void>;
+  deleteCategory: (id: string) => Promise<void>;
 }
 
-export const useCategoryStore = create<CategoryState>()(
-  persist(
-    (set) => ({
-      categories: [],
+function rowToCategory(row: any): Category {
+  return {
+    id: row.id,
+    name: row.name,
+    iconName: row.icon ?? row.icon_name ?? '',
+  };
+}
 
-      addCategory: (cat) =>
-        set((state) => ({
-          categories: [
-            ...state.categories,
-            { ...cat, id: Math.random().toString(36).slice(2, 10) },
-          ],
-        })),
+export const useCategoryStore = create<CategoryState>()((set) => ({
+  categories: [],
+  loading: false,
 
-      updateCategory: (id, updates) =>
-        set((state) => ({
-          categories: state.categories.map((c) =>
-            c.id === id ? { ...c, ...updates } : c
-          ),
-        })),
-
-      deleteCategory: (id) =>
-        set((state) => ({
-          categories: state.categories.filter((c) => c.id !== id),
-        })),
-    }),
-    {
-      name: 'elite-categories-v1',
-      storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ categories: state.categories }),
+  fetchCategories: async () => {
+    set({ loading: true });
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('sort_order', { ascending: true });
+      if (error) throw error;
+      set({ categories: (data ?? []).map(rowToCategory) });
+    } catch (e) {
+      console.error('fetchCategories error:', e);
+    } finally {
+      set({ loading: false });
     }
-  )
-);
+  },
+
+  addCategory: async (cat) => {
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({ name: cat.name, icon: cat.iconName })
+      .select()
+      .single();
+    if (error) throw new Error(error.message);
+    set((s) => ({ categories: [...s.categories, rowToCategory(data)] }));
+  },
+
+  updateCategory: async (id, updates) => {
+    const dbUpdates: any = {};
+    if (updates.name    !== undefined) dbUpdates.name = updates.name;
+    if (updates.iconName !== undefined) dbUpdates.icon = updates.iconName;
+    const { error } = await supabase
+      .from('categories')
+      .update(dbUpdates)
+      .eq('id', id);
+    if (error) throw new Error(error.message);
+    set((s) => ({
+      categories: s.categories.map((c) =>
+        c.id === id ? { ...c, ...updates } : c
+      ),
+    }));
+  },
+
+  deleteCategory: async (id) => {
+    const { error } = await supabase.from('categories').delete().eq('id', id);
+    if (error) throw new Error(error.message);
+    set((s) => ({ categories: s.categories.filter((c) => c.id !== id) }));
+  },
+}));

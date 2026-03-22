@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Search, User, Ban, CheckCircle2, Coins, Trash2, X, Check, Plus, Minus, Shield, ShieldOff } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search, User, Ban, CheckCircle2, Coins, Trash2, X, Check, Plus, Minus, Shield, ShieldOff, RefreshCw } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
 import { usePlatformStore, PlatformUser } from '@/src/store/platformStore';
@@ -21,45 +21,47 @@ const IOSToast = ({ toast }: { toast: Toast }) => (
 );
 
 export default function AdminUsers() {
-  const { registeredUsers, banUser, unbanUser, suspendUser, unsuspendUser, adjustCoins, deleteUser } = usePlatformStore();
+  const { registeredUsers, fetchUsers, banUser, unbanUser, suspendUser, unsuspendUser, adjustCoins, deleteUser, loading } = usePlatformStore();
   const { updateCoins } = useUserStore();
-  const [searchQuery, setSearchQuery]     = useState('');
-  const [statusFilter, setStatusFilter]   = useState('all');
-  const [coinModal, setCoinModal]         = useState<PlatformUser | null>(null);
-  const [coinAmount, setCoinAmount]       = useState('');
-  const [coinMode, setCoinMode]           = useState<'add' | 'deduct'>('add');
+  const [searchQuery, setSearchQuery]         = useState('');
+  const [statusFilter, setStatusFilter]       = useState('all');
+  const [coinModal, setCoinModal]             = useState<PlatformUser | null>(null);
+  const [coinAmount, setCoinAmount]           = useState('');
+  const [coinMode, setCoinMode]               = useState<'add' | 'deduct'>('add');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
-  const [toast, setToast]                 = useState<Toast>(null);
+  const [toast, setToast]                     = useState<Toast>(null);
+
+  useEffect(() => { fetchUsers(); }, []);
 
   const showToast = (msg: string, ok = true) => {
     setToast({ msg, ok });
     setTimeout(() => setToast(null), 2500);
   };
 
-  const handleToggleBan = (user: PlatformUser) => {
+  const handleToggleBan = async (user: PlatformUser) => {
     if (user.status === 'banned') {
-      unbanUser(user.id);
+      await unbanUser(user.id);
       showToast(`${user.username} unbanned`);
     } else {
-      banUser(user.id);
+      await banUser(user.id);
       showToast(`${user.username} banned`, false);
     }
   };
 
-  const handleToggleSuspend = (user: PlatformUser) => {
+  const handleToggleSuspend = async (user: PlatformUser) => {
     if (user.status === 'suspended') {
-      unsuspendUser(user.id);
+      await unsuspendUser(user.id);
       showToast(`${user.username} unsuspended`);
     } else {
-      suspendUser(user.id);
+      await suspendUser(user.id);
       showToast(`${user.username} suspended`, false);
     }
   };
 
-  const applyCoins = () => {
+  const applyCoins = async () => {
     if (!coinModal || !coinAmount || isNaN(Number(coinAmount))) return;
     const delta = coinMode === 'add' ? Number(coinAmount) : -Number(coinAmount);
-    adjustCoins(coinModal.id, delta);
+    await adjustCoins(coinModal.id, delta);
     const { user } = useUserStore.getState();
     if (user && coinModal.id === user.id) updateCoins(delta);
     showToast(`${coinMode === 'add' ? '+' : '-'}₹${coinAmount} applied to ${coinModal.username}`);
@@ -67,10 +69,10 @@ export default function AdminUsers() {
     setCoinAmount('');
   };
 
-  const handleDeleteUser = () => {
+  const handleDeleteUser = async () => {
     if (!confirmDeleteId) return;
     const u = registeredUsers.find(u => u.id === confirmDeleteId);
-    deleteUser(confirmDeleteId);
+    await deleteUser(confirmDeleteId);
     setConfirmDeleteId(null);
     showToast(`${u?.username} deleted`);
   };
@@ -103,13 +105,20 @@ export default function AdminUsers() {
     <div className="pb-24 pt-2 space-y-5">
       <IOSToast toast={toast} />
 
-      {/* Header */}
-      <div className="px-4 pt-2">
-        <h1 className="text-[22px] font-bold text-text-primary tracking-[-0.5px]">Players</h1>
-        <p className="text-[13px] text-text-muted font-normal mt-0.5">{registeredUsers.length} total registered</p>
+      <div className="px-4 pt-2 flex items-center justify-between">
+        <div>
+          <h1 className="text-[22px] font-bold text-text-primary tracking-[-0.5px]">Players</h1>
+          <p className="text-[13px] text-text-muted font-normal mt-0.5">{registeredUsers.length} total registered</p>
+        </div>
+        <button
+          onClick={() => fetchUsers()}
+          disabled={loading}
+          className="w-9 h-9 bg-app-elevated rounded-full flex items-center justify-center border border-ios-sep active:opacity-60 transition-opacity"
+        >
+          <RefreshCw size={15} className={cn('text-text-secondary', loading && 'animate-spin')} />
+        </button>
       </div>
 
-      {/* Filter tabs */}
       <div className="flex gap-2 px-4 overflow-x-auto pb-1 scrollable-content">
         {filters.map(f => (
           <button
@@ -125,7 +134,6 @@ export default function AdminUsers() {
         ))}
       </div>
 
-      {/* Search */}
       <div className="px-4">
         <div className="relative">
           <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
@@ -139,13 +147,17 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* User list */}
       <section className="px-4 space-y-2">
         <p className="text-[13px] text-text-secondary uppercase tracking-[0.06em] font-normal px-1">
           {filtered.length} {filtered.length === 1 ? 'player' : 'players'}
         </p>
 
-        {filtered.length === 0 ? (
+        {loading && registeredUsers.length === 0 ? (
+          <div className="bg-app-card rounded-[18px] py-14 flex flex-col items-center gap-3">
+            <RefreshCw size={24} className="text-text-muted animate-spin" />
+            <p className="text-[15px] text-text-muted font-normal">Loading players…</p>
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="bg-app-card rounded-[18px] py-14 flex flex-col items-center gap-3">
             <div className="w-14 h-14 rounded-full bg-app-elevated flex items-center justify-center">
               <User size={24} className="text-text-muted" />
@@ -162,7 +174,6 @@ export default function AdminUsers() {
                 transition={{ delay: i * 0.04 }}
                 className="bg-app-card rounded-[18px] overflow-hidden"
               >
-                {/* User info row */}
                 <div className="flex items-center gap-3 px-4 py-3.5">
                   <div className={cn(
                     'w-11 h-11 rounded-full flex items-center justify-center shrink-0 font-semibold text-[16px]',
@@ -186,12 +197,13 @@ export default function AdminUsers() {
                     <div className="flex items-center gap-3 mt-0.5">
                       <span className="text-[11px] font-semibold text-brand-primary">{user.rank}</span>
                       <span className="text-[11px] font-semibold text-brand-success">₹{user.coins.toLocaleString()}</span>
-                      <span className="text-[11px] text-text-muted">{user.joined}</span>
+                      <span className="text-[11px] text-text-muted">
+                        {user.joined ? new Date(user.joined).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : ''}
+                      </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Actions row */}
                 <div className="flex items-center gap-2 px-4 pb-3.5">
                   <button
                     onClick={() => { setCoinModal(user); setCoinAmount(''); setCoinMode('add'); }}
@@ -234,7 +246,6 @@ export default function AdminUsers() {
         )}
       </section>
 
-      {/* Delete Confirm — iOS alert style */}
       <AnimatePresence>
         {confirmDeleteId && deleteTarget && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDeleteId(null)}>
@@ -259,7 +270,6 @@ export default function AdminUsers() {
         )}
       </AnimatePresence>
 
-      {/* Coins bottom sheet */}
       <AnimatePresence>
         {coinModal && (
           <div className="fixed inset-0 z-[100] flex items-end justify-center">
@@ -272,7 +282,6 @@ export default function AdminUsers() {
               <div className="flex justify-center pt-3 pb-2">
                 <div className="w-10 h-[5px] bg-app-elevated rounded-full" />
               </div>
-
               <div className="flex items-center justify-between px-5 pb-4 border-b border-ios-sep">
                 <div>
                   <h3 className="text-[18px] font-semibold text-text-primary">Adjust Coins</h3>
@@ -282,14 +291,10 @@ export default function AdminUsers() {
                   <X size={15} />
                 </button>
               </div>
-
               <div className="p-5 space-y-5">
-                {/* Mode selector */}
                 <div className="flex gap-2">
                   {(['add', 'deduct'] as const).map(m => (
-                    <button
-                      key={m}
-                      onClick={() => setCoinMode(m)}
+                    <button key={m} onClick={() => setCoinMode(m)}
                       className={cn(
                         'flex-1 py-3 rounded-[14px] text-[14px] font-medium capitalize transition-all flex items-center justify-center gap-2',
                         coinMode === m
@@ -301,8 +306,6 @@ export default function AdminUsers() {
                     </button>
                   ))}
                 </div>
-
-                {/* Amount input */}
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[18px] font-medium text-text-muted">₹</span>
                   <input
@@ -313,23 +316,15 @@ export default function AdminUsers() {
                     className="w-full bg-app-elevated border border-ios-sep rounded-[14px] py-3.5 pl-9 pr-4 text-[22px] font-semibold text-text-primary placeholder:text-text-muted outline-none focus:border-brand-primary transition-all"
                   />
                 </div>
-
-                {/* Quick amounts */}
                 <div className="grid grid-cols-4 gap-2">
                   {[50, 100, 200, 500].map(v => (
-                    <button
-                      key={v}
-                      onClick={() => setCoinAmount(v.toString())}
-                      className="py-2.5 bg-app-elevated rounded-[12px] text-[13px] font-medium text-text-secondary active:opacity-60 transition-opacity"
-                    >
+                    <button key={v} onClick={() => setCoinAmount(v.toString())}
+                      className="py-2.5 bg-app-elevated rounded-[12px] text-[13px] font-medium text-text-secondary active:opacity-60 transition-opacity">
                       {coinMode === 'add' ? '+' : '-'}₹{v}
                     </button>
                   ))}
                 </div>
-
-                {/* Apply button */}
-                <button
-                  onClick={applyCoins}
+                <button onClick={applyCoins}
                   className={cn(
                     'w-full py-4 rounded-[14px] text-[16px] font-semibold text-white transition-all active:opacity-80',
                     coinMode === 'add' ? 'bg-brand-success' : 'bg-brand-live'
