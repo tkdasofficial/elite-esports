@@ -53,7 +53,8 @@ CREATE POLICY "transactions_admin_update" ON public.transactions FOR UPDATE USIN
 );
 
 -- ── GAME PROFILES ────────────────────────────────────────────
-CREATE POLICY "game_profiles_select"   ON public.game_profiles FOR SELECT USING (auth.uid() = user_id);
+-- Anyone can read game profiles (for public profile pages)
+CREATE POLICY "game_profiles_select"   ON public.game_profiles FOR SELECT USING (true);
 CREATE POLICY "game_profiles_insert"   ON public.game_profiles FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "game_profiles_update"   ON public.game_profiles FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "game_profiles_delete"   ON public.game_profiles FOR DELETE USING (auth.uid() = user_id);

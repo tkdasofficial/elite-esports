@@ -9,7 +9,9 @@ import { useAuthStore } from './store/authStore';
 import { supabase } from './lib/supabase';
 
 export default function App() {
-  const [showSplash, setShowSplash] = useState(true);
+  // Skip splash for public profile routes (/@username)
+  const isPublicProfileRoute = window.location.pathname.startsWith('/@');
+  const [showSplash, setShowSplash] = useState(!isPublicProfileRoute);
 
   const { session, setSession, setInitialized } = useAuthStore();
   const { shouldShowWelcomeAd, recordWelcomeAd, shouldShowTimerAd, recordTimerAd } = useCampaignStore();

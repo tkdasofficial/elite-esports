@@ -12,6 +12,7 @@ import Leaderboard from '@/src/pages/Leaderboard';
 import Live from '@/src/pages/Live';
 import Wallet from '@/src/pages/Wallet';
 import Profile from '@/src/pages/Profile';
+import PublicProfile from '@/src/pages/PublicProfile';
 import Login from '@/src/pages/Login';
 import SignUp from '@/src/pages/SignUp';
 import ForgotPassword from '@/src/pages/ForgotPassword';
@@ -84,8 +85,17 @@ const UserLayout = () => {
 
 export const AppRouter = () => {
   const { session, initialized } = useAuthStore();
-  const { profileSetupComplete, user } = useUserStore();
+  const { profileSetupComplete, user, isAdmin: isAdminFromStore } = useUserStore();
   const location = useLocation();
+
+  // ── Public profile pages — no auth required ──────────────────
+  if (location.pathname.startsWith('/@')) {
+    return (
+      <Routes>
+        <Route path="*" element={<PublicProfile />} />
+      </Routes>
+    );
+  }
 
   if (!initialized) {
     return (
@@ -113,9 +123,11 @@ export const AppRouter = () => {
   }
 
   const userEmail = session.user?.email ?? '';
-  const isAdmin = userEmail === import.meta.env.VITE_ADMIN_EMAIL || 
-                  session.user?.app_metadata?.role === 'admin' ||
-                  session.user?.user_metadata?.role === 'admin';
+  const isAdmin =
+    isAdminFromStore ||
+    userEmail === import.meta.env.VITE_ADMIN_EMAIL ||
+    session.user?.app_metadata?.role === 'admin' ||
+    session.user?.user_metadata?.role === 'admin';
 
   // Existing users with a saved username are considered set up already
   const needsProfileSetup = !isAdmin && !profileSetupComplete && !user?.username;
@@ -139,10 +151,12 @@ export const AppRouter = () => {
 
   const isAdminPage = location.pathname.startsWith('/admin');
 
+  // Admins are only allowed on admin pages — redirect to dashboard otherwise
   if (isAdmin && !isAdminPage) {
     return <Navigate to="/admin/dashboard" replace />;
   }
 
+  // Non-admins cannot access admin pages
   if (!isAdmin && isAdminPage) {
     return <Navigate to="/" replace />;
   }
