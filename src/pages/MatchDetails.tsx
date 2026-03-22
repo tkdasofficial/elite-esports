@@ -6,6 +6,7 @@ import { useMatchStore } from '@/src/store/matchStore';
 import { useUserStore } from '@/src/store/userStore';
 import { MatchParticipant } from '@/src/types';
 import { useAdEngineStore } from '@/src/store/adEngineStore';
+import { useAdTagStore } from '@/src/store/adTagStore';
 import { LetterAvatar } from '@/src/components/ui/LetterAvatar';
 import { cn } from '@/src/utils/helpers';
 
@@ -15,6 +16,7 @@ export default function MatchDetails() {
   const { getMatchById, addParticipant, removeParticipant } = useMatchStore();
   const { user, joinedMatchIds, joinMatch, leaveMatch } = useUserStore();
   const { triggerAd } = useAdEngineStore();
+  const { triggerTagAd } = useAdTagStore();
 
   const match = getMatchById(id || '');
   const isJoined = joinedMatchIds.includes(id || '');
@@ -22,10 +24,12 @@ export default function MatchDetails() {
   const handleJoinLeave = async () => {
     if (!match || !user) return;
     if (isJoined) {
+      await triggerTagAd('leave_button_ad');
       await triggerAd('Leave');
       leaveMatch(match.match_id);
       removeParticipant(match.match_id, user.id);
     } else {
+      await triggerTagAd('join_button_ad');
       await triggerAd('Join');
       joinMatch(match.match_id);
       const participant: MatchParticipant = {

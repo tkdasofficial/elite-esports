@@ -20,11 +20,11 @@ const TYPE_META: Record<AdTagType, { label: string; color: string; bg: string }>
 };
 
 const POSITION_META: Record<AdPosition, { label: string }> = {
-  home:        { label: 'Home' },
-  matches:     { label: 'Matches' },
-  leaderboard: { label: 'Leaderboard' },
-  wallet:      { label: 'Wallet' },
-  global:      { label: 'Global (all pages)' },
+  join_button_ad:  { label: 'Join Match' },
+  leave_button_ad: { label: 'Leave Match' },
+  welcome_ad:      { label: 'Welcome (App Open)' },
+  get_reward_ad:   { label: 'Claim Reward' },
+  timer_ad:        { label: 'Timer (Auto Interval)' },
 };
 
 const CODE_TYPE_META: Record<AdCodeType, { label: string; hint: string; icon: React.ElementType }> = {
@@ -38,7 +38,7 @@ const EMPTY_TAG: Partial<AdTagInput> = {
   type:      'banner',
   code_type: 'html',
   code:      '',
-  position:  'global',
+  position:  'welcome_ad',
   is_active: true,
   priority:  0,
   notes:     '',

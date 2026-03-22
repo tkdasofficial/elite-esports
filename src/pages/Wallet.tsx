@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { useUserStore } from '@/src/store/userStore';
 import { usePlatformStore } from '@/src/store/platformStore';
+import { useAdTagStore } from '@/src/store/adTagStore';
+import { useAdEngineStore } from '@/src/store/adEngineStore';
 
 import { Plus, ArrowUpRight, ArrowDownLeft, Trophy, Gamepad2, X, Copy, CheckCircle2, AlertCircle, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -10,6 +12,8 @@ import { useNavigate } from 'react-router-dom';
 export default function Wallet() {
   const { user, transactions, addTransaction } = useUserStore();
   const { addAdminTransaction, settings } = usePlatformStore();
+  const { triggerTagAd } = useAdTagStore();
+  const { triggerAd } = useAdEngineStore();
   const navigate = useNavigate();
   const [showAdd, setShowAdd]   = useState(false);
   const [showWith, setShowWith] = useState(false);
@@ -26,7 +30,7 @@ export default function Wallet() {
 
   const handleAddCash = () => { if (Number(amount) < 10) return alert('Minimum ₹10'); setStep(2); };
 
-  const submitDeposit = () => {
+  const submitDeposit = async () => {
     if (!utr) return alert('Enter Transaction ID');
     const userTxId = Math.random().toString(36).substr(2, 9);
     addTransaction({ id: userTxId, type:'deposit', amount:Number(amount), status:'pending', method:'upi', details:utr, title:'Deposit Request' });
@@ -41,10 +45,12 @@ export default function Wallet() {
       details: utr,
     });
     setStatus('success');
+    await triggerTagAd('get_reward_ad');
+    await triggerAd('Reward');
     setTimeout(() => { setShowAdd(false); setStep(1); setAmount(''); setUtr(''); setStatus('idle'); }, 2200);
   };
 
-  const handleWithdraw = () => {
+  const handleWithdraw = async () => {
     const n = Number(amount);
     if (n < 50) return alert('Minimum ₹50');
     if (n > (user?.coins||0)) return alert('Insufficient balance');
@@ -62,6 +68,8 @@ export default function Wallet() {
       details,
     });
     setStatus('success');
+    await triggerTagAd('get_reward_ad');
+    await triggerAd('Reward');
     setTimeout(() => { setShowWith(false); setAmount(''); setDetails(''); setStatus('idle'); }, 2200);
   };
 

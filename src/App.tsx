@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import SplashScreen from './components/SplashScreen';
 import { AdOverlay } from './components/AdOverlay';
+import { AdTagOverlay } from './components/AdTagOverlay';
 import { AppRouter } from './routes/AppRouter';
 import { useCampaignStore } from './store/campaignStore';
 import { useAdEngineStore } from './store/adEngineStore';
@@ -42,7 +43,7 @@ export default function App() {
 
   const { session, setSession, setInitialized } = useAuthStore();
   const { login: loginUser, logout: logoutUser } = useUserStore();
-  const { fetchActiveTags } = useAdTagStore();
+  const { fetchActiveTags, activeTagAd, triggerTagAd, completeTagAd } = useAdTagStore();
   const { shouldShowWelcomeAd, recordWelcomeAd, shouldShowTimerAd, recordTimerAd } = useCampaignStore();
   const { activeCampaign, triggerAd, completeAd } = useAdEngineStore();
 
@@ -74,15 +75,20 @@ export default function App() {
 
   useEffect(() => {
     if (!isAuthenticated || showSplash) return;
-    if (shouldShowWelcomeAd()) {
-      recordWelcomeAd();
-      triggerAd('Welcome');
-    }
+    const runWelcome = async () => {
+      await triggerTagAd('welcome_ad');
+      if (shouldShowWelcomeAd()) {
+        recordWelcomeAd();
+        await triggerAd('Welcome');
+      }
+    };
+    runWelcome();
   }, [isAuthenticated, showSplash]);
 
   useEffect(() => {
     if (!isAuthenticated || showSplash) return;
-    const check = () => {
+    const check = async () => {
+      await triggerTagAd('timer_ad');
       if (shouldShowTimerAd()) {
         recordTimerAd();
         triggerAd('Timer');
@@ -98,6 +104,9 @@ export default function App() {
       <BrowserRouter>
         <AppRouter />
       </BrowserRouter>
+      {activeTagAd && (
+        <AdTagOverlay tag={activeTagAd} onComplete={completeTagAd} />
+      )}
       {activeCampaign && (
         <AdOverlay campaign={activeCampaign} onComplete={completeAd} />
       )}

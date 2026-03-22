@@ -3,7 +3,7 @@ import { supabase } from '@/src/lib/supabase';
 
 export type AdTagType     = 'banner' | 'interstitial' | 'native' | 'custom';
 export type AdCodeType    = 'html' | 'javascript' | 'url';
-export type AdPosition    = 'home' | 'matches' | 'leaderboard' | 'wallet' | 'global';
+export type AdPosition    = 'join_button_ad' | 'leave_button_ad' | 'welcome_ad' | 'get_reward_ad' | 'timer_ad';
 
 export interface AdTag {
   id:         string;
@@ -38,9 +38,11 @@ function writeCache(tags: AdTag[]) {
 }
 
 interface AdTagState {
-  tags:    AdTag[];
-  loading: boolean;
-  error:   string | null;
+  tags:              AdTag[];
+  loading:           boolean;
+  error:             string | null;
+  activeTagAd:       AdTag | null;
+  onTagAdComplete:   (() => void) | null;
 
   /** Fetch only active tags (for the app / regular users) */
   fetchActiveTags: () => Promise<void>;
@@ -54,14 +56,20 @@ interface AdTagState {
   toggleTag: (id: string) => Promise<void>;
   /** Delete a tag permanently (admin) */
   deleteTag: (id: string) => Promise<void>;
-  /** Get tags for a specific screen position */
+  /** Get highest-priority active tag for a placement */
   tagsForPosition: (position: AdPosition) => AdTag[];
+  /** Show the highest-priority active tag for a placement as an overlay */
+  triggerTagAd: (placement: AdPosition) => Promise<void>;
+  /** Dismiss the active tag ad overlay */
+  completeTagAd: () => void;
 }
 
 export const useAdTagStore = create<AdTagState>((set, get) => ({
-  tags:    [],
-  loading: false,
-  error:   null,
+  tags:            [],
+  loading:         false,
+  error:           null,
+  activeTagAd:     null,
+  onTagAdComplete: null,
 
   fetchActiveTags: async () => {
     set({ loading: true, error: null });
@@ -140,7 +148,24 @@ export const useAdTagStore = create<AdTagState>((set, get) => ({
   tagsForPosition: (position) => {
     const { tags } = get();
     return tags
-      .filter(t => t.is_active && (t.position === position || t.position === 'global'))
+      .filter(t => t.is_active && t.position === position)
       .sort((a, b) => b.priority - a.priority);
+  },
+
+  triggerTagAd: (placement) => {
+    return new Promise((resolve) => {
+      const { tags } = get();
+      const tag = tags
+        .filter(t => t.is_active && t.position === placement)
+        .sort((a, b) => b.priority - a.priority)[0] ?? null;
+      if (!tag) { resolve(); return; }
+      set({ activeTagAd: tag, onTagAdComplete: resolve });
+    });
+  },
+
+  completeTagAd: () => {
+    const { onTagAdComplete } = get();
+    onTagAdComplete?.();
+    set({ activeTagAd: null, onTagAdComplete: null });
   },
 }));
