@@ -22,12 +22,12 @@ name = "Start application"
 author = "agent"
 
 [workflows.workflow.metadata]
-outputType = "console"
+outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npx expo start --port 8080"
-waitForPort = 8080
+args = "npm run dev"
+waitForPort = 5000
 
 [[ports]]
 localPort = 3000
@@ -35,11 +35,7 @@ externalPort = 80
 
 [[ports]]
 localPort = 5000
-externalPort = 5000
-
-[[ports]]
-localPort = 5001
-externalPort = 3000
+externalPort = 80
 
 [[ports]]
 localPort = 8080
@@ -56,3 +52,6 @@ run = ["node", "server.js"]
 EXPO_PUBLIC_SUPABASE_URL = "https://bliytowrufwppgxwcknb.supabase.co"
 EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_N-c39bLNoxE-RqysaM44Rg_hpLYcS0v"
 EXPO_PUBLIC_SUPABASE_PROJECT_ID = "bliytowrufwppgxwcknb"
+VITE_SUPABASE_URL = "https://bliytowrufwppgxwcknb.supabase.co"
+VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_N-c39bLNoxE-RqysaM44Rg_hpLYcS0v"
+VITE_SUPABASE_PROJECT_ID = "bliytowrufwppgxwcknb"
