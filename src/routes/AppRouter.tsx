@@ -1,11 +1,13 @@
 import { Routes, Route, Navigate, useLocation, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@/src/store/authStore';
+import { useUserStore } from '@/src/store/userStore';
 import { Header } from '@/src/components/layout/Header';
 import { BottomBar } from '@/src/components/layout/BottomBar';
 import { AnimatePresence, motion } from 'motion/react';
 
 // Pages
 import Home from '@/src/pages/Home';
+import ProfileSetup from '@/src/pages/ProfileSetup';
 import Leaderboard from '@/src/pages/Leaderboard';
 import Live from '@/src/pages/Live';
 import Wallet from '@/src/pages/Wallet';
@@ -82,6 +84,7 @@ const UserLayout = () => {
 
 export const AppRouter = () => {
   const { session, initialized } = useAuthStore();
+  const { profileSetupComplete, user } = useUserStore();
   const location = useLocation();
 
   if (!initialized) {
@@ -113,6 +116,26 @@ export const AppRouter = () => {
   const isAdmin = userEmail === import.meta.env.VITE_ADMIN_EMAIL || 
                   session.user?.app_metadata?.role === 'admin' ||
                   session.user?.user_metadata?.role === 'admin';
+
+  // Existing users with a saved username are considered set up already
+  const needsProfileSetup = !isAdmin && !profileSetupComplete && !user?.username;
+
+  // Redirect non-admin new users to profile setup
+  if (needsProfileSetup && location.pathname !== '/profile-setup') {
+    return <Navigate to="/profile-setup" replace />;
+  }
+
+  // Serve profile setup standalone (no header/bottom bar)
+  if (!isAdmin && location.pathname === '/profile-setup') {
+    return (
+      <div className="h-full w-full bg-app-bg overflow-hidden">
+        <Routes>
+          <Route path="/profile-setup" element={<ProfileSetup />} />
+          <Route path="*" element={<Navigate to="/profile-setup" replace />} />
+        </Routes>
+      </div>
+    );
+  }
 
   const isAdminPage = location.pathname.startsWith('/admin');
 

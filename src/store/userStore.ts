@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface UserState {
+  profileSetupComplete: boolean;
   user: {
     id: string;
     username: string;
@@ -42,6 +43,7 @@ interface UserState {
   } | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  setProfileSetupComplete: (value: boolean) => void;
   login: (userData: any, isAdmin?: boolean) => void;
   logout: () => void;
   updateProfile: (data: Partial<UserState['user']>) => void;
@@ -61,6 +63,7 @@ interface UserState {
 export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
+      profileSetupComplete: false,
       user: null,
       gameProfiles: [],
       joinedMatchIds: [],
@@ -68,6 +71,8 @@ export const useUserStore = create<UserState>()(
       team: null,
       isAuthenticated: false,
       isAdmin: false,
+
+      setProfileSetupComplete: (value) => set({ profileSetupComplete: value }),
 
       login: (userData, isAdmin = false) =>
         set({ user: userData, isAuthenticated: true, isAdmin }),
@@ -207,6 +212,7 @@ export const useUserStore = create<UserState>()(
       name: 'elite-user-v3',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
+        profileSetupComplete: state.profileSetupComplete,
         user: state.user,
         gameProfiles: state.gameProfiles,
         joinedMatchIds: state.joinedMatchIds,
