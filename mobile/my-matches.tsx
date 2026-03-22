@@ -57,6 +57,6 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 },
   emptyTitle: { fontSize: 18, fontWeight: '600', color: Colors.textPrimary },
   emptyText: { fontSize: 15, color: Colors.textSecondary },
-  browseBtn: { marginTop: 8, paddingHorizontal: 24, paddingVertical: 12, backgroundColor: Colors.brandPrimary, borderRadius: 14 },
+  browseBtn: { marginTop: 8, paddingHorizontal: 24, paddingVertical: 10, backgroundColor: Colors.brandPrimary, borderRadius: 999 },
   browseBtnText: { fontSize: 15, fontWeight: '600', color: Colors.white },
 });

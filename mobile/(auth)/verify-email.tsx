@@ -38,10 +38,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
   subtitle: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', lineHeight: 22, paddingHorizontal: 16 },
   btn: {
-    width: '100%', height: 54, backgroundColor: Colors.brandPrimary,
-    borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 8,
+    width: '100%', height: 44, backgroundColor: Colors.brandPrimary,
+    borderRadius: 999, alignItems: 'center', justifyContent: 'center', marginTop: 8,
   },
-  btnText: { fontSize: 17, fontWeight: '600', color: Colors.white },
+  btnText: { fontSize: 15, fontWeight: '600', color: Colors.white },
   ghostBtn: { paddingVertical: 12 },
   ghostText: { fontSize: 15, color: Colors.brandPrimary },
 });

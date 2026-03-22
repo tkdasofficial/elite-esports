@@ -211,17 +211,17 @@ export default function MatchDetails() {
         </section>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 px-4 py-4 bg-app-bg/95 backdrop-blur-md border-t border-app-border z-[60]">
-        <div className="max-w-[768px] mx-auto flex items-center gap-4">
+      <div className="fixed bottom-0 left-0 right-0 px-4 py-3 bg-app-bg/95 backdrop-blur-md border-t border-app-border z-[60]">
+        <div className="max-w-[768px] mx-auto flex items-center gap-3">
           <div>
-            <p className="text-[11px] text-text-muted font-medium uppercase tracking-wide">Entry Fee</p>
-            <p className="text-[22px] font-bold text-text-primary tabular">{match.entry_fee}</p>
+            <p className="text-[10px] text-text-muted font-medium uppercase tracking-wide">Entry Fee</p>
+            <p className="text-[20px] font-bold text-text-primary tabular">{match.entry_fee}</p>
           </div>
           <button
             onClick={handleJoinLeave}
             disabled={!isJoinable || (isFull && !isJoined)}
             className={cn(
-              'flex-1 h-[52px] text-white text-[16px] font-semibold rounded-[14px] transition-opacity active:opacity-75',
+              'flex-1 h-[44px] text-white text-[14px] font-semibold rounded-full transition-opacity active:opacity-75',
               isJoined
                 ? 'bg-brand-live shadow-lg shadow-brand-live/20'
                 : 'bg-brand-success shadow-lg shadow-brand-success/20',

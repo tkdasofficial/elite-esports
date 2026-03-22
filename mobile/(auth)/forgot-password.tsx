@@ -77,13 +77,13 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', marginBottom: 32 },
   form: { width: '100%', gap: 12 },
   input: {
-    height: 52, backgroundColor: Colors.appSurface,
-    borderRadius: 14, paddingHorizontal: 16, fontSize: 17, color: Colors.textPrimary,
+    height: 48, backgroundColor: Colors.appSurface,
+    borderRadius: 14, paddingHorizontal: 16, fontSize: 15, color: Colors.textPrimary,
   },
   error: { fontSize: 13, color: Colors.brandLive },
   btn: {
-    height: 54, backgroundColor: Colors.brandPrimary,
-    borderRadius: 14, alignItems: 'center', justifyContent: 'center',
+    height: 44, backgroundColor: Colors.brandPrimary,
+    borderRadius: 999, alignItems: 'center', justifyContent: 'center',
   },
   disabled: { opacity: 0.4 },
   btnText: { fontSize: 16, fontWeight: '600', color: Colors.white },
