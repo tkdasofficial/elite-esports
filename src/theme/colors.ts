@@ -4,6 +4,7 @@ export const Colors = {
   brandLive: '#FF3B30',
   brandWarning: '#FF9F0A',
   brandSuccess: '#30D158',
+  brandCyan: '#32ADE6',
 
   appBg: '#0a0a0f',
   appDark: '#0f0f1a',

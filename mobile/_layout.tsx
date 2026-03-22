@@ -104,6 +104,7 @@ export default function RootLayout() {
           <Stack.Screen name="help" options={{ headerShown: false }} />
           <Stack.Screen name="about" options={{ headerShown: false }} />
           <Stack.Screen name="blocked-users" options={{ headerShown: false }} />
+          <Stack.Screen name="public-profile/[id]" options={{ headerShown: false }} />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>
