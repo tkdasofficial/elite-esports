@@ -10,7 +10,7 @@ export interface PlatformUser {
   password: string;
   rank: string;
   coins: number;
-  status: 'active' | 'banned';
+  status: 'active' | 'suspended' | 'banned';
   joined: string;
 }
 
@@ -141,6 +141,8 @@ interface PlatformState {
   updatePlatformUser: (id: string, updates: Partial<PlatformUser>) => void;
   banUser: (id: string) => void;
   unbanUser: (id: string) => void;
+  suspendUser: (id: string) => void;
+  unsuspendUser: (id: string) => void;
   adjustCoins: (id: string, delta: number) => void;
   deleteUser: (id: string) => void;
 
@@ -246,6 +248,16 @@ export const usePlatformStore = create<PlatformState>()(
         })),
 
       unbanUser: (id) =>
+        set((s) => ({
+          registeredUsers: s.registeredUsers.map(u => u.id === id ? { ...u, status: 'active' } : u),
+        })),
+
+      suspendUser: (id) =>
+        set((s) => ({
+          registeredUsers: s.registeredUsers.map(u => u.id === id ? { ...u, status: 'suspended' } : u),
+        })),
+
+      unsuspendUser: (id) =>
         set((s) => ({
           registeredUsers: s.registeredUsers.map(u => u.id === id ? { ...u, status: 'active' } : u),
         })),

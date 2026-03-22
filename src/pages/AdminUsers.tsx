@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, User, Ban, CheckCircle2, Coins, Trash2, X, Check, Plus, Minus, ChevronRight } from 'lucide-react';
+import { Search, User, Ban, CheckCircle2, Coins, Trash2, X, Check, Plus, Minus, Shield, ShieldOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '@/src/utils/helpers';
 import { usePlatformStore, PlatformUser } from '@/src/store/platformStore';
@@ -21,7 +21,7 @@ const IOSToast = ({ toast }: { toast: Toast }) => (
 );
 
 export default function AdminUsers() {
-  const { registeredUsers, banUser, unbanUser, adjustCoins, deleteUser } = usePlatformStore();
+  const { registeredUsers, banUser, unbanUser, suspendUser, unsuspendUser, adjustCoins, deleteUser } = usePlatformStore();
   const { updateCoins } = useUserStore();
   const [searchQuery, setSearchQuery]     = useState('');
   const [statusFilter, setStatusFilter]   = useState('all');
@@ -36,13 +36,23 @@ export default function AdminUsers() {
     setTimeout(() => setToast(null), 2500);
   };
 
-  const handleToggleStatus = (user: PlatformUser) => {
-    if (user.status === 'active') {
-      banUser(user.id);
-      showToast(`${user.username} banned`);
-    } else {
+  const handleToggleBan = (user: PlatformUser) => {
+    if (user.status === 'banned') {
       unbanUser(user.id);
       showToast(`${user.username} unbanned`);
+    } else {
+      banUser(user.id);
+      showToast(`${user.username} banned`, false);
+    }
+  };
+
+  const handleToggleSuspend = (user: PlatformUser) => {
+    if (user.status === 'suspended') {
+      unsuspendUser(user.id);
+      showToast(`${user.username} unsuspended`);
+    } else {
+      suspendUser(user.id);
+      showToast(`${user.username} suspended`, false);
     }
   };
 
@@ -66,9 +76,10 @@ export default function AdminUsers() {
   };
 
   const counts = {
-    all: registeredUsers.length,
-    active: registeredUsers.filter(u => u.status === 'active').length,
-    banned: registeredUsers.filter(u => u.status === 'banned').length,
+    all:       registeredUsers.length,
+    active:    registeredUsers.filter(u => u.status === 'active').length,
+    suspended: registeredUsers.filter(u => u.status === 'suspended').length,
+    banned:    registeredUsers.filter(u => u.status === 'banned').length,
   };
 
   const filtered = registeredUsers.filter(u => {
@@ -82,9 +93,10 @@ export default function AdminUsers() {
   const deleteTarget = registeredUsers.find(u => u.id === confirmDeleteId);
 
   const filters = [
-    { value: 'all',    label: `All (${counts.all})` },
-    { value: 'active', label: `Active (${counts.active})` },
-    { value: 'banned', label: `Banned (${counts.banned})` },
+    { value: 'all',       label: `All (${counts.all})` },
+    { value: 'active',    label: `Active (${counts.active})` },
+    { value: 'suspended', label: `Suspended (${counts.suspended})` },
+    { value: 'banned',    label: `Banned (${counts.banned})` },
   ];
 
   return (
@@ -154,18 +166,23 @@ export default function AdminUsers() {
                 <div className="flex items-center gap-3 px-4 py-3.5">
                   <div className={cn(
                     'w-11 h-11 rounded-full flex items-center justify-center shrink-0 font-semibold text-[16px]',
-                    user.status === 'banned' ? 'bg-brand-live/10 text-brand-live' : 'bg-brand-primary/10 text-brand-primary'
+                    user.status === 'banned'    ? 'bg-brand-live/10 text-brand-live' :
+                    user.status === 'suspended' ? 'bg-brand-warning/10 text-brand-warning' :
+                    'bg-brand-primary/10 text-brand-primary'
                   )}>
                     {user.username?.[0]?.toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <p className="text-[15px] font-medium text-text-primary truncate">{user.username}</p>
                       {user.status === 'banned' && (
                         <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-brand-live/10 text-brand-live shrink-0">Banned</span>
                       )}
+                      {user.status === 'suspended' && (
+                        <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full bg-brand-warning/15 text-brand-warning shrink-0">Suspended</span>
+                      )}
                     </div>
-                    <p className="text-[12px] text-text-muted truncate">{user.email}</p>
+                    <p className="text-[12px] text-brand-primary/80 truncate">{user.email}</p>
                     <div className="flex items-center gap-3 mt-0.5">
                       <span className="text-[11px] font-semibold text-brand-primary">{user.rank}</span>
                       <span className="text-[11px] font-semibold text-brand-success">₹{user.coins.toLocaleString()}</span>
@@ -183,15 +200,26 @@ export default function AdminUsers() {
                     <Coins size={14} /> Coins
                   </button>
                   <button
-                    onClick={() => handleToggleStatus(user)}
+                    onClick={() => handleToggleSuspend(user)}
                     className={cn(
                       'flex-1 py-2 rounded-[12px] text-[12px] font-medium transition-opacity active:opacity-70 flex items-center justify-center gap-1.5',
-                      user.status === 'banned'
+                      user.status === 'suspended'
                         ? 'bg-brand-success/10 text-brand-success'
-                        : 'bg-app-elevated text-text-secondary'
+                        : 'bg-brand-warning/10 text-brand-warning'
                     )}
                   >
-                    {user.status === 'banned' ? <><Check size={14} /> Unban</> : <><Ban size={14} /> Ban</>}
+                    {user.status === 'suspended' ? <><ShieldOff size={14} /> Unsuspend</> : <><Shield size={14} /> Suspend</>}
+                  </button>
+                  <button
+                    onClick={() => handleToggleBan(user)}
+                    className={cn(
+                      'py-2 px-3 rounded-[12px] text-[12px] font-medium transition-opacity active:opacity-70 flex items-center justify-center gap-1',
+                      user.status === 'banned'
+                        ? 'bg-brand-success/10 text-brand-success'
+                        : 'bg-brand-live/10 text-brand-live'
+                    )}
+                  >
+                    {user.status === 'banned' ? <Check size={14} /> : <Ban size={14} />}
                   </button>
                   <button
                     onClick={() => setConfirmDeleteId(user.id)}

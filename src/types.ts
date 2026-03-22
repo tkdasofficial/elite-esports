@@ -3,6 +3,7 @@ export type MatchStatus = 'live' | 'upcoming' | 'completed';
 export interface MatchParticipant {
   id: string;
   username: string;
+  email?: string;
   joinedAt: string;
 }
 
