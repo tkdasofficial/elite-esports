@@ -1,0 +1,144 @@
+TASK: Rename App Folder + Force Exact UI/UX Copy from Web to Mobile (React Native)
+
+You are required to strictly transform the existing project to ensure that the mobile (React Native) app EXACTLY matches the web app UI/UX, without redesigning or generating anything new.
+
+---
+
+🚫 STRICT RULES (NO EXCEPTIONS)
+
+1. DO NOT create new pages
+2. DO NOT redesign UI/UX
+3. DO NOT generate new layouts or styles
+4. DO NOT take inspiration — perform exact replication only
+5. DO NOT create duplicate components
+6. DO NOT modify business logic or TypeScript structure
+7. DO NOT remove any required pages
+8. DO NOT leave mismatched UI between web and mobile
+9. DO NOT approximate — must be EXACT MATCH
+
+---
+
+📁 FOLDER OPERATION (MANDATORY)
+
+- Rename root folder:
+  
+  "app" → "mobile"
+
+- Only rename — do NOT create a new folder
+
+- Keep all existing files inside intact
+
+---
+
+🎯 CORE OBJECTIVE
+
+Ensure that:
+
+«The MOBILE APP UI/UX is an EXACT COPY of the WEB APP UI/UX»
+
+This is NOT a redesign or adaptation.
+
+This is a direct visual + structural replication.
+
+---
+
+🔥 CRITICAL INSTRUCTION (MOST IMPORTANT)
+
+For every mobile screen:
+
+- Compare it with the corresponding web page
+- COPY the UI and UX from web
+- APPLY it to the mobile component
+
+---
+
+🔁 IMPLEMENTATION RULE
+
+You MUST:
+
+- Take web UI structure (layout, spacing, alignment)
+- Take web styling (colors, fonts, sizes, positioning)
+- Take web component hierarchy
+- And APPLY them inside React Native components
+
+---
+
+⚠️ COMPONENT HANDLING
+
+- Use existing React Native components ONLY:
+  
+  - "<View>"
+  - "<Text>"
+  - "<Image>"
+  - "<ScrollView>"
+  - "<FlatList>"
+  - "<Pressable>" / "<TouchableOpacity>"
+  - "<TextInput>"
+
+- DO NOT use any HTML tags ("div", "span", etc.)
+
+- DO NOT leave any web component inside mobile code
+
+---
+
+🎨 UI/UX MATCHING (STRICT)
+
+The following MUST match EXACTLY with web:
+
+- Layout structure
+- Component positions
+- Spacing and margins
+- Colors
+- Typography (use closest possible match)
+- Button styles
+- Card designs
+- Alignment and hierarchy
+
+---
+
+❌ WHAT YOU MUST NOT DO
+
+- Do NOT redesign mobile UI differently
+- Do NOT simplify layouts
+- Do NOT skip any UI element
+- Do NOT create "mobile-friendly alternative UI"
+- Do NOT create new styles
+
+---
+
+🧠 LOGIC RULE
+
+- Keep all:
+  - API calls
+  - State logic
+  - TypeScript structure
+
+Only adjust syntax for React Native compatibility if required
+
+---
+
+🧹 CLEANUP
+
+- Remove any incorrect or mismatched mobile UI
+- Remove any auto-generated layouts that do not match web
+- Ensure only accurate UI remains
+
+---
+
+✅ SUCCESS CRITERIA
+
+- Mobile app UI looks IDENTICAL to web app
+- No extra pages created
+- No redesign done
+- No HTML tags used in mobile
+- App runs successfully in Expo
+- Folder renamed correctly to "mobile"
+
+---
+
+⚠️ FINAL COMMAND
+
+Do EXACT COPY of UI/UX from web → mobile components.
+NO creativity. NO changes. ONLY replication.
+
+Follow all rules strictly.
