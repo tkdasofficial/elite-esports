@@ -29,12 +29,12 @@ The platform uses a shared `src/` layer — all Zustand stores, Supabase client,
 - Framer Motion / motion/react (animations)
 
 **Mobile:**
-- Expo SDK 53 + React Native 0.79
+- Expo SDK 54 + React Native 0.79.6
 - expo-router v5 (file-based routing)
 - React Native StyleSheet (uses `src/theme/colors.ts` — no Tailwind)
 - @expo/vector-icons (Ionicons)
-- react-native-reanimated + react-native-gesture-handler
-- react-native-safe-area-context
+- react-native-gesture-handler, react-native-safe-area-context
+- Note: react-native-reanimated v4 conflicts with Expo Go; use RN Animated API instead
 
 **Shared:**
 - Zustand (state management)
@@ -150,7 +150,14 @@ npm run expo  # Expo mobile (QR code for Expo Go)
 - Admin screens guard with `useUserStore().isAdmin` + redirect to `/(auth)/login` or `/(tabs)` if unauthorized
 - Color theme at `src/theme/colors.ts` — `Colors.appBg = #0a0a0f`, `Colors.brandPrimary = #FF6B2B`
 - All admin screens use modals (bottom sheets via `Modal` + `animationType="slide"`) for create/edit
-- `app/_layout.tsx` initializes: fetchMatches, fetchGames, fetchBanners, fetchCampaigns, fetchCategories, fetchSettings on mount
+- `mobile/_layout.tsx` initializes: fetchMatches, fetchGames, fetchBanners, fetchCampaigns, fetchCategories, fetchSettings on mount
+- Auth social providers: Google + Facebook (replaced Apple). Facebook brand color: `#1877F2`
+- Mobile OAuth (Google/Facebook) not available in Expo Go — shows friendly message, email-only for preview builds
+- After sign in on mobile, explicitly call `router.replace('/(tabs)')` for reliable navigation
+- `(tabs)/_layout.tsx` waits for `initialized` from authStore before redirecting to login (prevents flash)
+- `supabase.ts` uses `detectSessionInUrl: typeof window !== 'undefined'` — true for web (OAuth), false for mobile
+- `vite.config.ts` excludes `.local/**` from file watching to prevent Replit state files from triggering reloads
+- `SplashScreen.tsx` uses `useRef` for `onFinish` callback with empty dep array to prevent timer resets on re-render
 
 ## Supabase Tables
 

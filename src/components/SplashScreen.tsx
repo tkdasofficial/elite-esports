@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -8,6 +8,8 @@ type Phase = 'logo' | 'loading' | 'exiting';
 
 export default function SplashScreen({ onFinish }: SplashScreenProps) {
   const [phase, setPhase] = useState<Phase>('logo');
+  const onFinishRef = useRef(onFinish);
+  onFinishRef.current = onFinish;
 
   useEffect(() => {
     const logoTimer = setTimeout(() => {
@@ -15,14 +17,14 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
 
       const exitTimer = setTimeout(() => {
         setPhase('exiting');
-        setTimeout(onFinish, 380);
+        setTimeout(() => onFinishRef.current(), 380);
       }, 1200);
 
       return () => clearTimeout(exitTimer);
     }, 2000);
 
     return () => clearTimeout(logoTimer);
-  }, [onFinish]);
+  }, []);
 
   return (
     <div

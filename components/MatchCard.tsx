@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
+import { useRef } from 'react';
 import { router } from 'expo-router';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { Match } from '@/src/types';
 import { Colors } from '@/src/theme/colors';
 
@@ -18,12 +18,10 @@ export function MatchCard({ match }: Props) {
   const isFull = slotsLeft <= 0;
   const fillPct = Math.min((match.slots_filled / match.slots_total) * 100, 100);
   const cfg = statusConfig[match.status];
-  const scale = useSharedValue(1);
+  const scale = useRef(new Animated.Value(1)).current;
 
-  const animStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
-
-  const onPressIn = () => { scale.value = withTiming(0.975, { duration: 80 }); };
-  const onPressOut = () => { scale.value = withTiming(1, { duration: 150 }); };
+  const onPressIn = () => Animated.timing(scale, { toValue: 0.975, duration: 80, useNativeDriver: true }).start();
+  const onPressOut = () => Animated.timing(scale, { toValue: 1, duration: 150, useNativeDriver: true }).start();
 
   return (
     <TouchableOpacity
@@ -32,7 +30,7 @@ export function MatchCard({ match }: Props) {
       onPressOut={onPressOut}
       activeOpacity={1}
     >
-      <Animated.View style={[styles.card, animStyle]}>
+      <Animated.View style={[styles.card, { transform: [{ scale }] }]}>
         {/* Banner */}
         <View style={styles.bannerContainer}>
           <Image

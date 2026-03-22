@@ -1,5 +1,5 @@
 import { Tabs, Redirect } from 'expo-router';
-import { View, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/src/store/authStore';
@@ -17,9 +17,17 @@ function TabIcon({ name, focused, library = 'Ionicons' }: { name: string; focuse
 }
 
 export default function TabLayout() {
-  const { session } = useAuthStore();
+  const { session, initialized } = useAuthStore();
   const { isAdmin } = useUserStore();
   const insets = useSafeAreaInsets();
+
+  if (!initialized) {
+    return (
+      <View style={loadingStyles.container}>
+        <ActivityIndicator size="large" color={Colors.brandPrimary} />
+      </View>
+    );
+  }
 
   if (!session) return <Redirect href="/(auth)/login" />;
   if (isAdmin) return <Redirect href="/admin" />;
@@ -82,4 +90,11 @@ export default function TabLayout() {
   );
 }
 
-const styles = StyleSheet.create({});
+const loadingStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.appBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

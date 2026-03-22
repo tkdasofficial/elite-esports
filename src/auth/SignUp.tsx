@@ -14,9 +14,9 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const AppleIcon = () => (
+const FacebookIcon = () => (
   <svg width="21" height="21" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.7 9.05 7.4c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 3.99zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
   </svg>
 );
 
@@ -37,7 +37,7 @@ export default function SignUp() {
   const [password, setPassword]           = useState('');
   const [showPw, setShowPw]               = useState(false);
   const [loading, setLoading]             = useState(false);
-  const [socialLoading, setSocialLoading] = useState<'google' | 'apple' | null>(null);
+  const [socialLoading, setSocialLoading] = useState<'google' | 'facebook' | null>(null);
   const [error, setError]                 = useState('');
   const navigate = useNavigate();
 
@@ -72,9 +72,9 @@ export default function SignUp() {
     if (err) { setError(err.message); setSocialLoading(null); }
   };
 
-  const handleApple = async () => {
-    setSocialLoading('apple'); setError('');
-    const { error: err } = await supabase.auth.signInWithOAuth({ provider: 'apple', options: { redirectTo: `${window.location.origin}/` } });
+  const handleFacebook = async () => {
+    setSocialLoading('facebook'); setError('');
+    const { error: err } = await supabase.auth.signInWithOAuth({ provider: 'facebook', options: { redirectTo: `${window.location.origin}/` } });
     if (err) { setError(err.message); setSocialLoading(null); }
   };
 
@@ -82,7 +82,6 @@ export default function SignUp() {
 
   return (
     <div className="min-h-screen bg-app-bg flex flex-col select-none">
-      {/* Top nav */}
       <div className="h-[52px] px-2 flex items-center flex-shrink-0">
         <AnimatePresence>
           {showEmail && (
@@ -101,9 +100,7 @@ export default function SignUp() {
         </AnimatePresence>
       </div>
 
-      {/* Content */}
       <div className="flex-1 flex flex-col px-6 overflow-y-auto scrollable-content">
-        {/* Brand */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -116,12 +113,11 @@ export default function SignUp() {
           <h1 className="text-[30px] font-bold text-text-primary tracking-[-0.8px] mb-1">
             {showEmail ? 'Create Account' : 'Join Elite'}
           </h1>
-          <p className="text-[15px] text-text-secondary">
-            {showEmail ? 'Enter your email and a password' : 'The world\'s premier gaming platform'}
+          <p className="text-[15px] text-text-secondary text-center">
+            {showEmail ? 'Enter your email and a password' : "The world's premier gaming platform"}
           </p>
         </motion.div>
 
-        {/* Auth area */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -138,7 +134,6 @@ export default function SignUp() {
                 transition={{ duration: 0.2 }}
                 className="space-y-3"
               >
-                {/* Google */}
                 <button
                   onClick={handleGoogle}
                   disabled={busy}
@@ -150,19 +145,17 @@ export default function SignUp() {
                   <span className="text-[16px] font-semibold text-gray-900">Continue with Google</span>
                 </button>
 
-                {/* Apple */}
                 <button
-                  onClick={handleApple}
+                  onClick={handleFacebook}
                   disabled={busy}
-                  className="relative w-full h-[54px] bg-[#1C1C1E] border border-white/10 rounded-[14px] flex items-center justify-center active:scale-[0.98] transition-transform disabled:opacity-50"
+                  className="relative w-full h-[54px] bg-[#1877F2] rounded-[14px] flex items-center justify-center active:scale-[0.98] transition-transform disabled:opacity-50"
                 >
-                  <span className="absolute left-[18px] flex items-center">
-                    {socialLoading === 'apple' ? <Spinner /> : <AppleIcon />}
+                  <span className="absolute left-[18px] flex items-center text-white">
+                    {socialLoading === 'facebook' ? <Spinner /> : <FacebookIcon />}
                   </span>
-                  <span className="text-[16px] font-semibold text-white">Continue with Apple</span>
+                  <span className="text-[16px] font-semibold text-white">Continue with Facebook</span>
                 </button>
 
-                {/* Email */}
                 <button
                   onClick={() => setShowEmail(true)}
                   disabled={busy}
@@ -174,14 +167,12 @@ export default function SignUp() {
                   <span className="text-[16px] font-semibold text-text-primary">Continue with Email</span>
                 </button>
 
-                {/* Divider */}
                 <div className="flex items-center gap-3 py-1">
                   <div className="flex-1 h-px bg-app-border" />
                   <span className="text-[12px] text-text-muted">or</span>
                   <div className="flex-1 h-px bg-app-border" />
                 </div>
 
-                {/* Sign in link */}
                 <Link
                   to="/login"
                   className="block w-full h-[54px] bg-app-elevated border border-white/[0.08] rounded-[14px] flex items-center justify-center active:scale-[0.98] transition-transform"
@@ -192,7 +183,6 @@ export default function SignUp() {
                 </Link>
               </motion.div>
             ) : (
-              /* Email form */
               <motion.div
                 key="email-form"
                 initial={{ opacity: 0, y: 12 }}
@@ -201,7 +191,6 @@ export default function SignUp() {
                 transition={{ duration: 0.22, ease: [0.25, 0.46, 0.45, 0.94] }}
               >
                 <form onSubmit={handleEmailSubmit} className="space-y-3">
-                  {/* iOS grouped input */}
                   <div className="bg-app-surface rounded-[14px] overflow-hidden divide-y divide-[rgba(84,84,88,0.36)]">
                     <div className="flex items-center h-[52px] px-4">
                       <input
@@ -235,12 +224,10 @@ export default function SignUp() {
                     </div>
                   </div>
 
-                  {/* Hint */}
                   <p className="text-[12px] text-text-muted px-1">
                     Minimum 6 characters. Your profile is set up after sign in.
                   </p>
 
-                  {/* Error */}
                   {error && (
                     <motion.p
                       initial={{ opacity: 0, y: -4 }}
@@ -251,7 +238,6 @@ export default function SignUp() {
                     </motion.p>
                   )}
 
-                  {/* CTA */}
                   <button
                     type="submit"
                     disabled={loading}
@@ -271,7 +257,6 @@ export default function SignUp() {
         </motion.div>
       </div>
 
-      {/* Legal */}
       <p className="text-center text-[12px] text-text-faint px-6 pb-8 pt-4 leading-relaxed flex-shrink-0">
         By continuing you agree to our{' '}
         <Link to="/terms" className="text-text-muted">Terms of Service</Link>

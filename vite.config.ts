@@ -33,6 +33,9 @@ export default defineConfig(({mode}) => {
       headers: {
         'Cache-Control': 'no-store',
       },
+      watch: {
+        ignored: ['**/.local/**', '**/node_modules/**'],
+      },
     },
     preview: {
       host: '0.0.0.0',
