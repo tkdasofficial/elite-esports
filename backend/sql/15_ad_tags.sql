@@ -2,9 +2,10 @@
 -- 15_ad_tags.sql
 -- Ad Tag management: HTML, JS, and URL-based ad code snippets
 -- Admins manage tags via the panel; the app renders them live.
--- Run AFTER 14_admin_access.sql
+-- Safe to re-run: uses IF NOT EXISTS / DROP IF EXISTS / OR REPLACE
 -- ============================================================
 
+-- ── Table ─────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.ad_tags (
   id          UUID        PRIMARY KEY DEFAULT uuid_generate_v4(),
   name        TEXT        NOT NULL,
@@ -22,19 +23,34 @@ CREATE TABLE IF NOT EXISTS public.ad_tags (
   updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Auto-update updated_at
+-- ── Auto-update updated_at trigger function ───────────────────
+CREATE OR REPLACE FUNCTION update_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS ad_tags_updated_at ON public.ad_tags;
 CREATE TRIGGER ad_tags_updated_at
   BEFORE UPDATE ON public.ad_tags
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- ── Indexes ───────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_ad_tags_active   ON public.ad_tags (is_active);
 CREATE INDEX IF NOT EXISTS idx_ad_tags_position ON public.ad_tags (position);
 CREATE INDEX IF NOT EXISTS idx_ad_tags_priority ON public.ad_tags (priority DESC);
 
--- ── Row Level Security ─────────────────────────────────────────
+-- ── Row Level Security ────────────────────────────────────────
 ALTER TABLE public.ad_tags ENABLE ROW LEVEL SECURITY;
 
--- Anyone (including unauthenticated) can read active tags for rendering
+DROP POLICY IF EXISTS "ad_tags_select_active" ON public.ad_tags;
+DROP POLICY IF EXISTS "ad_tags_admin_insert"  ON public.ad_tags;
+DROP POLICY IF EXISTS "ad_tags_admin_update"  ON public.ad_tags;
+DROP POLICY IF EXISTS "ad_tags_admin_delete"  ON public.ad_tags;
+
+-- Public reads active tags; admins read all (including inactive)
 CREATE POLICY "ad_tags_select_active"
   ON public.ad_tags FOR SELECT
   USING (
@@ -42,14 +58,14 @@ CREATE POLICY "ad_tags_select_active"
     OR (SELECT is_admin FROM public.profiles WHERE id = auth.uid())
   );
 
--- Only admins can insert new tags
+-- Only admins can create tags
 CREATE POLICY "ad_tags_admin_insert"
   ON public.ad_tags FOR INSERT
   WITH CHECK (
     (SELECT is_admin FROM public.profiles WHERE id = auth.uid())
   );
 
--- Only admins can update tags
+-- Only admins can edit tags
 CREATE POLICY "ad_tags_admin_update"
   ON public.ad_tags FOR UPDATE
   USING (
