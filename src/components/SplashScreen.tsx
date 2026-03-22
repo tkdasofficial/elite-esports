@@ -10,31 +10,18 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
   const [phase, setPhase] = useState<Phase>('logo');
 
   useEffect(() => {
-    const LOGO_DURATION = 1000;
-    const LOADING_DURATION = 1800;
-    const POLL_INTERVAL = 300;
-
-    let pollCount = 0;
-    let pollTimer: ReturnType<typeof setInterval>;
-
     const logoTimer = setTimeout(() => {
       setPhase('loading');
 
-      pollTimer = setInterval(() => {
-        pollCount++;
-        const ready = document.getElementById('root')?.children.length > 0;
-        if (ready || pollCount >= Math.floor(LOADING_DURATION / POLL_INTERVAL)) {
-          clearInterval(pollTimer);
-          setPhase('exiting');
-          setTimeout(onFinish, 400);
-        }
-      }, POLL_INTERVAL);
-    }, LOGO_DURATION);
+      const exitTimer = setTimeout(() => {
+        setPhase('exiting');
+        setTimeout(onFinish, 380);
+      }, 1200);
 
-    return () => {
-      clearTimeout(logoTimer);
-      clearInterval(pollTimer);
-    };
+      return () => clearTimeout(exitTimer);
+    }, 2000);
+
+    return () => clearTimeout(logoTimer);
   }, [onFinish]);
 
   return (
@@ -44,58 +31,78 @@ export default function SplashScreen({ onFinish }: SplashScreenProps) {
         inset: 0,
         backgroundColor: '#000000',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 9999,
-        transition: 'opacity 0.4s ease',
         opacity: phase === 'exiting' ? 0 : 1,
+        transition: 'opacity 0.38s ease',
       }}
     >
-      <img
-        src="/logo.png"
-        alt="Elite Esports"
-        style={{
-          width: '70px',
-          height: '70px',
-          objectFit: 'contain',
-          borderRadius: '16px',
-        }}
-      />
-
-      <div
-        style={{
-          marginTop: '40px',
-          transition: 'opacity 0.5s ease',
-          opacity: phase === 'loading' ? 1 : 0,
-        }}
-      >
-        <svg
-          width="36"
-          height="36"
-          viewBox="0 0 36 36"
-          style={{ animation: phase === 'loading' ? 'splash-spin 0.9s linear infinite' : 'none' }}
+      <div style={{ position: 'relative', width: 72, height: 72 }}>
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: phase === 'logo' ? 1 : 0,
+            transform: phase === 'logo' ? 'scale(1)' : 'scale(0.82)',
+            transition: 'opacity 0.32s ease, transform 0.32s ease',
+          }}
         >
-          <circle
-            cx="18"
-            cy="18"
-            r="14"
+          <svg
+            width="48"
+            height="76"
+            viewBox="0 0 56 88"
             fill="none"
-            stroke="#1a1a1a"
-            strokeWidth="3"
-          />
-          <circle
-            cx="18"
-            cy="18"
-            r="14"
-            fill="none"
-            stroke="#FF4500"
-            strokeWidth="3"
-            strokeLinecap="round"
-            strokeDasharray="22 66"
-            strokeDashoffset="0"
-          />
-        </svg>
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <defs>
+              <linearGradient id="bolt-grad" x1="40" y1="3" x2="16" y2="85" gradientUnits="userSpaceOnUse">
+                <stop offset="0%" stopColor="#FF6B35" />
+                <stop offset="55%" stopColor="#FF4500" />
+                <stop offset="100%" stopColor="#CC3700" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M 40 3 L 6 52 L 24 52 L 14 85 L 50 36 L 32 36 Z"
+              fill="url(#bolt-grad)"
+            />
+          </svg>
+        </div>
+
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: phase === 'loading' ? 1 : 0,
+            transition: 'opacity 0.32s ease',
+          }}
+        >
+          <svg
+            width="44"
+            height="44"
+            viewBox="0 0 44 44"
+            style={{ animation: phase === 'loading' ? 'splash-spin 0.85s linear infinite' : 'none' }}
+          >
+            <circle cx="22" cy="22" r="18" fill="none" stroke="#1a1a1a" strokeWidth="3.5" />
+            <circle
+              cx="22"
+              cy="22"
+              r="18"
+              fill="none"
+              stroke="#FF4500"
+              strokeWidth="3.5"
+              strokeLinecap="round"
+              strokeDasharray="28 84"
+              strokeDashoffset="0"
+            />
+          </svg>
+        </div>
       </div>
 
       <style>{`
