@@ -49,13 +49,6 @@ CREATE POLICY "transactions_admin_delete"
     (SELECT is_admin FROM public.profiles WHERE id = auth.uid())
   );
 
--- ── GAME PROFILES: Admin can read all game profiles ──────────
-CREATE POLICY "game_profiles_admin_select"
-  ON public.game_profiles FOR SELECT
-  USING (
-    (SELECT is_admin FROM public.profiles WHERE id = auth.uid())
-  );
-
 -- ── GAME PROFILES: Admin can update/delete any game profile ──
 CREATE POLICY "game_profiles_admin_update"
   ON public.game_profiles FOR UPDATE
@@ -87,6 +80,9 @@ CREATE POLICY "team_members_admin_all"
   ON public.team_members FOR ALL
   USING (
     (SELECT is_admin FROM public.profiles WHERE id = auth.uid())
+  )
+  WITH CHECK (
+    (SELECT is_admin FROM public.profiles WHERE id = auth.uid())
   );
 
 -- ── TEAMS: Admin can delete any team ─────────────────────────
@@ -110,19 +106,9 @@ CREATE POLICY "notifications_admin_delete"
     (SELECT is_admin FROM public.profiles WHERE id = auth.uid())
   );
 
--- ── USER STATUS COLUMN ────────────────────────────────────────
--- Add status column to profiles if not already present.
--- Values: 'active' | 'suspended' | 'banned'
-ALTER TABLE public.profiles
-  ADD COLUMN IF NOT EXISTS account_status TEXT NOT NULL DEFAULT 'active'
-    CHECK (account_status IN ('active', 'suspended', 'banned'));
-
--- Index for fast status filtering
-CREATE INDEX IF NOT EXISTS idx_profiles_account_status
-  ON public.profiles (account_status);
-
 -- ── FUNCTION: Admin set user status ──────────────────────────
--- Call: SELECT admin_set_user_status('<user_uuid>', 'suspended');
+-- Updates the existing 'status' column on profiles.
+-- Call: SELECT admin_set_user_status('<user_uuid>', 'banned');
 CREATE OR REPLACE FUNCTION public.admin_set_user_status(
   target_user_id UUID,
   new_status      TEXT
@@ -138,12 +124,12 @@ BEGIN
     RAISE EXCEPTION 'Access denied: admin only';
   END IF;
 
-  IF new_status NOT IN ('active', 'suspended', 'banned') THEN
-    RAISE EXCEPTION 'Invalid status: %', new_status;
+  IF new_status NOT IN ('active', 'inactive', 'banned') THEN
+    RAISE EXCEPTION 'Invalid status: %. Must be active, inactive, or banned.', new_status;
   END IF;
 
   UPDATE public.profiles
-    SET account_status = new_status
+    SET status = new_status
   WHERE id = target_user_id;
 END;
 $$;
@@ -179,11 +165,11 @@ CREATE OR REPLACE VIEW public.admin_users_view AS
   SELECT
     p.id,
     p.username,
-    p.full_name,
     p.rank,
     p.coins,
+    p.bio,
+    p.status,
     p.is_admin,
-    p.account_status,
     p.created_at,
     u.email
   FROM public.profiles p
@@ -212,15 +198,15 @@ ON CONFLICT (id) DO UPDATE
 -- ── FUNCTION: Admin list all users with emails ────────────────
 CREATE OR REPLACE FUNCTION public.admin_list_users()
 RETURNS TABLE (
-  id             UUID,
-  username       TEXT,
-  full_name      TEXT,
-  email          TEXT,
-  rank           TEXT,
-  coins          INTEGER,
-  is_admin       BOOLEAN,
-  account_status TEXT,
-  created_at     TIMESTAMPTZ
+  id         UUID,
+  username   TEXT,
+  email      TEXT,
+  rank       TEXT,
+  coins      INTEGER,
+  bio        TEXT,
+  status     TEXT,
+  is_admin   BOOLEAN,
+  created_at TIMESTAMPTZ
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -235,12 +221,12 @@ BEGIN
     SELECT
       p.id,
       p.username,
-      p.full_name,
       u.email,
       p.rank,
       p.coins,
+      p.bio,
+      p.status,
       p.is_admin,
-      p.account_status,
       p.created_at
     FROM public.profiles p
     JOIN auth.users       u ON u.id = p.id
