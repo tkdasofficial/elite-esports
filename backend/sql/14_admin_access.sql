@@ -196,6 +196,19 @@ REVOKE ALL ON public.admin_users_view FROM anon, authenticated;
 GRANT  SELECT ON public.admin_users_view
   TO authenticated;   -- RLS on profiles still gates it via is_admin check
 
+-- ── SEED: Hardcoded admin user ────────────────────────────────
+-- Grants full admin privileges to avzio@outlook.com (UID: 87a33209-b121-42fc-a735-37fae84acbf4)
+INSERT INTO public.profiles (id, email, username, is_admin)
+VALUES (
+  '87a33209-b121-42fc-a735-37fae84acbf4',
+  'avzio@outlook.com',
+  'avzio',
+  TRUE
+)
+ON CONFLICT (id) DO UPDATE
+  SET is_admin = TRUE,
+      email    = EXCLUDED.email;
+
 -- ── FUNCTION: Admin list all users with emails ────────────────
 CREATE OR REPLACE FUNCTION public.admin_list_users()
 RETURNS TABLE (
