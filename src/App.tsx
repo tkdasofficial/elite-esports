@@ -6,7 +6,33 @@ import { AppRouter } from './routes/AppRouter';
 import { useCampaignStore } from './store/campaignStore';
 import { useAdEngineStore } from './store/adEngineStore';
 import { useAuthStore } from './store/authStore';
+import { useUserStore } from './store/userStore';
 import { supabase } from './lib/supabase';
+import type { Session } from '@supabase/supabase-js';
+
+async function loadProfile(session: Session, loginUser: ReturnType<typeof useUserStore>['login']) {
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('id, username, email, avatar, coins, rank, bio, phone, is_admin, status')
+    .eq('id', session.user.id)
+    .single();
+
+  if (profile) {
+    loginUser(
+      {
+        id: profile.id,
+        username: profile.username ?? '',
+        email: profile.email ?? session.user.email ?? '',
+        avatar: profile.avatar ?? '',
+        coins: profile.coins ?? 0,
+        rank: profile.rank ?? 'Bronze',
+        bio: profile.bio ?? '',
+        phone: profile.phone ?? '',
+      },
+      profile.is_admin === true,
+    );
+  }
+}
 
 export default function App() {
   // Skip splash for public profile routes (/@username)
@@ -14,17 +40,26 @@ export default function App() {
   const [showSplash, setShowSplash] = useState(!isPublicProfileRoute);
 
   const { session, setSession, setInitialized } = useAuthStore();
+  const { login: loginUser, logout: logoutUser } = useUserStore();
   const { shouldShowWelcomeAd, recordWelcomeAd, shouldShowTimerAd, recordTimerAd } = useCampaignStore();
   const { activeCampaign, triggerAd, completeAd } = useAdEngineStore();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    // On mount: restore existing session and load profile
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       setSession(session);
+      if (session) await loadProfile(session, loginUser);
       setInitialized(true);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    // On login / logout / token refresh
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setSession(session);
+      if (session) {
+        await loadProfile(session, loginUser);
+      } else {
+        logoutUser();
+      }
     });
 
     return () => subscription.unsubscribe();
