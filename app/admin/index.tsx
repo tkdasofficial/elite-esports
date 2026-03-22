@@ -51,6 +51,14 @@ export default function AdminDashboard() {
     { icon: 'people', label: 'Users', sub: 'Manage player accounts', route: '/admin/users', color: Colors.brandPrimary },
     { icon: 'cash', label: 'Economy', sub: 'Deposits & withdrawals', route: '/admin/economy', color: Colors.brandSuccess },
     { icon: 'notifications', label: 'Notifications', sub: 'Send push notifications', route: '/admin/notifications', color: Colors.brandLive },
+    { icon: 'game-controller', label: 'Games', sub: 'Manage game catalog', route: '/admin/games', color: Colors.brandPrimary },
+    { icon: 'megaphone', label: 'Campaigns', sub: 'Manage ad campaigns', route: '/admin/campaign', color: Colors.brandWarning },
+    { icon: 'pricetag', label: 'Ad Tags', sub: 'Manage ad tag codes', route: '/admin/tags', color: Colors.brandSuccess },
+    { icon: 'headset', label: 'Support', sub: 'Handle support tickets', route: '/admin/support', color: Colors.brandLive },
+    { icon: 'book', label: 'Rules', sub: 'Manage game rules', route: '/admin/rules', color: Colors.brandPrimary },
+    { icon: 'share-social', label: 'Referrals', sub: 'View referral history', route: '/admin/referrals', color: Colors.brandSuccess },
+    { icon: 'grid', label: 'Categories', sub: 'Manage game categories', route: '/admin/categories', color: Colors.brandWarning },
+    { icon: 'settings', label: 'Settings', sub: 'Platform configuration', route: '/admin/settings', color: Colors.textSecondary },
   ];
 
   const handleSignOut = () => {

@@ -8,6 +8,10 @@ import { useAuthStore } from '@/src/store/authStore';
 import { useUserStore } from '@/src/store/userStore';
 import { useMatchStore } from '@/src/store/matchStore';
 import { useGameStore } from '@/src/store/gameStore';
+import { useBannerStore } from '@/src/store/bannerStore';
+import { useCampaignStore } from '@/src/store/campaignStore';
+import { useCategoryStore } from '@/src/store/categoryStore';
+import { usePlatformStore } from '@/src/store/platformStore';
 import { StyleSheet } from 'react-native';
 
 export default function RootLayout() {
@@ -15,8 +19,19 @@ export default function RootLayout() {
   const { fetchUserData, login, logout } = useUserStore();
   const { fetchMatches } = useMatchStore();
   const fetchGames = useGameStore(s => s.fetchGames);
+  const fetchBanners = useBannerStore(s => s.fetchBanners);
+  const fetchCampaigns = useCampaignStore(s => s.fetchCampaigns);
+  const fetchCategories = useCategoryStore(s => s.fetchCategories);
+  const fetchSettings = usePlatformStore(s => s.fetchSettings);
 
   useEffect(() => {
+    fetchMatches();
+    fetchGames();
+    fetchBanners();
+    fetchCampaigns();
+    fetchCategories();
+    fetchSettings();
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setInitialized(true);
@@ -35,9 +50,6 @@ export default function RootLayout() {
       }
     });
 
-    fetchMatches();
-    fetchGames();
-
     return () => subscription.unsubscribe();
   }, []);
 
@@ -51,7 +63,8 @@ export default function RootLayout() {
     if (profile) {
       const isAdmin =
         email === process.env.EXPO_PUBLIC_ADMIN_EMAIL ||
-        profile.role === 'admin';
+        profile.role === 'admin' ||
+        profile.is_admin === true;
       login({
         id: profile.id,
         username: profile.username ?? '',
@@ -90,6 +103,7 @@ export default function RootLayout() {
           <Stack.Screen name="privacy" options={{ headerShown: false }} />
           <Stack.Screen name="help" options={{ headerShown: false }} />
           <Stack.Screen name="about" options={{ headerShown: false }} />
+          <Stack.Screen name="blocked-users" options={{ headerShown: false }} />
         </Stack>
       </SafeAreaProvider>
     </GestureHandlerRootView>

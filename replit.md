@@ -1,137 +1,168 @@
-# Elite Esports — Mobile App
+# Elite Esports Platform
 
-A premium competitive mobile gaming platform built with Expo + React Native for Android & iOS. Features real-money tournaments, leaderboards, wallet management, and admin controls.
+A premium competitive gaming platform with two codebases:
+1. **Web app** — Vite + React (SPA, runs on port 5000 via `npm run dev`)
+2. **Mobile app** — Expo + React Native (in `app/` directory, shares all `src/` stores/logic)
 
 ## Architecture
 
-This is a **React Native / Expo** mobile-first app. The primary application is the Expo app in `app/`, served via Metro's web bundler on port 5000 for preview. The `src/` directory contains shared stores, the Supabase client, theme, and TypeScript types used by all screens.
+The platform uses a shared `src/` layer — all Zustand stores, Supabase client, theme colors, and TypeScript types are shared between both the Vite web app and the Expo mobile app.
 
-## Tech Stack — Mobile (Expo)
+### Web App (Vite/React)
+- Entry: `index.html` → `src/main.tsx` → `src/App.tsx`
+- Router: `src/routes/AppRouter.tsx` (React Router v7)
+- Pages are organized into:
+  - `src/auth/` — Login, SignUp, ForgotPassword, ResetPassword, VerifyEmail
+  - `src/app/` — all user-facing pages (Home, Wallet, Profile, etc.)
+  - `src/admin/` — all admin panel pages (AdminDashboard, AdminMatches, etc.)
 
-- **Framework**: Expo SDK 53 + React Native 0.79
-- **Navigation**: expo-router v5 (file-based routing, `app/` directory)
-- **Styling**: React Native StyleSheet (no Tailwind — uses `src/theme/colors.ts`)
-- **Icons**: @expo/vector-icons (Ionicons, Feather)
-- **Animations**: react-native-reanimated + react-native-gesture-handler
-- **State Management**: Zustand (same stores as web app — `src/store/`)
-- **Backend/Auth/DB**: Supabase with AsyncStorage session persistence
-- **SafeArea**: react-native-safe-area-context
+### Mobile App (Expo)
+- Entry: `app/` directory via expo-router (file-based routing)
+- Root layout: `app/_layout.tsx` (Supabase auth listener, global store initialization)
+
+## Tech Stack
+
+**Web:**
+- Vite + React 18 + TypeScript
+- React Router v7 (SPA mode)
+- Tailwind CSS + custom variables
+- Framer Motion / motion/react (animations)
+
+**Mobile:**
+- Expo SDK 53 + React Native 0.79
+- expo-router v5 (file-based routing)
+- React Native StyleSheet (uses `src/theme/colors.ts` — no Tailwind)
+- @expo/vector-icons (Ionicons)
+- react-native-reanimated + react-native-gesture-handler
+- react-native-safe-area-context
+
+**Shared:**
+- Zustand (state management)
+- Supabase (auth, database, real-time)
+- TypeScript
 
 ## Project Structure
 
 ```
 /
-├── app/                     # Expo mobile screens (expo-router)
-│   ├── _layout.tsx          # Root layout (auth listener, providers)
-│   ├── index.tsx            # Auth redirect entry point
-│   ├── (auth)/              # Login, signup, forgot-password, etc.
-│   ├── (tabs)/              # Home, Live, Leaderboard, Wallet, Profile
-│   ├── match/[id].tsx       # Match details + join/leave
-│   ├── admin/               # Admin panel (dashboard, matches, users, economy)
-│   ├── settings.tsx
-│   ├── edit-profile.tsx
-│   ├── add-game.tsx
-│   ├── edit-game/[id].tsx
-│   ├── notifications.tsx
-│   ├── tournaments.tsx
-│   ├── transactions.tsx
-│   ├── my-matches.tsx
-│   ├── my-team.tsx
-│   ├── terms.tsx / privacy.tsx / help.tsx / about.tsx
-│   └── profile-setup.tsx
+├── app/                       # Expo mobile screens (expo-router)
+│   ├── _layout.tsx            # Root layout — auth, store init
+│   ├── index.tsx              # Auth redirect entry
+│   ├── (auth)/                # Login, Signup, ForgotPassword, ResetPassword, VerifyEmail
+│   ├── (tabs)/                # Home, Live, Leaderboard, Wallet, Profile
+│   ├── match/[id].tsx         # Match detail + join/leave
+│   ├── notifications.tsx      # Notifications list
+│   ├── notifications/[id].tsx # Notification detail
+│   ├── blocked-users.tsx      # Blocked users management
+│   ├── my-matches.tsx         # User's joined tournaments
+│   ├── my-team.tsx            # Team & game profiles
+│   ├── settings.tsx           # App settings
+│   ├── edit-profile.tsx       # Edit profile
+│   ├── add-game.tsx           # Link game IGN/UID
+│   ├── edit-game/[id].tsx     # Edit game profile
+│   ├── tournaments.tsx        # All tournaments browser
+│   ├── transactions.tsx       # Full transaction history
+│   ├── profile-setup.tsx      # New user onboarding
+│   ├── terms.tsx              # Terms & Conditions
+│   ├── privacy.tsx            # Privacy Policy
+│   ├── help.tsx               # Help Center
+│   ├── about.tsx              # About page
+│   └── admin/                 # Admin panel
+│       ├── _layout.tsx        # Admin auth guard
+│       ├── index.tsx          # Admin dashboard (stats + nav)
+│       ├── matches.tsx        # Manage tournaments
+│       ├── match-form.tsx     # Create/edit tournament
+│       ├── participants.tsx   # Match participants + winner selection
+│       ├── users.tsx          # User management + coin adjustment
+│       ├── economy.tsx        # Approve deposits & withdrawals
+│       ├── games.tsx          # Game catalog management
+│       ├── campaign.tsx       # Ad campaigns (Image/Video/Banner)
+│       ├── tags.tsx           # Ad tags/codes
+│       ├── settings.tsx       # Platform settings
+│       ├── notifications.tsx  # Send broadcast notifications
+│       ├── support.tsx        # Support tickets
+│       ├── rules.tsx          # Game rules
+│       ├── referrals.tsx      # Referral history
+│       └── categories.tsx     # Game categories
 │
-├── components/              # Shared React Native components
-│   ├── MatchCard.tsx        # Tournament card with progress bar
-│   └── LetterAvatar.tsx     # Letter-based avatar generator
+├── components/                # Shared React Native components
+│   ├── MatchCard.tsx
+│   └── LetterAvatar.tsx
 │
 ├── src/
-│   ├── store/               # Zustand stores (shared between web & mobile)
-│   │   ├── authStore.ts     # Auth session state
-│   │   ├── userStore.ts     # User profile, coins, transactions, game profiles
-│   │   ├── matchStore.ts    # Tournament data with real-time Supabase
-│   │   ├── gameStore.ts     # Available games list
-│   │   └── platformStore.ts # Platform settings (UPI ID, etc.)
+│   ├── auth/                  # Web auth pages (moved from src/pages/)
+│   ├── app/                   # Web user pages (moved from src/pages/)
+│   ├── admin/                 # Web admin pages (moved from src/pages/)
+│   ├── routes/
+│   │   └── AppRouter.tsx      # Web SPA router
+│   ├── store/                 # Zustand stores (shared web + mobile)
+│   │   ├── authStore.ts
+│   │   ├── userStore.ts
+│   │   ├── matchStore.ts
+│   │   ├── gameStore.ts
+│   │   ├── platformStore.ts   # Settings, rules, support tickets
+│   │   ├── notificationStore.ts
+│   │   ├── bannerStore.ts
+│   │   ├── campaignStore.ts
+│   │   ├── categoryStore.ts
+│   │   ├── adTagStore.ts
+│   │   └── adEngineStore.ts
+│   ├── components/            # Shared web components
 │   ├── lib/
-│   │   └── supabase.ts      # Supabase client with AsyncStorage
+│   │   └── supabase.ts
 │   ├── theme/
-│   │   └── colors.ts        # Dark mode color palette
-│   └── types.ts             # TypeScript types (Match, User, Game, etc.)
+│   │   └── colors.ts          # Color palette (Colors.brandPrimary = #FF6B2B)
+│   └── types.ts
 │
-├── assets/                  # App icons & splash screens
-├── app.json                 # Expo config
-├── babel.config.js          # Expo babel preset + reanimated plugin
-├── metro.config.js          # Metro bundler config
-└── eas.json                 # EAS Build config (Android/iOS)
+├── index.html                 # Vite web entry
+├── vite.config.ts
+├── app.json                   # Expo config
+├── metro.config.js
+├── babel.config.js
+└── eas.json
 ```
 
 ## Environment Variables
 
-All env vars use `EXPO_PUBLIC_` prefix for mobile:
-
-- `EXPO_PUBLIC_SUPABASE_URL` — Supabase project URL
-- `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` — Supabase anon key
-- `EXPO_PUBLIC_SUPABASE_PROJECT_ID` — Supabase project ID
-- `EXPO_PUBLIC_ADMIN_EMAIL` — Email address for admin role assignment
-
-## Running the App
-
-```bash
-# Expo web (browser preview, port 5000) — primary workflow
-npm run web
-
-# Expo mobile (QR code for Expo Go / dev build)
-npm run expo
-
-# Vite web app (legacy)
-npm run dev
+```
+EXPO_PUBLIC_SUPABASE_URL
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+EXPO_PUBLIC_SUPABASE_PROJECT_ID
+EXPO_PUBLIC_ADMIN_EMAIL      # Email for admin role
 ```
 
-## Key Configuration
+## Running
 
-- **`package.json`**: `"main": "expo-router/entry"` — tells Metro to use Expo Router, not App.tsx
-- **`src/lib/supabase.ts`**: Uses `process.env.EXPO_PUBLIC_*` — works in both Metro (native/web) and Vite (define config)
-- **`vite.config.ts`**: Defines `process.env.EXPO_PUBLIC_*` vars from environment so Vite builds also resolve Supabase credentials
-- **`metro.config.js`**: Minimal, uses `getDefaultConfig` from expo/metro-config
+```bash
+npm run dev   # Vite web app → port 5000 (primary workflow)
+npm run web   # Expo web preview (Metro bundler)
+npm run expo  # Expo mobile (QR code for Expo Go)
+```
 
-## Mobile Screen Map
+## Workflows
 
-| Route | Screen |
-|-------|--------|
-| `/` | Auth redirect (auto-routes to login or home) |
-| `/(auth)/login` | Login (email + OAuth) |
-| `/(auth)/signup` | Sign up |
-| `/(auth)/forgot-password` | Password reset request |
-| `/(auth)/verify-email` | Email verification prompt |
-| `/profile-setup` | Username setup for new users |
-| `/(tabs)` | Home tab |
-| `/(tabs)/live` | Tournaments browser |
-| `/(tabs)/leaderboard` | Player rankings |
-| `/(tabs)/wallet` | Wallet + deposit/withdrawal |
-| `/(tabs)/profile` | User profile |
-| `/match/[id]` | Match details + join/leave |
-| `/my-matches` | Registered tournaments |
-| `/my-team` | Team & game profiles |
-| `/notifications` | Notifications list |
-| `/settings` | App settings |
-| `/edit-profile` | Edit username, bio, phone |
-| `/add-game` | Link game profile (IGN + UID) |
-| `/edit-game/[id]` | Edit/remove game profile |
-| `/tournaments` | All tournaments browser |
-| `/transactions` | Full transaction history |
-| `/admin` | Admin dashboard |
-| `/admin/matches` | Manage tournaments |
-| `/admin/match-form` | Create/edit tournament |
-| `/admin/users` | User management + coin adjustment |
-| `/admin/economy` | Approve/reject deposits & withdrawals |
-| `/admin/notifications` | Broadcast notifications |
+- **Start application**: `npm run dev` → Vite on port 5000
+
+## Key Design Notes
+
+- Web and mobile use the **same Zustand stores** and Supabase client
+- Mobile uses `react-native-safe-area-context` — all screens wrap with `useSafeAreaInsets()`
+- Admin screens guard with `useUserStore().isAdmin` + redirect to `/(auth)/login` or `/(tabs)` if unauthorized
+- Color theme at `src/theme/colors.ts` — `Colors.appBg = #0a0a0f`, `Colors.brandPrimary = #FF6B2B`
+- All admin screens use modals (bottom sheets via `Modal` + `animationType="slide"`) for create/edit
+- `app/_layout.tsx` initializes: fetchMatches, fetchGames, fetchBanners, fetchCampaigns, fetchCategories, fetchSettings on mount
 
 ## Supabase Tables
 
-- `profiles` — user data (username, coins, rank, bio, phone, role)
+- `profiles` — user data (username, coins, rank, bio, phone, role, is_admin)
 - `matches` — tournament data
 - `match_participants` — joined players per match
 - `game_profiles` — user IGN/UID per game
 - `transactions` — deposit/withdrawal/win/entry records
 - `notifications` — push notification records
-- `platform_settings` — UPI ID, fees, toggles
+- `platform_settings` — UPI ID, fees, feature toggles
 - `teams` / `team_members` — squad management
+- `blocked_users` — user block relationships
+- `referrals` — referral tracking
+- `ad_tags` — ad tag codes and placements
+- `campaigns` — ad campaign configurations

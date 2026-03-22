@@ -1,0 +1,143 @@
+TASK: Convert Existing Web App to Mobile App (React Native Expo) WITHOUT Changing UI/UX
+
+You are required to convert an existing web-based application into a mobile application using React Native (Expo).
+
+---
+
+🚫 STRICT RULES (MUST FOLLOW – NO EXCEPTIONS)
+
+1. DO NOT create any new pages
+2. DO NOT redesign or modify UI/UX
+3. DO NOT take inspiration from web and recreate
+4. DO NOT generate new mobile-specific layouts
+5. DO NOT create duplicate components
+6. DO NOT create or use any separate mobile app folder (e.g., "/app", "/mobile")
+7. DO NOT change business logic or TypeScript structure
+8. DO NOT remove any mandatory pages
+9. DO NOT rename existing routes/pages unless required for compatibility
+10. DO NOT introduce new navigation structure unless required for Expo compatibility
+
+---
+
+✅ CORE OBJECTIVE
+
+Convert the EXISTING WEB APP directly into a MOBILE APP by replacing only web-specific components/tags with React Native equivalents, while keeping:
+
+- UI (User Interface) → EXACT SAME
+- UX (User Experience) → EXACT SAME
+- Layout → EXACT SAME
+- Structure → EXACT SAME
+- Logic → EXACT SAME
+
+---
+
+🔁 CONVERSION RULES (VERY IMPORTANT)
+
+Replace ONLY web elements with React Native equivalents:
+
+Web عنصر| Convert To (React Native)
+"<div>"| "<View>"
+"<span>"| "<Text>"
+"<p>"| "<Text>"
+"<img>"| "<Image>"
+"<button>"| "<Pressable>" or "<TouchableOpacity>"
+"<input>"| "<TextInput>"
+"<a>"| Use Navigation (React Navigation)
+CSS / Tailwind| Use "StyleSheet" or inline styles
+
+---
+
+📁 FOLDER & FILE RULES
+
+- ❌ DELETE any auto-created mobile folders (like "/app", "/mobile", "/native")
+- ✅ USE existing web project structure
+- ✅ MODIFY files in-place (convert them)
+- ❌ DO NOT duplicate pages into new mobile versions
+- ❌ DO NOT create parallel component systems
+
+---
+
+📄 PAGE HANDLING RULES
+
+- KEEP all existing pages:
+  
+  - Signup Page
+  - Login / Authentication Pages
+  - Home Page
+  - Dashboard
+  - Profile
+  - Any other user pages
+
+- CONVERT these pages directly into React Native components
+
+- DO NOT recreate them from scratch
+
+- DO NOT redesign layout
+
+---
+
+🎨 UI/UX PRESERVATION (CRITICAL)
+
+- Spacing → SAME
+- Colors → SAME
+- Fonts → SAME (use closest possible match)
+- Component positions → SAME
+- Layout hierarchy → SAME
+
+⚠️ Even small UI changes are NOT allowed
+
+---
+
+⚙️ NAVIGATION RULES
+
+- Replace web routing with React Navigation
+- Maintain SAME navigation flow
+- Do NOT add extra screens or flows
+
+---
+
+🧠 LOGIC HANDLING
+
+- Keep all:
+  - API calls
+  - State management
+  - Business logic
+  - TypeScript types
+
+Only adjust syntax where required for React Native compatibility
+
+---
+
+🧹 CLEANUP TASK
+
+- REMOVE:
+  - All newly created mobile-specific pages
+  - All duplicate components
+  - All unused files/folders related to wrong mobile builds
+
+---
+
+🎯 FINAL GOAL
+
+You are NOT building a new mobile app.
+
+You are transforming the EXISTING WEB APP into a MOBILE APP with:
+
+✔ Same design
+✔ Same structure
+✔ Same experience
+✔ Only component-level conversion
+
+---
+
+✅ SUCCESS CRITERIA
+
+- App builds successfully in Expo
+- No duplicate pages
+- No extra folders
+- UI matches web version exactly
+- All features work as expected
+
+---
+
+Follow all rules strictly. Do NOT improvise. Do NOT assume. Do EXACT conversion only.
