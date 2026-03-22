@@ -42,8 +42,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "EXPO_NO_TELEMETRY=1 expo start --go --port 8080"
-waitForPort = 8080
+args = "EXPO_NO_TELEMETRY=1 REACT_NATIVE_PACKAGER_HOSTNAME=8081-0db4-49e1-b484-71bf54c8fc1d-00-2tjxw0rya4kn7.janeway.replit.dev npx expo start --port 8081 --go"
 
 [[ports]]
 localPort = 3000

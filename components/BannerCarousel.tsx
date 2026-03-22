@@ -96,7 +96,7 @@ export function BannerCarousel() {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { marginBottom: 8 },
+  wrapper: { marginBottom: 8, marginHorizontal: -16 },
   listContent: { paddingHorizontal: 16, gap: 12 },
   card: {
     width: CARD_W,
