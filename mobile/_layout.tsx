@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, Component, ReactNode } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet } from 'react-native';
 import { supabase } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
 import { useUserStore } from '@/src/store/userStore';
@@ -12,9 +13,41 @@ import { useBannerStore } from '@/src/store/bannerStore';
 import { useCampaignStore } from '@/src/store/campaignStore';
 import { useCategoryStore } from '@/src/store/categoryStore';
 import { usePlatformStore } from '@/src/store/platformStore';
-import { StyleSheet } from 'react-native';
+import { Colors } from '@/src/theme/colors';
 
-export default function RootLayout() {
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: string;
+}
+
+class ErrorBoundary extends Component<{ children: ReactNode }, ErrorBoundaryState> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: '' };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error: error.message };
+  }
+
+  componentDidCatch(error: Error, info: any) {
+    console.error('[ErrorBoundary] Caught error:', error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={errorStyles.container}>
+          <Text style={errorStyles.title}>Something went wrong</Text>
+          <Text style={errorStyles.message}>{this.state.error}</Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function RootLayoutInner() {
   const { setSession, setInitialized } = useAuthStore();
   const { fetchUserData, login, logout } = useUserStore();
   const { fetchMatches } = useMatchStore();
@@ -25,26 +58,44 @@ export default function RootLayout() {
   const fetchSettings = usePlatformStore(s => s.fetchSettings);
 
   useEffect(() => {
-    fetchMatches();
-    fetchGames();
-    fetchBanners();
-    fetchCampaigns();
-    fetchCategories();
-    fetchSettings();
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setInitialized(true);
-      if (session?.user) {
-        loadUserData(session.user.id, session.user.email ?? '');
+    const init = async () => {
+      try {
+        await Promise.allSettled([
+          fetchMatches(),
+          fetchGames(),
+          fetchBanners(),
+          fetchCampaigns(),
+          fetchCategories(),
+          fetchSettings(),
+        ]);
+      } catch (e) {
+        console.warn('[RootLayout] Public data fetch failed:', e);
       }
-    });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setInitialized(true);
+        if (session?.user) {
+          await loadUserData(session.user.id, session.user.email ?? '');
+        }
+      } catch (e) {
+        console.error('[RootLayout] Auth init failed:', e);
+        setInitialized(true);
+      }
+    };
+
+    init();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSession(session);
       setInitialized(true);
       if (session?.user) {
-        loadUserData(session.user.id, session.user.email ?? '');
+        try {
+          await loadUserData(session.user.id, session.user.email ?? '');
+        } catch (e) {
+          console.warn('[RootLayout] loadUserData failed on auth change:', e);
+        }
       } else {
         logout();
       }
@@ -54,28 +105,32 @@ export default function RootLayout() {
   }, []);
 
   const loadUserData = async (userId: string, email: string) => {
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (profile) {
-      const isAdmin =
-        email === process.env.EXPO_PUBLIC_ADMIN_EMAIL ||
-        profile.role === 'admin' ||
-        profile.is_admin === true;
-      login({
-        id: profile.id,
-        username: profile.username ?? '',
-        email: profile.email ?? email,
-        avatar: profile.avatar ?? '',
-        coins: profile.coins ?? 0,
-        rank: profile.rank ?? 'Bronze',
-        bio: profile.bio ?? '',
-        phone: profile.phone ?? '',
-      }, isAdmin);
-      await fetchUserData(userId);
+      if (profile) {
+        const isAdmin =
+          email === process.env.EXPO_PUBLIC_ADMIN_EMAIL ||
+          profile.role === 'admin' ||
+          profile.is_admin === true;
+        login({
+          id: profile.id,
+          username: profile.username ?? '',
+          email: profile.email ?? email,
+          avatar: profile.avatar ?? '',
+          coins: profile.coins ?? 0,
+          rank: profile.rank ?? 'Bronze',
+          bio: profile.bio ?? '',
+          phone: profile.phone ?? '',
+        }, isAdmin);
+        await fetchUserData(userId);
+      }
+    } catch (e) {
+      console.warn('[RootLayout] loadUserData error:', e);
     }
   };
 
@@ -111,6 +166,35 @@ export default function RootLayout() {
   );
 }
 
+export default function RootLayout() {
+  return (
+    <ErrorBoundary>
+      <RootLayoutInner />
+    </ErrorBoundary>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1 },
+});
+
+const errorStyles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.appBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  title: {
+    color: Colors.brandPrimary,
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 12,
+  },
+  message: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'center',
+  },
 });
