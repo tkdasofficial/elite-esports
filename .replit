@@ -26,7 +26,7 @@ outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "EXPO_NO_TELEMETRY=1 REACT_NATIVE_PACKAGER_HOSTNAME=8d016859-445e-4ccc-bdda-b269e8b596fb-00-rnc5uvxexw6w.picard.replit.dev ./node_modules/.bin/expo start --web --port 8080"
+args = "EXPO_NO_TELEMETRY=1 REACT_NATIVE_PACKAGER_HOSTNAME=8d016859-445e-4ccc-bdda-b269e8b596fb-00-rnc5uvxexw6w.expo.picard.replit.dev ./node_modules/.bin/expo start --port 8080"
 waitForPort = 8080
 
 [[ports]]
