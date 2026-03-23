@@ -1,9 +1,11 @@
+import 'react-native-url-polyfill/auto';
 import { useEffect, Component, ReactNode } from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { supabase } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
 import { useUserStore } from '@/src/store/userStore';
@@ -14,6 +16,8 @@ import { useCampaignStore } from '@/src/store/campaignStore';
 import { useCategoryStore } from '@/src/store/categoryStore';
 import { usePlatformStore } from '@/src/store/platformStore';
 import { Colors } from '@/src/theme/colors';
+
+SplashScreen.preventAutoHideAsync();
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -83,6 +87,8 @@ function RootLayoutInner() {
         console.error('[RootLayout] Auth init failed:', e);
         setInitialized(true);
       }
+
+      SplashScreen.hideAsync();
     };
 
     init();

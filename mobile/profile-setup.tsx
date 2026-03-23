@@ -57,7 +57,7 @@ export default function ProfileSetup() {
     >
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
         <View style={styles.brand}>
-          <Image source={require('@/assets/logo.png')} style={styles.logo} resizeMode="contain" />
+          <Image source={require('../assets/logo.png')} style={styles.logo} resizeMode="contain" />
           <Text style={styles.title}>Set Up Profile</Text>
           <Text style={styles.subtitle}>Choose a username to get started</Text>
         </View>

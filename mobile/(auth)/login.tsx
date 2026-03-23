@@ -77,7 +77,7 @@ export default function Login() {
         )}
 
         <View style={styles.brand}>
-          <Image source={require('@/assets/logo.png')} style={styles.logo} resizeMode="contain" />
+          <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
           <Text style={styles.title}>{showEmail ? 'Sign In' : 'Welcome Back'}</Text>
           <Text style={styles.subtitle}>
             {showEmail ? 'Enter your credentials below' : 'Sign in to Elite Esports'}

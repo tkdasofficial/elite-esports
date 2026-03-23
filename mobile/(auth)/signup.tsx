@@ -86,7 +86,7 @@ export default function SignUp() {
         </TouchableOpacity>
 
         <View style={styles.brand}>
-          <Image source={require('@/assets/logo.png')} style={styles.logo} resizeMode="contain" />
+          <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
           <Text style={styles.title}>{showEmail ? 'Create Account' : 'Join Elite'}</Text>
           <Text style={styles.subtitle}>
             {showEmail ? 'Enter your email and a password' : "The world's premier gaming platform"}
