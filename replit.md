@@ -2,7 +2,7 @@
 
 A premium competitive gaming platform with two codebases:
 1. **Web app** — Vite + React (SPA, runs on port 5000 via `npm run dev`)
-2. **Mobile app** — Expo + React Native (in `app/` directory, shares all `src/` stores/logic)
+2. **Mobile app** — Expo + React Native (in `mobile/` directory, shares all `src/` stores/logic)
 
 ## Architecture
 
@@ -17,35 +17,51 @@ The platform uses a shared `src/` layer — all Zustand stores, Supabase client,
   - `src/admin/` — all admin panel pages (AdminDashboard, AdminMatches, etc.)
 
 ### Mobile App (Expo)
-- Entry: `app/` directory via expo-router (file-based routing)
-- Root layout: `app/_layout.tsx` (Supabase auth listener, global store initialization)
+- Entry: `mobile/` directory via expo-router (file-based routing, root configured in app.json)
+- Root layout: `mobile/_layout.tsx` (Supabase auth listener, global store initialization)
 
 ## Tech Stack
 
 **Web:**
-- Vite + React 18 + TypeScript
+- Vite 6 + React 19.1.0 + TypeScript 5.9
 - React Router v7 (SPA mode)
-- Tailwind CSS + custom variables
-- Framer Motion / motion/react (animations)
+- Tailwind CSS v4 (via @tailwindcss/vite)
+- Framer Motion / motion (animations)
+- Lucide React (icons)
 
 **Mobile:**
-- Expo SDK 54 + React Native 0.79.6
-- expo-router v5 (file-based routing)
+- Expo SDK 54 + React Native 0.81.5
+- expo-router v6 (file-based routing, root: `mobile/`)
 - React Native StyleSheet (uses `src/theme/colors.ts` — no Tailwind)
-- @expo/vector-icons (Ionicons)
-- react-native-gesture-handler, react-native-safe-area-context
-- Note: react-native-reanimated v4 conflicts with Expo Go; use RN Animated API instead
+- @expo/vector-icons
+- react-native-gesture-handler, react-native-safe-area-context, react-native-reanimated
 
 **Shared:**
-- Zustand (state management)
-- Supabase (auth, database, real-time)
+- Zustand v5 (state management)
+- Supabase (auth, database, real-time) — `src/lib/supabase.ts` (web) + `src/lib/supabase.native.ts` (mobile)
 - TypeScript
+
+## EAS Build Configuration
+
+`eas.json` is configured for Android + iOS:
+
+| Profile     | Android            | iOS              | Distribution |
+|-------------|--------------------|------------------|--------------|
+| development | APK (debug)        | Simulator        | internal     |
+| preview     | APK                | internal         | internal     |
+| production  | AAB (Play Store)   | Store (App Store)| store        |
+
+**iOS bundle ID:** `com.elite.esports.mobile`
+**Android package:** `com.elite.esports.mobile`
+**EAS project ID:** `0bdb1889-e4dc-43a2-94f3-aa8f825bc590`
+
+To submit to stores, `./google-service-account.json` (Android) and Apple credentials (iOS) must be provided. These are NOT committed to the repo.
 
 ## Project Structure
 
 ```
 /
-├── app/                       # Expo mobile screens (expo-router)
+├── mobile/                    # Expo mobile screens (expo-router)
 │   ├── _layout.tsx            # Root layout — auth, store init
 │   ├── index.tsx              # Auth redirect entry
 │   ├── (auth)/                # Login, Signup, ForgotPassword, ResetPassword, VerifyEmail
@@ -69,14 +85,14 @@ The platform uses a shared `src/` layer — all Zustand stores, Supabase client,
 │   ├── about.tsx              # About page
 │   └── admin/                 # Admin panel
 │       ├── _layout.tsx        # Admin auth guard
-│       ├── index.tsx          # Admin dashboard (stats + nav)
+│       ├── index.tsx          # Admin dashboard
 │       ├── matches.tsx        # Manage tournaments
 │       ├── match-form.tsx     # Create/edit tournament
 │       ├── participants.tsx   # Match participants + winner selection
-│       ├── users.tsx          # User management + coin adjustment
+│       ├── users.tsx          # User management
 │       ├── economy.tsx        # Approve deposits & withdrawals
 │       ├── games.tsx          # Game catalog management
-│       ├── campaign.tsx       # Ad campaigns (Image/Video/Banner)
+│       ├── campaign.tsx       # Ad campaigns
 │       ├── tags.tsx           # Ad tags/codes
 │       ├── settings.tsx       # Platform settings
 │       ├── notifications.tsx  # Send broadcast notifications
@@ -85,14 +101,10 @@ The platform uses a shared `src/` layer — all Zustand stores, Supabase client,
 │       ├── referrals.tsx      # Referral history
 │       └── categories.tsx     # Game categories
 │
-├── components/                # Shared React Native components
-│   ├── MatchCard.tsx
-│   └── LetterAvatar.tsx
-│
 ├── src/
-│   ├── auth/                  # Web auth pages (moved from src/pages/)
-│   ├── app/                   # Web user pages (moved from src/pages/)
-│   ├── admin/                 # Web admin pages (moved from src/pages/)
+│   ├── auth/                  # Web auth pages
+│   ├── app/                   # Web user pages
+│   ├── admin/                 # Web admin pages
 │   ├── routes/
 │   │   └── AppRouter.tsx      # Web SPA router
 │   ├── store/                 # Zustand stores (shared web + mobile)
@@ -100,26 +112,38 @@ The platform uses a shared `src/` layer — all Zustand stores, Supabase client,
 │   │   ├── userStore.ts
 │   │   ├── matchStore.ts
 │   │   ├── gameStore.ts
-│   │   ├── platformStore.ts   # Settings, rules, support tickets
+│   │   ├── platformStore.ts
 │   │   ├── notificationStore.ts
 │   │   ├── bannerStore.ts
 │   │   ├── campaignStore.ts
 │   │   ├── categoryStore.ts
 │   │   ├── adTagStore.ts
 │   │   └── adEngineStore.ts
-│   ├── components/            # Shared web components
 │   ├── lib/
-│   │   └── supabase.ts
+│   │   ├── supabase.ts        # Web Supabase client
+│   │   └── supabase.native.ts # Mobile Supabase client (AsyncStorage)
 │   ├── theme/
 │   │   └── colors.ts          # Color palette (Colors.brandPrimary = #FF6B2B)
 │   └── types.ts
 │
+├── assets/                    # Expo assets (all 1024x1024 px)
+│   ├── icon.png
+│   ├── adaptive-icon.png
+│   ├── splash-icon.png
+│   └── favicon.png
+│
+├── backend/
+│   ├── sql/                   # Supabase schema migrations
+│   └── server.js              # Express server for production web build
+│
 ├── index.html                 # Vite web entry
 ├── vite.config.ts
-├── app.json                   # Expo config
-├── metro.config.js
-├── babel.config.js
-└── eas.json
+├── metro.config.js            # Metro bundler (@ alias, extra sourceExts)
+├── babel.config.js            # babel-preset-expo + reanimated plugin
+├── app.json                   # Expo config (iOS/Android ids, plugins, runtimeVersion)
+├── eas.json                   # EAS build profiles (dev/preview/production)
+├── expo-env.d.ts              # Expo type declarations
+└── tsconfig.json              # extends expo/tsconfig.base
 ```
 
 ## Environment Variables
@@ -131,17 +155,25 @@ EXPO_PUBLIC_SUPABASE_PROJECT_ID
 EXPO_PUBLIC_ADMIN_EMAIL      # Email for admin role
 ```
 
+For web (Vite), these can also be set as:
+```
+VITE_SUPABASE_URL
+VITE_SUPABASE_PUBLISHABLE_KEY
+VITE_SUPABASE_PROJECT_ID
+GEMINI_API_KEY / VITE_GEMINI_API_KEY
+```
+
 ## Running
 
 ```bash
-npm run dev   # Vite web app → port 5000 (primary workflow)
-npm run web   # Expo web preview (Metro bundler)
-npm run expo  # Expo mobile (QR code for Expo Go)
+npm run dev       # Vite web app → port 5000 (primary workflow)
+npm run start     # Expo mobile (QR code for Expo Go)
 ```
 
 ## Workflows
 
 - **Start application**: `npm run dev` → Vite on port 5000
+- **Start Mobile**: Expo Metro bundler on port 8081
 
 ## Key Design Notes
 
@@ -149,15 +181,11 @@ npm run expo  # Expo mobile (QR code for Expo Go)
 - Mobile uses `react-native-safe-area-context` — all screens wrap with `useSafeAreaInsets()`
 - Admin screens guard with `useUserStore().isAdmin` + redirect to `/(auth)/login` or `/(tabs)` if unauthorized
 - Color theme at `src/theme/colors.ts` — `Colors.appBg = #0a0a0f`, `Colors.brandPrimary = #FF6B2B`
-- All admin screens use modals (bottom sheets via `Modal` + `animationType="slide"`) for create/edit
 - `mobile/_layout.tsx` initializes: fetchMatches, fetchGames, fetchBanners, fetchCampaigns, fetchCategories, fetchSettings on mount
-- Auth social providers: Google + Facebook (replaced Apple). Facebook brand color: `#1877F2`
-- Mobile OAuth (Google/Facebook) not available in Expo Go — shows friendly message, email-only for preview builds
-- After sign in on mobile, explicitly call `router.replace('/(tabs)')` for reliable navigation
-- `(tabs)/_layout.tsx` waits for `initialized` from authStore before redirecting to login (prevents flash)
-- `supabase.ts` uses `detectSessionInUrl: typeof window !== 'undefined'` — true for web (OAuth), false for mobile
+- `supabase.native.ts` uses AsyncStorage for session persistence on mobile
 - `vite.config.ts` excludes `.local/**` from file watching to prevent Replit state files from triggering reloads
-- `SplashScreen.tsx` uses `useRef` for `onFinish` callback with empty dep array to prevent timer resets on re-render
+- Assets must be 1024×1024 px for Expo EAS builds (already resized)
+- React pinned to 19.1.0 to match Expo SDK 54 expected version
 
 ## Supabase Tables
 
