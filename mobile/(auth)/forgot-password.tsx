@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -79,6 +79,7 @@ const styles = StyleSheet.create({
   input: {
     height: 48, backgroundColor: Colors.appSurface,
     borderRadius: 14, paddingHorizontal: 16, fontSize: 15, color: Colors.textPrimary,
+    ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}),
   },
   error: { fontSize: 13, color: Colors.brandLive },
   btn: {

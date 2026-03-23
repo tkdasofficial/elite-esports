@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.appSurface, borderRadius: 14, paddingHorizontal: 16, height: 54,
   },
   at: { fontSize: 18, color: Colors.brandPrimary, fontWeight: '600', marginRight: 4 },
-  input: { flex: 1, fontSize: 18, color: Colors.textPrimary },
+  input: { flex: 1, fontSize: 18, color: Colors.textPrimary, ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}) },
   hint: { fontSize: 13, color: Colors.textMuted },
   error: { fontSize: 13, color: Colors.brandLive },
   btn: {

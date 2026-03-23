@@ -1,0 +1,100 @@
+TASK: FIX ICON VISIBILITY + AUTHENTICATION UI ISSUES (REACT NATIVE / EXPO)
+
+IMPORTANT:
+This task is ONLY for fixing icon visibility issues and improving authentication UI elements. Do NOT redesign the app. Only fix and optimize.
+
+----------------------------------------
+1. ICON VISIBILITY FIX (CRITICAL)
+----------------------------------------
+PROBLEM:
+- Icons are not visible / not loading / broken
+
+INSTRUCTIONS:
+- REMOVE all web-based icon usage (CDN, <i> tags, browser-based libraries)
+- Use ONLY supported methods:
+  → Expo Vector Icons (preferred)
+  → react-native-vector-icons
+  → Local SVG files (react-native-svg)
+
+REQUIREMENTS:
+- Icons must NOT depend on internet
+- Icons must load instantly
+- Icons must be clearly visible (proper size & color)
+- Fix any import or linking issues
+- Remove all icon-related errors
+
+APPLY FIX TO:
+- Header → Notification icon
+- Authentication buttons:
+  → Google icon
+  → Facebook icon
+  → Email icon
+- Any other missing icons in the app
+
+SUCCESS CONDITION:
+- All icons visible
+- No missing icons
+- No rendering errors
+
+----------------------------------------
+2. AUTHENTICATION PAGE UI FIX
+----------------------------------------
+
+A. APP LOGO USAGE:
+- Use ONLY local assets for app logo
+- Path: assets/logo.png OR assets/icon.png
+- Do NOT use generated or external images
+- Ensure logo is clearly visible and properly sized
+
+B. SOCIAL LOGIN BUTTONS:
+
+1. CONTINUE WITH GOOGLE:
+- Background color MUST be WHITE
+- Use OFFICIAL Google logo (download or accurate replica)
+- Proper alignment of icon and text
+
+2. CONTINUE WITH FACEBOOK:
+- Keep existing BLUE color
+- Use OFFICIAL Facebook logo
+
+3. CONTINUE WITH EMAIL:
+- Keep current design
+- Ensure email icon is visible (after icon fix)
+
+----------------------------------------
+3. INPUT FIELD UI ISSUE (IMPORTANT)
+----------------------------------------
+PROBLEM:
+- White border/outline appears around input fields when user taps
+
+FIX:
+- Remove unwanted white highlight/border
+- Customize input focus style properly
+- Ensure clean and minimal UI when focused
+
+REQUIREMENTS:
+- No visual glitch on tap
+- Smooth and clean input interaction
+
+----------------------------------------
+4. COLOR & UI CONSISTENCY
+----------------------------------------
+- Fix incorrect color usage in authentication screens
+- Ensure all buttons follow consistent design
+- Proper spacing, alignment, and padding
+
+----------------------------------------
+5. GENERAL RULES
+----------------------------------------
+- Do NOT redesign layout
+- Do NOT change functionality
+- Only fix visual issues + icons + UI polish
+
+----------------------------------------
+FINAL GOAL:
+----------------------------------------
+- All icons fully visible and working
+- Official logos used correctly
+- Clean authentication UI
+- No visual bugs or highlight issues
+- Professional app-like experience

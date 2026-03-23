@@ -10,14 +10,14 @@ import { supabase } from '@/src/lib/supabase';
 import { Colors } from '@/src/theme/colors';
 
 const GoogleIcon = () => (
-  <View style={iconStyles.googleOuter}>
-    <Text style={iconStyles.googleG}>G</Text>
+  <View style={iconStyles.googleCircle}>
+    <Ionicons name="logo-google" size={16} color="#4285F4" />
   </View>
 );
 
 const FacebookIcon = () => (
-  <View style={iconStyles.facebook}>
-    <Text style={iconStyles.facebookF}>f</Text>
+  <View style={iconStyles.facebookCircle}>
+    <Ionicons name="logo-facebook" size={18} color="#fff" />
   </View>
 );
 
@@ -91,11 +91,9 @@ export default function Login() {
               onPress={() => handleSocial('google')}
               disabled={busy}
             >
-              <View style={styles.socialIconCircle}>
-                {socialLoading === 'google'
-                  ? <ActivityIndicator color="#333" size="small" />
-                  : <GoogleIcon />}
-              </View>
+              {socialLoading === 'google'
+                ? <ActivityIndicator color="#333" size="small" style={styles.socialLoader} />
+                : <GoogleIcon />}
               <Text style={styles.googleText}>Continue with Google</Text>
               <View style={{ width: 32 }} />
             </TouchableOpacity>
@@ -105,18 +103,16 @@ export default function Login() {
               onPress={() => handleSocial('facebook')}
               disabled={busy}
             >
-              <View style={styles.socialIconCircleFb}>
-                {socialLoading === 'facebook'
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <FacebookIcon />}
-              </View>
+              {socialLoading === 'facebook'
+                ? <ActivityIndicator color="#fff" size="small" style={styles.socialLoader} />
+                : <FacebookIcon />}
               <Text style={styles.facebookText}>Continue with Facebook</Text>
               <View style={{ width: 32 }} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.emailBtn} onPress={() => setShowEmail(true)} disabled={busy}>
               <View style={styles.emailIconCircle}>
-                <Ionicons name="mail-outline" size={18} color={Colors.textSecondary} />
+                <Ionicons name="mail-outline" size={16} color={Colors.textSecondary} />
               </View>
               <Text style={styles.emailBtnText}>Continue with Email</Text>
               <View style={{ width: 32 }} />
@@ -202,17 +198,24 @@ export default function Login() {
 }
 
 const iconStyles = StyleSheet.create({
-  googleOuter: {
-    width: 20, height: 20, borderRadius: 10,
-    backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: '#ddd',
+  googleCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
   },
-  googleG: { fontSize: 13, fontWeight: '800', color: '#4285F4' },
-  facebook: {
-    width: 20, height: 20, borderRadius: 10,
-    backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
+  facebookCircle: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: '#1877F2',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  facebookF: { fontSize: 14, fontWeight: '900', color: '#1877F2' },
 });
 
 const styles = StyleSheet.create({
@@ -225,38 +228,31 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.6, marginBottom: 4 },
   subtitle: { fontSize: 14, color: Colors.textSecondary },
   methods: { gap: 10 },
-  socialIconCircle: {
-    width: 30, height: 30, borderRadius: 15,
-    backgroundColor: '#f0f0f0', alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1, borderColor: '#ddd',
-  },
-  socialIconCircleFb: {
-    width: 30, height: 30, borderRadius: 15,
-    backgroundColor: '#1464D0', alignItems: 'center', justifyContent: 'center',
-  },
+  socialLoader: { width: 30, height: 30 },
   emailIconCircle: {
     width: 30, height: 30, borderRadius: 15,
     backgroundColor: Colors.appFill, alignItems: 'center', justifyContent: 'center',
   },
   socialBtnGoogle: {
-    height: 48, backgroundColor: '#FFFFFF', borderRadius: 999,
+    height: 52, backgroundColor: '#FFFFFF', borderRadius: 999,
     alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
-    paddingHorizontal: 14, gap: 10,
+    paddingHorizontal: 16, gap: 10,
+    borderWidth: 1, borderColor: '#e0e0e0',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08, shadowRadius: 3, elevation: 2,
   },
   googleText: { flex: 1, textAlign: 'center', fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
   socialBtnFacebook: {
-    height: 48, backgroundColor: '#1877F2', borderRadius: 999,
+    height: 52, backgroundColor: '#1877F2', borderRadius: 999,
     alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
-    paddingHorizontal: 14, gap: 10,
+    paddingHorizontal: 16, gap: 10,
   },
   facebookText: { flex: 1, textAlign: 'center', fontSize: 14, fontWeight: '600', color: '#fff' },
   emailBtn: {
-    height: 48, backgroundColor: Colors.appElevated, borderRadius: 999,
+    height: 52, backgroundColor: Colors.appElevated, borderRadius: 999,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: Colors.appBorder, flexDirection: 'row',
-    paddingHorizontal: 14, gap: 10,
+    paddingHorizontal: 16, gap: 10,
   },
   emailBtnText: { flex: 1, textAlign: 'center', fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   divider: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 2 },
@@ -271,7 +267,10 @@ const styles = StyleSheet.create({
   altBtnBold: { color: Colors.brandPrimary, fontWeight: '600' },
   form: { gap: 10 },
   inputCard: { backgroundColor: Colors.appSurface, borderRadius: 14, overflow: 'hidden' },
-  input: { height: 48, paddingHorizontal: 16, fontSize: 15, color: Colors.textPrimary },
+  input: {
+    height: 48, paddingHorizontal: 16, fontSize: 15, color: Colors.textPrimary,
+    ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}),
+  },
   inputDivider: { height: 1, backgroundColor: 'rgba(84,84,88,0.36)' },
   passwordRow: { flexDirection: 'row', alignItems: 'center' },
   passwordInput: { flex: 1 },
@@ -280,7 +279,7 @@ const styles = StyleSheet.create({
   forgotBtn: { alignSelf: 'flex-end' },
   forgotText: { fontSize: 13, color: Colors.brandPrimary, fontWeight: '500' },
   ctaBtn: {
-    height: 48, backgroundColor: Colors.brandPrimary, borderRadius: 999,
+    height: 52, backgroundColor: Colors.brandPrimary, borderRadius: 999,
     alignItems: 'center', justifyContent: 'center',
     shadowColor: Colors.brandPrimary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 10, elevation: 6,
