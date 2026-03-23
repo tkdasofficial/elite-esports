@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '@/src/lib/supabase';
 import { Colors } from '@/src/theme/colors';
+import { ChevronBackIcon, CheckmarkCircleIcon } from '@/src/icons/IconLibrary';
 
 export default function ResetPassword() {
   const insets = useSafeAreaInsets();
@@ -27,7 +27,7 @@ export default function ResetPassword() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={22} color={Colors.brandPrimary} />
+        <ChevronBackIcon size={22} color={Colors.brandPrimary} />
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
       <View style={styles.content}>
@@ -35,7 +35,7 @@ export default function ResetPassword() {
         <Text style={styles.subtitle}>Choose a strong password for your account</Text>
         {done ? (
           <View style={styles.successBox}>
-            <Ionicons name="checkmark-circle" size={52} color={Colors.brandSuccess} />
+            <CheckmarkCircleIcon size={52} color={Colors.brandSuccess} />
             <Text style={styles.successText}>Password updated!</Text>
             <TouchableOpacity style={styles.btn} onPress={() => router.replace('/(auth)/login')}>
               <Text style={styles.btnText}>Sign In</Text>
@@ -43,8 +43,22 @@ export default function ResetPassword() {
           </View>
         ) : (
           <View style={styles.form}>
-            <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="New Password" placeholderTextColor={Colors.textMuted} secureTextEntry />
-            <TextInput style={styles.input} value={confirm} onChangeText={setConfirm} placeholder="Confirm Password" placeholderTextColor={Colors.textMuted} secureTextEntry />
+            <TextInput
+              style={styles.input}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="New Password"
+              placeholderTextColor={Colors.textMuted}
+              secureTextEntry
+            />
+            <TextInput
+              style={styles.input}
+              value={confirm}
+              onChangeText={setConfirm}
+              placeholder="Confirm Password"
+              placeholderTextColor={Colors.textMuted}
+              secureTextEntry
+            />
             {error ? <Text style={styles.error}>{error}</Text> : null}
             <TouchableOpacity style={[styles.btn, loading && styles.disabled]} onPress={handleReset} disabled={loading}>
               {loading ? <ActivityIndicator color={Colors.white} /> : <Text style={styles.btnText}>Update Password</Text>}
@@ -64,7 +78,11 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '700', color: Colors.textPrimary, marginBottom: 4 },
   subtitle: { fontSize: 15, color: Colors.textSecondary, marginBottom: 16 },
   form: { gap: 12 },
-  input: { height: 48, backgroundColor: Colors.appSurface, borderRadius: 14, paddingHorizontal: 16, fontSize: 15, color: Colors.textPrimary, ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}) },
+  input: {
+    height: 48, backgroundColor: Colors.appSurface, borderRadius: 14,
+    paddingHorizontal: 16, fontSize: 15, color: Colors.textPrimary,
+    ...(Platform.OS === 'web' ? { outlineWidth: 0 } as any : {}),
+  },
   error: { fontSize: 13, color: Colors.brandLive },
   btn: { height: 44, backgroundColor: Colors.brandPrimary, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   disabled: { opacity: 0.4 },

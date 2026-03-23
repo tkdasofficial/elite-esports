@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, Image, Animated } from 'react-native';
 import { useRef } from 'react';
 import { router } from 'expo-router';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { TrophyIcon, ClockIcon, UsersIcon, ChevronForwardIcon } from '@/src/icons/IconLibrary';
 import { Match } from '@/src/types';
 import { Colors } from '@/src/theme/colors';
 
@@ -58,7 +58,7 @@ export function MatchCard({ match }: Props) {
         <View style={styles.body}>
           <View style={styles.metaRow}>
             <View style={styles.metaItem}>
-              <Ionicons name="trophy" size={13} color={Colors.brandSuccess} />
+              <TrophyIcon size={13} color={Colors.brandSuccess} />
               <Text style={[styles.metaText, { color: Colors.brandSuccess }]}>{match.prize}</Text>
             </View>
             <View style={styles.metaItem}>

@@ -1,21 +1,21 @@
 import { Tabs, Redirect } from 'expo-router';
-import { View, StyleSheet, Platform } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/src/store/authStore';
 import { useUserStore } from '@/src/store/userStore';
 import { Colors } from '@/src/theme/colors';
-import { ActivityIndicator } from 'react-native';
-
-function TabIcon({ name, focused }: { name: string; focused: boolean }) {
-  const color = focused ? Colors.brandPrimary : Colors.textMuted;
-  return <Ionicons name={name as any} size={24} color={color} />;
-}
+import {
+  HomeIcon,
+  TrophyIcon,
+  RadioIcon,
+  WalletIcon,
+  PersonIcon,
+} from '@/src/icons/IconLibrary';
 
 function LiveTabIcon({ focused }: { focused: boolean }) {
   return (
     <View style={[liveStyles.wrapper, focused && liveStyles.wrapperActive]}>
-      <Ionicons name="radio" size={22} color={Colors.white} />
+      <RadioIcon size={22} color={Colors.white} />
     </View>
   );
 }
@@ -59,14 +59,18 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'home' : 'home-outline'} focused={focused} />,
+          tabBarIcon: ({ focused, color }) => (
+            <HomeIcon size={24} color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="leaderboard"
         options={{
           title: 'Ranks',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'trophy' : 'trophy-outline'} focused={focused} />,
+          tabBarIcon: ({ focused, color }) => (
+            <TrophyIcon size={24} color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
@@ -81,14 +85,18 @@ export default function TabLayout() {
         name="wallet"
         options={{
           title: 'Wallet',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'wallet' : 'wallet-outline'} focused={focused} />,
+          tabBarIcon: ({ focused, color }) => (
+            <WalletIcon size={24} color={color} focused={focused} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Profile',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'person' : 'person-outline'} focused={focused} />,
+          tabBarIcon: ({ focused, color }) => (
+            <PersonIcon size={24} color={color} focused={focused} />
+          ),
         }}
       />
     </Tabs>

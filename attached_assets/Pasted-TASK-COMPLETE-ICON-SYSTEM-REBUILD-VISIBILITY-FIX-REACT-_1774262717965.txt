@@ -1,0 +1,174 @@
+TASK: COMPLETE ICON SYSTEM REBUILD & VISIBILITY FIX (REACT NATIVE / EXPO)
+
+IMPORTANT:
+This is a CRITICAL FIX task. Currently, ALL icons across the app are NOT visible or showing as blank boxes. You MUST fix this completely.
+
+This task applies to the ENTIRE app (ALL screens, ALL components).
+
+----------------------------------------
+🚨 CORE PROBLEM
+----------------------------------------
+- Icons are NOT rendering (blank / invisible / broken)
+- Google, Facebook, Email icons NOT visible
+- Bottom navigation icons NOT visible
+- Header icons NOT visible
+- Icons missing across Home, Wallet, Live, Profile, etc.
+
+----------------------------------------
+🎯 FINAL GOAL
+----------------------------------------
+- 100% icons visible
+- No blank icons anywhere
+- No dependency on external sources
+- Fully working on all devices (especially Android)
+- iOS-style clean and modern icons
+- Zero errors or crashes
+
+----------------------------------------
+1. REMOVE ALL EXISTING ICON SYSTEM
+----------------------------------------
+- Remove ALL current icon implementations
+- Remove:
+  → Web-based icons (CDN, <i> tags, font icons)
+  → Broken SVG usage
+  → Any unsupported libraries
+
+----------------------------------------
+2. CREATE CUSTOM ICON LIBRARY (MANDATORY)
+----------------------------------------
+Create a centralized file:
+
+/src/icons/IconLibrary.tsx
+
+INSTRUCTIONS:
+- Build ALL icons using TSX (React Native components)
+- Use react-native-svg (ONLY if properly supported)
+  OR pure View/Text based shapes if needed
+
+- Each icon should be a reusable component
+
+EXAMPLE STRUCTURE:
+
+export const HomeIcon = ({ size = 24, color = "#000" }) => (...)
+export const WalletIcon = ({ size = 24, color = "#000" }) => (...)
+export const ProfileIcon = ({ size = 24, color = "#000" }) => (...)
+export const LiveIcon = ({ size = 24, color = "#007AFF" }) => (...)
+export const NotificationIcon = (...) 
+export const GoogleIcon = (...)
+export const FacebookIcon = (...)
+export const EmailIcon = (...)
+
+----------------------------------------
+3. ICON DESIGN RULE (iOS STYLE)
+----------------------------------------
+- All icons must follow iOS-style design:
+  → Clean
+  → Minimal
+  → Rounded edges
+  → Proper stroke balance
+
+- You MAY:
+  → Analyze iOS icons from internet
+  → Recreate them in TSX code
+
+- DO NOT copy images directly
+- DO NOT use external image URLs
+
+----------------------------------------
+4. REPLACE ICONS EVERYWHERE
+----------------------------------------
+Apply icons to ALL areas:
+
+A. BOTTOM NAVIGATION:
+- Home
+- Leaderboard
+- Live
+- Wallet
+- Profile
+
+B. HEADER:
+- Notification icon
+
+C. AUTHENTICATION:
+- Google icon (OFFICIAL style)
+- Facebook icon (OFFICIAL style)
+- Email icon
+
+D. ALL OTHER SCREENS:
+- Home page
+- Wallet page
+- Live page
+- Profile page
+- Any other components
+
+----------------------------------------
+5. AUTH BUTTON IMAGE FIX (CRITICAL)
+----------------------------------------
+Current issue:
+- Google & Facebook logos NOT showing
+
+FIX:
+- Use LOCAL PNG images ONLY
+
+LOCATION:
+assets/google.png
+assets/facebook.png
+
+RULES:
+- File size ~10KB (optimized)
+- Must load instantly
+- NO external fetching
+
+BUTTON STYLE:
+- Google button → WHITE background + Google logo
+- Facebook button → BLUE background + Facebook logo
+- Email → Use icon from icon library
+
+----------------------------------------
+6. APP LOGO FIX
+----------------------------------------
+- Use ONLY local assets:
+  → assets/logo.png OR assets/icon.png
+
+- Remove any generated or external images
+
+----------------------------------------
+7. ENSURE VISIBILITY (VERY IMPORTANT)
+----------------------------------------
+- Icons must:
+  → Have proper size (min 20px)
+  → Have visible color (not same as background)
+  → Not be hidden by styles
+  → Not overlap
+
+----------------------------------------
+8. ERROR HANDLING
+----------------------------------------
+- Fix ALL icon-related errors
+- No undefined components
+- No missing imports
+
+----------------------------------------
+9. PERFORMANCE RULE
+----------------------------------------
+- Icons must work OFFLINE
+- No API calls
+- No lag
+- Instant rendering
+
+----------------------------------------
+🚫 DO NOT:
+----------------------------------------
+- Do NOT use CDN icons
+- Do NOT use external image URLs
+- Do NOT depend on internet
+- Do NOT redesign layout
+
+----------------------------------------
+✅ SUCCESS CONDITIONS:
+----------------------------------------
+- ALL icons visible on ALL screens
+- Google, Facebook, Email icons working
+- No blank boxes anywhere
+- Works perfectly in Expo Go
+- Clean iOS-style UI icons

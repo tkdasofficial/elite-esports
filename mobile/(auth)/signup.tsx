@@ -4,22 +4,17 @@ import {
   ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Image,
 } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '@/src/lib/supabase';
 import { Colors } from '@/src/theme/colors';
-
-const GoogleIcon = () => (
-  <View style={iconStyles.googleCircle}>
-    <Ionicons name="logo-google" size={16} color="#4285F4" />
-  </View>
-);
-
-const FacebookIcon = () => (
-  <View style={iconStyles.facebookCircle}>
-    <Ionicons name="logo-facebook" size={18} color="#fff" />
-  </View>
-);
+import {
+  GoogleIcon,
+  FacebookIcon,
+  EmailIcon,
+  ChevronBackIcon,
+  EyeIcon,
+  EyeOffIcon,
+} from '@/src/icons/IconLibrary';
 
 export default function SignUp() {
   const insets = useSafeAreaInsets();
@@ -38,10 +33,7 @@ export default function SignUp() {
     if (!password) { setError('Password is required'); return; }
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     setLoading(true);
-    const { error: err } = await supabase.auth.signUp({
-      email: email.trim(),
-      password,
-    });
+    const { error: err } = await supabase.auth.signUp({ email: email.trim(), password });
     setLoading(false);
     if (err) {
       if (err.message.includes('already registered') || err.message.includes('already exists')) {
@@ -79,7 +71,7 @@ export default function SignUp() {
             style={styles.backBtn}
             onPress={() => { setShowEmail(false); setError(''); setEmail(''); setPassword(''); }}
           >
-            <Ionicons name="chevron-back" size={20} color={Colors.brandPrimary} />
+            <ChevronBackIcon size={20} color={Colors.brandPrimary} />
             <Text style={styles.backText}>Back</Text>
           </TouchableOpacity>
         )}
@@ -101,7 +93,7 @@ export default function SignUp() {
             >
               {socialLoading === 'google'
                 ? <ActivityIndicator color="#333" size="small" style={styles.socialLoader} />
-                : <GoogleIcon />}
+                : <GoogleIcon size={18} />}
               <Text style={styles.googleText}>Continue with Google</Text>
               <View style={{ width: 32 }} />
             </TouchableOpacity>
@@ -113,15 +105,13 @@ export default function SignUp() {
             >
               {socialLoading === 'facebook'
                 ? <ActivityIndicator color="#fff" size="small" style={styles.socialLoader} />
-                : <FacebookIcon />}
+                : <FacebookIcon size={18} />}
               <Text style={styles.facebookText}>Continue with Facebook</Text>
               <View style={{ width: 32 }} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.emailBtn} onPress={() => setShowEmail(true)} disabled={busy}>
-              <View style={styles.emailIconCircle}>
-                <Ionicons name="mail-outline" size={16} color={Colors.textSecondary} />
-              </View>
+              <EmailIcon size={16} color={Colors.textSecondary} />
               <Text style={styles.emailBtnText}>Continue with Email</Text>
               <View style={{ width: 32 }} />
             </TouchableOpacity>
@@ -166,7 +156,9 @@ export default function SignUp() {
                   autoComplete="new-password"
                 />
                 <TouchableOpacity onPress={() => setShowPw(!showPw)} style={styles.eyeBtn}>
-                  <Ionicons name={showPw ? 'eye-off' : 'eye'} size={16} color={Colors.textMuted} />
+                  {showPw
+                    ? <EyeOffIcon size={16} color={Colors.textMuted} />
+                    : <EyeIcon size={16} color={Colors.textMuted} />}
                 </TouchableOpacity>
               </View>
             </View>
@@ -203,27 +195,6 @@ export default function SignUp() {
   );
 }
 
-const iconStyles = StyleSheet.create({
-  googleCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  facebookCircle: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
-    backgroundColor: '#1877F2',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
-
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.appBg },
   scroll: { flexGrow: 1, paddingHorizontal: 20 },
@@ -234,11 +205,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.6, marginBottom: 4 },
   subtitle: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
   methods: { gap: 10 },
-  socialLoader: { width: 30, height: 30 },
-  emailIconCircle: {
-    width: 30, height: 30, borderRadius: 15,
-    backgroundColor: Colors.appFill, alignItems: 'center', justifyContent: 'center',
-  },
+  socialLoader: { width: 32, height: 32 },
   socialBtnGoogle: {
     height: 52, backgroundColor: '#FFFFFF', borderRadius: 999,
     alignItems: 'center', justifyContent: 'center', flexDirection: 'row',

@@ -1,8 +1,8 @@
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/src/theme/colors';
+import { BellIcon } from '@/src/icons/IconLibrary';
 
 interface AppHeaderProps {
   title: string;
@@ -29,7 +29,7 @@ export function AppHeader({ title, showNotification = true }: AppHeaderProps) {
             style={styles.notifBtn}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Ionicons name="notifications-outline" size={22} color={Colors.textSecondary} />
+            <BellIcon size={22} color={Colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>

@@ -6,6 +6,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { View, Text, StyleSheet } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
+import * as Font from 'expo-font';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { supabase } from '@/src/lib/supabase';
 import { useAuthStore } from '@/src/store/authStore';
 import { useUserStore } from '@/src/store/userStore';
@@ -63,6 +65,16 @@ function RootLayoutInner() {
 
   useEffect(() => {
     const init = async () => {
+      try {
+        // Load icon fonts first — critical for web and native
+        await Font.loadAsync({
+          ...Ionicons.font,
+          ...Feather.font,
+        });
+      } catch (e) {
+        console.warn('[RootLayout] Font loading failed:', e);
+      }
+
       try {
         await Promise.allSettled([
           fetchMatches(),

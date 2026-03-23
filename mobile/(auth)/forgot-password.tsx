@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '@/src/lib/supabase';
 import { Colors } from '@/src/theme/colors';
+import { ChevronBackIcon, LockIcon, CheckmarkCircleIcon } from '@/src/icons/IconLibrary';
 
 export default function ForgotPassword() {
   const insets = useSafeAreaInsets();
@@ -25,20 +25,20 @@ export default function ForgotPassword() {
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <Ionicons name="chevron-back" size={22} color={Colors.brandPrimary} />
+        <ChevronBackIcon size={22} color={Colors.brandPrimary} />
         <Text style={styles.backText}>Back</Text>
       </TouchableOpacity>
 
       <View style={styles.content}>
         <View style={styles.iconBox}>
-          <Ionicons name="lock-closed" size={32} color={Colors.white} />
+          <LockIcon size={32} color={Colors.white} />
         </View>
         <Text style={styles.title}>Reset Password</Text>
         <Text style={styles.subtitle}>Enter your email and we'll send a reset link</Text>
 
         {sent ? (
           <View style={styles.successBox}>
-            <Ionicons name="checkmark-circle" size={48} color={Colors.brandSuccess} style={styles.successIcon} />
+            <CheckmarkCircleIcon size={48} color={Colors.brandSuccess} />
             <Text style={styles.successTitle}>Email Sent!</Text>
             <Text style={styles.successText}>Check your inbox for the password reset link.</Text>
           </View>
@@ -88,8 +88,7 @@ const styles = StyleSheet.create({
   },
   disabled: { opacity: 0.4 },
   btnText: { fontSize: 16, fontWeight: '600', color: Colors.white },
-  successBox: { alignItems: 'center', paddingTop: 20 },
-  successIcon: { marginBottom: 16 },
-  successTitle: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
+  successBox: { alignItems: 'center', paddingTop: 20, gap: 12 },
+  successTitle: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary },
   successText: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center' },
 });
