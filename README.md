@@ -299,7 +299,7 @@ This project uses [EAS Build](https://docs.expo.dev/build/introduction/) for clo
 |---|---|---|---|
 | `development` | APK (debug) | Simulator build | Local testing |
 | `preview` | APK | Ad-hoc IPA | Internal distribution |
-| `production` | AAB (Play Store) | App Store IPA | Store release |
+| `production` | APK | App Store IPA | Store release |
 
 ```bash
 # Install EAS CLI
@@ -314,7 +314,7 @@ eas build --platform android --profile preview
 # Build preview IPA (iOS)
 eas build --platform ios --profile preview
 
-# Production build (AAB for Play Store)
+# Production build (APK)
 eas build --platform android --profile production
 
 # Production build (IPA for App Store)
