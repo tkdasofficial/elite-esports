@@ -27,7 +27,7 @@
     "production": {
       "autoIncrement": true,
       "android": {
-        "buildType": "aab"
+        "buildType": "apk"
       },
       "ios": {
         "distribution": "store"
