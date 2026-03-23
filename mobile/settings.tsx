@@ -100,6 +100,8 @@ export default function Settings() {
         <Text style={[styles.sectionLabel, styles.mt]}>PRIVACY & SECURITY</Text>
         <View style={styles.card}>
           <Row icon="shield" label="Privacy Policy" onPress={() => router.push('/privacy')} />
+          <View style={styles.divider} />
+          <Row icon="person-remove" label="Blocked Users" onPress={() => router.push('/blocked-users')} />
         </View>
 
         <Text style={[styles.sectionLabel, styles.mt]}>SUPPORT</Text>

@@ -1,44 +1,24 @@
 # Elite Esports Platform
 
-A premium competitive gaming platform with two codebases:
-1. **Web app** — Vite + React (SPA, runs on port 5000 via `npm run dev`)
-2. **Mobile app** — Expo + React Native (in `mobile/` directory, shares all `src/` stores/logic)
+A premium competitive gaming platform — **mobile-only** (Android APK / iOS IPA) built with Expo + React Native.
 
 ## Architecture
 
-The platform uses a shared `src/` layer — all Zustand stores, Supabase client, theme colors, and TypeScript types are shared between both the Vite web app and the Expo mobile app.
-
-### Web App (Vite/React)
-- Entry: `index.html` → `src/main.tsx` → `src/App.tsx`
-- Router: `src/routes/AppRouter.tsx` (React Router v7)
-- Pages are organized into:
-  - `src/auth/` — Login, SignUp, ForgotPassword, ResetPassword, VerifyEmail
-  - `src/app/` — all user-facing pages (Home, Wallet, Profile, etc.)
-  - `src/admin/` — all admin panel pages (AdminDashboard, AdminMatches, etc.)
-
-### Mobile App (Expo)
-- Entry: `mobile/` directory via expo-router (file-based routing, root configured in app.json)
-- Root layout: `mobile/_layout.tsx` (Supabase auth listener, global store initialization)
+The `src/` directory holds shared logic used by all mobile screens:
+- **Zustand stores** (`src/store/`) — auth, user, match, game, platform, notifications, banners, campaigns, categories, ad engine
+- **Supabase client** (`src/lib/`) — `supabase.native.ts` uses AsyncStorage for session persistence
+- **Theme** (`src/theme/colors.ts`) — `Colors.appBg = #0a0a0f`, `Colors.brandPrimary = #FF6B2B`
+- **Types** (`src/types.ts`) — shared TypeScript types
 
 ## Tech Stack
 
-**Web:**
-- Vite 6 + React 19.1.0 + TypeScript 5.9
-- React Router v7 (SPA mode)
-- Tailwind CSS v4 (via @tailwindcss/vite)
-- Framer Motion / motion (animations)
-- Lucide React (icons)
-
-**Mobile:**
 - Expo SDK 54 + React Native 0.81.5
 - expo-router v6 (file-based routing, root: `mobile/`)
 - React Native StyleSheet (uses `src/theme/colors.ts` — no Tailwind)
-- @expo/vector-icons
+- @expo/vector-icons (Ionicons)
 - react-native-gesture-handler, react-native-safe-area-context, react-native-reanimated
-
-**Shared:**
 - Zustand v5 (state management)
-- Supabase (auth, database, real-time) — `src/lib/supabase.ts` (web) + `src/lib/supabase.native.ts` (mobile)
+- Supabase (auth, database, real-time)
 - TypeScript
 
 ## EAS Build Configuration
@@ -72,8 +52,8 @@ To submit to stores, `./google-service-account.json` (Android) and Apple credent
 │   ├── blocked-users.tsx      # Blocked users management
 │   ├── my-matches.tsx         # User's joined tournaments
 │   ├── my-team.tsx            # Team & game profiles
-│   ├── settings.tsx           # App settings
-│   ├── edit-profile.tsx       # Edit profile
+│   ├── settings.tsx           # App settings (links to blocked-users)
+│   ├── edit-profile.tsx       # Edit profile (saves to Supabase)
 │   ├── add-game.tsx           # Link game IGN/UID
 │   ├── edit-game/[id].tsx     # Edit game profile
 │   ├── tournaments.tsx        # All tournaments browser
@@ -102,12 +82,7 @@ To submit to stores, `./google-service-account.json` (Android) and Apple credent
 │       └── categories.tsx     # Game categories
 │
 ├── src/
-│   ├── auth/                  # Web auth pages
-│   ├── app/                   # Web user pages
-│   ├── admin/                 # Web admin pages
-│   ├── routes/
-│   │   └── AppRouter.tsx      # Web SPA router
-│   ├── store/                 # Zustand stores (shared web + mobile)
+│   ├── store/                 # Zustand stores (mobile shared)
 │   │   ├── authStore.ts
 │   │   ├── userStore.ts
 │   │   ├── matchStore.ts
@@ -120,11 +95,19 @@ To submit to stores, `./google-service-account.json` (Android) and Apple credent
 │   │   ├── adTagStore.ts
 │   │   └── adEngineStore.ts
 │   ├── lib/
-│   │   ├── supabase.ts        # Web Supabase client
+│   │   ├── supabase.ts        # Supabase client (base)
 │   │   └── supabase.native.ts # Mobile Supabase client (AsyncStorage)
 │   ├── theme/
-│   │   └── colors.ts          # Color palette (Colors.brandPrimary = #FF6B2B)
+│   │   └── colors.ts          # Color palette
+│   ├── utils/
+│   │   ├── helpers.ts
+│   │   └── iconRegistry.tsx
 │   └── types.ts
+│
+├── components/                # Shared React Native components
+│   ├── MatchCard.tsx
+│   ├── BannerCarousel.tsx
+│   └── LetterAvatar.tsx
 │
 ├── assets/                    # Expo assets (all 1024x1024 px)
 │   ├── icon.png
@@ -132,17 +115,10 @@ To submit to stores, `./google-service-account.json` (Android) and Apple credent
 │   ├── splash-icon.png
 │   └── favicon.png
 │
-├── backend/
-│   ├── sql/                   # Supabase schema migrations
-│   └── server.js              # Express server for production web build
-│
-├── index.html                 # Vite web entry
-├── vite.config.ts
 ├── metro.config.js            # Metro bundler (@ alias, extra sourceExts)
 ├── babel.config.js            # babel-preset-expo + reanimated plugin
 ├── app.json                   # Expo config (iOS/Android ids, plugins, runtimeVersion)
 ├── eas.json                   # EAS build profiles (dev/preview/production)
-├── expo-env.d.ts              # Expo type declarations
 └── tsconfig.json              # extends expo/tsconfig.base
 ```
 
@@ -155,37 +131,27 @@ EXPO_PUBLIC_SUPABASE_PROJECT_ID
 EXPO_PUBLIC_ADMIN_EMAIL      # Email for admin role
 ```
 
-For web (Vite), these can also be set as:
-```
-VITE_SUPABASE_URL
-VITE_SUPABASE_PUBLISHABLE_KEY
-VITE_SUPABASE_PROJECT_ID
-GEMINI_API_KEY / VITE_GEMINI_API_KEY
-```
-
 ## Running
 
 ```bash
-npm run dev       # Vite web app → port 5000 (primary workflow)
-npm run start     # Expo mobile (QR code for Expo Go)
+npm run start     # Expo Metro bundler (QR code for Expo Go)
+npm run android   # Run on Android device/emulator
+npm run ios       # Run on iOS simulator
 ```
 
 ## Workflows
 
-- **Start application**: `npm run dev` → Vite on port 5000
 - **Start Mobile**: Expo Metro bundler on port 8081
 
 ## Key Design Notes
 
-- Web and mobile use the **same Zustand stores** and Supabase client
-- Mobile uses `react-native-safe-area-context` — all screens wrap with `useSafeAreaInsets()`
-- Admin screens guard with `useUserStore().isAdmin` + redirect to `/(auth)/login` or `/(tabs)` if unauthorized
-- Color theme at `src/theme/colors.ts` — `Colors.appBg = #0a0a0f`, `Colors.brandPrimary = #FF6B2B`
+- All mobile screens use `useSafeAreaInsets()` from `react-native-safe-area-context`
+- Admin screens guard with `useUserStore().isAdmin` + redirect if unauthorized
 - `mobile/_layout.tsx` initializes: fetchMatches, fetchGames, fetchBanners, fetchCampaigns, fetchCategories, fetchSettings on mount
-- `supabase.native.ts` uses AsyncStorage for session persistence on mobile
-- `vite.config.ts` excludes `.local/**` from file watching to prevent Replit state files from triggering reloads
+- `supabase.native.ts` uses AsyncStorage for session persistence
 - Assets must be 1024×1024 px for Expo EAS builds (already resized)
-- React pinned to 19.1.0 to match Expo SDK 54 expected version
+- Settings page links to Blocked Users page (privacy section)
+- EditProfile saves directly to Supabase `profiles` table with validation
 
 ## Supabase Tables
 
