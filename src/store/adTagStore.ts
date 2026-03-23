@@ -21,20 +21,14 @@ export interface AdTag {
 
 export type AdTagInput = Omit<AdTag, 'id' | 'created_at' | 'updated_at'>;
 
-const CACHE_KEY = 'elite-ad-tags-v1';
+let _memCache: AdTag[] = [];
 
 function readCache(): AdTag[] {
-  try {
-    return JSON.parse(localStorage.getItem(CACHE_KEY) ?? '[]') as AdTag[];
-  } catch {
-    return [];
-  }
+  return _memCache;
 }
 
 function writeCache(tags: AdTag[]) {
-  try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(tags.filter(t => t.is_active)));
-  } catch {}
+  _memCache = tags.filter(t => t.is_active);
 }
 
 interface AdTagState {

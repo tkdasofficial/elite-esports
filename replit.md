@@ -92,16 +92,14 @@ To submit to stores, `./google-service-account.json` (Android) and Apple credent
 │   │   ├── bannerStore.ts
 │   │   ├── campaignStore.ts
 │   │   ├── categoryStore.ts
-│   │   ├── adTagStore.ts
-│   │   └── adEngineStore.ts
+│   │   ├── adTagStore.ts      # in-memory cache (no localStorage)
+│   │   ├── adEngineStore.ts
+│   │   └── tagStore.ts
 │   ├── lib/
 │   │   ├── supabase.ts        # Supabase client (base)
 │   │   └── supabase.native.ts # Mobile Supabase client (AsyncStorage)
 │   ├── theme/
 │   │   └── colors.ts          # Color palette
-│   ├── utils/
-│   │   ├── helpers.ts
-│   │   └── iconRegistry.tsx
 │   └── types.ts
 │
 ├── components/                # Shared React Native components
