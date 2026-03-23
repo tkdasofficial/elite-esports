@@ -3,17 +3,16 @@ import {
   View, Text, StyleSheet, ScrollView, Image,
   TouchableOpacity, ActivityIndicator, Linking,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useMatchStore } from '@/src/store/matchStore';
 import { MatchCard } from '@/components/MatchCard';
+import { AppHeader } from '@/components/AppHeader';
 import { Colors } from '@/src/theme/colors';
 
 const FILTERS = ['Live', 'Upcoming', 'Completed'] as const;
 type FilterType = typeof FILTERS[number];
 
 export default function Live() {
-  const insets = useSafeAreaInsets();
   const { liveMatches, upcomingMatches, completedMatches, loading } = useMatchStore();
   const [filter, setFilter] = useState<FilterType>('Live');
 
@@ -28,16 +27,8 @@ export default function Live() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Tournaments</Text>
-        {liveMatches.length > 0 && (
-          <View style={styles.liveBadge}>
-            <View style={styles.liveDot} />
-            <Text style={styles.liveLabel}>LIVE</Text>
-          </View>
-        )}
-      </View>
+    <View style={styles.container}>
+      <AppHeader title="Tournaments" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Hero stream card */}
@@ -53,18 +44,15 @@ export default function Live() {
           />
           <View style={[StyleSheet.absoluteFill, styles.heroOverlay]} />
 
-          {/* Play button */}
           <View style={styles.playBtn}>
             <Ionicons name="play" size={26} color={Colors.white} />
           </View>
 
-          {/* Live badge */}
           <View style={styles.heroBadge}>
             <View style={styles.heroDot} />
             <Text style={styles.heroBadgeText}>LIVE</Text>
           </View>
 
-          {/* Bottom text */}
           <View style={styles.heroBottom}>
             <Text style={styles.heroTitle}>Watch Live Streams</Text>
             <Text style={styles.heroSub}>Experience the action in real-time</Text>
@@ -136,15 +124,7 @@ export default function Live() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.appBg },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingBottom: 12, paddingTop: 8,
-  },
-  title: { fontSize: 24, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.5 },
-  liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, backgroundColor: `${Colors.brandLive}15`, borderRadius: 20 },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: Colors.brandLive },
-  liveLabel: { fontSize: 12, fontWeight: '700', color: Colors.brandLive, letterSpacing: 0.5 },
-  scroll: { paddingHorizontal: 16, gap: 0 },
+  scroll: { paddingHorizontal: 16, paddingTop: 16 },
   heroCard: {
     height: 192, borderRadius: 20, overflow: 'hidden',
     marginBottom: 20, backgroundColor: Colors.appCard,

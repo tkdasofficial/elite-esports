@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Modal, Share, Alert,
+  Share, Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserStore } from '@/src/store/userStore';
 import { useAuthStore } from '@/src/store/authStore';
 import { LetterAvatar } from '@/components/LetterAvatar';
+import { AppHeader } from '@/components/AppHeader';
 import { Colors } from '@/src/theme/colors';
 
 interface RowProps {
@@ -37,7 +37,6 @@ function Row({ icon, label, sub, color, iconColor, onPress, danger }: RowProps) 
 }
 
 export default function Profile() {
-  const insets = useSafeAreaInsets();
   const { user, logout, gameProfiles, isAdmin, joinedMatchIds, transactions } = useUserStore();
   const { signOut } = useAuthStore();
   const [showShare, setShowShare] = useState(false);
@@ -64,12 +63,21 @@ export default function Profile() {
   const handleSignOut = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Sign Out', style: 'destructive', onPress: async () => { logout(); await signOut(); } },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          logout();
+          await signOut();
+          router.replace('/(auth)/login');
+        },
+      },
     ]);
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
+      <AppHeader title="Profile" />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Hero */}
         <View style={styles.hero}>

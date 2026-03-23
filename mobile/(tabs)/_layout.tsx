@@ -1,19 +1,23 @@
 import { Tabs, Redirect } from 'expo-router';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { View, StyleSheet, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/src/store/authStore';
 import { useUserStore } from '@/src/store/userStore';
 import { Colors } from '@/src/theme/colors';
+import { ActivityIndicator } from 'react-native';
 
-function TabIcon({ name, focused, library = 'Ionicons' }: { name: string; focused: boolean; library?: string }) {
+function TabIcon({ name, focused }: { name: string; focused: boolean }) {
   const color = focused ? Colors.brandPrimary : Colors.textMuted;
-  const size = 24;
+  return <Ionicons name={name as any} size={24} color={color} />;
+}
 
-  if (library === 'Feather') {
-    return <Feather name={name as any} size={size} color={color} />;
-  }
-  return <Ionicons name={name as any} size={size} color={color} />;
+function LiveTabIcon({ focused }: { focused: boolean }) {
+  return (
+    <View style={[liveStyles.wrapper, focused && liveStyles.wrapperActive]}>
+      <Ionicons name="radio" size={22} color={Colors.white} />
+    </View>
+  );
 }
 
 export default function TabLayout() {
@@ -40,7 +44,7 @@ export default function TabLayout() {
           backgroundColor: Colors.appCard,
           borderTopColor: Colors.appBorder,
           borderTopWidth: 1,
-          height: 56 + insets.bottom,
+          height: 60 + insets.bottom,
           paddingBottom: insets.bottom,
           paddingTop: 8,
           elevation: 0,
@@ -59,17 +63,18 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="live"
-        options={{
-          title: 'Live',
-          tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'radio' : 'radio-outline'} focused={focused} />,
-        }}
-      />
-      <Tabs.Screen
         name="leaderboard"
         options={{
           title: 'Ranks',
           tabBarIcon: ({ focused }) => <TabIcon name={focused ? 'trophy' : 'trophy-outline'} focused={focused} />,
+        }}
+      />
+      <Tabs.Screen
+        name="live"
+        options={{
+          title: 'Live',
+          tabBarIcon: ({ focused }) => <LiveTabIcon focused={focused} />,
+          tabBarLabelStyle: { fontSize: 10, fontWeight: '700', marginTop: 2, color: Colors.brandPrimary },
         }}
       />
       <Tabs.Screen
@@ -89,6 +94,26 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const liveStyles = StyleSheet.create({
+  wrapper: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: Colors.textMuted,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: -10,
+    shadowColor: Colors.brandPrimary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  wrapperActive: {
+    backgroundColor: Colors.brandPrimary,
+  },
+});
 
 const loadingStyles = StyleSheet.create({
   container: {

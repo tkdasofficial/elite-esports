@@ -3,12 +3,13 @@ import {
   View, Text, StyleSheet, FlatList, ActivityIndicator,
   TouchableOpacity, Image,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '@/src/lib/supabase';
 import { useMatchStore } from '@/src/store/matchStore';
 import { useUserStore } from '@/src/store/userStore';
 import { LetterAvatar } from '@/components/LetterAvatar';
+import { AppHeader } from '@/components/AppHeader';
 import { Colors } from '@/src/theme/colors';
 
 interface LeaderboardEntry {
@@ -57,15 +58,11 @@ export default function Leaderboard() {
     .sort((a, b) => new Date(b.start_time).getTime() - new Date(a.start_time).getTime());
 
   const top3 = players.slice(0, 3);
-  const rest = players.slice(3);
   const myIndex = players.findIndex(p => p.id === user?.id);
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Leaderboard</Text>
-        <Text style={styles.subtitle}>Top players & tournament results</Text>
-      </View>
+    <View style={styles.container}>
+      <AppHeader title="Leaderboard" />
 
       {/* Filter toggle */}
       <View style={styles.filterWrapper}>
@@ -95,7 +92,6 @@ export default function Leaderboard() {
           ListHeaderComponent={
             top3.length >= 3 ? (
               <View style={styles.podium}>
-                {/* 2nd, 1st, 3rd order */}
                 {[1, 0, 2].map(idx => {
                   const p = top3[idx];
                   const pos = idx + 1;
@@ -163,7 +159,6 @@ export default function Leaderboard() {
             ];
             return (
               <View style={styles.tournamentCard}>
-                {/* Banner */}
                 <View style={styles.tournamentBanner}>
                   {match.banner_image ? (
                     <Image source={{ uri: match.banner_image }} style={StyleSheet.absoluteFill} resizeMode="cover" />
@@ -183,7 +178,6 @@ export default function Leaderboard() {
                   </View>
                 </View>
 
-                {/* Mini podium */}
                 <View style={styles.miniPodium}>
                   {podium.map(({ pos, player, color }) => {
                     const heights = [60, 80, 44];
@@ -204,7 +198,7 @@ export default function Leaderboard() {
                         <LetterAvatar name={player.username} size="sm" />
                         <Text style={styles.miniName} numberOfLines={1}>{player.username}</Text>
                         <View style={[styles.miniBlock, { height: h, backgroundColor: color + '20', borderColor: color + '40', borderWidth: 1 }]}>
-                          <Text style={[styles.miniRankEmoji]}>{MEDAL_EMOJI[pos - 1]}</Text>
+                          <Text style={styles.miniRankEmoji}>{MEDAL_EMOJI[pos - 1]}</Text>
                         </View>
                       </View>
                     );
@@ -237,9 +231,6 @@ export default function Leaderboard() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.appBg },
-  header: { paddingHorizontal: 16, paddingBottom: 4, paddingTop: 8 },
-  title: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.5 },
-  subtitle: { fontSize: 13, color: Colors.textMuted, marginTop: 2 },
   filterWrapper: { paddingHorizontal: 16, marginVertical: 12 },
   filterRow: {
     flexDirection: 'row', gap: 0, backgroundColor: Colors.appElevated,

@@ -5,10 +5,11 @@ import {
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import { router } from 'expo-router';
-import { Ionicons, Feather } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useUserStore } from '@/src/store/userStore';
 import { usePlatformStore } from '@/src/store/platformStore';
+import { AppHeader } from '@/components/AppHeader';
 import { Colors } from '@/src/theme/colors';
 
 export default function Wallet() {
@@ -65,10 +66,8 @@ export default function Wallet() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Wallet</Text>
-      </View>
+    <View style={styles.container}>
+      <AppHeader title="Wallet" />
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         {/* Balance card */}
@@ -132,7 +131,7 @@ export default function Wallet() {
             </View>
           ) : (
             <View style={styles.txList}>
-              {transactions.slice(0, 5).map((tx, i) => (
+              {transactions.slice(0, 5).map((tx) => (
                 <View key={tx.id} style={styles.txRow}>
                   <View style={[styles.txIcon, { backgroundColor: `${txColor(tx)}20` }]}>
                     <Ionicons name={txIcon(tx.type) as any} size={18} color={txColor(tx)} />
@@ -283,9 +282,7 @@ export default function Wallet() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.appBg },
-  header: { paddingHorizontal: 16, paddingBottom: 12, paddingTop: 8 },
-  title: { fontSize: 24, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.5 },
-  scroll: { paddingHorizontal: 16, paddingBottom: 24 },
+  scroll: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 24 },
   balanceCard: {
     borderRadius: 22, overflow: 'hidden', marginBottom: 16,
     backgroundColor: '#0f3460',

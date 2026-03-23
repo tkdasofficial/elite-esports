@@ -1,23 +1,20 @@
 import { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  TouchableOpacity, FlatList, ActivityIndicator,
+  TouchableOpacity, ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons, Feather } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMatchStore } from '@/src/store/matchStore';
 import { useGameStore } from '@/src/store/gameStore';
-import { useUserStore } from '@/src/store/userStore';
 import { MatchCard } from '@/components/MatchCard';
 import { BannerCarousel } from '@/components/BannerCarousel';
+import { AppHeader } from '@/components/AppHeader';
 import { Colors } from '@/src/theme/colors';
 
 export default function Home() {
-  const insets = useSafeAreaInsets();
   const { liveMatches, upcomingMatches, completedMatches, searchQuery, setSearchQuery, loading } = useMatchStore();
   const allGames = useGameStore(s => s.games);
-  const { user } = useUserStore();
   const activeGames = allGames.filter(g => g.status === 'active');
   const now = new Date();
 
@@ -59,23 +56,8 @@ export default function Home() {
   );
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Good day,</Text>
-          <Text style={styles.username}>{user?.username || 'Player'}</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <View style={styles.coinBadge}>
-            <Ionicons name="flash" size={14} color={Colors.brandWarning} />
-            <Text style={styles.coinText}>₹{user?.coins || 0}</Text>
-          </View>
-          <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.notifBtn}>
-            <Ionicons name="notifications-outline" size={22} color={Colors.textSecondary} />
-          </TouchableOpacity>
-        </View>
-      </View>
+    <View style={styles.container}>
+      <AppHeader title="Home" />
 
       {/* Search */}
       <View style={styles.searchContainer}>
@@ -168,26 +150,11 @@ export default function Home() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.appBg },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingBottom: 12, paddingTop: 8,
-  },
-  greeting: { fontSize: 13, color: Colors.textMuted, fontWeight: '500' },
-  username: { fontSize: 20, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.4 },
-  headerRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  coinBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    backgroundColor: Colors.appElevated,
-    paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20,
-    borderWidth: 1, borderColor: Colors.appBorder,
-  },
-  coinText: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
-  notifBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
   searchContainer: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: Colors.appElevated,
     marginHorizontal: 16, borderRadius: 12, paddingHorizontal: 12,
-    marginBottom: 8,
+    marginTop: 10, marginBottom: 4,
     borderWidth: 1, borderColor: Colors.appBorder,
     height: 40,
   },

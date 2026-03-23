@@ -10,7 +10,7 @@ import { supabase } from '@/src/lib/supabase';
 import { Colors } from '@/src/theme/colors';
 
 const GoogleIcon = () => (
-  <View style={iconStyles.google}>
+  <View style={iconStyles.googleOuter}>
     <Text style={iconStyles.googleG}>G</Text>
   </View>
 );
@@ -74,16 +74,16 @@ export default function SignUp() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity
-          style={styles.backBtn}
-          onPress={() => showEmail
-            ? (setShowEmail(false), setError(''), setEmail(''), setPassword(''))
-            : router.back()
-          }
-        >
-          <Ionicons name="chevron-back" size={20} color={Colors.brandPrimary} />
-          <Text style={styles.backText}>Back</Text>
-        </TouchableOpacity>
+        {/* Back button: only show when in email form, not on social methods screen */}
+        {showEmail && (
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={() => { setShowEmail(false); setError(''); setEmail(''); setPassword(''); }}
+          >
+            <Ionicons name="chevron-back" size={20} color={Colors.brandPrimary} />
+            <Text style={styles.backText}>Back</Text>
+          </TouchableOpacity>
+        )}
 
         <View style={styles.brand}>
           <Image source={require('../../assets/logo.png')} style={styles.logo} resizeMode="contain" />
@@ -209,68 +209,68 @@ export default function SignUp() {
 }
 
 const iconStyles = StyleSheet.create({
-  google: {
-    width: 18, height: 18, borderRadius: 9,
+  googleOuter: {
+    width: 20, height: 20, borderRadius: 10,
     backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: '#ddd',
   },
-  googleG: { fontSize: 12, fontWeight: '700', color: '#4285F4' },
+  googleG: { fontSize: 13, fontWeight: '800', color: '#4285F4' },
   facebook: {
-    width: 18, height: 18, borderRadius: 9,
+    width: 20, height: 20, borderRadius: 10,
     backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
   },
-  facebookF: { fontSize: 13, fontWeight: '900', color: '#1877F2' },
+  facebookF: { fontSize: 14, fontWeight: '900', color: '#1877F2' },
 });
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.appBg },
   scroll: { flexGrow: 1, paddingHorizontal: 20 },
-  backBtn: { flexDirection: 'row', alignItems: 'center', height: 40, marginTop: 4 },
+  backBtn: { flexDirection: 'row', alignItems: 'center', height: 44, marginTop: 4 },
   backText: { color: Colors.brandPrimary, fontSize: 15 },
-  brand: { alignItems: 'center', paddingTop: 24, paddingBottom: 32 },
-  logo: { width: 60, height: 60, borderRadius: 16, marginBottom: 16 },
+  brand: { alignItems: 'center', paddingTop: 32, paddingBottom: 32 },
+  logo: { width: 96, height: 96, marginBottom: 20 },
   title: { fontSize: 26, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.6, marginBottom: 4 },
   subtitle: { fontSize: 14, color: Colors.textSecondary, textAlign: 'center' },
   methods: { gap: 10 },
   socialIconCircle: {
-    width: 28, height: 28, borderRadius: 14,
+    width: 30, height: 30, borderRadius: 15,
     backgroundColor: '#f0f0f0', alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: '#ddd',
   },
   socialIconCircleFb: {
-    width: 28, height: 28, borderRadius: 14,
+    width: 30, height: 30, borderRadius: 15,
     backgroundColor: '#1464D0', alignItems: 'center', justifyContent: 'center',
   },
   emailIconCircle: {
-    width: 28, height: 28, borderRadius: 14,
+    width: 30, height: 30, borderRadius: 15,
     backgroundColor: Colors.appFill, alignItems: 'center', justifyContent: 'center',
   },
   socialBtnGoogle: {
-    height: 44, backgroundColor: '#FFFFFF', borderRadius: 999,
+    height: 48, backgroundColor: '#FFFFFF', borderRadius: 999,
     alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
-    paddingHorizontal: 12, gap: 10,
+    paddingHorizontal: 14, gap: 10,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08, shadowRadius: 3, elevation: 2,
   },
   googleText: { flex: 1, textAlign: 'center', fontSize: 14, fontWeight: '600', color: '#1a1a1a' },
   socialBtnFacebook: {
-    height: 44, backgroundColor: '#1877F2', borderRadius: 999,
+    height: 48, backgroundColor: '#1877F2', borderRadius: 999,
     alignItems: 'center', justifyContent: 'center', flexDirection: 'row',
-    paddingHorizontal: 12, gap: 10,
+    paddingHorizontal: 14, gap: 10,
   },
   facebookText: { flex: 1, textAlign: 'center', fontSize: 14, fontWeight: '600', color: '#fff' },
   emailBtn: {
-    height: 44, backgroundColor: Colors.appElevated, borderRadius: 999,
+    height: 48, backgroundColor: Colors.appElevated, borderRadius: 999,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: Colors.appBorder, flexDirection: 'row',
-    paddingHorizontal: 12, gap: 10,
+    paddingHorizontal: 14, gap: 10,
   },
   emailBtnText: { flex: 1, textAlign: 'center', fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   divider: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 2 },
   divLine: { flex: 1, height: 1, backgroundColor: Colors.appBorder },
   divText: { fontSize: 11, color: Colors.textMuted },
   altBtn: {
-    height: 44, backgroundColor: Colors.appElevated, borderRadius: 999,
+    height: 48, backgroundColor: Colors.appElevated, borderRadius: 999,
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: Colors.appBorder,
   },
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   hint: { fontSize: 11, color: Colors.textMuted, paddingHorizontal: 4 },
   error: { fontSize: 12, color: Colors.brandLive, paddingHorizontal: 4 },
   ctaBtn: {
-    height: 44, backgroundColor: Colors.brandPrimary, borderRadius: 999,
+    height: 48, backgroundColor: Colors.brandPrimary, borderRadius: 999,
     alignItems: 'center', justifyContent: 'center',
     shadowColor: Colors.brandPrimary, shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3, shadowRadius: 10, elevation: 6,

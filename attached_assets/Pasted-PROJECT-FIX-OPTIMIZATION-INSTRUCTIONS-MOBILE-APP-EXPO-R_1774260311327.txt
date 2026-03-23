@@ -1,0 +1,164 @@
+PROJECT FIX & OPTIMIZATION INSTRUCTIONS (MOBILE APP - EXPO / REACT NATIVE)
+
+OVERVIEW:
+The app UI is already close to a professional mobile app and mostly working fine. However, there are multiple issues related to icons, layout consistency, authentication flow, and UI alignment that must be fixed and optimized.
+
+----------------------------------------
+1. ICON SYSTEM (CRITICAL ISSUE)
+----------------------------------------
+- All icons are currently NOT loading.
+- Likely cause: Web-based icons or external CDN dependency.
+
+REQUIREMENTS:
+- Replace ALL icons with local assets or a supported React Native icon library (e.g., SVG or vector icons).
+- Ensure icons work offline and load instantly.
+- Use consistent icon style across the app.
+- Fix missing icons in:
+  - Header (notification icon)
+  - Authentication buttons (Google, Facebook, Email)
+  - Bottom navigation bar
+
+----------------------------------------
+2. HEADER (GLOBAL CONSISTENCY RULE)
+----------------------------------------
+Apply SAME header on ALL screens.
+
+HEADER STRUCTURE:
+- LEFT SIDE:
+  - App Logo
+  - Page Title (NOT app name separately)
+
+- RIGHT SIDE:
+  - Notification Icon ONLY
+
+REMOVE:
+- Wallet balance from header (do NOT show)
+- Any extra text or elements
+
+RULE:
+- Header must be consistent across ALL pages
+- Proper alignment and spacing required
+
+----------------------------------------
+3. BOTTOM NAVIGATION BAR FIX
+----------------------------------------
+Current issue: Wrong order of items
+
+CORRECT ORDER (Left → Right):
+1. Home
+2. Leaderboard
+3. Live (CENTER - Highlighted)
+4. Wallet
+5. Profile
+
+REQUIREMENTS:
+- "Live" MUST be the center (3rd) button
+- Highlight "Live" with a special style (e.g., circular button)
+- Fix incorrect shifting (currently Live is in 2nd position)
+- Ensure icons are visible and aligned
+
+----------------------------------------
+4. HOME SCREEN ISSUE
+----------------------------------------
+- "Good Day Admin" appears incorrectly/inconsistently
+- Other screens do NOT match this behavior
+
+FIX:
+- Make UI consistent across all screens
+- Standardize greeting system or remove if not global
+- Align layout with other pages
+
+----------------------------------------
+5. AUTHENTICATION SYSTEM (HIGH PRIORITY)
+----------------------------------------
+
+A. LOGIN PAGE:
+- Mostly working (keep structure)
+- Fix UI consistency if needed
+
+B. SIGN-UP (CREATE ACCOUNT) PAGE:
+ISSUES:
+- Extra BACK button on top-right (REMOVE it)
+
+RULE:
+- Login & Signup UI must be consistent
+- No unnecessary navigation buttons
+
+C. SOCIAL BUTTONS FIX:
+- "Continue with Google":
+  - Background must be WHITE
+  - Use REAL Google logo
+
+- "Continue with Facebook":
+  - Use correct Facebook color & logo
+
+- "Continue with Email":
+  - Must show proper email icon
+
+NOTE:
+- Icons currently missing → fix via icon system
+
+----------------------------------------
+6. AUTH FLOW (LOGOUT ISSUE)
+----------------------------------------
+Current behavior:
+- Logout works BUT does NOT redirect automatically
+
+EXPECTED BEHAVIOR:
+- On logout:
+  → Clear session
+  → Automatically reload app state
+  → Redirect to Login screen
+
+RULE:
+- No manual refresh should be required
+- Must behave like professional apps
+
+----------------------------------------
+7. SCROLLING ISSUE
+----------------------------------------
+- Scrolling is NOT smooth or properly handled
+
+FIX:
+- Implement smooth scrolling across ALL screens
+- Ensure:
+  - No UI breaking while scrolling
+  - Proper padding and spacing
+  - ScrollView / FlatList used correctly
+
+----------------------------------------
+8. GENERAL UI CONSISTENCY
+----------------------------------------
+- Ensure ALL screens follow SAME design system
+- Fix:
+  - Alignment issues
+  - Spacing inconsistencies
+  - Component mismatches
+
+RULE:
+- One design system → applied everywhere
+
+----------------------------------------
+9. BACKEND NOTE (IGNORE)
+----------------------------------------
+- Pre-added game names in backend are NOT a system issue
+- These will be removed later manually
+- Do NOT modify backend logic for this
+
+----------------------------------------
+FINAL GOAL:
+- Fully functional mobile app
+- All icons working
+- Clean and consistent UI
+- Proper authentication flow
+- Professional app-level experience
+
+----------------------------------------
+PRIORITY ORDER:
+1. Icons Fix (CRITICAL)
+2. Bottom Navigation Fix
+3. Header Consistency
+4. Authentication Flow
+5. UI Alignment
+6. Scrolling Optimization
+----------------------------------------
