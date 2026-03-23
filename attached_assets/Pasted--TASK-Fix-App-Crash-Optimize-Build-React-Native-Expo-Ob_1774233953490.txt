@@ -1,0 +1,119 @@
+🚨 TASK: Fix App Crash + Optimize Build (React Native / Expo)
+
+🎯 Objective:
+
+The mobile app builds successfully (APK generated), but it crashes immediately after launch (within 1–2 seconds). The goal is to identify and fix the root cause, stabilize the app, and optimize the build size.
+
+---
+
+❗ Current Issues:
+
+1. App crashes immediately after opening (auto closes within 1–2 seconds).
+2. The same issue occurred in Expo Go earlier (app was not running there either).
+3. APK build is successful → So build process is correct.
+4. Problem is likely inside the codebase (logic, dependencies, or initialization).
+5. APK size is too large (~102 MB), likely due to:
+   - Web + Mobile combined codebase
+   - Unoptimized assets and dependencies
+
+---
+
+🔍 Tasks to Perform:
+
+1. 🧠 Crash Debugging (Top Priority)
+
+- Analyze the root cause of the crash.
+- Check:
+  - App entry point ("App.js" / "index.js")
+  - Navigation setup (React Navigation / routing errors)
+  - Async functions or API calls on startup
+  - State initialization issues
+  - Undefined variables or null errors
+- Add proper error boundaries to prevent app crash.
+- Add fallback UI if any critical component fails.
+
+---
+
+2. 📱 Fix Expo / Runtime Issues
+
+- Ensure compatibility with Expo environment.
+- Check:
+  - "app.json" / "app.config.js"
+  - SDK version compatibility
+  - Missing permissions
+  - Incorrect imports (web vs native conflicts)
+- Make sure app runs properly in:
+  - Expo Go
+  - Development build
+  - Production APK
+
+---
+
+3. 🧹 Remove Web Code (Important for Size + Stability)
+
+- Identify and remove all web-only components and files.
+- Ensure the project is pure React Native (mobile-focused).
+- Remove:
+  - React DOM usage
+  - Web-specific libraries
+  - Unused components/assets
+
+---
+
+4. 📦 Optimize App Size
+
+- Reduce APK size from ~102 MB to ~30–50 MB.
+- Apply:
+  - Image compression (use optimized formats like WebP)
+  - Remove unused dependencies
+  - Enable tree-shaking
+  - Use lightweight libraries
+- Split large assets if needed.
+
+---
+
+5. 🔧 Dependency & Package Fixes
+
+- Check for:
+  - Broken or incompatible packages
+  - Duplicate dependencies
+- Update all packages to stable versions.
+- Ensure all imports are correct and used.
+
+---
+
+6. 🧪 Add Logging & Debug Support
+
+- Add console logs or error tracking for:
+  - App startup
+  - Navigation load
+  - API calls
+- Ensure future debugging is easier.
+
+---
+
+7. ✅ Final Output Requirements
+
+- App should:
+  - Open without crashing
+  - Run smoothly on Android device
+  - Work in Expo Go (if supported)
+- Optimized APK size
+- Clean, stable, and production-ready codebase
+
+---
+
+⚙️ Rules:
+
+- Do NOT break existing working features.
+- Maintain clean and modular code.
+- Follow React Native + Expo best practices.
+- If a file is missing → create it.
+- If something is unnecessary → remove it.
+- Prioritize stability over adding new features.
+
+---
+
+💡 Expected Result:
+
+A fully working, crash-free, optimized mobile app ready for production release.
