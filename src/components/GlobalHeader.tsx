@@ -25,7 +25,7 @@ export function GlobalHeader() {
         <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
           <Ionicons name="search-outline" size={22} color={Colors.text.primary} />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/notifications')} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/app/notifications')} activeOpacity={0.7}>
           <Ionicons name="notifications-outline" size={22} color={Colors.text.primary} />
           {unreadCount > 0 && (
             <View style={styles.badge}>

@@ -6,29 +6,29 @@ A professional React Native Expo mobile app (Android-first, web-previewed) for c
 ## Project Structure
 ```
 /                              # Root — all config files live here
-├── app/                       # Expo Router pages (routing only)
-│   ├── _layout.tsx            # Root layout — providers, fonts, navigation
-│   ├── index.tsx              # Auth redirect (session check)
-│   ├── +not-found.tsx
-│   ├── (auth)/                # Unauthenticated screens
-│   │   ├── login.tsx
-│   │   └── signup.tsx
-│   ├── (tabs)/                # 5-tab navigation
-│   │   ├── index.tsx          # Home — tournament list
-│   │   ├── live.tsx           # Live matches
-│   │   ├── leaderboard.tsx
-│   │   ├── wallet.tsx
-│   │   └── profile.tsx
-│   ├── match/[id].tsx
-│   ├── tournament/[id].tsx
-│   ├── notifications.tsx
-│   ├── settings.tsx
-│   ├── edit-profile.tsx
-│   ├── add-money.tsx
-│   ├── withdraw.tsx
-│   ├── transaction-history.tsx
-│   └── support.tsx
 ├── src/                       # All application source code
+│   ├── app/                   # Expo Router pages (root: "src" in app.json)
+│   │   ├── _layout.tsx        # Root layout — providers, fonts, navigation
+│   │   ├── index.tsx          # Auth redirect → /app/(tabs) or /app/(auth)/login
+│   │   ├── +not-found.tsx
+│   │   ├── (auth)/            # Unauthenticated screens
+│   │   │   ├── login.tsx
+│   │   │   └── signup.tsx
+│   │   ├── (tabs)/            # 5-tab navigation
+│   │   │   ├── index.tsx      # Home — tournament list
+│   │   │   ├── live.tsx       # Live matches
+│   │   │   ├── leaderboard.tsx
+│   │   │   ├── wallet.tsx
+│   │   │   └── profile.tsx
+│   │   ├── match/[id].tsx
+│   │   ├── tournament/[id].tsx
+│   │   ├── notifications.tsx
+│   │   ├── settings.tsx
+│   │   ├── edit-profile.tsx
+│   │   ├── add-money.tsx
+│   │   ├── withdraw.tsx
+│   │   ├── transaction-history.tsx
+│   │   └── support.tsx
 │   ├── components/            # Shared UI components
 │   │   ├── GlobalHeader.tsx
 │   │   ├── ErrorBoundary.tsx
@@ -106,7 +106,8 @@ A professional React Native Expo mobile app (Android-first, web-previewed) for c
 - **production-aab** — AAB for Play Store submission
 
 ## Key Tech Decisions
-- `app/` at root = Expo Router pages; `src/` = all source modules
+- `src/app/` = Expo Router pages (expo-router `root: "src"` set in app.json)
+- Route paths have `/app/` prefix: e.g. `/app/(tabs)`, `/app/(auth)/login`, `/app/match/[id]`
 - `useBottomTabBarHeight` → `@react-navigation/bottom-tabs`
 - `Platform.OS === 'web'` → 67px top inset, 34px bottom inset
 - `expo-secure-store` → session persistence on native; localStorage adapter on web

@@ -23,7 +23,7 @@ export default function LoginScreen() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (error) Alert.alert('Login Failed', error.message);
-    else router.replace('/(tabs)');
+    else router.replace('/app/(tabs)');
   };
 
   return (
@@ -39,7 +39,7 @@ export default function LoginScreen() {
             <TouchableOpacity style={[styles.btn, loading && styles.btnDisabled]} onPress={handleLogin} disabled={loading} activeOpacity={0.85}>
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Sign In</Text>}
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/(auth)/signup')} style={styles.link}>
+            <TouchableOpacity onPress={() => router.push('/app/(auth)/signup')} style={styles.link}>
               <Text style={styles.linkText}>Don't have an account? <Text style={styles.linkBold}>Sign Up</Text></Text>
             </TouchableOpacity>
           </View>

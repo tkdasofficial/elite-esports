@@ -2,5 +2,5 @@ import { Redirect, useLocalSearchParams } from 'expo-router';
 
 export default function TournamentRedirect() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  return <Redirect href={{ pathname: '/match/[id]', params: { id } }} />;
+  return <Redirect href={{ pathname: '/app/match/[id]', params: { id } }} />;
 }

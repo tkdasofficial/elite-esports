@@ -29,7 +29,7 @@ export default function SignupScreen() {
     setLoading(false);
     if (error) Alert.alert('Signup Failed', error.message);
     else Alert.alert('Success', 'Account created! Check your email to verify.', [
-      { text: 'OK', onPress: () => router.replace('/(auth)/login') },
+      { text: 'OK', onPress: () => router.replace('/app/(auth)/login') },
     ]);
   };
 

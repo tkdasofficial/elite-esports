@@ -13,8 +13,8 @@ const AVATARS = ['🎮', '⚡', '🔥', '💀', '🎯', '🛡️', '⚔️', '�
 const MENU_ITEMS = [
   { icon: 'people-outline', label: 'My Team', route: null },
   { icon: 'game-controller-outline', label: 'My Matches', route: null },
-  { icon: 'settings-outline', label: 'Settings', route: '/settings' },
-  { icon: 'headset-outline', label: 'Support', route: '/support' },
+  { icon: 'settings-outline', label: 'Settings', route: '/app/settings' },
+  { icon: 'headset-outline', label: 'Support', route: '/app/support' },
 ];
 
 export default function ProfileScreen() {
@@ -45,7 +45,7 @@ export default function ProfileScreen() {
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarEmoji}>{AVATARS[avatarIndex] ?? '🎮'}</Text>
             </View>
-            <TouchableOpacity style={styles.editIcon} onPress={() => router.push('/edit-profile')} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.editIcon} onPress={() => router.push('/app/edit-profile')} activeOpacity={0.8}>
               <Ionicons name="pencil" size={14} color="#fff" />
             </TouchableOpacity>
           </View>

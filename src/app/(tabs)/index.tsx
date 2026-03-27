@@ -28,7 +28,7 @@ export default function HomeScreen() {
         data={matches}
         keyExtractor={item => item.id}
         renderItem={({ item }) => (
-          <MatchCard match={item} onPress={() => router.push({ pathname: '/match/[id]', params: { id: item.id } })} />
+          <MatchCard match={item} onPress={() => router.push({ pathname: '/app/match/[id]', params: { id: item.id } })} />
         )}
         contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
