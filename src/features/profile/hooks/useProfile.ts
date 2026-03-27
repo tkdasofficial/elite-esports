@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/services/supabase';
 import { ProfileData } from '@/utils/types';
 
@@ -6,12 +6,17 @@ export function useProfile(userId?: string) {
   const [profile, setProfile] = useState<ProfileData>({});
   const [loading, setLoading] = useState(true);
 
-  const fetch = async () => {
-    if (!userId) return;
+  const fetch = useCallback(async () => {
+    if (!userId) {
+      setProfile({});
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     if (data) setProfile(data);
     setLoading(false);
-  };
+  }, [userId]);
 
   const save = async (updates: ProfileData) => {
     if (!userId) return { error: new Error('Not authenticated') };
@@ -20,7 +25,7 @@ export function useProfile(userId?: string) {
     return { error };
   };
 
-  useEffect(() => { fetch(); }, [userId]);
+  useEffect(() => { fetch(); }, [fetch]);
 
   return { profile, loading, save, refresh: fetch };
 }

@@ -23,24 +23,25 @@ export default function WalletScreen() {
         showsVerticalScrollIndicator={false}
         onRefresh={refreshWallet}
         refreshing={loading}
+        scrollEnabled
         ListHeaderComponent={
           <View>
             <LinearGradient colors={['#2A0900', '#1A0500']} style={styles.balanceCard}>
               <Text style={styles.balanceLabel}>Available Balance</Text>
               <Text style={styles.balanceAmount}>₹{balance.toFixed(2)}</Text>
               <View style={styles.actionRow}>
-                <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/app/add-money')} activeOpacity={0.85}>
+                <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/add-money')} activeOpacity={0.85}>
                   <Ionicons name="add-circle" size={20} color="#fff" />
                   <Text style={styles.actionBtnText}>Add Money</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={[styles.actionBtn, styles.actionBtnOutline]} onPress={() => router.push('/app/withdraw')} activeOpacity={0.85}>
+                <TouchableOpacity style={[styles.actionBtn, styles.actionBtnOutline]} onPress={() => router.push('/withdraw')} activeOpacity={0.85}>
                   <Ionicons name="arrow-up-circle-outline" size={20} color={Colors.primary} />
                   <Text style={[styles.actionBtnText, { color: Colors.primary }]}>Withdraw</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
 
-            <TouchableOpacity style={styles.historyBtn} onPress={() => router.push('/app/transaction-history')} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.historyBtn} onPress={() => router.push('/transaction-history')} activeOpacity={0.8}>
               <Text style={styles.historyBtnText}>Full Transaction History</Text>
               <Ionicons name="chevron-forward" size={16} color={Colors.primary} />
             </TouchableOpacity>
