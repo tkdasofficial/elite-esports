@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Platform, ActivityIndicator, Alert,
+  KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -10,7 +10,6 @@ import { supabase } from '@/services/supabase';
 import { Colors } from '@/utils/colors';
 import { AuthLogo } from '@/features/auth/components/AuthLogo';
 import { AuthInput } from '@/features/auth/components/AuthInput';
-import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 
 export default function SignupScreen() {
   const insets = useSafeAreaInsets();
@@ -21,14 +20,11 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
 
   const handleSignup = async () => {
-    if (!name.trim() || !username.trim() || !email.trim() || !password) {
-      Alert.alert('Error', 'Please fill in all fields'); return;
-    }
-    if (password.length < 6) { Alert.alert('Error', 'Password must be at least 6 characters'); return; }
+    if (!name || !username || !email || !password) { Alert.alert('Error', 'Please fill in all fields'); return; }
     setLoading(true);
     const { error } = await supabase.auth.signUp({
-      email: email.trim(), password,
-      options: { data: { full_name: name.trim(), username: username.trim().toLowerCase() } },
+      email, password,
+      options: { data: { full_name: name, username } },
     });
     setLoading(false);
     if (error) Alert.alert('Signup Failed', error.message);
@@ -40,28 +36,31 @@ export default function SignupScreen() {
   return (
     <View style={[styles.container, { paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) }]}>
       <LinearGradient colors={['#1A0500', '#000000']} style={StyleSheet.absoluteFill} />
-      <KeyboardAwareScrollViewCompat contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <AuthLogo tagline="Join the Arena" />
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Create Account</Text>
-          <AuthInput label="Full Name" value={name} onChangeText={setName} placeholder="John Doe" iconName="person-outline" autoCapitalize="words" />
-          <AuthInput label="Username" value={username} onChangeText={setUsername} placeholder="johndoe" iconName="at-outline" />
-          <AuthInput label="Email" value={email} onChangeText={setEmail} placeholder="your@email.com" iconName="mail-outline" keyboardType="email-address" autoComplete="email" />
-          <AuthInput label="Password" value={password} onChangeText={setPassword} placeholder="••••••••" iconName="lock-closed-outline" secureTextEntry />
-          <TouchableOpacity style={[styles.btn, loading && styles.btnDisabled]} onPress={handleSignup} disabled={loading} activeOpacity={0.85}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Create Account</Text>}
-          </TouchableOpacity>
-          <TouchableOpacity onPress={() => router.back()} style={styles.link}>
-            <Text style={styles.linkText}>Already have an account? <Text style={styles.linkBold}>Sign In</Text></Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAwareScrollViewCompat>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
+        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <AuthLogo tagline="Join the Arena" />
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Create Account</Text>
+            <AuthInput label="Full Name" value={name} onChangeText={setName} placeholder="John Doe" iconName="person-outline" />
+            <AuthInput label="Username" value={username} onChangeText={setUsername} placeholder="johndoe" iconName="at-outline" />
+            <AuthInput label="Email" value={email} onChangeText={setEmail} placeholder="your@email.com" iconName="mail-outline" keyboardType="email-address" autoComplete="email" />
+            <AuthInput label="Password" value={password} onChangeText={setPassword} placeholder="••••••••" iconName="lock-closed-outline" secureTextEntry />
+            <TouchableOpacity style={[styles.btn, loading && styles.btnDisabled]} onPress={handleSignup} disabled={loading} activeOpacity={0.85}>
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Create Account</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.back()} style={styles.link}>
+              <Text style={styles.linkText}>Already have an account? <Text style={styles.linkBold}>Sign In</Text></Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
+  flex: { flex: 1 },
   scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingBottom: 48 },
   card: { backgroundColor: Colors.background.card, borderRadius: 20, padding: 24, borderWidth: 1, borderColor: Colors.border.default },
   cardTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 20 },

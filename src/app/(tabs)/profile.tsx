@@ -39,6 +39,7 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <GlobalHeader />
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: tabBarHeight + 16 }]} showsVerticalScrollIndicator={false}>
+        {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarCircle}>
@@ -63,6 +64,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+        {/* Game IDs */}
         {profile.games && profile.games.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Game IDs</Text>
@@ -78,22 +80,15 @@ export default function ProfileScreen() {
           </View>
         )}
 
+        {/* Menu */}
         <View style={styles.section}>
           {MENU_ITEMS.map(item => (
-            <TouchableOpacity
-              key={item.label}
-              style={[styles.menuRow, !item.route && styles.menuRowDisabled]}
-              onPress={() => item.route && router.push(item.route as any)}
-              activeOpacity={item.route ? 0.75 : 1}
-            >
+            <TouchableOpacity key={item.label} style={styles.menuRow} onPress={() => item.route && router.push(item.route as any)} activeOpacity={0.75}>
               <View style={styles.menuIconBox}>
-                <Ionicons name={item.icon as any} size={20} color={item.route ? Colors.primary : Colors.text.muted} />
+                <Ionicons name={item.icon as any} size={20} color={Colors.primary} />
               </View>
-              <Text style={[styles.menuLabel, !item.route && styles.menuLabelMuted]}>{item.label}</Text>
-              {item.route
-                ? <Ionicons name="chevron-forward" size={18} color={Colors.text.muted} />
-                : <Text style={styles.comingSoon}>Soon</Text>
-              }
+              <Text style={styles.menuLabel}>{item.label}</Text>
+              <Ionicons name="chevron-forward" size={18} color={Colors.text.muted} />
             </TouchableOpacity>
           ))}
         </View>
@@ -129,11 +124,8 @@ const styles = StyleSheet.create({
   gameName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
   gameUID: { fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.text.secondary },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: Colors.background.card, borderRadius: 14, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: Colors.border.subtle },
-  menuRowDisabled: { opacity: 0.5 },
   menuIconBox: { width: 38, height: 38, borderRadius: 10, backgroundColor: 'rgba(254,76,17,0.1)', alignItems: 'center', justifyContent: 'center' },
   menuLabel: { flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary },
-  menuLabelMuted: { color: Colors.text.secondary },
-  comingSoon: { fontSize: 11, fontFamily: 'Inter_500Medium', color: Colors.text.muted, backgroundColor: Colors.background.elevated, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 14, height: 52, marginTop: 8, borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)' },
   logoutText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: Colors.status.error },
 });

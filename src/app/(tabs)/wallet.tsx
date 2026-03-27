@@ -23,7 +23,6 @@ export default function WalletScreen() {
         showsVerticalScrollIndicator={false}
         onRefresh={refreshWallet}
         refreshing={loading}
-        scrollEnabled
         ListHeaderComponent={
           <View>
             <LinearGradient colors={['#2A0900', '#1A0500']} style={styles.balanceCard}>

@@ -33,7 +33,6 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
         showsVerticalScrollIndicator={false}
-        scrollEnabled
         ListHeaderComponent={
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Tournaments</Text>

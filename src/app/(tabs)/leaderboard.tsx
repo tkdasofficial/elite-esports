@@ -35,7 +35,6 @@ export default function LeaderboardScreen() {
           renderItem={({ item }) => <LeaderRow item={item} />}
           contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
           showsVerticalScrollIndicator={false}
-          scrollEnabled
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
           ListHeaderComponent={
             <View style={styles.listHeader}>
