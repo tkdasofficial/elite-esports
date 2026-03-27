@@ -59,6 +59,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, height: 52,
   },
   icon: { marginRight: 10 },
-  input: { flex: 1, color: Colors.text.primary, fontSize: 15, fontFamily: 'Inter_400Regular' },
-  eyeBtn: { padding: 4 },
+  input: { flex: 1, color: Colors.text.primary, fontSize: 15, fontFamily: 'Inter_400Regular', paddingRight: 8 },
+  eyeBtn: { paddingHorizontal: 6, paddingVertical: 8, marginLeft: 4 },
 });
