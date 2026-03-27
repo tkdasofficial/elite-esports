@@ -3,32 +3,32 @@
 ## Overview
 A professional React Native Expo mobile app (Android-first, web-previewed) for competitive eSports tournaments. Package: `com.elite.esports.android`, version 1.0.0. Built with Expo Router, Supabase backend, and a fully modular feature-based architecture.
 
-## Project Structure (Flat)
+## Project Structure
 ```
 /                              # Root — all config files live here
+├── app/                       # Expo Router pages (routing only)
+│   ├── _layout.tsx            # Root layout — providers, fonts, navigation
+│   ├── index.tsx              # Auth redirect (session check)
+│   ├── +not-found.tsx
+│   ├── (auth)/                # Unauthenticated screens
+│   │   ├── login.tsx
+│   │   └── signup.tsx
+│   ├── (tabs)/                # 5-tab navigation
+│   │   ├── index.tsx          # Home — tournament list
+│   │   ├── live.tsx           # Live matches
+│   │   ├── leaderboard.tsx
+│   │   ├── wallet.tsx
+│   │   └── profile.tsx
+│   ├── match/[id].tsx
+│   ├── tournament/[id].tsx
+│   ├── notifications.tsx
+│   ├── settings.tsx
+│   ├── edit-profile.tsx
+│   ├── add-money.tsx
+│   ├── withdraw.tsx
+│   ├── transaction-history.tsx
+│   └── support.tsx
 ├── src/                       # All application source code
-│   ├── app/                   # Expo Router routes (pages)
-│   │   ├── _layout.tsx        # Root layout — providers, fonts, navigation
-│   │   ├── index.tsx          # Auth redirect (session check)
-│   │   ├── +not-found.tsx
-│   │   ├── (auth)/            # Unauthenticated screens
-│   │   │   ├── login.tsx
-│   │   │   └── signup.tsx
-│   │   ├── (tabs)/            # 5-tab navigation
-│   │   │   ├── index.tsx      # Home — tournament list
-│   │   │   ├── live.tsx       # Live matches
-│   │   │   ├── leaderboard.tsx
-│   │   │   ├── wallet.tsx
-│   │   │   └── profile.tsx
-│   │   ├── match/[id].tsx
-│   │   ├── tournament/[id].tsx
-│   │   ├── notifications.tsx
-│   │   ├── settings.tsx
-│   │   ├── edit-profile.tsx
-│   │   ├── add-money.tsx
-│   │   ├── withdraw.tsx
-│   │   ├── transaction-history.tsx
-│   │   └── support.tsx
 │   ├── components/            # Shared UI components
 │   │   ├── GlobalHeader.tsx
 │   │   ├── ErrorBoundary.tsx
@@ -48,7 +48,7 @@ A professional React Native Expo mobile app (Android-first, web-previewed) for c
 │   │   ├── NotificationsContext.tsx
 │   │   └── WalletContext.tsx
 │   ├── services/
-│   │   └── supabase.ts        # Supabase client (SecureStore adapter)
+│   │   └── supabase.ts        # Supabase client
 │   ├── utils/
 │   │   ├── colors.ts          # Design tokens
 │   │   └── types.ts           # Shared TypeScript interfaces
@@ -57,17 +57,20 @@ A professional React Native Expo mobile app (Android-first, web-previewed) for c
 │   ├── scripts/
 │   │   └── build.js           # Production build script
 │   └── lib/                   # Shared libraries
-│       ├── api-client-react/  # Custom fetch client + React Query hooks
+│       ├── api-client-react/  # Custom fetch + React Query hooks
 │       ├── api-spec/          # OpenAPI spec (openapi.yaml)
-│       ├── api-zod/           # Zod schemas generated from API spec
-│       └── db/                # Drizzle ORM schema + migrations
-├── backend/                   # Supabase / Express API integration
-│   ├── lib/
+│       ├── api-zod/           # Zod schemas
+│       └── db/                # Drizzle ORM schema
+├── backend/                   # Express API / Supabase integration
+│   ├── app.ts
+│   ├── index.ts
+│   ├── lib/logger.ts
 │   ├── middlewares/
 │   └── routes/
 ├── package.json
-├── tsconfig.json
+├── tsconfig.json              # Excludes backend/ and server-only libs
 ├── app.json
+├── eas.json                   # EAS build profiles
 ├── babel.config.js
 ├── metro.config.js
 ├── expo-env.d.ts
@@ -96,12 +99,19 @@ A professional React Native Expo mobile app (Android-first, web-previewed) for c
 - Auth: Email + password (Supabase Auth)
 - Realtime: Used for matches feed, notifications, wallet updates
 
+## EAS Build Profiles
+- **development** — internal dev client build
+- **preview** — internal APK for testing
+- **production** — APK for Play Store (default)
+- **production-aab** — AAB for Play Store submission
+
 ## Key Tech Decisions
-- `expo.router.root: "src"` in app.json → Expo Router uses `src/app/` for pages
-- `useBottomTabBarHeight` → imported from `@react-navigation/bottom-tabs`
-- `Platform.OS === 'web'` → 67px top inset, 34px bottom inset (proxy iframe)
+- `app/` at root = Expo Router pages; `src/` = all source modules
+- `useBottomTabBarHeight` → `@react-navigation/bottom-tabs`
+- `Platform.OS === 'web'` → 67px top inset, 34px bottom inset
 - `expo-secure-store` → session persistence on native; localStorage adapter on web
 - All currencies in Indian Rupees (₹)
+- `backend/` and `src/lib/db` excluded from mobile tsconfig (server-only)
 
 ## Workflow
 - `Elite eSports` — Expo dev server running from root (port 8081)

@@ -15,6 +15,14 @@
     },
     "production": {
       "autoIncrement": true,
+      "distribution": "store",
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "production-aab": {
+      "autoIncrement": true,
+      "distribution": "store",
       "android": {
         "buildType": "app-bundle"
       }

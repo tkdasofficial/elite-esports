@@ -10,9 +10,19 @@
     }
   },
   "include": [
-    "**/*.ts",
-    "**/*.tsx",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
     "expo-env.d.ts",
     ".expo/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "backend",
+    "src/lib/db",
+    "src/lib/api-zod",
+    "src/lib/api-spec",
+    "src/scripts"
   ]
 }
