@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useMemo, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors } from '@/constants/colors';
+import { Colors } from '@/utils/colors';
 
 type ThemeMode = 'dark' | 'light';
 

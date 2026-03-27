@@ -1,24 +1,14 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Platform,
-} from 'react-native';
+import React from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { Colors } from '@/constants/colors';
-import { supabase } from '@/services/supabase';
-import { useAuth } from '@/context/AuthContext';
-import { GlobalHeader } from '@/components/GlobalHeader';
 import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { Colors } from '@/utils/colors';
+import { GlobalHeader } from '@/components/GlobalHeader';
+import { useAuth } from '@/store/AuthContext';
+import { useProfile } from '@/features/profile/hooks/useProfile';
 
 const AVATARS = ['🎮', '⚡', '🔥', '💀', '🎯', '🛡️', '⚔️', '🏆'];
-
-interface ProfileData {
-  full_name?: string;
-  username?: string;
-  avatar_index?: number;
-  games?: { game: string; uid: string }[];
-}
 
 const MENU_ITEMS = [
   { icon: 'people-outline', label: 'My Team', route: null },
@@ -29,27 +19,8 @@ const MENU_ITEMS = [
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
-  const insets = useSafeAreaInsets();
+  const { profile, loading } = useProfile(user?.id);
   const tabBarHeight = useBottomTabBarHeight();
-  const [profile, setProfile] = useState<ProfileData>({});
-  const [loading, setLoading] = useState(true);
-
-  const fetchProfile = async () => {
-    if (!user) return;
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-    if (data) setProfile(data);
-    setLoading(false);
-  };
-
-  useEffect(() => { fetchProfile(); }, [user]);
-
-  const avatarIndex = profile.avatar_index ?? 0;
-  const name = profile.full_name || user?.user_metadata?.full_name || 'Player';
-  const username = profile.username || user?.user_metadata?.username || 'unknown';
 
   if (loading) {
     return (
@@ -60,11 +31,15 @@ export default function ProfileScreen() {
     );
   }
 
+  const avatarIndex = profile.avatar_index ?? 0;
+  const name = profile.full_name || user?.user_metadata?.full_name || 'Player';
+  const username = profile.username || user?.user_metadata?.username || 'unknown';
+
   return (
     <View style={styles.container}>
       <GlobalHeader />
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: tabBarHeight + 16 }]} showsVerticalScrollIndicator={false}>
-        {/* Profile Hero */}
+        {/* Hero */}
         <View style={styles.hero}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarCircle}>
@@ -76,33 +51,27 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.name}>{name}</Text>
           <Text style={styles.username}>@{username}</Text>
-
           <View style={styles.statsRow}>
-            <View style={styles.statBox}>
-              <Text style={styles.statVal}>0</Text>
-              <Text style={styles.statLbl}>Matches</Text>
-            </View>
-            <View style={styles.statDiv} />
-            <View style={styles.statBox}>
-              <Text style={styles.statVal}>0</Text>
-              <Text style={styles.statLbl}>Wins</Text>
-            </View>
-            <View style={styles.statDiv} />
-            <View style={styles.statBox}>
-              <Text style={styles.statVal}>0</Text>
-              <Text style={styles.statLbl}>Kills</Text>
-            </View>
+            {[{ label: 'Matches', val: '0' }, { label: 'Wins', val: '0' }, { label: 'Kills', val: '0' }].map(({ label, val }, i) => (
+              <React.Fragment key={label}>
+                {i > 0 && <View style={styles.statDiv} />}
+                <View style={styles.statBox}>
+                  <Text style={styles.statVal}>{val}</Text>
+                  <Text style={styles.statLbl}>{label}</Text>
+                </View>
+              </React.Fragment>
+            ))}
           </View>
         </View>
 
-        {/* Games Section */}
+        {/* Game IDs */}
         {profile.games && profile.games.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Game IDs</Text>
+            <Text style={styles.sectionLabel}>Game IDs</Text>
             {profile.games.map((g, i) => (
               <View key={i} style={styles.gameRow}>
                 <Ionicons name="game-controller-outline" size={16} color={Colors.primary} />
-                <View style={styles.gameInfo}>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.gameName}>{g.game}</Text>
                   <Text style={styles.gameUID}>UID: {g.uid}</Text>
                 </View>
@@ -114,12 +83,7 @@ export default function ProfileScreen() {
         {/* Menu */}
         <View style={styles.section}>
           {MENU_ITEMS.map(item => (
-            <TouchableOpacity
-              key={item.label}
-              style={styles.menuRow}
-              onPress={() => item.route && router.push(item.route as any)}
-              activeOpacity={0.75}
-            >
+            <TouchableOpacity key={item.label} style={styles.menuRow} onPress={() => item.route && router.push(item.route as any)} activeOpacity={0.75}>
               <View style={styles.menuIconBox}>
                 <Ionicons name={item.icon as any} size={20} color={Colors.primary} />
               </View>
@@ -129,7 +93,6 @@ export default function ProfileScreen() {
           ))}
         </View>
 
-        {/* Logout */}
         <TouchableOpacity style={styles.logoutBtn} onPress={signOut} activeOpacity={0.8}>
           <Ionicons name="log-out-outline" size={20} color={Colors.status.error} />
           <Text style={styles.logoutText}>Sign Out</Text>
@@ -143,21 +106,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   scroll: { padding: 16 },
-  hero: {
-    backgroundColor: Colors.background.card, borderRadius: 20, padding: 24,
-    alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: Colors.border.default,
-  },
+  hero: { backgroundColor: Colors.background.card, borderRadius: 20, padding: 24, alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: Colors.border.default },
   avatarWrapper: { position: 'relative', marginBottom: 12 },
-  avatarCircle: {
-    width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.background.elevated,
-    borderWidth: 2, borderColor: Colors.primary, alignItems: 'center', justifyContent: 'center',
-  },
+  avatarCircle: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.background.elevated, borderWidth: 2, borderColor: Colors.primary, alignItems: 'center', justifyContent: 'center' },
   avatarEmoji: { fontSize: 36 },
-  editIcon: {
-    position: 'absolute', bottom: 0, right: 0, width: 26, height: 26,
-    borderRadius: 13, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: Colors.background.card,
-  },
+  editIcon: { position: 'absolute', bottom: 0, right: 0, width: 26, height: 26, borderRadius: 13, backgroundColor: Colors.primary, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: Colors.background.card },
   name: { fontSize: 22, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 2 },
   username: { fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, marginBottom: 20 },
   statsRow: { flexDirection: 'row', alignItems: 'center' },
@@ -166,29 +119,13 @@ const styles = StyleSheet.create({
   statLbl: { fontSize: 11, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, marginTop: 2 },
   statDiv: { width: 1, height: 32, backgroundColor: Colors.border.default },
   section: { marginBottom: 16 },
-  sectionTitle: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.secondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 },
-  gameRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.background.card, borderRadius: 12, padding: 14, marginBottom: 8,
-    borderWidth: 1, borderColor: Colors.border.default,
-  },
-  gameInfo: { flex: 1 },
+  sectionLabel: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: Colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
+  gameRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: Colors.background.card, borderRadius: 12, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: Colors.border.default },
   gameName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
   gameUID: { fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.text.secondary },
-  menuRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: Colors.background.card, borderRadius: 14, padding: 16, marginBottom: 8,
-    borderWidth: 1, borderColor: Colors.border.subtle,
-  },
-  menuIconBox: {
-    width: 38, height: 38, borderRadius: 10, backgroundColor: 'rgba(254,76,17,0.1)',
-    alignItems: 'center', justifyContent: 'center',
-  },
+  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: Colors.background.card, borderRadius: 14, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: Colors.border.subtle },
+  menuIconBox: { width: 38, height: 38, borderRadius: 10, backgroundColor: 'rgba(254,76,17,0.1)', alignItems: 'center', justifyContent: 'center' },
   menuLabel: { flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary },
-  logoutBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 14, height: 52, marginTop: 8,
-    borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)',
-  },
+  logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: 'rgba(239,68,68,0.1)', borderRadius: 14, height: 52, marginTop: 8, borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)' },
   logoutText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: Colors.status.error },
 });

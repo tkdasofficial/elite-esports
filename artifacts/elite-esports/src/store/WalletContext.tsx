@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { supabase } from '@/services/supabase';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/store/AuthContext';
 
 export interface Transaction {
   id: string;
@@ -29,18 +29,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const fetchWallet = async () => {
     if (!user) return;
     setLoading(true);
-    const { data: wallet } = await supabase
-      .from('wallets')
-      .select('balance')
-      .eq('user_id', user.id)
-      .single();
+    const [{ data: wallet }, { data: txns }] = await Promise.all([
+      supabase.from('wallets').select('balance').eq('user_id', user.id).single(),
+      supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+    ]);
     if (wallet) setBalance(wallet.balance);
-
-    const { data: txns } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false });
     if (txns) setTransactions(txns);
     setLoading(false);
   };
@@ -48,24 +41,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) { setBalance(0); setTransactions([]); return; }
     fetchWallet();
-
     const channel = supabase
       .channel('wallet')
       .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'wallets',
+        event: '*', schema: 'public', table: 'wallets',
         filter: `user_id=eq.${user.id}`,
       }, () => fetchWallet())
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   const value = useMemo(() => ({
-    balance,
-    transactions,
-    loading,
+    balance, transactions, loading,
     refreshWallet: fetchWallet,
   }), [balance, transactions, loading, user]);
 

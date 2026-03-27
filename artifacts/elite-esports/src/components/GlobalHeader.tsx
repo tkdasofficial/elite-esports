@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '@/constants/colors';
-import { useNotifications } from '@/context/NotificationsContext';
+import { Colors } from '@/utils/colors';
+import { useNotifications } from '@/store/NotificationsContext';
 
 export function GlobalHeader() {
   const insets = useSafeAreaInsets();
@@ -17,17 +17,15 @@ export function GlobalHeader() {
         <View style={styles.logoMark}>
           <Ionicons name="flash" size={18} color={Colors.primary} />
         </View>
-        <Text style={styles.logoText}>Elite <Text style={styles.logoHighlight}>eSports</Text></Text>
+        <Text style={styles.logoText}>
+          Elite <Text style={styles.logoHighlight}>eSports</Text>
+        </Text>
       </View>
       <View style={styles.right}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => {}} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.iconBtn} activeOpacity={0.7}>
           <Ionicons name="search-outline" size={22} color={Colors.text.primary} />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.iconBtn}
-          onPress={() => router.push('/notifications')}
-          activeOpacity={0.7}
-        >
+        <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/notifications')} activeOpacity={0.7}>
           <Ionicons name="notifications-outline" size={22} color={Colors.text.primary} />
           {unreadCount > 0 && (
             <View style={styles.badge}>
@@ -55,13 +53,10 @@ const styles = StyleSheet.create({
   logoText: { fontSize: 18, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
   logoHighlight: { color: Colors.primary },
   right: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  iconBtn: {
-    width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20,
-  },
+  iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
   badge: {
     position: 'absolute', top: 4, right: 4, backgroundColor: Colors.primary,
-    borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 3,
+    borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
   },
   badgeText: { color: '#fff', fontSize: 9, fontFamily: 'Inter_700Bold' },
 });

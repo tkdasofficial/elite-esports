@@ -1,23 +1,11 @@
 import React, { useState } from 'react';
-import {
-  View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert,
-} from 'react-native';
-import { router } from 'expo-router';
-import { Colors } from '@/constants/colors';
-import { useTheme } from '@/context/ThemeContext';
-import { useAuth } from '@/context/AuthContext';
-import { supabase } from '@/services/supabase';
+import { View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView, Platform, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-interface SettingRow {
-  icon: string;
-  label: string;
-  type: 'toggle' | 'arrow' | 'danger';
-  value?: boolean;
-  onToggle?: (v: boolean) => void;
-  onPress?: () => void;
-}
+import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
+import { useAuth } from '@/store/AuthContext';
+import { supabase } from '@/services/supabase';
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
@@ -26,67 +14,41 @@ export default function SettingsScreen() {
   const [notifEnabled, setNotifEnabled] = useState(true);
 
   const handleChangePassword = () => {
-    Alert.prompt(
-      'Change Password',
-      'Enter your new password',
-      async (newPass) => {
-        if (newPass && newPass.length >= 6) {
-          const { error } = await supabase.auth.updateUser({ password: newPass });
-          Alert.alert(error ? 'Error' : 'Success', error ? error.message : 'Password updated!');
-        } else {
-          Alert.alert('Error', 'Password must be at least 6 characters');
-        }
-      },
-      'secure-text',
-    );
+    Alert.prompt('Change Password', 'Enter your new password', async (newPass) => {
+      if (newPass && newPass.length >= 6) {
+        const { error } = await supabase.auth.updateUser({ password: newPass });
+        Alert.alert(error ? 'Error' : 'Success', error ? error.message : 'Password updated!');
+      } else Alert.alert('Error', 'Password must be at least 6 characters');
+    }, 'secure-text');
   };
 
-  const sections: { title: string; rows: SettingRow[] }[] = [
+  const sections = [
     {
       title: 'Preferences',
       rows: [
-        {
-          icon: isDark ? 'moon' : 'sunny',
-          label: isDark ? 'Dark Mode' : 'Light Mode',
-          type: 'toggle',
-          value: isDark,
-          onToggle: () => toggleTheme(),
-        },
-        {
-          icon: 'notifications-outline',
-          label: 'Notifications',
-          type: 'toggle',
-          value: notifEnabled,
-          onToggle: setNotifEnabled,
-        },
+        { icon: isDark ? 'moon' : 'sunny', label: isDark ? 'Dark Mode' : 'Light Mode', type: 'toggle' as const, value: isDark, onToggle: () => toggleTheme() },
+        { icon: 'notifications-outline', label: 'Notifications', type: 'toggle' as const, value: notifEnabled, onToggle: setNotifEnabled },
       ],
     },
     {
       title: 'Account',
       rows: [
-        {
-          icon: 'lock-closed-outline',
-          label: 'Change Password',
-          type: 'arrow',
-          onPress: Platform.OS === 'ios' ? handleChangePassword : undefined,
-        },
+        { icon: 'lock-closed-outline', label: 'Change Password', type: 'arrow' as const, onPress: Platform.OS === 'ios' ? handleChangePassword : undefined },
       ],
     },
     {
       title: 'Legal',
       rows: [
-        { icon: 'document-text-outline', label: 'Terms & Conditions', type: 'arrow' },
-        { icon: 'shield-checkmark-outline', label: 'Privacy Policy', type: 'arrow' },
-        { icon: 'information-circle-outline', label: 'About', type: 'arrow' },
+        { icon: 'document-text-outline', label: 'Terms & Conditions', type: 'arrow' as const },
+        { icon: 'shield-checkmark-outline', label: 'Privacy Policy', type: 'arrow' as const },
+        { icon: 'information-circle-outline', label: 'About', type: 'arrow' as const },
       ],
     },
     {
       title: 'Danger Zone',
       rows: [
         {
-          icon: 'log-out-outline',
-          label: 'Sign Out',
-          type: 'danger',
+          icon: 'log-out-outline', label: 'Sign Out', type: 'danger' as const,
           onPress: () => Alert.alert('Sign Out', 'Are you sure?', [
             { text: 'Cancel', style: 'cancel' },
             { text: 'Sign Out', style: 'destructive', onPress: signOut },
@@ -106,23 +68,13 @@ export default function SettingsScreen() {
               {section.rows.map((row, i) => (
                 <View key={row.label}>
                   {i > 0 && <View style={styles.divider} />}
-                  <TouchableOpacity
-                    style={styles.row}
-                    onPress={row.onPress}
-                    activeOpacity={row.type === 'toggle' ? 1 : 0.75}
-                    disabled={row.type === 'toggle' || !row.onPress}
-                  >
+                  <TouchableOpacity style={styles.row} onPress={row.type !== 'toggle' ? (row as any).onPress : undefined} activeOpacity={row.type === 'toggle' ? 1 : 0.75} disabled={row.type === 'toggle' || !(row as any).onPress}>
                     <View style={[styles.iconBox, row.type === 'danger' && styles.dangerIconBox]}>
                       <Ionicons name={row.icon as any} size={18} color={row.type === 'danger' ? Colors.status.error : Colors.primary} />
                     </View>
                     <Text style={[styles.rowLabel, row.type === 'danger' && styles.dangerLabel]}>{row.label}</Text>
                     {row.type === 'toggle' && (
-                      <Switch
-                        value={row.value}
-                        onValueChange={row.onToggle}
-                        trackColor={{ false: Colors.background.surface, true: Colors.primary }}
-                        thumbColor="#fff"
-                      />
+                      <Switch value={(row as any).value} onValueChange={(row as any).onToggle} trackColor={{ false: Colors.background.surface, true: Colors.primary }} thumbColor="#fff" />
                     )}
                     {row.type === 'arrow' && <Ionicons name="chevron-forward" size={16} color={Colors.text.muted} />}
                   </TouchableOpacity>
@@ -131,7 +83,6 @@ export default function SettingsScreen() {
             </View>
           </View>
         ))}
-
         <Text style={styles.version}>Elite eSports v1.0.0 Alpha</Text>
       </ScrollView>
     </View>

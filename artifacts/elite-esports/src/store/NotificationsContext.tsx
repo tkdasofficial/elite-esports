@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import { supabase } from '@/services/supabase';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/store/AuthContext';
 
 export interface Notification {
   id: string;
@@ -38,17 +38,13 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user) { setNotifications([]); return; }
     fetchNotifications();
-
     const channel = supabase
       .channel('notifications')
       .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'notifications',
+        event: '*', schema: 'public', table: 'notifications',
         filter: `user_id=eq.${user.id}`,
       }, () => fetchNotifications())
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 

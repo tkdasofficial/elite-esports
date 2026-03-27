@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
-import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Platform,
-} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
 import { router } from 'expo-router';
-import { Colors } from '@/constants/colors';
-import { supabase } from '@/services/supabase';
-import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Colors } from '@/utils/colors';
+import { supabase } from '@/services/supabase';
+import { useAuth } from '@/store/AuthContext';
 
 const QUICK_AMOUNTS = [100, 250, 500, 1000, 2000, 5000];
+type Step = 'amount' | 'payment' | 'confirm';
 
 export default function AddMoneyScreen() {
   const { user } = useAuth();
@@ -17,7 +16,7 @@ export default function AddMoneyScreen() {
   const [amount, setAmount] = useState('');
   const [utr, setUtr] = useState('');
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<'amount' | 'payment' | 'confirm'>('amount');
+  const [step, setStep] = useState<Step>('amount');
 
   const handleNext = () => {
     const val = parseFloat(amount);
@@ -34,25 +33,22 @@ export default function AddMoneyScreen() {
     });
     setLoading(false);
     if (error) Alert.alert('Error', error.message);
-    else {
-      Alert.alert('Submitted!', 'Your deposit request is pending review.', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
-    }
+    else Alert.alert('Submitted!', 'Deposit request is pending review.', [{ text: 'OK', onPress: () => router.back() }]);
   };
+
+  const STEPS: Step[] = ['amount', 'payment', 'confirm'];
 
   return (
     <View style={[styles.container, { paddingBottom: insets.bottom + (Platform.OS === 'web' ? 34 : 0) }]}>
       <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        {/* Step Indicator */}
         <View style={styles.steps}>
-          {['Amount', 'Payment', 'Confirm'].map((s, i) => (
-            <React.Fragment key={s}>
+          {['Amount', 'Payment', 'Confirm'].map((label, i) => (
+            <React.Fragment key={label}>
               <View style={styles.stepItem}>
-                <View style={[styles.stepCircle, step === ['amount', 'payment', 'confirm'][i] && styles.stepActive]}>
+                <View style={[styles.stepCircle, step === STEPS[i] && styles.stepActive]}>
                   <Text style={styles.stepNum}>{i + 1}</Text>
                 </View>
-                <Text style={styles.stepLabel}>{s}</Text>
+                <Text style={styles.stepLabel}>{label}</Text>
               </View>
               {i < 2 && <View style={styles.stepLine} />}
             </React.Fragment>
@@ -64,27 +60,15 @@ export default function AddMoneyScreen() {
             <Text style={styles.sectionTitle}>Select Amount</Text>
             <View style={styles.quickGrid}>
               {QUICK_AMOUNTS.map(a => (
-                <TouchableOpacity
-                  key={a}
-                  style={[styles.quickBtn, amount === String(a) && styles.quickBtnActive]}
-                  onPress={() => setAmount(String(a))}
-                  activeOpacity={0.8}
-                >
+                <TouchableOpacity key={a} style={[styles.quickBtn, amount === String(a) && styles.quickBtnActive]} onPress={() => setAmount(String(a))} activeOpacity={0.8}>
                   <Text style={[styles.quickBtnText, amount === String(a) && styles.quickBtnTextActive]}>₹{a}</Text>
                 </TouchableOpacity>
               ))}
             </View>
             <Text style={styles.label}>Or Enter Amount</Text>
-            <View style={styles.inputBox}>
+            <View style={styles.amtBox}>
               <Text style={styles.rupee}>₹</Text>
-              <TextInput
-                style={styles.amtInput}
-                value={amount}
-                onChangeText={setAmount}
-                placeholder="Enter amount"
-                placeholderTextColor={Colors.text.muted}
-                keyboardType="numeric"
-              />
+              <TextInput style={styles.amtInput} value={amount} onChangeText={setAmount} placeholder="Enter amount" placeholderTextColor={Colors.text.muted} keyboardType="numeric" />
             </View>
             <TouchableOpacity style={styles.btn} onPress={handleNext} activeOpacity={0.85}>
               <Text style={styles.btnText}>Continue</Text>
@@ -100,9 +84,7 @@ export default function AddMoneyScreen() {
               <Text style={styles.payTitle}>Pay via UPI</Text>
               <View style={styles.upiId}>
                 <Text style={styles.upiText}>elite@upi</Text>
-                <TouchableOpacity>
-                  <Ionicons name="copy-outline" size={18} color={Colors.text.secondary} />
-                </TouchableOpacity>
+                <Ionicons name="copy-outline" size={18} color={Colors.text.secondary} />
               </View>
               <View style={styles.amtBadge}>
                 <Text style={styles.amtBadgeText}>Amount: ₹{amount}</Text>
@@ -119,15 +101,7 @@ export default function AddMoneyScreen() {
             <Text style={styles.sectionTitle}>Confirm Transaction</Text>
             <Text style={styles.label}>Transaction / UTR ID</Text>
             <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                value={utr}
-                onChangeText={setUtr}
-                placeholder="12-digit UTR number"
-                placeholderTextColor={Colors.text.muted}
-                keyboardType="numeric"
-                maxLength={12}
-              />
+              <TextInput style={styles.input} value={utr} onChangeText={setUtr} placeholder="12-digit UTR number" placeholderTextColor={Colors.text.muted} keyboardType="numeric" maxLength={12} />
             </View>
             <View style={styles.infoBox}>
               <Ionicons name="information-circle-outline" size={16} color={Colors.status.info} />
@@ -157,33 +131,20 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
   label: { fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.text.secondary },
   quickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  quickBtn: {
-    paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12,
-    backgroundColor: Colors.background.card, borderWidth: 1, borderColor: Colors.border.default,
-  },
+  quickBtn: { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12, backgroundColor: Colors.background.card, borderWidth: 1, borderColor: Colors.border.default },
   quickBtnActive: { backgroundColor: 'rgba(254,76,17,0.15)', borderColor: Colors.primary },
   quickBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.secondary },
   quickBtnTextActive: { color: Colors.primary },
-  inputBox: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.background.card, borderRadius: 14, borderWidth: 1,
-    borderColor: Colors.border.default, paddingHorizontal: 16, height: 56,
-  },
+  amtBox: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.background.card, borderRadius: 14, borderWidth: 1, borderColor: Colors.border.default, paddingHorizontal: 16, height: 56 },
   rupee: { fontSize: 20, fontFamily: 'Inter_700Bold', color: Colors.text.secondary, marginRight: 8 },
   amtInput: { flex: 1, fontSize: 24, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
   btn: { backgroundColor: Colors.primary, borderRadius: 14, height: 54, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   disabled: { opacity: 0.6 },
   btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
-  payCard: {
-    backgroundColor: Colors.background.card, borderRadius: 16, padding: 24,
-    alignItems: 'center', gap: 12, borderWidth: 1, borderColor: Colors.primary + '44',
-  },
+  payCard: { backgroundColor: Colors.background.card, borderRadius: 16, padding: 24, alignItems: 'center', gap: 12, borderWidth: 1, borderColor: Colors.primary + '44' },
   payTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
-  upiId: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: Colors.background.elevated, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10,
-  },
-  upiText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: Colors.primary, letterSpacing: 0.5 },
+  upiId: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: Colors.background.elevated, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
+  upiText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: Colors.primary },
   amtBadge: { backgroundColor: 'rgba(254,76,17,0.15)', borderRadius: 8, paddingHorizontal: 16, paddingVertical: 8 },
   amtBadgeText: { fontSize: 15, fontFamily: 'Inter_700Bold', color: Colors.primary },
   inputWrapper: { backgroundColor: Colors.background.card, borderRadius: 12, borderWidth: 1, borderColor: Colors.border.default, paddingHorizontal: 14, height: 52, justifyContent: 'center' },
