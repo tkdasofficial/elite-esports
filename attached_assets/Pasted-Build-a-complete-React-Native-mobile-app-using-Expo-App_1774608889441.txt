@@ -1,0 +1,300 @@
+Build a complete React Native mobile app using Expo.
+
+App Name: Elite eSports
+
+This app is an eSports tournament platform with real-time features.
+
+---
+
+IMPORTANT RULES:
+
+- Backend is already built using Supabase.
+- You must connect using environment variables.
+- DO NOT hardcode any API keys.
+- Use a .env file for all credentials.
+- Use clean, modular code structure.
+
+---
+
+ENV SETUP:
+
+Use these environment variables:
+
+VITE_SUPABASE_PROJECT_ID
+VITE_SUPABASE_PUBLISHABLE_KEY
+VITE_SUPABASE_URL
+
+Create a Supabase client config file and initialize connection using these variables.
+
+---
+
+TECH STACK:
+
+- React Native (Expo)
+- Supabase (Auth, Database, Realtime)
+- React Navigation (Bottom Tabs + Stack)
+- Functional components with hooks
+
+---
+
+NAVIGATION STRUCTURE:
+
+Bottom Tabs (Main Screens):
+
+- Home
+- Live
+- Leaderboard
+- Wallet
+- Profile
+
+---
+
+GLOBAL HEADER (ALL TAB SCREENS):
+
+Left side:
+
+- App logo + text "Elite eSports"
+
+Right side:
+
+- Search button
+- Notifications button (with unread badge)
+
+---
+
+SUB SCREENS (STACK):
+
+- Notifications
+- Settings
+- Edit Profile
+- Tournament Details
+- Match Details
+- Add Money
+- Withdraw Money
+- Transaction History
+- Support
+- Report Issue
+
+Header for sub screens:
+
+- Left: Back button
+- Center: Page title
+
+---
+
+AUTH SYSTEM:
+
+- Signup and Login using Supabase Auth
+- Maintain user session
+- Redirect unauthenticated users to login screen
+
+---
+
+HOME SCREEN:
+
+- Fetch matches from backend
+
+- Display:
+  
+  - Game banner (16:9)
+  - Match title
+  - Entry fee
+  - Prize pool
+  - Players joined / max players
+  - Match status (upcoming, ongoing, completed, cancelled)
+
+- Join button:
+  
+  - Disabled if match is full
+
+---
+
+MATCH DETAILS SCREEN:
+
+- Show:
+  - Full match info
+  - Room ID & Password (only when match is ongoing)
+  - Match status
+
+---
+
+LIVE SCREEN:
+
+- Show ongoing matches
+- Each item has a button:
+  - "Watch Live"
+  - Opens external link (YouTube or others)
+
+---
+
+LEADERBOARD SCREEN:
+
+- Tabs:
+  
+  - Solo
+  - Squad
+
+- Show:
+  
+  - Rank
+  - Username
+  - Kills
+  - Points
+
+---
+
+WALLET SCREEN:
+
+- Show balance
+- Buttons:
+  - Add Money
+  - Withdraw
+- Transaction history list
+
+---
+
+ADD MONEY FLOW:
+
+- Select amount (respect min/max limits from backend)
+
+- Show UPI / QR / Bank details
+
+- Input:
+  
+  - Transaction ID (UTR)
+  - Upload screenshot
+
+- Submit request
+
+- Show status:
+  
+  - Pending
+  - Auto-Verified
+  - Pending Manual Review
+  - Approved
+  - Rejected
+
+---
+
+WITHDRAW FLOW:
+
+- Enter amount
+- Submit request
+- Status handled by admin
+
+---
+
+PROFILE SCREEN:
+
+- Avatar (predefined selection only)
+
+- Name
+
+- Username (below name)
+
+- Games section:
+  
+  - User selects game from list
+  - Enters UID
+  - Display: Game Name + UID
+
+- Options:
+  
+  - My Team
+  - My Matches
+  - Settings
+  - Support
+
+- Show edit icon (not text) for editing profile
+
+---
+
+EDIT PROFILE:
+
+- Change avatar
+- Edit name
+- Manage games + UID
+
+---
+
+SETTINGS:
+
+- Dark / Light mode toggle
+- Change password
+- Notifications toggle
+- Terms & Conditions
+- Privacy Policy
+- About
+- Logout
+
+---
+
+NOTIFICATIONS SCREEN:
+
+- List all notifications
+- Mark as read
+
+---
+
+REAL-TIME FEATURES (IMPORTANT):
+
+Use Supabase real-time subscriptions ONLY for:
+
+- Matches (status, slots)
+- Payments (status updates)
+- Wallet (balance updates)
+- Notifications
+
+Do NOT use real-time for:
+
+- Leaderboard
+- Profile
+- Settings
+- Games list
+
+---
+
+MONETIZATION (ADS SYSTEM):
+
+- App receives ad config from backend
+- Based on triggers (join_match, app_open, etc.)
+- Show ads using SDK (structure only, no real ads needed now)
+
+---
+
+UI REQUIREMENTS:
+
+- Clean and modern UI
+- Consistent spacing
+- Use reusable components
+- Responsive design
+
+---
+
+PROJECT STRUCTURE:
+
+- screens/
+- components/
+- navigation/
+- services/
+- utils/
+
+---
+
+DELIVERABLE:
+
+Generate full working Expo project with:
+
+- Navigation setup
+- Screens
+- Supabase connection
+- Real-time listeners
+- Clean code structure
+
+---
+
+IMPORTANT:
+
+Do NOT overcomplicate.
+Focus on working features.
+Use best practices and keep code readable.
