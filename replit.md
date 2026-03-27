@@ -1,85 +1,94 @@
 # Elite eSports — Replit Project
 
 ## Overview
-A professional React Native Expo mobile app (Android-first, web-previewed) for competitive eSports tournaments. Package: `com.elite.esports.android`, version 1.0.0. Built with Expo Router, Supabase backend, and a fully modular feature-based architecture.
+A professional React Native Expo mobile app (Android-first, web-previewed) for competitive eSports tournaments. Package: `com.elite.esports.android`, version 1.0.0 Alpha. Built with Expo Router, Supabase backend, and a fully modular feature-based architecture.
 
-## Project Structure (Flat)
+## Project Structure (Monorepo)
 ```
-/                              # Root — all config files live here
-├── src/                       # All application source code
-│   ├── app/                   # Expo Router routes (pages)
-│   │   ├── _layout.tsx        # Root layout — providers, fonts, navigation
-│   │   ├── index.tsx          # Auth redirect (session check)
-│   │   ├── +not-found.tsx
-│   │   ├── (auth)/            # Unauthenticated screens
-│   │   │   ├── login.tsx
-│   │   │   └── signup.tsx
-│   │   ├── (tabs)/            # 5-tab navigation
-│   │   │   ├── index.tsx      # Home — tournament list
-│   │   │   ├── live.tsx       # Live matches
-│   │   │   ├── leaderboard.tsx
-│   │   │   ├── wallet.tsx
-│   │   │   └── profile.tsx
-│   │   ├── match/[id].tsx
-│   │   ├── tournament/[id].tsx
-│   │   ├── notifications.tsx
-│   │   ├── settings.tsx
-│   │   ├── edit-profile.tsx
-│   │   ├── add-money.tsx
-│   │   ├── withdraw.tsx
-│   │   ├── transaction-history.tsx
-│   │   └── support.tsx
-│   ├── components/            # Shared UI components
-│   │   ├── GlobalHeader.tsx
-│   │   ├── ErrorBoundary.tsx
-│   │   ├── ErrorFallback.tsx
-│   │   └── KeyboardAwareScrollViewCompat.tsx
-│   ├── features/              # Domain-specific modules
-│   │   ├── auth/components/
-│   │   ├── home/components/ + hooks/
-│   │   ├── live/components/ + hooks/
-│   │   ├── leaderboard/components/ + hooks/
-│   │   ├── wallet/components/
-│   │   ├── profile/hooks/
-│   │   └── match/components/ + hooks/
-│   ├── store/                 # React Context providers
-│   │   ├── AuthContext.tsx
-│   │   ├── ThemeContext.tsx
-│   │   ├── NotificationsContext.tsx
-│   │   └── WalletContext.tsx
-│   ├── services/
-│   │   └── supabase.ts        # Supabase client (SecureStore adapter)
-│   ├── utils/
-│   │   ├── colors.ts          # Design tokens
-│   │   └── types.ts           # Shared TypeScript interfaces
-│   ├── hooks/                 # Global/reusable hooks
-│   ├── assets/images/         # App icons, splash screens
-│   ├── scripts/
-│   │   └── build.js           # Production build script
-│   └── lib/                   # Shared libraries
-│       ├── api-client-react/  # Custom fetch client + React Query hooks
-│       ├── api-spec/          # OpenAPI spec (openapi.yaml)
-│       ├── api-zod/           # Zod schemas generated from API spec
-│       └── db/                # Drizzle ORM schema + migrations
-├── backend/                   # Supabase / Express API integration
-│   ├── lib/
-│   ├── middlewares/
-│   └── routes/
-├── package.json
-├── tsconfig.json
-├── app.json
-├── babel.config.js
-├── metro.config.js
-├── expo-env.d.ts
-├── pnpm-workspace.yaml
-└── .gitignore
+artifacts/
+  elite-esports/       # Mobile app — @workspace/elite-esports
+  api-server/          # Express API server — @workspace/api-server
+  mockup-sandbox/      # Vite canvas preview server — @workspace/mockup-sandbox
+lib/
+  api-client-react/    # Shared API client
 ```
 
-## Path Alias
-`tsconfig.json` maps `@/*` → `./src/*`. Examples:
+## Elite eSports Architecture
+
+### Directory Layout
+```
+artifacts/elite-esports/
+├── app/                          # Expo Router routes (routing only)
+│   ├── _layout.tsx               # Root layout — providers, fonts, navigation
+│   ├── index.tsx                 # Auth redirect (session check)
+│   ├── +not-found.tsx
+│   ├── (auth)/                   # Unauthenticated screens
+│   │   ├── login.tsx
+│   │   └── signup.tsx
+│   ├── (tabs)/                   # 5-tab navigation
+│   │   ├── index.tsx             # Home — tournament list
+│   │   ├── live.tsx              # Live matches
+│   │   ├── leaderboard.tsx       # Rankings
+│   │   ├── wallet.tsx            # Wallet & balance
+│   │   └── profile.tsx           # User profile
+│   ├── match/[id].tsx            # Match detail + join
+│   ├── tournament/[id].tsx       # Redirects to match/[id]
+│   ├── notifications.tsx
+│   ├── settings.tsx
+│   ├── edit-profile.tsx
+│   ├── add-money.tsx
+│   ├── withdraw.tsx
+│   ├── transaction-history.tsx
+│   └── support.tsx
+│
+└── src/                          # All source modules
+    ├── components/               # Shared UI components
+    │   ├── GlobalHeader.tsx      # App header with logo + notif badge
+    │   ├── ErrorBoundary.tsx
+    │   ├── ErrorFallback.tsx
+    │   └── KeyboardAwareScrollViewCompat.tsx
+    │
+    ├── features/                 # Domain-specific modules
+    │   ├── auth/
+    │   │   └── components/
+    │   │       ├── AuthLogo.tsx
+    │   │       └── AuthInput.tsx
+    │   ├── home/
+    │   │   ├── components/MatchCard.tsx
+    │   │   └── hooks/useMatches.ts
+    │   ├── live/
+    │   │   ├── components/LiveMatchCard.tsx
+    │   │   └── hooks/useLiveMatches.ts
+    │   ├── leaderboard/
+    │   │   ├── components/LeaderRow.tsx
+    │   │   └── hooks/useLeaderboard.ts
+    │   ├── wallet/
+    │   │   └── components/TransactionItem.tsx
+    │   ├── profile/
+    │   │   └── hooks/useProfile.ts
+    │   └── match/
+    │       ├── components/RoomDetails.tsx
+    │       └── hooks/useMatchDetail.ts
+    │
+    ├── hooks/                    # Global/reusable hooks (future)
+    ├── services/
+    │   └── supabase.ts           # Supabase client (SecureStore adapter)
+    ├── store/                    # React Context providers
+    │   ├── AuthContext.tsx       # Session, user, signOut
+    │   ├── ThemeContext.tsx      # Dark/light theme
+    │   ├── NotificationsContext.tsx
+    │   └── WalletContext.tsx     # Balance + transactions
+    └── utils/
+        ├── colors.ts             # Design tokens (Colors object)
+        └── types.ts              # Shared TypeScript interfaces
+```
+
+### Path Alias
+`tsconfig.json` maps `@/*` → `./src/*`. So:
 - `@/utils/colors` → `src/utils/colors.ts`
 - `@/store/AuthContext` → `src/store/AuthContext.tsx`
-- `@/lib/api-client-react/src` → `src/lib/api-client-react/src/index.ts`
+- `@/features/home/hooks/useMatches` → `src/features/home/hooks/useMatches.ts`
+- `@/components/GlobalHeader` → `src/components/GlobalHeader.tsx`
 
 ## Design System
 - **Primary color**: `#FE4C11` (orange-red)
@@ -89,19 +98,20 @@ A professional React Native Expo mobile app (Android-first, web-previewed) for c
 - All design tokens live in `src/utils/colors.ts` → `Colors` object
 
 ## Backend (Supabase)
-- URL: `EXPO_PUBLIC_SUPABASE_URL` (env var)
-- Key: `EXPO_PUBLIC_SUPABASE_ANON_KEY` (Replit secret)
-- Project ID: `EXPO_PUBLIC_SUPABASE_PROJECT_ID` (env var)
+- URL: `EXPO_PUBLIC_SUPABASE_URL` (env secret)
+- Key: `EXPO_PUBLIC_SUPABASE_ANON_KEY` (env secret)
 - Tables: `matches`, `match_registrations`, `leaderboard`, `wallets`, `transactions`, `notifications`, `profiles`, `support_tickets`
 - Auth: Email + password (Supabase Auth)
 - Realtime: Used for matches feed, notifications, wallet updates
 
 ## Key Tech Decisions
-- `expo.router.root: "src"` in app.json → Expo Router uses `src/app/` for pages
 - `useBottomTabBarHeight` → imported from `@react-navigation/bottom-tabs`
 - `Platform.OS === 'web'` → 67px top inset, 34px bottom inset (proxy iframe)
 - `expo-secure-store` → session persistence on native; localStorage adapter on web
+- Tab layout: `isLiquidGlassAvailable()` → Native tabs on iOS 26+, Tabs component elsewhere
 - All currencies in Indian Rupees (₹)
 
-## Workflow
-- `Elite eSports` — Expo dev server running from root (port 8081)
+## Workflows
+- `artifacts/elite-esports: expo` — Expo dev server (port from `$PORT` env)
+- `artifacts/api-server: API Server` — Express on port 8080
+- `artifacts/mockup-sandbox: Component Preview Server` — Vite on port 8081
