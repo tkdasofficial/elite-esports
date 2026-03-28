@@ -10,7 +10,7 @@ interface Props {
 
 export function AuthLogo({ tagline = 'Compete. Win. Dominate.', showName = true }: Props) {
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, !showName && styles.containerCompact]}>
       <View style={styles.logoWrap}>
         <View style={styles.logoCircle}>
           <Ionicons name="flash" size={36} color={Colors.primary} />
@@ -30,6 +30,9 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     marginBottom: 36,
+  },
+  containerCompact: {
+    marginBottom: 20,
   },
   logoWrap: {
     marginBottom: 18,
