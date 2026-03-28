@@ -10,15 +10,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Colors } from '@/utils/colors';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
 
 const SLIDES = [
   {
     id: '1',
     icon: 'trophy' as const,
     title: 'Enter the Arena',
-    body: 'Join elite eSports tournaments and battle the best players. Every match is a chance to prove yourself.',
-    gradient: ['#1A0500', '#0A0A0A'] as [string, string],
+    body: 'Join elite eSports tournaments and battle the best players. Every match is your chance to prove yourself.',
+    gradient: ['#200800', '#0A0A0A'] as [string, string],
     accent: '#FE4C11',
   },
   {
@@ -26,7 +26,7 @@ const SLIDES = [
     icon: 'pulse' as const,
     title: 'Track Live Battles',
     body: 'Follow matches in real time. Watch leaderboards shift as the competition heats up — stay in the action.',
-    gradient: ['#000D1A', '#0A0A0A'] as [string, string],
+    gradient: ['#000E1F', '#0A0A0A'] as [string, string],
     accent: '#3B82F6',
   },
   {
@@ -34,7 +34,7 @@ const SLIDES = [
     icon: 'wallet' as const,
     title: 'Win Real Rewards',
     body: 'Compete for prize pools paid directly to your wallet in Indian Rupees. Every match counts.',
-    gradient: ['#0A1A00', '#0A0A0A'] as [string, string],
+    gradient: ['#051A00', '#0A0A0A'] as [string, string],
     accent: '#22C55E',
   },
 ];
@@ -46,25 +46,41 @@ export default function OnboardingScreen() {
   const topPad = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
   const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
-  const handleNext = async () => {
+  const goNext = async () => {
     if (activeIndex < SLIDES.length - 1) {
-      listRef.current?.scrollToIndex({ index: activeIndex + 1, animated: true });
-      setActiveIndex(i => i + 1);
+      const next = activeIndex + 1;
+      listRef.current?.scrollToIndex({ index: next, animated: true });
+      setActiveIndex(next);
     } else {
       await AsyncStorage.setItem('onboarding_seen', 'true');
       router.replace('/(auth)/options');
     }
   };
 
+  const skip = async () => {
+    await AsyncStorage.setItem('onboarding_seen', 'true');
+    router.replace('/(auth)/options');
+  };
+
   const slide = SLIDES[activeIndex];
+  const isLast = activeIndex === SLIDES.length - 1;
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={slide.gradient}
-        style={StyleSheet.absoluteFill}
-      />
+      <LinearGradient colors={slide.gradient} style={StyleSheet.absoluteFill} />
 
+      {/* Skip — top right */}
+      {!isLast && (
+        <TouchableOpacity
+          style={[styles.skipBtn, { top: topPad + 12 }]}
+          onPress={skip}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Slides */}
       <FlatList
         ref={listRef}
         data={SLIDES}
@@ -73,66 +89,56 @@ export default function OnboardingScreen() {
         pagingEnabled
         scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
+        style={{ flex: 1 }}
         renderItem={({ item }) => (
-          <View style={[styles.slide, { width }]}>
-            <View style={[styles.iconWrap, { borderColor: item.accent + '44' }]}>
-              <View style={[styles.iconInner, { backgroundColor: item.accent + '18' }]}>
-                <Ionicons name={item.icon} size={52} color={item.accent} />
+          <View style={[styles.slide, { width, paddingTop: topPad + 60 }]}>
+            {/* Icon */}
+            <View style={[styles.iconRing, { borderColor: item.accent + '40' }]}>
+              <View style={[styles.iconFill, { backgroundColor: item.accent + '16' }]}>
+                <Ionicons name={item.icon} size={56} color={item.accent} />
               </View>
             </View>
-            <Text style={styles.title}>{item.title}</Text>
-            <Text style={styles.body}>{item.body}</Text>
+
+            {/* Text */}
+            <Text style={styles.slideTitle}>{item.title}</Text>
+            <Text style={styles.slideBody}>{item.body}</Text>
           </View>
         )}
       />
 
-      {/* Dot indicators */}
-      <View style={styles.dots}>
-        {SLIDES.map((_, i) => (
-          <View
-            key={i}
-            style={[
-              styles.dot,
-              i === activeIndex && { backgroundColor: slide.accent, width: 24 },
-            ]}
-          />
-        ))}
-      </View>
+      {/* Bottom section */}
+      <View style={[styles.bottom, { paddingBottom: bottomPad + 28 }]}>
+        {/* Dots */}
+        <View style={styles.dots}>
+          {SLIDES.map((s, i) => (
+            <View
+              key={i}
+              style={[
+                styles.dot,
+                i === activeIndex && { backgroundColor: slide.accent, width: 22, borderRadius: 4 },
+              ]}
+            />
+          ))}
+        </View>
 
-      {/* CTA button */}
-      <View style={[styles.footer, { paddingBottom: bottomPad + 24 }]}>
+        {/* CTA */}
         <TouchableOpacity
-          style={[styles.btn, { backgroundColor: slide.accent }]}
-          onPress={handleNext}
+          style={[styles.cta, { backgroundColor: slide.accent }]}
+          onPress={goNext}
           activeOpacity={0.85}
         >
-          <Text style={styles.btnText}>
-            {activeIndex === SLIDES.length - 1 ? 'Get Started' : 'Continue'}
-          </Text>
+          <Text style={styles.ctaText}>{isLast ? 'Get Started' : 'Continue'}</Text>
           <Ionicons
-            name={activeIndex === SLIDES.length - 1 ? 'arrow-forward-circle' : 'chevron-forward'}
+            name={isLast ? 'arrow-forward-circle-outline' : 'chevron-forward'}
             size={20}
             color="#fff"
-            style={{ marginLeft: 8 }}
+            style={{ marginLeft: 6 }}
           />
         </TouchableOpacity>
 
-        {activeIndex < SLIDES.length - 1 && (
-          <TouchableOpacity
-            onPress={async () => {
-              await AsyncStorage.setItem('onboarding_seen', 'true');
-              router.replace('/(auth)/options');
-            }}
-            style={styles.skipBtn}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.skipText}>Skip</Text>
-          </TouchableOpacity>
-        )}
+        {/* Page counter */}
+        <Text style={styles.counter}>{activeIndex + 1} of {SLIDES.length}</Text>
       </View>
-
-      {/* Top padding spacer */}
-      <View style={{ height: topPad, position: 'absolute', top: 0 }} />
     </View>
   );
 }
@@ -142,89 +148,104 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#0A0A0A',
   },
+
+  skipBtn: {
+    position: 'absolute',
+    right: 24,
+    zIndex: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#1A1A1A',
+  },
+  skipText: {
+    color: '#888888',
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
+  },
+
   slide: {
-    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingTop: 60,
-    paddingBottom: 180,
+    paddingHorizontal: 36,
+    paddingBottom: 200,
   },
-  iconWrap: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+
+  iconRing: {
+    width: 148,
+    height: 148,
+    borderRadius: 74,
     borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 40,
+    marginBottom: 44,
   },
-  iconInner: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
+  iconFill: {
+    width: 116,
+    height: 116,
+    borderRadius: 58,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  title: {
+
+  slideTitle: {
     fontSize: 30,
     fontFamily: 'Inter_700Bold',
     color: '#FFFFFF',
     textAlign: 'center',
-    marginBottom: 16,
     letterSpacing: -0.5,
+    marginBottom: 16,
   },
-  body: {
+  slideBody: {
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    color: '#888888',
+    color: '#777777',
     textAlign: 'center',
     lineHeight: 24,
+    maxWidth: 300,
   },
-  dots: {
+
+  bottom: {
     position: 'absolute',
-    bottom: 160,
+    bottom: 0,
     left: 0,
     right: 0,
-    flexDirection: 'row',
-    justifyContent: 'center',
     alignItems: 'center',
-    gap: 8,
+    paddingHorizontal: 25,
+    gap: 16,
+  },
+
+  dots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#333333',
+    backgroundColor: '#2A2A2A',
   },
-  footer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    paddingHorizontal: 25,
-    gap: 12,
-  },
-  btn: {
+
+  cta: {
+    width: '100%',
     height: 54,
     borderRadius: 27,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  btnText: {
-    color: '#fff',
+  ctaText: {
+    color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Inter_700Bold',
     letterSpacing: 0.2,
   },
-  skipBtn: {
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  skipText: {
-    color: '#555555',
-    fontSize: 14,
+
+  counter: {
+    color: '#3A3A3A',
+    fontSize: 12,
     fontFamily: 'Inter_400Regular',
+    textAlign: 'center',
   },
 });

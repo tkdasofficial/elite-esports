@@ -23,7 +23,7 @@ const SOCIAL = [
     icon: 'logo-google' as const,
     bg: '#FFFFFF',
     text: '#1A1A1A',
-    border: '#E0E0E0',
+    border: '#DDDDDD',
   },
   {
     id: 'github' as Provider,
@@ -56,14 +56,9 @@ export default function AuthOptionsScreen() {
       const redirectUrl = Linking.createURL('/');
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: {
-          redirectTo: redirectUrl,
-          skipBrowserRedirect: true,
-        },
+        options: { redirectTo: redirectUrl, skipBrowserRedirect: true },
       });
-
       if (error) throw error;
-
       if (data?.url) {
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
         if (result.type === 'success' && result.url) {
@@ -82,17 +77,17 @@ export default function AuthOptionsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#140400', '#0A0A0A', '#0A0A0A']}
-        locations={[0, 0.4, 1]}
+        colors={['#150400', '#0A0A0A', '#0A0A0A']}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
 
-      <View style={[styles.content, { paddingTop: topPad + 32, paddingBottom: bottomPad + 24 }]}>
+      <View style={[styles.content, { paddingTop: topPad + 20, paddingBottom: bottomPad + 20 }]}>
 
-        {/* Logo */}
-        <View style={styles.logoArea}>
+        {/* ── Brand ── */}
+        <View style={styles.brand}>
           <View style={styles.logoCircle}>
-            <Ionicons name="flash" size={36} color={Colors.primary} />
+            <Ionicons name="flash" size={34} color={Colors.primary} />
           </View>
           <Text style={styles.appName}>
             Elite <Text style={styles.accent}>eSports</Text>
@@ -100,14 +95,14 @@ export default function AuthOptionsScreen() {
           <Text style={styles.tagline}>Compete. Win. Dominate.</Text>
         </View>
 
-        {/* Heading */}
-        <View style={styles.headingArea}>
+        {/* ── Heading ── */}
+        <View style={styles.headingBlock}>
           <Text style={styles.heading}>Get started</Text>
-          <Text style={styles.sub}>Choose how you want to sign in</Text>
+          <Text style={styles.sub}>Sign in or create your account</Text>
         </View>
 
-        {/* Social buttons */}
-        <View style={styles.socialList}>
+        {/* ── Social buttons ── */}
+        <View style={styles.btnList}>
           {SOCIAL.map(s => (
             <TouchableOpacity
               key={s.id}
@@ -116,38 +111,41 @@ export default function AuthOptionsScreen() {
               disabled={loadingProvider !== null}
               activeOpacity={0.85}
             >
-              {loadingProvider === s.id ? (
-                <ActivityIndicator color={s.text} size="small" />
-              ) : (
-                <Ionicons name={s.icon} size={20} color={s.text} style={styles.socialIcon} />
-              )}
-              <Text style={[styles.socialLabel, { color: s.text }]}>{s.label}</Text>
+              {/* Icon pinned left — text stays centered */}
+              <View style={styles.btnIconSlot}>
+                {loadingProvider === s.id
+                  ? <ActivityIndicator color={s.text} size="small" />
+                  : <Ionicons name={s.icon} size={19} color={s.text} />}
+              </View>
+              <Text style={[styles.btnLabel, { color: s.text }]}>{s.label}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Divider */}
+        {/* ── Divider ── */}
         <View style={styles.dividerRow}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
+          <Text style={styles.dividerText}>or continue with email</Text>
           <View style={styles.dividerLine} />
         </View>
 
-        {/* Email button */}
+        {/* ── Email button ── */}
         <TouchableOpacity
           style={styles.emailBtn}
           onPress={() => router.push('/(auth)/email-auth')}
           activeOpacity={0.85}
         >
-          <Ionicons name="mail-outline" size={20} color={Colors.primary} style={styles.socialIcon} />
-          <Text style={styles.emailLabel}>Continue with Email</Text>
+          <View style={styles.btnIconSlot}>
+            <Ionicons name="mail-outline" size={19} color={Colors.primary} />
+          </View>
+          <Text style={styles.emailBtnLabel}>Continue with Email</Text>
         </TouchableOpacity>
 
-        {/* Terms */}
+        {/* ── Terms ── */}
         <Text style={styles.terms}>
-          By continuing you agree to our{' '}
+          By continuing, you agree to our{'\n'}
           <Text style={styles.termsLink}>Terms of Service</Text>
-          {' '}and{' '}
+          {'  ·  '}
           <Text style={styles.termsLink}>Privacy Policy</Text>
         </Text>
 
@@ -156,21 +154,27 @@ export default function AuthOptionsScreen() {
   );
 }
 
+const BTN_HEIGHT = 50;
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0A0A0A' },
+
   content: {
     flex: 1,
     paddingHorizontal: 25,
     justifyContent: 'center',
+    gap: 0,
   },
-  logoArea: {
+
+  /* Brand */
+  brand: {
     alignItems: 'center',
-    marginBottom: 36,
+    marginBottom: 32,
   },
   logoCircle: {
-    width: 72,
-    height: 72,
-    borderRadius: 22,
+    width: 68,
+    height: 68,
+    borderRadius: 20,
     backgroundColor: '#1A0500',
     borderWidth: 1.5,
     borderColor: '#4A1800',
@@ -179,10 +183,11 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   appName: {
-    fontSize: 26,
+    fontSize: 24,
     fontFamily: 'Inter_700Bold',
     color: '#FFFFFF',
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
+    textAlign: 'center',
     marginBottom: 4,
   },
   accent: { color: Colors.primary },
@@ -190,82 +195,103 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
     color: '#555555',
-    letterSpacing: 0.4,
+    letterSpacing: 0.5,
+    textAlign: 'center',
   },
-  headingArea: {
+
+  /* Heading */
+  headingBlock: {
     alignItems: 'center',
-    marginBottom: 28,
+    marginBottom: 24,
   },
   heading: {
-    fontSize: 22,
+    fontSize: 20,
     fontFamily: 'Inter_700Bold',
     color: '#FFFFFF',
-    marginBottom: 4,
+    textAlign: 'center',
+    marginBottom: 5,
   },
   sub: {
-    fontSize: 14,
+    fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: '#666666',
+    color: '#606060',
+    textAlign: 'center',
   },
-  socialList: {
-    gap: 12,
+
+  /* Buttons */
+  btnList: {
+    gap: 11,
     marginBottom: 20,
   },
   socialBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 50,
-    borderRadius: 25,
+    justifyContent: 'center',
+    height: BTN_HEIGHT,
+    borderRadius: BTN_HEIGHT / 2,
     borderWidth: 1,
-    paddingHorizontal: 20,
-  },
-  socialIcon: {
-    marginRight: 12,
-  },
-  socialLabel: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#222222',
-  },
-  dividerText: {
-    color: '#555555',
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
+    position: 'relative',
   },
   emailBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    height: 50,
-    borderRadius: 25,
+    justifyContent: 'center',
+    height: BTN_HEIGHT,
+    borderRadius: BTN_HEIGHT / 2,
     borderWidth: 1.5,
-    borderColor: Colors.primary + '55',
-    paddingHorizontal: 20,
-    marginBottom: 28,
+    borderColor: Colors.primary + '50',
+    position: 'relative',
+    marginBottom: 24,
   },
-  emailLabel: {
+  /* Fixed-width slot pinned to the left — keeps label centered */
+  btnIconSlot: {
+    position: 'absolute',
+    left: 20,
+    width: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  btnLabel: {
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+    textAlign: 'center',
+  },
+  emailBtnLabel: {
     fontSize: 15,
     fontFamily: 'Inter_600SemiBold',
     color: Colors.primary,
+    textAlign: 'center',
   },
+
+  /* Divider */
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 10,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#202020',
+  },
+  dividerText: {
+    color: '#484848',
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    textAlign: 'center',
+  },
+
+  /* Terms */
   terms: {
     textAlign: 'center',
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: '#444444',
-    lineHeight: 18,
+    color: '#3A3A3A',
+    lineHeight: 20,
   },
   termsLink: {
-    color: '#666666',
+    color: '#585858',
     fontFamily: 'Inter_500Medium',
   },
 });
