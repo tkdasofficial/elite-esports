@@ -13,12 +13,13 @@ The Supabase connection is fully driven by environment variables — no credenti
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Public anonymous/client API key |
 | `EXPO_PUBLIC_SUPABASE_PROJECT_ID` | Supabase project ID (derived from URL) |
 
-These are stored in:
-- **`artifacts/elite-esports/.env`** — Expo reads its `.env` from its own project directory, not the workspace root. This file is the primary source for the dev server.
-- **Replit shared environment** (dev + production, set via environment secrets panel) — backup / production reference.
-- **`artifacts/elite-esports/eas.json`** (all EAS build profiles — development, preview, production)
+Credentials are stored in three places, in priority order:
 
-The Supabase client (`artifacts/elite-esports/src/services/supabase.ts`) throws a hard error on startup if any credential is missing or still set to a placeholder, so misconfiguration is immediately visible rather than causing silent failures.
+1. **`artifacts/elite-esports/src/config/supabase.config.ts`** — committed source file with the credentials baked in. This is the permanent baseline. Any environment or AI tool that receives this codebase can build the Supabase connection with zero extra setup.
+2. **`artifacts/elite-esports/.env`** — also committed (removed from `.gitignore`). Expo's bundler reads this from its own project directory.
+3. **`artifacts/elite-esports/eas.json`** — all EAS build profiles (development, preview, production) include the credentials for native Android/iOS builds.
+
+The Supabase client (`artifacts/elite-esports/src/services/supabase.ts`) resolves credentials in order: environment variable → `supabase.config.ts` default. This means environment variables can still override the committed defaults if needed, but a working connection is always guaranteed from the committed config alone.
 
 ## Project Structure (Monorepo)
 ```
