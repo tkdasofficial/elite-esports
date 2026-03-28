@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '@/services/supabase';
 import { Colors } from '@/utils/colors';
+import { WEB_TOP_INSET, WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { AuthLogo } from '@/features/auth/components/AuthLogo';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 
@@ -17,8 +18,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const topPad = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
-  const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
+  const topPad = Platform.OS === 'web' ? Math.max(WEB_TOP_INSET, insets.top) : insets.top;
+  const bottomPad = insets.bottom + (Platform.OS === 'web' ? WEB_BOTTOM_INSET : 0);
 
   const handleLogin = async () => {
     if (!email || !password) { Alert.alert('Error', 'Please fill in all fields'); return; }

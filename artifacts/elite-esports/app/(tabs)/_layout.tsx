@@ -8,6 +8,7 @@ import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
+import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 
 function NativeTabLayout() {
   return (
@@ -37,8 +38,8 @@ function ClassicTabLayout() {
           borderTopWidth: 1,
           borderTopColor: Colors.border.default,
           elevation: 0,
-          paddingBottom: insets.bottom,
-          ...(Platform.OS === 'web' ? { height: 84 } : {}),
+          paddingBottom: Platform.OS === 'web' ? WEB_BOTTOM_INSET : insets.bottom,
+          ...(Platform.OS === 'web' ? { height: 50 + WEB_BOTTOM_INSET } : {}),
         },
         tabBarBackground: () =>
           isIOS

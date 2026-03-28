@@ -5,11 +5,12 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
 import { useNotifications } from '@/store/NotificationsContext';
+import { WEB_TOP_INSET } from '@/utils/webInsets';
 
 export function GlobalHeader() {
   const insets = useSafeAreaInsets();
   const { unreadCount } = useNotifications();
-  const topInset = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
+  const topInset = Platform.OS === 'web' ? Math.max(WEB_TOP_INSET, insets.top) : insets.top;
 
   return (
     <View style={[styles.header, { paddingTop: topInset }]}>
