@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Alert,
@@ -9,11 +9,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { AvatarSVG, AVATAR_NAMES, AVATAR_COUNT } from '@/components/AvatarSVG';
 import { useAuth } from '@/store/AuthContext';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 
-const AVATARS = ['🎮', '⚡', '🔥', '💀', '🎯', '🛡️', '⚔️', '🏆'];
 const GAMES = ['BGMI', 'Free Fire', 'COD Mobile', 'Valorant', 'PUBG PC'];
+
+const AVATAR_SIZE = 68;
+const AVATAR_GAP = 10;
 
 export default function EditProfileScreen() {
   const { user } = useAuth();
@@ -42,6 +45,12 @@ export default function EditProfileScreen() {
     else { Alert.alert('Saved!', 'Profile updated successfully'); router.back(); }
   };
 
+  // Chunk avatar indices into columns of 2 (for 2-row horizontal layout)
+  const columns = Array.from({ length: Math.ceil(AVATAR_COUNT / 2) }, (_, col) => [
+    col * 2,
+    col * 2 + 1,
+  ].filter(i => i < AVATAR_COUNT));
+
   if (loading) {
     return (
       <View style={[styles.centered, { backgroundColor: Colors.background.dark }]}>
@@ -53,22 +62,56 @@ export default function EditProfileScreen() {
   return (
     <View style={styles.container}>
       <ScreenHeader title="Edit Profile" />
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]} showsVerticalScrollIndicator={false}>
-
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET + 24 }]}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Avatar Picker ── */}
         <Text style={styles.sectionLabel}>Choose Avatar</Text>
-        <View style={styles.avatarGrid}>
-          {AVATARS.map((emoji, i) => (
-            <TouchableOpacity
-              key={i}
-              style={[styles.avatarOption, avatarIndex === i && styles.avatarSelected]}
-              onPress={() => setAvatarIndex(i)}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.avatarEmoji}>{emoji}</Text>
-            </TouchableOpacity>
-          ))}
+
+        {/* Selected preview */}
+        <View style={styles.previewRow}>
+          <View style={styles.previewCircle}>
+            <AvatarSVG index={avatarIndex} size={72} />
+          </View>
+          <View style={styles.previewInfo}>
+            <Text style={styles.previewName}>{AVATAR_NAMES[avatarIndex]}</Text>
+            <Text style={styles.previewHint}>Scroll to see all {AVATAR_COUNT} avatars</Text>
+          </View>
         </View>
 
+        {/* 2-row horizontal scroll grid */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.avatarScrollContent}
+          style={styles.avatarScroll}
+        >
+          {columns.map((col, colIdx) => (
+            <View key={colIdx} style={[styles.avatarColumn, { marginRight: colIdx < columns.length - 1 ? AVATAR_GAP : 0 }]}>
+              {col.map(idx => (
+                <TouchableOpacity
+                  key={idx}
+                  onPress={() => setAvatarIndex(idx)}
+                  activeOpacity={0.8}
+                  style={[
+                    styles.avatarItem,
+                    avatarIndex === idx && styles.avatarItemSelected,
+                  ]}
+                >
+                  <AvatarSVG index={idx} size={AVATAR_SIZE} />
+                  {avatarIndex === idx && (
+                    <View style={styles.checkBadge}>
+                      <Ionicons name="checkmark" size={10} color="#fff" />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          ))}
+        </ScrollView>
+
+        {/* ── Display Name ── */}
         <Text style={styles.sectionLabel}>Display Name</Text>
         <View style={styles.inputWrapper}>
           <TextInput
@@ -80,6 +123,7 @@ export default function EditProfileScreen() {
           />
         </View>
 
+        {/* ── Username ── */}
         <Text style={styles.sectionLabel}>Username</Text>
         <View style={styles.inputWrapper}>
           <TextInput
@@ -92,6 +136,7 @@ export default function EditProfileScreen() {
           />
         </View>
 
+        {/* ── Game IDs ── */}
         <View style={styles.gamesHeader}>
           <Text style={styles.sectionLabel}>Game IDs</Text>
           <TouchableOpacity
@@ -135,13 +180,16 @@ export default function EditProfileScreen() {
           </View>
         ))}
 
+        {/* ── Save ── */}
         <TouchableOpacity
           style={[styles.saveBtn, saving && styles.disabled]}
           onPress={handleSave}
           disabled={saving}
           activeOpacity={0.85}
         >
-          {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
+          {saving
+            ? <ActivityIndicator color="#fff" />
+            : <Text style={styles.saveBtnText}>Save Changes</Text>}
         </TouchableOpacity>
       </ScrollView>
     </View>
@@ -151,32 +199,99 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scroll: { padding: 20, paddingBottom: 40 },
+  scroll: { padding: 20 },
+
   sectionLabel: {
-    fontSize: 12,
+    fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
     color: Colors.text.muted,
     textTransform: 'uppercase',
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     marginBottom: 10,
-    marginTop: 20,
+    marginTop: 24,
   },
-  avatarGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 4 },
-  avatarOption: {
-    width: 60,
-    height: 60,
+
+  /* Preview */
+  previewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    backgroundColor: Colors.background.card,
     borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.border.default,
+    marginBottom: 14,
+  },
+  previewCircle: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    overflow: 'hidden',
+    borderWidth: 2.5,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.background.elevated,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewInfo: { flex: 1 },
+  previewName: {
+    fontSize: 18,
+    fontFamily: 'Inter_700Bold',
+    color: Colors.text.primary,
+    marginBottom: 3,
+  },
+  previewHint: {
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: Colors.text.muted,
+  },
+
+  /* 2-row horizontal scroll */
+  avatarScroll: {
+    marginHorizontal: -20,
+  },
+  avatarScrollContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+  },
+  avatarColumn: {
+    flexDirection: 'column',
+    gap: AVATAR_GAP,
+  },
+  avatarItem: {
+    width: AVATAR_SIZE + 8,
+    height: AVATAR_SIZE + 8,
+    borderRadius: 18,
+    overflow: 'hidden',
+    borderWidth: 2.5,
+    borderColor: Colors.border.default,
     backgroundColor: Colors.background.card,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.border.default,
+    position: 'relative',
   },
-  avatarSelected: {
+  avatarItemSelected: {
     borderColor: Colors.primary,
-    backgroundColor: 'rgba(254,76,17,0.1)',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  avatarEmoji: { fontSize: 28 },
+  checkBadge: {
+    position: 'absolute',
+    bottom: 4,
+    right: 4,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  /* Inputs */
   inputWrapper: {
     backgroundColor: Colors.background.card,
     borderRadius: 12,
@@ -191,7 +306,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 24,
     marginBottom: 10,
   },
   addBtn: {
@@ -207,6 +322,7 @@ const styles = StyleSheet.create({
   gameRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
   gameInputs: { flex: 1, flexDirection: 'row', gap: 8 },
   removeBtn: { padding: 2 },
+
   saveBtn: {
     backgroundColor: Colors.primary,
     borderRadius: 14,

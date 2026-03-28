@@ -5,10 +5,9 @@ import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Colors } from '@/utils/colors';
 import { GlobalHeader } from '@/components/GlobalHeader';
+import { AvatarSVG, AVATAR_NAMES } from '@/components/AvatarSVG';
 import { useAuth } from '@/store/AuthContext';
 import { useProfile } from '@/features/profile/hooks/useProfile';
-
-const AVATARS = ['🎮', '⚡', '🔥', '💀', '🎯', '🛡️', '⚔️', '🏆'];
 
 const MENU_ITEMS = [
   { icon: 'people-outline', label: 'My Team', route: '/my-team' },
@@ -48,7 +47,7 @@ export default function ProfileScreen() {
         <View style={styles.hero}>
           <View style={styles.avatarWrapper}>
             <View style={styles.avatarCircle}>
-              <Text style={styles.avatarEmoji}>{AVATARS[avatarIndex] ?? '🎮'}</Text>
+              <AvatarSVG index={avatarIndex} size={84} />
             </View>
             <TouchableOpacity
               style={styles.editIcon}
@@ -60,6 +59,9 @@ export default function ProfileScreen() {
           </View>
           <Text style={styles.name}>{name}</Text>
           <Text style={styles.username}>@{username}</Text>
+          <View style={styles.avatarBadge}>
+            <Text style={styles.avatarBadgeText}>{AVATAR_NAMES[avatarIndex]}</Text>
+          </View>
 
           <View style={styles.statsRow}>
             {[
@@ -143,13 +145,13 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: 42,
+    overflow: 'hidden',
     backgroundColor: Colors.background.elevated,
     borderWidth: 2.5,
     borderColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarEmoji: { fontSize: 38 },
   editIcon: {
     position: 'absolute',
     bottom: 0,
