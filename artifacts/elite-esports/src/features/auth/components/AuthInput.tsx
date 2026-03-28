@@ -15,6 +15,8 @@ interface Props {
   autoComplete?: any;
 }
 
+const INPUT_HEIGHT = 56;
+
 export function AuthInput({
   label, value, onChangeText, placeholder, iconName,
   keyboardType = 'default', autoCapitalize = 'none',
@@ -28,18 +30,22 @@ export function AuthInput({
     <View style={styles.group}>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.wrapper, focused && styles.wrapperFocused]}>
-        <Ionicons
-          name={iconName}
-          size={18}
-          color={focused ? Colors.primary : '#555555'}
-          style={styles.leadIcon}
-        />
+
+        {/* Left icon — fixed-width container so it never shifts */}
+        <View style={styles.iconSlot}>
+          <Ionicons
+            name={iconName}
+            size={18}
+            color={focused ? Colors.primary : '#606060'}
+          />
+        </View>
+
         <TextInput
-          style={[styles.input, isPassword && styles.inputPassword]}
+          style={styles.input}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#444444"
+          placeholderTextColor="#484848"
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           secureTextEntry={isPassword && !showText}
@@ -47,20 +53,25 @@ export function AuthInput({
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
         />
-        {isPassword && (
+
+        {/* Right side — eye button for password, fixed spacer for others */}
+        {isPassword ? (
           <TouchableOpacity
             onPress={() => setShowText(v => !v)}
-            style={styles.eyeBtn}
+            style={styles.eyeSlot}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             activeOpacity={0.6}
           >
             <Ionicons
               name={showText ? 'eye-outline' : 'eye-off-outline'}
               size={19}
-              color="#555555"
+              color="#606060"
             />
           </TouchableOpacity>
+        ) : (
+          <View style={styles.rightSpacer} />
         )}
+
       </View>
     </View>
   );
@@ -68,7 +79,7 @@ export function AuthInput({
 
 const styles = StyleSheet.create({
   group: {
-    marginBottom: 18,
+    marginBottom: 20,
   },
   label: {
     fontSize: 12,
@@ -77,24 +88,28 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
+    paddingHorizontal: 4,
   },
   wrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#161616',
-    borderRadius: 14,
+    borderRadius: INPUT_HEIGHT / 2,
     borderWidth: 1.5,
-    borderColor: '#2C2C2C',
-    paddingHorizontal: 16,
-    height: 56,
+    borderColor: '#2A2A2A',
+    height: INPUT_HEIGHT,
     overflow: 'hidden',
   },
   wrapperFocused: {
     borderColor: Colors.primary,
     backgroundColor: '#1C0A04',
   },
-  leadIcon: {
-    marginRight: 12,
+  /* Fixed-width slot keeps the icon locked regardless of focus state */
+  iconSlot: {
+    width: 52,
+    height: INPUT_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   input: {
     flex: 1,
@@ -105,14 +120,15 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
     backgroundColor: 'transparent',
   },
-  inputPassword: {
-    paddingRight: 8,
-  },
-  eyeBtn: {
-    width: 36,
-    alignSelf: 'stretch',
+  /* Eye button — same fixed width as icon slot, right side */
+  eyeSlot: {
+    width: 52,
+    height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: -4,
+  },
+  /* Spacer gives the same right breathing room for non-password fields */
+  rightSpacer: {
+    width: 20,
   },
 });
