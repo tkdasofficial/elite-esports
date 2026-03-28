@@ -13,44 +13,31 @@ import { Colors } from '@/utils/colors';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 
 type Step = 'email' | 'password';
+type Mode = 'signin' | 'signup';
 
 export default function EmailAuthScreen() {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>('email');
+  const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isExistingUser, setIsExistingUser] = useState(false);
-  const [checking, setChecking] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const topPad = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
   const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
-  const handleCheckEmail = async () => {
-    if (!email.trim() || !email.includes('@')) {
+  const handleEmailContinue = () => {
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes('@') || !trimmed.includes('.')) {
       setError('Please enter a valid email address.');
       return;
     }
     setError('');
-    setChecking(true);
-    try {
-      const tempPw = 'probe_' + Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
-      const { data } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
-        password: tempPw,
-      });
-      await supabase.auth.signOut();
-      setIsExistingUser(data?.user?.identities?.length === 0);
-      setStep('password');
-    } catch {
-      setError('Unable to check email. Please try again.');
-    } finally {
-      setChecking(false);
-    }
+    setStep('password');
   };
 
-  const handleSubmit = async () => {
+  const handleSignIn = async () => {
     if (!password || password.length < 6) {
       setError('Password must be at least 6 characters.');
       return;
@@ -58,29 +45,21 @@ export default function EmailAuthScreen() {
     setError('');
     setLoading(true);
     try {
-      if (isExistingUser) {
-        const { error: signInError } = await supabase.auth.signInWithPassword({
-          email: email.trim().toLowerCase(),
-          password,
-        });
-        if (signInError) { setError('Incorrect password. Please try again.'); return; }
-        router.replace('/(tabs)');
-      } else {
-        const { data, error: signUpError } = await supabase.auth.signUp({
-          email: email.trim().toLowerCase(),
-          password,
-        });
-        if (signUpError) { setError(signUpError.message); return; }
-        if (data?.user?.identities?.length === 0) {
-          setIsExistingUser(true);
-          setError('This email is already registered. Enter your password to sign in.');
-          return;
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (signInError) {
+        const msg = signInError.message.toLowerCase();
+        if (msg.includes('invalid login credentials') || msg.includes('invalid email or password')) {
+          setError("Password is incorrect. Don't have an account? Tap 'Create Account' below.");
+        } else if (msg.includes('email not confirmed')) {
+          setError('Please verify your email first. Check your inbox for the confirmation link.');
+        } else {
+          setError(signInError.message);
         }
-        Alert.alert(
-          'Account Created',
-          'Check your email to verify your account, then sign in.',
-          [{ text: 'OK', onPress: () => router.replace('/(auth)/options') }],
-        );
+      } else {
+        router.replace('/(tabs)');
       }
     } catch (err: any) {
       setError(err?.message ?? 'Something went wrong. Please try again.');
@@ -89,7 +68,58 @@ export default function EmailAuthScreen() {
     }
   };
 
-  const goBack = () => step === 'password' ? (setStep('email'), setPassword(''), setError('')) : router.back();
+  const handleSignUp = async () => {
+    if (!password || password.length < 6) {
+      setError('Password must be at least 6 characters.');
+      return;
+    }
+    setError('');
+    setLoading(true);
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      if (signUpError) {
+        setError(signUpError.message);
+        return;
+      }
+      // identities.length === 0 means the email is already registered
+      if (data?.user?.identities?.length === 0) {
+        setMode('signin');
+        setError('This email is already registered. Enter your password to sign in.');
+        return;
+      }
+      Alert.alert(
+        'Account Created!',
+        'Check your email and click the confirmation link, then come back to sign in.',
+        [{ text: 'OK', onPress: () => { setMode('signin'); setPassword(''); setError(''); } }],
+      );
+    } catch (err: any) {
+      setError(err?.message ?? 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const goBack = () => {
+    if (step === 'password') {
+      setStep('email');
+      setPassword('');
+      setError('');
+      setMode('signin');
+    } else {
+      router.back();
+    }
+  };
+
+  const switchMode = () => {
+    setMode(m => m === 'signin' ? 'signup' : 'signin');
+    setPassword('');
+    setError('');
+  };
+
+  const isSignIn = mode === 'signin';
 
   return (
     <View style={styles.container}>
@@ -99,7 +129,6 @@ export default function EmailAuthScreen() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Back */}
       <TouchableOpacity
         style={[styles.backBtn, { top: topPad + 10 }]}
         onPress={goBack}
@@ -117,15 +146,10 @@ export default function EmailAuthScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-
           {/* Step icon */}
           <View style={styles.iconWrap}>
             <Ionicons
-              name={
-                step === 'email' ? 'mail-outline'
-                  : isExistingUser ? 'person-circle-outline'
-                  : 'shield-checkmark-outline'
-              }
+              name={step === 'email' ? 'mail-outline' : isSignIn ? 'person-circle-outline' : 'shield-checkmark-outline'}
               size={30}
               color={Colors.primary}
             />
@@ -133,24 +157,21 @@ export default function EmailAuthScreen() {
 
           {/* Heading */}
           <Text style={styles.title}>
-            {step === 'email'
-              ? 'Your email address'
-              : isExistingUser ? 'Welcome back!'
-              : 'Create a password'}
+            {step === 'email' ? 'Your email address' : isSignIn ? 'Welcome back!' : 'Create a password'}
           </Text>
           <Text style={styles.subtitle}>
             {step === 'email'
-              ? "We'll check if you have an account"
-              : isExistingUser
+              ? "Enter your email to get started"
+              : isSignIn
                 ? 'Enter your password to sign in'
-                : 'Choose a strong password for your account'}
+                : 'Choose a strong password (min. 6 characters)'}
           </Text>
 
-          {/* Email pill (step 2 only) */}
+          {/* Email pill — shown on step 2 */}
           {step === 'password' && (
             <TouchableOpacity
               style={styles.emailPill}
-              onPress={() => { setStep('email'); setPassword(''); setError(''); }}
+              onPress={() => { setStep('email'); setPassword(''); setError(''); setMode('signin'); }}
               activeOpacity={0.7}
             >
               <Ionicons name="mail-outline" size={14} color="#666666" />
@@ -174,10 +195,10 @@ export default function EmailAuthScreen() {
               />
             ) : (
               <AuthInput
-                label={isExistingUser ? 'Password' : 'Create password'}
+                label={isSignIn ? 'Password' : 'Create password'}
                 value={password}
                 onChangeText={v => { setPassword(v); setError(''); }}
-                placeholder={isExistingUser ? 'Your password' : 'Min. 6 characters'}
+                placeholder={isSignIn ? 'Your password' : 'Min. 6 characters'}
                 iconName="lock-closed-outline"
                 secureTextEntry
               />
@@ -192,22 +213,36 @@ export default function EmailAuthScreen() {
             </View>
           )}
 
-          {/* Submit */}
+          {/* Primary action */}
           <TouchableOpacity
-            style={[styles.btn, (checking || loading) && styles.btnDisabled]}
-            onPress={step === 'email' ? handleCheckEmail : handleSubmit}
-            disabled={checking || loading}
+            style={[styles.btn, loading && styles.btnDisabled]}
+            onPress={step === 'email' ? handleEmailContinue : isSignIn ? handleSignIn : handleSignUp}
+            disabled={loading}
             activeOpacity={0.85}
           >
-            {(checking || loading)
+            {loading
               ? <ActivityIndicator color="#fff" />
               : <Text style={styles.btnText}>
-                  {step === 'email' ? 'Continue' : isExistingUser ? 'Sign In' : 'Create Account'}
+                  {step === 'email' ? 'Continue' : isSignIn ? 'Sign In' : 'Create Account'}
                 </Text>}
           </TouchableOpacity>
 
+          {/* Mode switcher — shown on step 2 only */}
+          {step === 'password' && (
+            <TouchableOpacity style={styles.switchMode} onPress={switchMode} activeOpacity={0.7}>
+              <Text style={styles.switchModeText}>
+                {isSignIn ? "Don't have an account? " : 'Already have an account? '}
+                <Text style={styles.switchModeLink}>{isSignIn ? 'Create one' : 'Sign In'}</Text>
+              </Text>
+            </TouchableOpacity>
+          )}
+
           {/* Back to options */}
-          <TouchableOpacity style={styles.altLink} onPress={() => router.replace('/(auth)/options')} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={styles.altLink}
+            onPress={() => router.replace('/(auth)/options')}
+            activeOpacity={0.7}
+          >
             <Text style={styles.altLinkText}>Other sign-in options</Text>
           </TouchableOpacity>
 
@@ -291,9 +326,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_600SemiBold',
   },
 
-  fieldWrap: {
-    marginBottom: 8,
-  },
+  fieldWrap: { marginBottom: 8 },
 
   errorWrap: {
     flexDirection: 'row',
@@ -307,6 +340,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',
+    flex: 1,
   },
 
   btn: {
@@ -325,13 +359,29 @@ const styles = StyleSheet.create({
     letterSpacing: 0.2,
   },
 
+  switchMode: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingVertical: 6,
+  },
+  switchModeText: {
+    color: '#555555',
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    textAlign: 'center',
+  },
+  switchModeLink: {
+    color: Colors.primary,
+    fontFamily: 'Inter_600SemiBold',
+  },
+
   altLink: {
     alignItems: 'center',
-    marginTop: 24,
+    marginTop: 16,
     paddingVertical: 6,
   },
   altLinkText: {
-    color: '#555555',
+    color: '#404040',
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
   },

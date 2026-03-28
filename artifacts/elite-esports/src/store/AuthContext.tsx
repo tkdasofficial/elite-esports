@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import { supabase } from '@/services/supabase';
@@ -15,28 +15,34 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const initialLoadDone = useRef(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      initialLoadDone.current = true;
-    });
+    // Subscribe first so we never miss an event between getSession and subscribe.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
+      setSession(newSession);
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      // Redirect to auth when session is cleared (sign out) — but only after
-      // the initial session load so we don't redirect on first app open.
-      if (initialLoadDone.current && !session) {
+      // Only navigate on explicit sign-out. We do NOT navigate on SIGNED_IN here
+      // because that event also fires on token refresh, which would cause unwanted
+      // redirects while the user is already inside the app. Auth screens handle
+      // their own navigation to /(tabs) after a successful sign-in.
+      if (event === 'SIGNED_OUT') {
         router.replace('/(auth)/options');
       }
+    });
+
+    // Hydrate initial session state and stop the loading spinner.
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      setSession(initialSession);
+      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  const signOut = async () => { await supabase.auth.signOut(); };
+  const signOut = async () => {
+    await supabase.auth.signOut();
+    // Navigation is handled by the SIGNED_OUT event above
+  };
 
   const value = useMemo(() => ({
     session,
