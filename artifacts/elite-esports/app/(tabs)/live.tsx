@@ -15,7 +15,9 @@ export default function LiveScreen() {
     return (
       <View style={styles.container}>
         <GlobalHeader />
-        <View style={styles.centered}><ActivityIndicator color={Colors.primary} size="large" /></View>
+        <View style={[styles.centered, { paddingBottom: tabBarHeight }]}>
+          <ActivityIndicator color={Colors.primary} size="large" />
+        </View>
       </View>
     );
   }
