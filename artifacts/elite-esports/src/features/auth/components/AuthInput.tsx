@@ -30,16 +30,16 @@ export function AuthInput({
       <View style={[styles.wrapper, focused && styles.wrapperFocused]}>
         <Ionicons
           name={iconName}
-          size={17}
-          color={focused ? Colors.primary : Colors.text.muted}
-          style={styles.icon}
+          size={18}
+          color={focused ? Colors.primary : '#555555'}
+          style={styles.leadIcon}
         />
         <TextInput
           style={[styles.input, isPassword && styles.inputPassword]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={Colors.text.muted}
+          placeholderTextColor="#444444"
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           secureTextEntry={isPassword && !showText}
@@ -48,11 +48,16 @@ export function AuthInput({
           onBlur={() => setFocused(false)}
         />
         {isPassword && (
-          <TouchableOpacity onPress={() => setShowText(v => !v)} style={styles.eyeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+          <TouchableOpacity
+            onPress={() => setShowText(v => !v)}
+            style={styles.eyeBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            activeOpacity={0.6}
+          >
             <Ionicons
               name={showText ? 'eye-outline' : 'eye-off-outline'}
-              size={20}
-              color={Colors.text.muted}
+              size={19}
+              color="#555555"
             />
           </TouchableOpacity>
         )}
@@ -62,29 +67,35 @@ export function AuthInput({
 }
 
 const styles = StyleSheet.create({
-  group: { marginBottom: 16 },
+  group: {
+    marginBottom: 18,
+  },
   label: {
-    fontSize: 13,
-    fontFamily: 'Inter_500Medium',
-    color: Colors.text.secondary,
+    fontSize: 12,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#888888',
     marginBottom: 8,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
   },
   wrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background.elevated,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
-    paddingHorizontal: 14,
-    height: 52,
+    backgroundColor: '#161616',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#2C2C2C',
+    paddingHorizontal: 16,
+    height: 56,
     overflow: 'hidden',
   },
   wrapperFocused: {
     borderColor: Colors.primary,
-    backgroundColor: '#1A0800',
+    backgroundColor: '#1C0A04',
   },
-  icon: { marginRight: 10 },
+  leadIcon: {
+    marginRight: 12,
+  },
   input: {
     flex: 1,
     alignSelf: 'stretch',
@@ -95,15 +106,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   inputPassword: {
-    paddingRight: 36,
+    paddingRight: 8,
   },
   eyeBtn: {
-    position: 'absolute',
-    right: 14,
-    top: 0,
-    bottom: 0,
-    justifyContent: 'center',
+    width: 36,
+    alignSelf: 'stretch',
     alignItems: 'center',
-    width: 32,
+    justifyContent: 'center',
+    marginRight: -4,
   },
 });
