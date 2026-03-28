@@ -35,7 +35,7 @@ export function AuthInput({
           style={styles.icon}
         />
         <TextInput
-          style={styles.input}
+          style={[styles.input, isPassword && styles.inputPassword]}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -48,10 +48,10 @@ export function AuthInput({
           onBlur={() => setFocused(false)}
         />
         {isPassword && (
-          <TouchableOpacity onPress={() => setShowText(v => !v)} style={styles.eyeBtn}>
+          <TouchableOpacity onPress={() => setShowText(v => !v)} style={styles.eyeBtn} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Ionicons
               name={showText ? 'eye-outline' : 'eye-off-outline'}
-              size={17}
+              size={20}
               color={Colors.text.muted}
             />
           </TouchableOpacity>
@@ -89,7 +89,17 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    paddingRight: 8,
   },
-  eyeBtn: { paddingHorizontal: 6, paddingVertical: 8, marginLeft: 2 },
+  inputPassword: {
+    paddingRight: 36,
+  },
+  eyeBtn: {
+    position: 'absolute',
+    right: 14,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 32,
+  },
 });
