@@ -3,6 +3,23 @@
 ## Overview
 A professional React Native Expo mobile app (Android-first, web-previewed) for competitive eSports tournaments. Package: `com.elite.esports.android`, version 1.0.0 Alpha. Built with Expo Router v6, Supabase backend, and a fully modular feature-based architecture. All currencies in Indian Rupees (₹).
 
+## Supabase Backend Connection
+
+The Supabase connection is fully driven by environment variables — no credentials are hard-coded anywhere in the codebase. If this project is uploaded to a new environment, set the three variables below and the backend connects automatically.
+
+| Variable | Description |
+|---|---|
+| `EXPO_PUBLIC_SUPABASE_URL` | Full Supabase project URL |
+| `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Public anonymous/client API key |
+| `EXPO_PUBLIC_SUPABASE_PROJECT_ID` | Supabase project ID (derived from URL) |
+
+These are stored in:
+- **Replit shared environment** (dev + production, set via environment secrets panel)
+- **`.env`** file at the project root (local development fallback)
+- **`artifacts/elite-esports/eas.json`** (all EAS build profiles — development, preview, production)
+
+The Supabase client (`artifacts/elite-esports/src/services/supabase.ts`) throws a hard error on startup if any credential is missing or still set to a placeholder, so misconfiguration is immediately visible rather than causing silent failures.
+
 ## Project Structure (Monorepo)
 ```
 artifacts/
