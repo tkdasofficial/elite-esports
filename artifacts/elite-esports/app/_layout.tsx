@@ -40,6 +40,8 @@ function RootLayoutNav() {
       <Stack.Screen name="withdraw" />
       <Stack.Screen name="transaction-history" />
       <Stack.Screen name="support" />
+      <Stack.Screen name="my-matches" />
+      <Stack.Screen name="my-team" />
       <Stack.Screen name="terms" />
       <Stack.Screen name="privacy" />
     </Stack>

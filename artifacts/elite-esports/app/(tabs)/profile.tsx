@@ -11,8 +11,8 @@ import { useProfile } from '@/features/profile/hooks/useProfile';
 const AVATARS = ['🎮', '⚡', '🔥', '💀', '🎯', '🛡️', '⚔️', '🏆'];
 
 const MENU_ITEMS = [
-  { icon: 'people-outline', label: 'My Team', route: null },
-  { icon: 'game-controller-outline', label: 'My Matches', route: null },
+  { icon: 'people-outline', label: 'My Team', route: '/my-team' },
+  { icon: 'game-controller-outline', label: 'My Matches', route: '/my-matches' },
   { icon: 'settings-outline', label: 'Settings', route: '/settings' },
   { icon: 'headset-outline', label: 'Support', route: '/support' },
 ];
