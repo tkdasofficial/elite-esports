@@ -1,40 +1,83 @@
 # Elite eSports — Replit Project
 
 ## Overview
-A professional React Native Expo mobile app (Android-first, web-previewed) for competitive eSports tournaments. Package: `com.elite.esports.android`, version 1.0.0 Alpha. Built with Expo Router v6, Supabase backend, and a fully modular feature-based architecture. All currencies in Indian Rupees (₹).
+A professional React Native Expo mobile app (Android-first, web-previewed) for competitive eSports tournaments. Package: `com.elite.esports.android`, version 1.0.0 Alpha. Built with Expo Router v6, Supabase as the sole backend, and a fully modular feature-based architecture. All currencies in Indian Rupees (₹).
 
 ## Replit Environment Setup
 
 The project runs on Replit with the Expo dev server. The workflow `Start application` starts the Expo bundler and serves the web version at port 8080.
 
 ### Environment Variables
-Supabase credentials are stored in `.replit` under `[userenv.shared]` and are available as environment variables at runtime:
+Stored in Replit shared userenv and available at runtime:
 
 | Variable | Description |
 |---|---|
 | `EXPO_PUBLIC_SUPABASE_URL` | Full Supabase project URL |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Public anonymous/client API key |
 | `EXPO_PUBLIC_SUPABASE_PROJECT_ID` | Supabase project ID |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key — server-side only, NOT bundled in mobile app |
 
-These are also committed as fallbacks in `artifacts/elite-esports/src/config/supabase.config.ts` so the app always connects without manual setup.
+## Supabase Backend
 
-## Supabase Backend Connection
+**Project ID:** `azxhcalksgudjemwjekd`  
+**URL:** `https://azxhcalksgudjemwjekd.supabase.co`
 
-The app uses Supabase for all backend operations: authentication, database queries, realtime subscriptions, and file storage. The Replit PostgreSQL database (provisioned in the `lib/db` package) is not used by the mobile app — it exists as a Drizzle-managed database for any future server-side API needs.
+Supabase is the sole and permanent backend for all app data. The Replit PostgreSQL database is NOT used by the mobile app.
 
-The Supabase client (`artifacts/elite-esports/src/services/supabase.ts`) resolves credentials in order: environment variable → `supabase.config.ts` default.
+### Existing Tables (live in Supabase)
+| Table | Purpose |
+|---|---|
+| `users` | User profiles — columns: `id, name, username, avatar_url, created_at, updated_at` |
+| `admin_users` | Admin access list — columns: `user_id` |
+| `matches` | Tournament matches — columns: `id, game_id, title, entry_fee, prize_pool, max_players, joined_players, status, room_id, room_password, live_stream_url, created_at` |
+| `match_participants` | Who joined a match — columns: `id, match_id, user_id, joined_at` |
+| `match_results` | Result per match — columns: `id, match_id, user_id, rank, kills, points` |
+| `games` | Game titles — columns: `id, name, banner_url, status, created_at` |
+| `wallets` | User wallet — columns: `user_id, balance, updated_at` |
+| `wallet_transactions` | Ledger — columns: `id, user_id, type, amount, status, reference_id, created_at` |
+| `payments` | Deposit proofs — columns: `id, user_id, amount, utr, screenshot_url, status, ai_status, created_at` |
+| `withdrawals` | Withdrawal requests — columns: `id, user_id, amount, status, created_at` |
+| `notifications` | In-app notifications — columns: `id, user_id, title, message, is_read, created_at` |
+| `leaderboard` | Aggregate rankings — columns: `user_id, username, avatar_url, total_points, total_kills, matches_played` |
+| `user_games` | User's game UIDs — columns: `id, user_id, game_id, uid` |
+| `support_tickets` | Help tickets — columns: `id, user_id, message, status, created_at` |
+| `reports` | User reports — columns: `id, user_id, description, related_match_id, created_at` |
+| `ad_units` | Ad unit config — columns: `id, name, type, ad_unit_id, status` |
+| `ad_triggers` | Ad event config — columns: `id, trigger, ad_unit_id, enabled, cooldown_seconds` |
+| `ad_settings` | Global ad toggle — columns: `id, ads_enabled, default_cooldown` |
+| `user_roles` | Role assignments — columns: `id, user_id, role` |
+| `points_settings` | Kill/rank points values |
+| `app_settings` | Min/max deposit & withdraw amounts |
+
+### Tables Requiring Migration (run `supabase/migrations/002_missing_tables.sql` in Supabase SQL Editor)
+| Table | Used By |
+|---|---|
+| `teams` | My Team screen — create/view team |
+| `team_members` | My Team screen — member list with `users` join |
+| `broadcasts` | Admin Broadcast screen (inserts into `notifications`) |
+
+**IMPORTANT:** Run `supabase/migrations/002_missing_tables.sql` in Supabase Dashboard → SQL Editor before using the Teams or Admin Broadcast features.
+
+### DB Column Mapping (key adaptations in `dbAdapters.ts`)
+The app type `Match` uses friendly names; `adaptMatch()` maps DB columns:
+- `matches.joined_players` → `match.players_joined`
+- `matches.live_stream_url` → `match.stream_url`
+- `matches.game_id` + `games.name` → `match.game`
+- `games.banner_url` → `match.banner_url`
+- `matches.created_at` (fallback) → `match.starts_at`
 
 ## Project Structure (Monorepo)
 ```
 artifacts/
   elite-esports/       # Mobile app — @workspace/elite-esports
-  api-server/          # Express API server — @workspace/api-server
+  api-server/          # Express API server — @workspace/api-server (not used by mobile app)
   mockup-sandbox/      # Vite canvas preview server — @workspace/mockup-sandbox
 lib/
-  api-client-react/    # Shared REST API client (NOT used by mobile app)
-  api-spec/            # OpenAPI spec + orval codegen
-  api-zod/             # Shared Zod schemas
-  db/                  # Drizzle ORM + Replit PostgreSQL (not used by mobile app)
+  db/                  # Drizzle ORM + Replit PostgreSQL (NOT used by mobile app)
+supabase/
+  migrations/
+    001_games.sql      # Reference schema (informational)
+    002_missing_tables.sql  # Run this in Supabase SQL Editor!
 ```
 
 ## Elite eSports Architecture
@@ -45,110 +88,85 @@ artifacts/elite-esports/
 ├── app/                          # Expo Router routes (routing only)
 │   ├── _layout.tsx               # Root layout — providers, fonts, navigation
 │   ├── index.tsx                 # Auth redirect (session check)
-│   ├── +not-found.tsx
 │   ├── (auth)/                   # Unauthenticated screens
+│   │   ├── options.tsx           # Login / Sign Up choice
 │   │   ├── login.tsx
 │   │   └── signup.tsx
 │   ├── (tabs)/                   # 5-tab navigation
-│   │   ├── _layout.tsx           # Tab bar (ClassicTabLayout Android/web, NativeTabLayout iOS26+)
+│   │   ├── _layout.tsx           # Tab bar
 │   │   ├── index.tsx             # Home — tournament list
 │   │   ├── live.tsx              # Live matches
 │   │   ├── leaderboard.tsx       # Rankings
 │   │   ├── wallet.tsx            # Wallet & balance
 │   │   └── profile.tsx           # User profile
+│   ├── admin/                    # Admin-only screens
+│   │   ├── _layout.tsx
+│   │   ├── index.tsx             # Admin dashboard
+│   │   ├── matches.tsx           # Create/manage matches
+│   │   ├── users.tsx             # User management
+│   │   ├── payments.tsx          # Payment approvals
+│   │   ├── withdrawals.tsx       # Withdrawal approvals
+│   │   ├── games.tsx             # Game management
+│   │   ├── reports.tsx           # View reports
+│   │   ├── support.tsx           # View support tickets
+│   │   ├── monetization.tsx      # Ad settings
+│   │   └── broadcast.tsx         # Send push notifications
 │   ├── match/[id].tsx            # Match detail + join
-│   ├── tournament/[id].tsx       # Redirects to match/[id]
 │   ├── notifications.tsx
-│   ├── settings.tsx              # Cross-platform password change modal
+│   ├── settings.tsx
 │   ├── edit-profile.tsx
 │   ├── add-money.tsx
 │   ├── withdraw.tsx
 │   ├── transaction-history.tsx
+│   ├── my-team.tsx               # Team management
 │   └── support.tsx
-│
-├── eas.json                      # EAS Build profiles (development, preview, production, production-aab)
-├── metro.config.js               # Monorepo-aware Metro config (watchFolders + nodeModulesPaths)
 │
 └── src/                          # All source modules
     ├── components/               # Shared UI components
-    │   ├── GlobalHeader.tsx      # App header with logo + notif badge
-    │   ├── ErrorBoundary.tsx
-    │   ├── ErrorFallback.tsx
-    │   └── KeyboardAwareScrollViewCompat.tsx
-    │
     ├── features/                 # Domain-specific modules
-    │   ├── auth/
-    │   │   └── components/
-    │   │       ├── AuthLogo.tsx
-    │   │       └── AuthInput.tsx
-    │   ├── home/
-    │   │   ├── components/MatchCard.tsx
-    │   │   └── hooks/useMatches.ts
-    │   ├── live/
-    │   │   ├── components/LiveMatchCard.tsx
-    │   │   └── hooks/useLiveMatches.ts
-    │   ├── leaderboard/
-    │   │   ├── components/LeaderRow.tsx
-    │   │   └── hooks/useLeaderboard.ts
-    │   ├── wallet/
-    │   │   └── components/TransactionItem.tsx
-    │   ├── profile/
-    │   │   └── hooks/useProfile.ts
-    │   └── match/
-    │       ├── components/RoomDetails.tsx
-    │       └── hooks/useMatchDetail.ts
-    │
-    ├── hooks/                    # Global/reusable hooks (future)
+    │   ├── home/hooks/useMatches.ts
+    │   ├── live/hooks/useLiveMatches.ts
+    │   ├── leaderboard/hooks/useLeaderboard.ts
+    │   ├── match/hooks/useMatchDetail.ts
+    │   ├── match/hooks/useMyMatches.ts   # uses match_participants
+    │   ├── profile/hooks/useProfile.ts   # users table (no updated_at issue)
+    │   └── team/hooks/useMyTeam.ts       # uses teams + team_members + users
     ├── services/
-    │   └── supabase.ts           # Supabase client (SecureStore adapter)
-    ├── store/                    # React Context providers
-    │   ├── AuthContext.tsx       # Session, user, signOut
-    │   ├── ThemeContext.tsx      # Dark/light theme
-    │   ├── NotificationsContext.tsx
-    │   └── WalletContext.tsx
+    │   ├── supabase.ts           # Supabase client (SecureStore adapter)
+    │   └── dbAdapters.ts         # adaptMatch(), matchToDbPayload()
+    ├── store/
+    │   ├── AuthContext.tsx        # Session, user, isAdmin (via admin_users)
+    │   ├── WalletContext.tsx      # Balance, realtime subscription
+    │   └── NotificationsContext.tsx
     └── utils/
-        ├── colors.ts             # Design tokens (Colors object)
+        ├── colors.ts             # Design tokens
         └── types.ts              # Shared TypeScript interfaces
 ```
 
 ### Path Alias
-`tsconfig.json` maps `@/*` → `./src/*`. So:
-- `@/utils/colors` → `src/utils/colors.ts`
-- `@/store/AuthContext` → `src/store/AuthContext.tsx`
-- `@/features/home/hooks/useMatches` → `src/features/home/hooks/useMatches.ts`
-- `@/components/GlobalHeader` → `src/components/GlobalHeader.tsx`
+`@/*` → `./src/*`
 
 ## Design System
 - **Primary color**: `#FE4C11` (orange-red)
 - **Background**: `#0A0A0A` (near-black)
 - **Font**: Inter (400, 500, 600, 700 weights via @expo-google-fonts/inter)
-- **Theme**: Forced dark mode (`userInterfaceStyle: dark` in app.json)
-- All design tokens live in `src/utils/colors.ts` → `Colors` object
-
-## Backend (Supabase)
-- URL: `EXPO_PUBLIC_SUPABASE_URL` = `https://azxhcalksgudjemwjekd.supabase.co`
-- Key: `EXPO_PUBLIC_SUPABASE_ANON_KEY`
-- Tables: `matches`, `match_registrations`, `leaderboard`, `wallets`, `transactions`, `notifications`, `profiles`, `support_tickets`, `games`, `users`, `admin_users`, `payments`, `withdrawals`, `user_games`, `team_members`, `teams`, `match_participants`
-- Auth: Email + password (Supabase Auth)
-- Realtime: Used for matches feed, notifications, wallet updates (channels namespaced with `user.id`)
-- Storage: `game-banners` bucket for game banner images
+- **Theme**: Forced dark mode
 
 ## EAS Build Profiles (`eas.json`)
 | Profile | Type | Output | Use |
 |---|---|---|---|
-| `development` | internal | debug APK | Testing with dev client |
+| `development` | internal | debug APK | Dev testing |
 | `preview` | internal | APK | Internal testing |
-| `production` | store | APK | Play Store (APK) |
+| `production` | store | APK | Play Store APK |
 | `production-aab` | store | AAB | Play Store (recommended) |
 
 ## Key Tech Decisions
-- `useBottomTabBarHeight` → imported from `@react-navigation/bottom-tabs` (^7.4.0, peer of expo-router)
-- `Platform.OS === 'web'` → 67px top inset, 34px bottom inset (proxy iframe)
+- Supabase Auth — email + password
 - `expo-secure-store` → session persistence on native; localStorage adapter on web
-- Tab layout: `isLiquidGlassAvailable()` → Native tabs on iOS 26+, Tabs component elsewhere
-- Android tab background: solid `#0A0A0A` `View` (no null return from tabBarBackground)
-- Settings password change: cross-platform `Modal` + `TextInput` (replaced iOS-only `Alert.prompt`)
-- React Compiler enabled (`experiments.reactCompiler: true` in app.json)
+- React Compiler enabled
+- `adaptMatch()` / `matchToDbPayload()` bridge DB column names ↔ app type names
+- `support_tickets` — category + subject are encoded into the `message` field as `[Category] Subject\n\nMessage`
+- Admin check: `admin_users` table lookup on every auth state change
 
 ## Workflows
-- `Start application` — Expo dev server for `@workspace/elite-esports` (port from `$PORT` env, default 8080)
+- `Start application` — Expo dev server (`@workspace/elite-esports`, port `$PORT`, default 8080)

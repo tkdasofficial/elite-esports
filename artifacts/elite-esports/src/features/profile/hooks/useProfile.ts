@@ -61,7 +61,6 @@ export function useProfile(userId?: string) {
           id: userId,
           name: updates.full_name ?? '',
           username: updates.username ?? null,
-          updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
 
       if (upsertErr) return { error: new Error(upsertErr.message) };

@@ -6,7 +6,7 @@ export interface TeamMember {
   user_id: string;
   role: string;
   joined_at: string;
-  profiles?: { username: string; full_name: string; avatar_index: number };
+  users?: { username: string | null; name: string | null };
 }
 
 export interface Team {
@@ -28,7 +28,7 @@ export function useMyTeam(userId?: string) {
     try {
       const { data: membership } = await supabase
         .from('team_members')
-        .select('team_id, role, joined_at, teams(id, name, tag, game, created_at, team_members(id, user_id, role, joined_at, profiles(username, full_name, avatar_index)))')
+        .select('team_id, role, joined_at, teams(id, name, tag, game, created_at, team_members(id, user_id, role, joined_at, users(username, name)))')
         .eq('user_id', userId)
         .maybeSingle();
       if (membership) {

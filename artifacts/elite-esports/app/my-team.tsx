@@ -115,16 +115,15 @@ export default function MyTeamScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Members</Text>
             {(team.team_members ?? []).map((member, i) => {
-              const p = member.profiles;
-              const avatarIdx = p?.avatar_index ?? 0;
+              const u = (member as any).users;
               return (
                 <View key={member.id ?? i} style={styles.memberRow}>
                   <View style={styles.memberAvatar}>
-                    <Text style={styles.memberEmoji}>{AVATARS[avatarIdx] ?? '🎮'}</Text>
+                    <Text style={styles.memberEmoji}>{AVATARS[i % AVATARS.length]}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.memberName}>{p?.full_name || 'Player'}</Text>
-                    <Text style={styles.memberUsername}>@{p?.username || 'unknown'}</Text>
+                    <Text style={styles.memberName}>{u?.name || u?.username || 'Player'}</Text>
+                    <Text style={styles.memberUsername}>@{u?.username || 'unknown'}</Text>
                   </View>
                   <View style={[styles.roleBadge, member.role === 'captain' && styles.roleCaptain]}>
                     <Text style={[styles.roleText, member.role === 'captain' && styles.roleTextCaptain]}>
