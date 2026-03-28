@@ -27,10 +27,12 @@ export interface LeaderEntry {
 export interface ProfileData {
   id?: string;
   full_name?: string;
-  username?: string;
+  username?: string | null;
   avatar_index?: number;
-  games?: { game: string; uid: string }[];
+  games?: { game: string; uid: string }[] | null;
+  balance?: number;
   is_admin?: boolean;
+  updated_at?: string;
 }
 
 export interface Game {

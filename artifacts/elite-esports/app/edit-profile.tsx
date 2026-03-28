@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Alert,
@@ -20,7 +20,8 @@ const AVATAR_GAP = 10;
 export default function EditProfileScreen() {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const { profile, loading, save } = useProfile(user?.id);
+  const { profile, loading, fetchError, save } = useProfile(user?.id);
+
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [avatarIndex, setAvatarIndex] = useState(0);
@@ -28,21 +29,55 @@ export default function EditProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [showAddGame, setShowAddGame] = useState(false);
 
+  // Only initialise the form fields once — when the first real profile arrives.
+  // Using a ref prevents overwriting the user's in-progress edits on subsequent
+  // re-renders, and ensures we catch data even if loading cycles more than once.
+  const initialized = useRef(false);
   useEffect(() => {
-    if (!loading) {
-      setName(profile.full_name || '');
-      setUsername(profile.username || '');
-      setAvatarIndex(profile.avatar_index || 0);
-      setGames(profile.games || []);
+    if (!loading && !initialized.current) {
+      const hasData = profile.full_name || profile.username || profile.avatar_index !== undefined;
+      if (hasData || !fetchError) {
+        initialized.current = true;
+        setName(profile.full_name ?? '');
+        setUsername(profile.username ?? '');
+        setAvatarIndex(profile.avatar_index ?? 0);
+        setGames(Array.isArray(profile.games) ? profile.games : []);
+      }
     }
-  }, [loading]);
+  }, [loading, profile, fetchError]);
 
   const handleSave = async () => {
+    const trimmedName = name.trim();
+    const trimmedUsername = username.trim().replace(/^@/, '');
+
+    if (!trimmedName) {
+      Alert.alert('Required', 'Please enter your display name.'); return;
+    }
+    if (trimmedUsername && !/^[a-z0-9_]{3,20}$/.test(trimmedUsername)) {
+      Alert.alert('Invalid username', 'Username must be 3–20 characters: lowercase letters, numbers, underscores only.');
+      return;
+    }
+
     setSaving(true);
-    const { error } = await save({ full_name: name, username, avatar_index: avatarIndex, games });
+    const { error } = await save({
+      full_name: trimmedName,
+      username: trimmedUsername || null,
+      avatar_index: avatarIndex,
+      games,
+    });
     setSaving(false);
-    if (error) Alert.alert('Error', error.message);
-    else { Alert.alert('Saved!', 'Profile updated successfully'); router.back(); }
+
+    if (error) {
+      const msg = error.message?.toLowerCase() ?? '';
+      if (msg.includes('unique') || msg.includes('duplicate') || msg.includes('username')) {
+        Alert.alert('Username taken', 'That username is already in use. Please choose another.');
+      } else {
+        Alert.alert('Save failed', error.message ?? 'Something went wrong. Please try again.');
+      }
+    } else {
+      Alert.alert('Saved!', 'Your profile has been updated.');
+      router.back();
+    }
   };
 
   const handleAddGame = (game: string, uid: string) => {
@@ -50,18 +85,23 @@ export default function EditProfileScreen() {
   };
 
   const handleRemoveGame = (index: number) => {
-    setGames(prev => prev.filter((_, i) => i !== index));
+    Alert.alert('Remove Game', 'Remove this game from your profile?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: () => setGames(prev => prev.filter((_, i) => i !== index)) },
+    ]);
   };
 
-  const columns = Array.from({ length: Math.ceil(AVATAR_COUNT / 2) }, (_, col) => [
-    col * 2,
-    col * 2 + 1,
-  ].filter(i => i < AVATAR_COUNT));
+  const columns = Array.from({ length: Math.ceil(AVATAR_COUNT / 2) }, (_, col) =>
+    [col * 2, col * 2 + 1].filter(i => i < AVATAR_COUNT)
+  );
 
   if (loading) {
     return (
-      <View style={[styles.centered, { backgroundColor: Colors.background.dark }]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
+      <View style={styles.container}>
+        <ScreenHeader title="Edit Profile" />
+        <View style={styles.centered}>
+          <ActivityIndicator color={Colors.primary} size="large" />
+        </View>
       </View>
     );
   }
@@ -70,8 +110,9 @@ export default function EditProfileScreen() {
     <View style={styles.container}>
       <ScreenHeader title="Edit Profile" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET + 24 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET + 32 }]}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
         {/* ── Avatar Picker ── */}
         <Text style={styles.sectionLabel}>Choose Avatar</Text>
@@ -81,9 +122,10 @@ export default function EditProfileScreen() {
           </View>
           <View style={styles.previewInfo}>
             <Text style={styles.previewName}>{AVATAR_NAMES[avatarIndex]}</Text>
-            <Text style={styles.previewHint}>Scroll to see all {AVATAR_COUNT} avatars</Text>
+            <Text style={styles.previewHint}>Scroll left/right to see all {AVATAR_COUNT} avatars</Text>
           </View>
         </View>
+
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -91,7 +133,10 @@ export default function EditProfileScreen() {
           style={styles.avatarScroll}
         >
           {columns.map((col, colIdx) => (
-            <View key={colIdx} style={[styles.avatarColumn, { marginRight: colIdx < columns.length - 1 ? AVATAR_GAP : 0 }]}>
+            <View
+              key={colIdx}
+              style={[styles.avatarColumn, { marginRight: colIdx < columns.length - 1 ? AVATAR_GAP : 0 }]}
+            >
               {col.map(idx => (
                 <TouchableOpacity
                   key={idx}
@@ -120,21 +165,29 @@ export default function EditProfileScreen() {
             onChangeText={setName}
             placeholder="Your name"
             placeholderTextColor={Colors.text.muted}
+            returnKeyType="next"
+            autoCapitalize="words"
           />
         </View>
 
         {/* ── Username ── */}
         <Text style={styles.sectionLabel}>Username</Text>
         <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.input}
-            value={username}
-            onChangeText={setUsername}
-            placeholder="@username"
-            placeholderTextColor={Colors.text.muted}
-            autoCapitalize="none"
-          />
+          <View style={styles.inputRow}>
+            <Text style={styles.atSign}>@</Text>
+            <TextInput
+              style={[styles.input, { flex: 1 }]}
+              value={username.replace(/^@/, '')}
+              onChangeText={v => setUsername(v.toLowerCase().replace(/\s/g, ''))}
+              placeholder="your_username"
+              placeholderTextColor={Colors.text.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+              returnKeyType="done"
+            />
+          </View>
         </View>
+        <Text style={styles.inputHint}>3–20 chars · lowercase · letters, numbers, underscores</Text>
 
         {/* ── Game IDs ── */}
         <View style={styles.gamesHeader}>
@@ -150,26 +203,40 @@ export default function EditProfileScreen() {
         </View>
 
         {games.length === 0 ? (
-          <View style={styles.emptyGames}>
+          <TouchableOpacity
+            style={styles.emptyGames}
+            onPress={() => setShowAddGame(true)}
+            activeOpacity={0.8}
+          >
             <Ionicons name="game-controller-outline" size={28} color={Colors.text.muted} />
             <Text style={styles.emptyGamesText}>No games added yet</Text>
-            <Text style={styles.emptyGamesHint}>Tap "Add Game" to link your game accounts</Text>
-          </View>
+            <Text style={styles.emptyGamesHint}>Tap here to link your game accounts</Text>
+          </TouchableOpacity>
         ) : (
-          games.map((g, i) => (
-            <View key={i} style={styles.gameRow}>
-              <View style={styles.gameIconBox}>
-                <Ionicons name="game-controller-outline" size={17} color={Colors.primary} />
+          <>
+            {games.map((g, i) => (
+              <View key={`${g.game}-${i}`} style={styles.gameRow}>
+                <View style={styles.gameIconBox}>
+                  <Ionicons name="game-controller-outline" size={17} color={Colors.primary} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.gameName}>{g.game}</Text>
+                  <Text style={styles.gameUID}>UID: {g.uid}</Text>
+                </View>
+                <TouchableOpacity onPress={() => handleRemoveGame(i)} style={styles.removeBtn} activeOpacity={0.7}>
+                  <Ionicons name="close-circle" size={22} color={Colors.status.error} />
+                </TouchableOpacity>
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.gameName}>{g.game}</Text>
-                <Text style={styles.gameUID}>UID: {g.uid}</Text>
-              </View>
-              <TouchableOpacity onPress={() => handleRemoveGame(i)} style={styles.removeBtn} activeOpacity={0.7}>
-                <Ionicons name="close-circle" size={22} color={Colors.status.error} />
-              </TouchableOpacity>
-            </View>
-          ))
+            ))}
+            <TouchableOpacity
+              onPress={() => setShowAddGame(true)}
+              style={styles.addMoreBtn}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add-circle-outline" size={16} color={Colors.primary} />
+              <Text style={styles.addMoreBtnText}>Add Another Game</Text>
+            </TouchableOpacity>
+          </>
         )}
 
         {/* ── Save ── */}
@@ -181,7 +248,12 @@ export default function EditProfileScreen() {
         >
           {saving
             ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.saveBtnText}>Save Changes</Text>}
+            : (
+              <>
+                <Ionicons name="checkmark-circle-outline" size={19} color="#fff" />
+                <Text style={styles.saveBtnText}>Save Changes</Text>
+              </>
+            )}
         </TouchableOpacity>
       </ScrollView>
 
@@ -251,7 +323,13 @@ const styles = StyleSheet.create({
     borderColor: Colors.border.default,
     paddingHorizontal: 14, height: 50, justifyContent: 'center',
   },
+  inputRow: { flexDirection: 'row', alignItems: 'center' },
+  atSign: { fontSize: 15, fontFamily: 'Inter_400Regular', color: Colors.text.muted, marginRight: 2 },
   input: { color: Colors.text.primary, fontSize: 15, fontFamily: 'Inter_400Regular' },
+  inputHint: {
+    fontSize: 11, fontFamily: 'Inter_400Regular', color: Colors.text.muted,
+    marginTop: 6, marginLeft: 4,
+  },
 
   gamesHeader: {
     flexDirection: 'row', alignItems: 'center',
@@ -288,10 +366,19 @@ const styles = StyleSheet.create({
   gameName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
   gameUID: { fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, marginTop: 2 },
   removeBtn: { padding: 2 },
+  addMoreBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingVertical: 12,
+    borderWidth: 1, borderColor: 'rgba(254,76,17,0.2)',
+    borderStyle: 'dashed', borderRadius: 12,
+    marginTop: 2,
+  },
+  addMoreBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: Colors.primary },
 
   saveBtn: {
-    backgroundColor: Colors.primary, borderRadius: 14,
-    height: 54, alignItems: 'center', justifyContent: 'center', marginTop: 32,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, backgroundColor: Colors.primary,
+    borderRadius: 14, height: 54, marginTop: 32,
   },
   disabled: { opacity: 0.6 },
   saveBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
