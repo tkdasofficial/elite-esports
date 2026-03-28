@@ -108,12 +108,14 @@ const styles = StyleSheet.create({
     fontFamily: 'Inter_700Bold',
     color: Colors.text.primary,
     marginBottom: 4,
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
     color: '#666666',
     marginBottom: 24,
+    textAlign: 'center',
   },
   fields: {
     gap: 16,
