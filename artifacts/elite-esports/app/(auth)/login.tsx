@@ -23,10 +23,20 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (!email || !password) { Alert.alert('Error', 'Please fill in all fields'); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
-    if (error) Alert.alert('Login Failed', error.message);
-    else router.replace('/(tabs)');
+    if (error) {
+      const msg = error.message.toLowerCase();
+      if (msg.includes('invalid login credentials') || msg.includes('invalid email or password')) {
+        Alert.alert('Login Failed', 'Incorrect email or password. Please check your details and try again.');
+      } else if (msg.includes('email not confirmed')) {
+        Alert.alert('Email Not Verified', 'Please verify your email before signing in. Check your inbox for the confirmation link.');
+      } else {
+        Alert.alert('Login Failed', error.message);
+      }
+    } else {
+      router.replace('/(tabs)');
+    }
   };
 
   return (

@@ -22,13 +22,24 @@ export default function SignupScreen() {
 
   const handleSignup = async () => {
     if (!email || !password) { Alert.alert('Error', 'Please fill in all fields'); return; }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) { Alert.alert('Error', 'Please enter a valid email address'); return; }
+    if (password.length < 6) { Alert.alert('Error', 'Password must be at least 6 characters'); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password });
     setLoading(false);
-    if (error) Alert.alert('Signup Failed', error.message);
-    else Alert.alert('Success', 'Account created! Check your email to verify.', [
-      { text: 'OK', onPress: () => router.replace('/(auth)/login') },
-    ]);
+    if (error) {
+      Alert.alert('Signup Failed', error.message);
+    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+      Alert.alert('Email Already Registered', 'An account with this email already exists. Please sign in instead.', [
+        { text: 'Sign In', onPress: () => router.replace('/(auth)/login') },
+        { text: 'Cancel', style: 'cancel' },
+      ]);
+    } else {
+      Alert.alert('Account Created', 'Check your email to verify your account before signing in.', [
+        { text: 'OK', onPress: () => router.replace('/(auth)/login') },
+      ]);
+    }
   };
 
   return (
