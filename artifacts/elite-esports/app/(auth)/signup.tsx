@@ -34,7 +34,7 @@ export default function SignupScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + (Platform.OS === 'web' ? 67 : 0) }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient colors={['#1A0500', '#000000']} style={StyleSheet.absoluteFill} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>

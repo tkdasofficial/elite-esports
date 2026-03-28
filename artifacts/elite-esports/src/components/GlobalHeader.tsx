@@ -9,7 +9,7 @@ import { useNotifications } from '@/store/NotificationsContext';
 export function GlobalHeader() {
   const insets = useSafeAreaInsets();
   const { unreadCount } = useNotifications();
-  const topPad = Platform.OS === 'web' ? 67 : insets.top;
+  const topPad = insets.top;
 
   return (
     <View style={[styles.header, { paddingTop: topPad }]}>
