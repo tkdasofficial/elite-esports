@@ -23,7 +23,6 @@ function NativeTabLayout() {
 
 function ClassicTabLayout() {
   const isIOS = Platform.OS === 'ios';
-  const isWeb = Platform.OS === 'web';
   const insets = useSafeAreaInsets();
 
   return (
@@ -39,20 +38,55 @@ function ClassicTabLayout() {
           borderTopColor: Colors.border.default,
           elevation: 0,
           paddingBottom: insets.bottom,
-          ...(isWeb ? { height: 84 } : {}),
+          ...(Platform.OS === 'web' ? { height: 84 } : {}),
         },
         tabBarBackground: () =>
-          isIOS ? <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
-            : isWeb ? <View style={[StyleSheet.absoluteFill, { backgroundColor: '#0A0A0A' }]} />
-            : null,
+          isIOS
+            ? <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
+            : <View style={[StyleSheet.absoluteFill, { backgroundColor: '#0A0A0A' }]} />,
         tabBarLabelStyle: { fontSize: 11, fontFamily: 'Inter_500Medium' },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => isIOS ? <SymbolView name="house" tintColor={color} size={24} /> : <Feather name="home" size={22} color={color} /> }} />
-      <Tabs.Screen name="live" options={{ title: 'Live', tabBarIcon: ({ color }) => isIOS ? <SymbolView name="play.circle" tintColor={color} size={24} /> : <Ionicons name="play-circle-outline" size={22} color={color} /> }} />
-      <Tabs.Screen name="leaderboard" options={{ title: 'Ranks', tabBarIcon: ({ color }) => isIOS ? <SymbolView name="trophy" tintColor={color} size={24} /> : <Ionicons name="trophy-outline" size={22} color={color} /> }} />
-      <Tabs.Screen name="wallet" options={{ title: 'Wallet', tabBarIcon: ({ color }) => isIOS ? <SymbolView name="creditcard" tintColor={color} size={24} /> : <Ionicons name="wallet-outline" size={22} color={color} /> }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color }) => isIOS ? <SymbolView name="person" tintColor={color} size={24} /> : <Ionicons name="person-outline" size={22} color={color} /> }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="house" tintColor={color} size={24} /> : <Feather name="home" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="live"
+        options={{
+          title: 'Live',
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="play.circle" tintColor={color} size={24} /> : <Ionicons name="play-circle-outline" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="leaderboard"
+        options={{
+          title: 'Ranks',
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="trophy" tintColor={color} size={24} /> : <Ionicons name="trophy-outline" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="wallet"
+        options={{
+          title: 'Wallet',
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="creditcard" tintColor={color} size={24} /> : <Ionicons name="wallet-outline" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color }) =>
+            isIOS ? <SymbolView name="person" tintColor={color} size={24} /> : <Ionicons name="person-outline" size={22} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

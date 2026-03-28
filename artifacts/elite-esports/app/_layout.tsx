@@ -16,13 +16,14 @@ import { AuthProvider } from '@/store/AuthContext';
 import { ThemeProvider } from '@/store/ThemeContext';
 import { NotificationsProvider } from '@/store/NotificationsContext';
 import { WalletProvider } from '@/store/WalletContext';
-import { setBaseUrl } from '@workspace/api-client-react';
-
-setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
 
 SplashScreen.preventAutoHideAsync();
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: { retry: 2, staleTime: 30_000 },
+  },
+});
 
 const HEADER_OPTS = {
   headerStyle: { backgroundColor: '#0A0A0A' },

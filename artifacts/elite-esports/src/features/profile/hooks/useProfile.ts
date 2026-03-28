@@ -7,7 +7,11 @@ export function useProfile(userId?: string) {
   const [loading, setLoading] = useState(true);
 
   const fetch = async () => {
-    if (!userId) return;
+    if (!userId) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     const { data } = await supabase.from('profiles').select('*').eq('id', userId).single();
     if (data) setProfile(data);
     setLoading(false);

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/store/AuthContext';
 
@@ -25,39 +25,39 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
-    if (data) setNotifications(data);
-  };
+    if (data) setNotifications(data as Notification[]);
+  }, [user]);
 
   useEffect(() => {
     if (!user) { setNotifications([]); return; }
     fetchNotifications();
     const channel = supabase
-      .channel('notifications')
+      .channel(`notifications-${user.id}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'notifications',
         filter: `user_id=eq.${user.id}`,
       }, () => fetchNotifications())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  }, [user, fetchNotifications]);
 
-  const markAsRead = async (id: string) => {
+  const markAsRead = useCallback(async (id: string) => {
     await supabase.from('notifications').update({ is_read: true }).eq('id', id);
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
-  };
+  }, []);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     if (!user) return;
     await supabase.from('notifications').update({ is_read: true }).eq('user_id', user.id);
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-  };
+  }, [user]);
 
   const value = useMemo(() => ({
     notifications,
@@ -65,7 +65,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     markAsRead,
     markAllAsRead,
     refreshNotifications: fetchNotifications,
-  }), [notifications, user]);
+  }), [notifications, markAsRead, markAllAsRead, fetchNotifications]);
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;
 }
