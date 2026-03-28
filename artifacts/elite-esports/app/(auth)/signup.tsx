@@ -13,8 +13,6 @@ import { AuthInput } from '@/features/auth/components/AuthInput';
 
 export default function SignupScreen() {
   const insets = useSafeAreaInsets();
-  const [name, setName] = useState('');
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,12 +21,9 @@ export default function SignupScreen() {
   const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
   const handleSignup = async () => {
-    if (!name || !username || !email || !password) { Alert.alert('Error', 'Please fill in all fields'); return; }
+    if (!email || !password) { Alert.alert('Error', 'Please fill in all fields'); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email, password,
-      options: { data: { full_name: name, username } },
-    });
+    const { error } = await supabase.auth.signUp({ email, password });
     setLoading(false);
     if (error) Alert.alert('Signup Failed', error.message);
     else Alert.alert('Success', 'Account created! Check your email to verify.', [
@@ -40,7 +35,7 @@ export default function SignupScreen() {
     <View style={styles.container}>
       <LinearGradient
         colors={['#140400', '#0A0A0A', '#0A0A0A']}
-        locations={[0, 0.35, 1]}
+        locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
@@ -52,48 +47,29 @@ export default function SignupScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <AuthLogo tagline="Join the Arena" />
+          <AuthLogo tagline="Join the Arena" showName={false} />
 
           <Text style={styles.title}>Create account</Text>
-          <Text style={styles.subtitle}>Fill in your details to get started</Text>
+          <Text style={styles.subtitle}>Enter your email and password to get started</Text>
 
           <View style={styles.fields}>
-            <View style={styles.row}>
-              <AuthInput
-                label="Full Name"
-                value={name}
-                onChangeText={setName}
-                placeholder="John Doe"
-                iconName="person-outline"
-                autoCapitalize="words"
-              />
-              <AuthInput
-                label="Username"
-                value={username}
-                onChangeText={setUsername}
-                placeholder="johndoe"
-                iconName="at-outline"
-              />
-            </View>
-            <View style={styles.row}>
-              <AuthInput
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="your@email.com"
-                iconName="mail-outline"
-                keyboardType="email-address"
-                autoComplete="email"
-              />
-              <AuthInput
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Password"
-                iconName="lock-closed-outline"
-                secureTextEntry
-              />
-            </View>
+            <AuthInput
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="your@email.com"
+              iconName="mail-outline"
+              keyboardType="email-address"
+              autoComplete="email"
+            />
+            <AuthInput
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              iconName="lock-closed-outline"
+              secureTextEntry
+            />
           </View>
 
           <TouchableOpacity
@@ -142,10 +118,6 @@ const styles = StyleSheet.create({
   fields: {
     gap: 16,
     marginBottom: 20,
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 20,
   },
   btn: {
     backgroundColor: Colors.primary,

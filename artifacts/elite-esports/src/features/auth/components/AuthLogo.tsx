@@ -5,9 +5,10 @@ import { Colors } from '@/utils/colors';
 
 interface Props {
   tagline?: string;
+  showName?: boolean;
 }
 
-export function AuthLogo({ tagline = 'Compete. Win. Dominate.' }: Props) {
+export function AuthLogo({ tagline = 'Compete. Win. Dominate.', showName = true }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.logoWrap}>
@@ -15,9 +16,11 @@ export function AuthLogo({ tagline = 'Compete. Win. Dominate.' }: Props) {
           <Ionicons name="flash" size={36} color={Colors.primary} />
         </View>
       </View>
-      <Text style={styles.appName}>
-        Elite <Text style={styles.highlight}>eSports</Text>
-      </Text>
+      {showName && (
+        <Text style={styles.appName}>
+          Elite <Text style={styles.highlight}>eSports</Text>
+        </Text>
+      )}
       <Text style={styles.tagline}>{tagline}</Text>
     </View>
   );
