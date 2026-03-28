@@ -30,6 +30,14 @@ export interface ProfileData {
   username?: string;
   avatar_index?: number;
   games?: { game: string; uid: string }[];
+  is_admin?: boolean;
+}
+
+export interface Game {
+  id: string;
+  name: string;
+  banner_url?: string;
+  created_at: string;
 }
 
 export interface SupportTicket {

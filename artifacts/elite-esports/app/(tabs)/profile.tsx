@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Image } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -8,6 +8,8 @@ import { GlobalHeader } from '@/components/GlobalHeader';
 import { AvatarSVG, AVATAR_NAMES } from '@/components/AvatarSVG';
 import { useAuth } from '@/store/AuthContext';
 import { useProfile } from '@/features/profile/hooks/useProfile';
+import { useIsAdmin } from '@/features/admin/hooks/useIsAdmin';
+import { useGames } from '@/features/games/hooks/useGames';
 
 const MENU_ITEMS = [
   { icon: 'people-outline', label: 'My Team', route: '/my-team' },
@@ -19,6 +21,8 @@ const MENU_ITEMS = [
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const { profile, loading } = useProfile(user?.id);
+  const { isAdmin } = useIsAdmin(user?.id);
+  const { games: allGames } = useGames();
   const tabBarHeight = useBottomTabBarHeight();
 
   if (loading) {
@@ -35,6 +39,9 @@ export default function ProfileScreen() {
   const avatarIndex = profile.avatar_index ?? 0;
   const name = profile.full_name || user?.user_metadata?.full_name || 'Player';
   const username = profile.username || user?.user_metadata?.username || 'unknown';
+
+  const getBanner = (gameName: string) =>
+    allGames.find(g => g.name.toLowerCase() === gameName.toLowerCase())?.banner_url;
 
   return (
     <View style={styles.container}>
@@ -84,17 +91,57 @@ export default function ProfileScreen() {
         {profile.games && profile.games.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Game IDs</Text>
-            {profile.games.map((g, i) => (
-              <View key={i} style={styles.gameRow}>
-                <View style={styles.gameIconBox}>
-                  <Ionicons name="game-controller-outline" size={16} color={Colors.primary} />
+            {profile.games.map((g, i) => {
+              const bannerUrl = getBanner(g.game);
+              return (
+                <View key={i} style={styles.gameCard}>
+                  {bannerUrl ? (
+                    <Image source={{ uri: bannerUrl }} style={styles.gameBanner} resizeMode="cover" />
+                  ) : (
+                    <View style={[styles.gameBanner, styles.gameBannerPlaceholder]}>
+                      <Ionicons name="game-controller-outline" size={18} color={Colors.text.muted} />
+                    </View>
+                  )}
+                  <View style={styles.gameInfo}>
+                    <Text style={styles.gameName}>{g.game}</Text>
+                    <Text style={styles.gameUID}>UID: {g.uid}</Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => router.push('/edit-profile')}
+                    style={styles.editGameBtn}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="pencil-outline" size={14} color={Colors.text.muted} />
+                  </TouchableOpacity>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.gameName}>{g.game}</Text>
-                  <Text style={styles.gameUID}>UID: {g.uid}</Text>
-                </View>
+              );
+            })}
+            <TouchableOpacity
+              style={styles.addGameBtn}
+              onPress={() => router.push('/edit-profile')}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="add-circle-outline" size={17} color={Colors.primary} />
+              <Text style={styles.addGameBtnText}>Add Another Game</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Admin Panel entry */}
+        {isAdmin && (
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Administration</Text>
+            <TouchableOpacity
+              style={styles.adminRow}
+              onPress={() => router.push('/admin')}
+              activeOpacity={0.8}
+            >
+              <View style={styles.adminIconBox}>
+                <Ionicons name="shield-checkmark-outline" size={19} color={Colors.primary} />
               </View>
-            ))}
+              <Text style={styles.adminLabel}>Admin Panel</Text>
+              <Ionicons name="chevron-forward" size={17} color={Colors.text.muted} />
+            </TouchableOpacity>
           </View>
         )}
 
@@ -104,7 +151,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               key={item.label}
               style={styles.menuRow}
-              onPress={() => { if (item.route) router.push(item.route as any); }}
+              onPress={() => router.push(item.route as any)}
               activeOpacity={0.75}
             >
               <View style={styles.menuIconBox}>
@@ -131,116 +178,103 @@ const styles = StyleSheet.create({
   scroll: { padding: 16 },
   hero: {
     backgroundColor: Colors.background.card,
-    borderRadius: 20,
-    paddingTop: 28,
-    paddingBottom: 24,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
+    borderRadius: 20, paddingTop: 28, paddingBottom: 24,
+    paddingHorizontal: 24, alignItems: 'center', marginBottom: 16,
+    borderWidth: 1, borderColor: Colors.border.default,
   },
   avatarWrapper: { position: 'relative', marginBottom: 14 },
   avatarCircle: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    overflow: 'hidden',
+    width: 84, height: 84, borderRadius: 42, overflow: 'hidden',
     backgroundColor: Colors.background.elevated,
-    borderWidth: 2.5,
-    borderColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 2.5, borderColor: Colors.primary,
+    alignItems: 'center', justifyContent: 'center',
   },
   editIcon: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    position: 'absolute', bottom: 0, right: 0,
+    width: 26, height: 26, borderRadius: 13,
     backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: Colors.background.card,
+    alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: Colors.background.card,
   },
   name: { fontSize: 22, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 3 },
-  username: { fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, marginBottom: 22 },
+  username: { fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, marginBottom: 8 },
+  avatarBadge: {
+    backgroundColor: 'rgba(254,76,17,0.1)',
+    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4,
+    marginBottom: 16, borderWidth: 1, borderColor: 'rgba(254,76,17,0.2)',
+  },
+  avatarBadgeText: { fontSize: 12, fontFamily: 'Inter_500Medium', color: Colors.primary },
   statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'stretch',
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.default,
-    paddingTop: 18,
+    flexDirection: 'row', alignItems: 'center', alignSelf: 'stretch',
+    borderTopWidth: 1, borderTopColor: Colors.border.default, paddingTop: 18,
   },
   statBox: { flex: 1, alignItems: 'center', gap: 3 },
   statVal: { fontSize: 20, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
   statLbl: { fontSize: 11, fontFamily: 'Inter_400Regular', color: Colors.text.secondary },
   statDiv: { width: 1, height: 32, backgroundColor: Colors.border.default },
+
   section: { marginBottom: 16 },
   sectionLabel: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-    marginBottom: 8,
-    marginLeft: 2,
+    fontSize: 12, fontFamily: 'Inter_600SemiBold', color: Colors.text.muted,
+    textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 2,
   },
-  gameRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+
+  gameCard: {
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: Colors.background.card,
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
+    borderRadius: 12, overflow: 'hidden',
+    marginBottom: 8, borderWidth: 1, borderColor: Colors.border.default,
+    paddingRight: 14,
   },
-  gameIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: 'rgba(254,76,17,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  gameBanner: { width: 72, height: 40 },
+  gameBannerPlaceholder: {
+    backgroundColor: Colors.background.elevated,
+    alignItems: 'center', justifyContent: 'center',
   },
+  gameInfo: { flex: 1, paddingHorizontal: 12 },
   gameName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
   gameUID: { fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, marginTop: 2 },
+  editGameBtn: { padding: 4 },
+
+  addGameBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, paddingVertical: 12,
+    backgroundColor: 'rgba(254,76,17,0.06)',
+    borderRadius: 10, borderWidth: 1,
+    borderColor: 'rgba(254,76,17,0.15)', borderStyle: 'dashed',
+  },
+  addGameBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: Colors.primary },
+
+  adminRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 14,
+    backgroundColor: 'rgba(254,76,17,0.06)',
+    borderRadius: 14, padding: 16, marginBottom: 8,
+    borderWidth: 1, borderColor: 'rgba(254,76,17,0.2)',
+  },
+  adminIconBox: {
+    width: 38, height: 38, borderRadius: 10,
+    backgroundColor: 'rgba(254,76,17,0.1)',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  adminLabel: { flex: 1, fontSize: 15, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
+
   menuRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
+    flexDirection: 'row', alignItems: 'center', gap: 14,
     backgroundColor: Colors.background.card,
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: Colors.border.subtle,
+    borderRadius: 14, padding: 16, marginBottom: 8,
+    borderWidth: 1, borderColor: Colors.border.subtle,
   },
   menuIconBox: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+    width: 38, height: 38, borderRadius: 10,
     backgroundColor: 'rgba(254,76,17,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
   menuLabel: { flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary },
   logoutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    backgroundColor: 'rgba(239,68,68,0.08)',
-    borderRadius: 14,
-    height: 52,
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(239,68,68,0.2)',
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 10, backgroundColor: 'rgba(239,68,68,0.08)',
+    borderRadius: 14, height: 52, marginTop: 8,
+    borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)',
   },
   logoutText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: Colors.status.error },
 });
