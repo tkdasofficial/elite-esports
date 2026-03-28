@@ -50,3 +50,6 @@ timeoutMs = 20000
 
 [userenv.shared]
 EXPO_PUBLIC_SUPABASE_URL = "https://azxhcalksgudjemwjekd.supabase.co"
+
+[[ports]]
+localPort = 8081
