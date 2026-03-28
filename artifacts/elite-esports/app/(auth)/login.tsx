@@ -115,8 +115,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   fields: {
-    flexDirection: 'row',
-    gap: 20,
+    gap: 16,
     marginBottom: 20,
   },
   btn: {
