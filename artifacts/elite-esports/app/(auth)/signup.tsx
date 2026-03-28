@@ -59,38 +59,42 @@ export default function SignupScreen() {
             <Text style={styles.cardSubtitle}>Fill in your details to get started</Text>
 
             <View style={styles.fields}>
-              <AuthInput
-                label="Full Name"
-                value={name}
-                onChangeText={setName}
-                placeholder="John Doe"
-                iconName="person-outline"
-                autoCapitalize="words"
-              />
-              <AuthInput
-                label="Username"
-                value={username}
-                onChangeText={setUsername}
-                placeholder="johndoe"
-                iconName="at-outline"
-              />
-              <AuthInput
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="your@email.com"
-                iconName="mail-outline"
-                keyboardType="email-address"
-                autoComplete="email"
-              />
-              <AuthInput
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Create a password"
-                iconName="lock-closed-outline"
-                secureTextEntry
-              />
+              <View style={styles.row}>
+                <AuthInput
+                  label="Full Name"
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="John Doe"
+                  iconName="person-outline"
+                  autoCapitalize="words"
+                />
+                <AuthInput
+                  label="Username"
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="johndoe"
+                  iconName="at-outline"
+                />
+              </View>
+              <View style={styles.row}>
+                <AuthInput
+                  label="Email"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="your@email.com"
+                  iconName="mail-outline"
+                  keyboardType="email-address"
+                  autoComplete="email"
+                />
+                <AuthInput
+                  label="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="Password"
+                  iconName="lock-closed-outline"
+                  secureTextEntry
+                />
+              </View>
             </View>
 
             <TouchableOpacity
@@ -145,7 +149,12 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   fields: {
-    marginBottom: 8,
+    marginBottom: 16,
+    gap: 16,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 20,
   },
   btn: {
     backgroundColor: Colors.primary,

@@ -15,7 +15,7 @@ interface Props {
   autoComplete?: any;
 }
 
-const INPUT_HEIGHT = 56;
+const INPUT_HEIGHT = 25;
 
 export function AuthInput({
   label, value, onChangeText, placeholder, iconName,
@@ -31,11 +31,11 @@ export function AuthInput({
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.wrapper, focused && styles.wrapperFocused]}>
 
-        {/* Left icon — fixed-width container so it never shifts */}
+        {/* Left icon — fixed-width slot, always locked */}
         <View style={styles.iconSlot}>
           <Ionicons
             name={iconName}
-            size={18}
+            size={12}
             color={focused ? Colors.primary : '#606060'}
           />
         </View>
@@ -54,17 +54,16 @@ export function AuthInput({
           onBlur={() => setFocused(false)}
         />
 
-        {/* Right side — eye button for password, fixed spacer for others */}
         {isPassword ? (
           <TouchableOpacity
             onPress={() => setShowText(v => !v)}
             style={styles.eyeSlot}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             activeOpacity={0.6}
           >
             <Ionicons
               name={showText ? 'eye-outline' : 'eye-off-outline'}
-              size={19}
+              size={12}
               color="#606060"
             />
           </TouchableOpacity>
@@ -79,23 +78,22 @@ export function AuthInput({
 
 const styles = StyleSheet.create({
   group: {
-    marginBottom: 20,
+    flex: 1,
   },
   label: {
-    fontSize: 12,
+    fontSize: 10,
     fontFamily: 'Inter_600SemiBold',
     color: '#888888',
-    marginBottom: 8,
-    letterSpacing: 0.6,
+    marginBottom: 6,
+    letterSpacing: 0.5,
     textTransform: 'uppercase',
-    paddingHorizontal: 4,
   },
   wrapper: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#161616',
     borderRadius: INPUT_HEIGHT / 2,
-    borderWidth: 1.5,
+    borderWidth: 1,
     borderColor: '#2A2A2A',
     height: INPUT_HEIGHT,
     overflow: 'hidden',
@@ -104,9 +102,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     backgroundColor: '#1C0A04',
   },
-  /* Fixed-width slot keeps the icon locked regardless of focus state */
   iconSlot: {
-    width: 52,
+    width: 30,
     height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
@@ -115,20 +112,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignSelf: 'stretch',
     color: Colors.text.primary,
-    fontSize: 15,
+    fontSize: 11,
     fontFamily: 'Inter_400Regular',
     paddingVertical: 0,
     backgroundColor: 'transparent',
   },
-  /* Eye button — same fixed width as icon slot, right side */
   eyeSlot: {
-    width: 52,
+    width: 30,
     height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  /* Spacer gives the same right breathing room for non-password fields */
   rightSpacer: {
-    width: 20,
+    width: 12,
   },
 });

@@ -65,7 +65,7 @@ export default function LoginScreen() {
                 label="Password"
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Enter your password"
+                placeholder="Password"
                 iconName="lock-closed-outline"
                 secureTextEntry
                 autoComplete="password"
@@ -124,7 +124,9 @@ const styles = StyleSheet.create({
     marginBottom: 28,
   },
   fields: {
-    marginBottom: 8,
+    flexDirection: 'row',
+    gap: 20,
+    marginBottom: 16,
   },
   btn: {
     backgroundColor: Colors.primary,
