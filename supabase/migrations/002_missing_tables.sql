@@ -1,11 +1,10 @@
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Elite eSports — Missing Tables & Columns Migration
--- Run this in your Supabase Dashboard → SQL Editor → New query → Run
+-- Run this in: Supabase Dashboard → SQL Editor → New query → Run
 -- ─────────────────────────────────────────────────────────────────────────────
 
 -- ─── 1. ADD MISSING COLUMNS TO EXISTING TABLES ───────────────────────────────
 
--- Add updated_at to users table (used by profile save)
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 
 -- ─── 2. TEAMS ─────────────────────────────────────────────────────────────────
@@ -27,17 +26,9 @@ DROP POLICY IF EXISTS "teams_admin"  ON public.teams;
 
 CREATE POLICY "teams_select" ON public.teams FOR SELECT USING (true);
 CREATE POLICY "teams_insert" ON public.teams FOR INSERT WITH CHECK (auth.uid() = created_by);
-CREATE POLICY "teams_update" ON public.teams FOR UPDATE
-  USING (
-    EXISTS (
-      SELECT 1 FROM public.team_members
-      WHERE team_id = teams.id AND user_id = auth.uid() AND role = 'captain'
-    )
-  );
-CREATE POLICY "teams_admin" ON public.teams FOR ALL
-  USING (EXISTS (SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()));
 
 -- ─── 3. TEAM MEMBERS ──────────────────────────────────────────────────────────
+-- Created BEFORE the teams_update policy so the cross-table reference works
 CREATE TABLE IF NOT EXISTS public.team_members (
   id        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   team_id   UUID NOT NULL REFERENCES public.teams(id) ON DELETE CASCADE,
@@ -56,6 +47,17 @@ DROP POLICY IF EXISTS "team_members_delete" ON public.team_members;
 CREATE POLICY "team_members_select" ON public.team_members FOR SELECT USING (true);
 CREATE POLICY "team_members_insert" ON public.team_members FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "team_members_delete" ON public.team_members FOR DELETE USING (auth.uid() = user_id);
+
+-- Now safe to add the teams_update policy that references team_members
+CREATE POLICY "teams_update" ON public.teams FOR UPDATE
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.team_members
+      WHERE team_id = teams.id AND user_id = auth.uid() AND role = 'captain'
+    )
+  );
+CREATE POLICY "teams_admin" ON public.teams FOR ALL
+  USING (EXISTS (SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()));
 
 -- ─── 4. BROADCASTS ────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.broadcasts (
@@ -76,7 +78,6 @@ CREATE POLICY "broadcasts_admin" ON public.broadcasts FOR ALL
   WITH CHECK (EXISTS (SELECT 1 FROM public.admin_users WHERE user_id = auth.uid()));
 
 -- ─── 5. ENABLE REALTIME FOR KEY TABLES ────────────────────────────────────────
--- Run these to enable real-time subscriptions used by the app
 ALTER PUBLICATION supabase_realtime ADD TABLE public.matches;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.notifications;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.wallets;
