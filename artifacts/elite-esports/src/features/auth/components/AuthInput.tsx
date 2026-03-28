@@ -86,9 +86,11 @@ const styles = StyleSheet.create({
   icon: { marginRight: 10 },
   input: {
     flex: 1,
+    height: 52,
     color: Colors.text.primary,
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
+    paddingVertical: 0,
   },
   inputPassword: {
     paddingRight: 36,
