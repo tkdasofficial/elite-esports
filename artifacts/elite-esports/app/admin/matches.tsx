@@ -9,7 +9,9 @@ import { Colors } from '@/utils/colors';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 import { supabase } from '@/services/supabase';
 import { Match } from '@/utils/types';
+import { adaptMatch } from '@/services/dbAdapters';
 import { useGames } from '@/features/games/hooks/useGames';
+import { Game } from '@/utils/types';
 
 const STATUS_COLORS: Record<string, string> = {
   upcoming: '#3B82F6', ongoing: '#22C55E', completed: '#666', cancelled: '#EF4444',
@@ -17,12 +19,12 @@ const STATUS_COLORS: Record<string, string> = {
 
 type FormData = {
   title: string; game: string; entry_fee: string; prize_pool: string;
-  max_players: string; starts_at: string; description: string; stream_url: string;
+  max_players: string; stream_url: string;
 };
 
 const EMPTY_FORM: FormData = {
   title: '', game: '', entry_fee: '', prize_pool: '',
-  max_players: '', starts_at: '', description: '', stream_url: '',
+  max_players: '', stream_url: '',
 };
 
 export default function AdminMatchesScreen() {
@@ -32,6 +34,7 @@ export default function AdminMatchesScreen() {
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editMatch, setEditMatch] = useState<Match | null>(null);
+  const [editMatchDbId, setEditMatchDbId] = useState<string | null>(null);
   const [form, setForm] = useState<FormData>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
 
@@ -41,26 +44,28 @@ export default function AdminMatchesScreen() {
     setLoading(true);
     const { data } = await supabase
       .from('matches')
-      .select('*')
-      .order('starts_at', { ascending: false });
-    setMatches(data ?? []);
+      .select('*, games(name, banner_url)')
+      .order('created_at', { ascending: false });
+    setMatches((data ?? []).map(adaptMatch));
     setLoading(false);
   };
 
   const openCreate = () => {
     setEditMatch(null);
+    setEditMatchDbId(null);
     setForm(EMPTY_FORM);
     setShowForm(true);
   };
 
   const openEdit = (m: Match) => {
     setEditMatch(m);
+    setEditMatchDbId(m.id);
     setForm({
-      title: m.title, game: m.game,
-      entry_fee: String(m.entry_fee), prize_pool: String(m.prize_pool),
+      title: m.title,
+      game: m.game,
+      entry_fee: String(m.entry_fee),
+      prize_pool: String(m.prize_pool),
       max_players: String(m.max_players),
-      starts_at: m.starts_at?.slice(0, 16) ?? '',
-      description: m.description ?? '',
       stream_url: m.stream_url ?? '',
     });
     setShowForm(true);
@@ -71,21 +76,26 @@ export default function AdminMatchesScreen() {
       Alert.alert('Required', 'Title and game are required.'); return;
     }
     setSaving(true);
-    const payload = {
+
+    const selectedGame: Game | undefined = games.find(g => g.name === form.game);
+    if (!selectedGame) {
+      Alert.alert('Error', 'Please select a valid game.'); setSaving(false); return;
+    }
+
+    const payload: any = {
       title: form.title.trim(),
-      game: form.game.trim(),
+      game_id: selectedGame.id,
       entry_fee: parseFloat(form.entry_fee) || 0,
       prize_pool: parseFloat(form.prize_pool) || 0,
       max_players: parseInt(form.max_players) || 2,
-      starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : new Date().toISOString(),
-      description: form.description.trim() || null,
-      stream_url: form.stream_url.trim() || null,
+      live_stream_url: form.stream_url.trim() || null,
       status: editMatch?.status ?? 'upcoming',
     };
-    if (editMatch) {
-      await supabase.from('matches').update(payload).eq('id', editMatch.id);
+
+    if (editMatchDbId) {
+      await supabase.from('matches').update(payload).eq('id', editMatchDbId);
     } else {
-      await supabase.from('matches').insert({ ...payload, players_joined: 0 });
+      await supabase.from('matches').insert({ ...payload, joined_players: 0 });
     }
     setSaving(false);
     setShowForm(false);
@@ -195,12 +205,7 @@ export default function AdminMatchesScreen() {
               <View style={{ width: 12 }} />
               <View style={{ flex: 1 }}><Field label="Prize Pool ₹" placeholder="0" {...field('prize_pool')} numeric /></View>
             </View>
-            <View style={styles.row}>
-              <View style={{ flex: 1 }}><Field label="Max Players" placeholder="100" {...field('max_players')} numeric /></View>
-              <View style={{ width: 12 }} />
-              <View style={{ flex: 1 }}><Field label="Start Time" placeholder="2025-01-01T18:00" {...field('starts_at')} /></View>
-            </View>
-            <Field label="Description" placeholder="Optional description" {...field('description')} multiline />
+            <Field label="Max Players" placeholder="100" {...field('max_players')} numeric />
             <Field label="Stream URL" placeholder="https://youtube.com/..." {...field('stream_url')} />
             <TouchableOpacity
               style={[styles.saveBtn, saving && styles.disabled]}

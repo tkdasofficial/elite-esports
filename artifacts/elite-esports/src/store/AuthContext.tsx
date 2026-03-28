@@ -46,12 +46,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setAdminLoading(true);
     supabase
-      .from('profiles')
-      .select('is_admin')
-      .eq('id', session.user.id)
-      .single()
+      .from('admin_users')
+      .select('user_id')
+      .eq('user_id', session.user.id)
+      .maybeSingle()
       .then(({ data }) => {
-        setIsAdmin(data?.is_admin === true);
+        setIsAdmin(!!data);
         setAdminLoading(false);
       });
   }, [session?.user?.id, loading]);

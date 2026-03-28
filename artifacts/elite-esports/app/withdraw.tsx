@@ -24,9 +24,8 @@ export default function WithdrawScreen() {
     if (val > balance) { Alert.alert('Insufficient', 'Not enough balance'); return; }
     if (!upiId.trim()) { Alert.alert('Required', 'Please enter your UPI ID'); return; }
     setLoading(true);
-    const { error } = await supabase.from('transactions').insert({
-      user_id: user?.id, type: 'debit', amount: val,
-      status: 'pending', description: `Withdrawal to UPI: ${upiId}`,
+    const { error } = await supabase.from('withdrawals').insert({
+      user_id: user?.id, amount: val, status: 'pending',
     });
     setLoading(false);
     if (error) Alert.alert('Error', error.message);

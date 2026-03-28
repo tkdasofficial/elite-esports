@@ -21,8 +21,9 @@ export default function SupportScreen() {
   const handleSubmit = async () => {
     if (!category || !subject || !message) { Alert.alert('Required', 'Please fill all fields'); return; }
     setLoading(true);
+    const fullMessage = `[${category}] ${subject}\n\n${message}`;
     const { error } = await supabase.from('support_tickets').insert({
-      user_id: user?.id, category, subject, message, status: 'open',
+      user_id: user?.id, message: fullMessage, status: 'open',
     });
     setLoading(false);
     if (error) Alert.alert('Error', error.message);

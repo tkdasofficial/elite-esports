@@ -29,12 +29,47 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const fetchWallet = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-    const [{ data: wallet }, { data: txns }] = await Promise.all([
-      supabase.from('wallets').select('balance').eq('user_id', user.id).single(),
-      supabase.from('transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false }),
+
+    const [walletRes, paymentsRes, withdrawalsRes, txnsRes] = await Promise.all([
+      supabase.from('wallets').select('balance').eq('user_id', user.id).maybeSingle(),
+      supabase.from('payments').select('id, amount, utr, status, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('withdrawals').select('id, amount, status, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
+      supabase.from('wallet_transactions').select('id, type, amount, status, created_at').eq('user_id', user.id).order('created_at', { ascending: false }),
     ]);
-    if (wallet) setBalance(wallet.balance);
-    if (txns) setTransactions(txns as Transaction[]);
+
+    if (walletRes.data) setBalance(walletRes.data.balance ?? 0);
+
+    const deposits: Transaction[] = (paymentsRes.data ?? []).map(p => ({
+      id: p.id,
+      type: 'credit' as const,
+      amount: p.amount,
+      status: (p.status as any) ?? 'pending',
+      description: p.utr ? `Deposit — UTR: ${p.utr}` : 'Deposit via UPI',
+      created_at: p.created_at,
+    }));
+
+    const withdrawals: Transaction[] = (withdrawalsRes.data ?? []).map(w => ({
+      id: w.id,
+      type: 'debit' as const,
+      amount: w.amount,
+      status: (w.status as any) ?? 'pending',
+      description: 'Withdrawal',
+      created_at: w.created_at,
+    }));
+
+    const walletTxns: Transaction[] = (txnsRes.data ?? []).map(t => ({
+      id: t.id,
+      type: t.type === 'credit' ? 'credit' : 'debit',
+      amount: t.amount,
+      status: (t.status as any) ?? 'approved',
+      description: t.type === 'credit' ? 'Match prize' : 'Match entry fee',
+      created_at: t.created_at,
+    }));
+
+    const all = [...deposits, ...withdrawals, ...walletTxns]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+    setTransactions(all);
     setLoading(false);
   }, [user]);
 

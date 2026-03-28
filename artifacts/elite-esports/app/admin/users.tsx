@@ -35,11 +35,26 @@ export default function AdminUsersScreen() {
 
   const loadUsers = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('profiles')
-      .select('id, full_name, username, balance, is_admin')
-      .order('full_name', { ascending: true });
-    const rows = data ?? [];
+    const [usersRes, walletsRes, adminsRes] = await Promise.all([
+      supabase.from('users').select('id, name, username').order('name', { ascending: true }),
+      supabase.from('wallets').select('user_id, balance'),
+      supabase.from('admin_users').select('user_id'),
+    ]);
+
+    const walletMap: Record<string, number> = {};
+    for (const w of (walletsRes.data ?? [])) {
+      walletMap[w.user_id] = w.balance ?? 0;
+    }
+    const adminSet = new Set((adminsRes.data ?? []).map(a => a.user_id));
+
+    const rows: UserRow[] = (usersRes.data ?? []).map(u => ({
+      id: u.id,
+      full_name: u.name ?? null,
+      username: u.username ?? null,
+      balance: walletMap[u.id] ?? 0,
+      is_admin: adminSet.has(u.id),
+    }));
+
     setUsers(rows);
     setFiltered(rows);
     setLoading(false);

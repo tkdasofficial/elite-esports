@@ -10,12 +10,11 @@ import { supabase } from '@/services/supabase';
 
 interface Ticket {
   id: string;
-  category: string;
-  subject: string;
+  user_id: string;
   message: string;
   status: string;
   created_at: string;
-  profiles?: { full_name: string | null; username: string | null } | null;
+  userName?: string | null;
 }
 
 export default function AdminSupportScreen() {
@@ -28,11 +27,29 @@ export default function AdminSupportScreen() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data: rows } = await supabase
       .from('support_tickets')
-      .select('id, category, subject, message, status, created_at, profiles(full_name, username)')
+      .select('id, user_id, message, status, created_at')
       .order('created_at', { ascending: false });
-    setTickets(data ?? []);
+
+    if (!rows || rows.length === 0) {
+      setTickets([]);
+      setLoading(false);
+      return;
+    }
+
+    const userIds = [...new Set(rows.map(r => r.user_id))];
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, name, username')
+      .in('id', userIds);
+
+    const userMap: Record<string, string | null> = {};
+    for (const u of (usersData ?? [])) {
+      userMap[u.id] = u.name ?? u.username ?? null;
+    }
+
+    setTickets(rows.map(r => ({ ...r, userName: userMap[r.user_id] ?? null })));
     setLoading(false);
   };
 
@@ -43,6 +60,17 @@ export default function AdminSupportScreen() {
 
   const statusColor = (s: string) =>
     s === 'resolved' ? Colors.status.success : s === 'in_progress' ? Colors.status.warning : Colors.status.info;
+
+  const parseSubject = (msg: string) => {
+    const match = msg.match(/^\[([^\]]+)\] (.+?)(?:\n|$)/);
+    if (match) return match[2];
+    return msg.slice(0, 60);
+  };
+
+  const parseCategory = (msg: string) => {
+    const match = msg.match(/^\[([^\]]+)\]/);
+    return match ? match[1] : 'General';
+  };
 
   return (
     <View style={styles.container}>
@@ -57,15 +85,16 @@ export default function AdminSupportScreen() {
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
           ListEmptyComponent={<Text style={styles.empty}>No support tickets yet.</Text>}
           renderItem={({ item }) => {
-            const user = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
             const expanded = expandedId === item.id;
+            const subject = parseSubject(item.message);
+            const category = parseCategory(item.message);
             return (
               <View style={styles.card}>
                 <TouchableOpacity onPress={() => setExpandedId(expanded ? null : item.id)} activeOpacity={0.8}>
                   <View style={styles.cardTop}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.subject} numberOfLines={expanded ? undefined : 1}>{item.subject}</Text>
-                      <Text style={styles.user}>{user?.full_name ?? 'Unknown'} · {item.category}</Text>
+                      <Text style={styles.subject} numberOfLines={expanded ? undefined : 1}>{subject}</Text>
+                      <Text style={styles.user}>{item.userName ?? 'Unknown'} · {category}</Text>
                     </View>
                     <View style={[styles.badge, { backgroundColor: statusColor(item.status) + '20' }]}>
                       <Text style={[styles.badgeText, { color: statusColor(item.status) }]}>

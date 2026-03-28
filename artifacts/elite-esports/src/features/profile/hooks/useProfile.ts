@@ -2,12 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/services/supabase';
 import { ProfileData } from '@/utils/types';
 
-const toGamesArray = (raw: unknown): { game: string; uid: string }[] => {
-  if (!raw) return [];
-  if (Array.isArray(raw)) return raw;
-  return [];
-};
-
 export function useProfile(userId?: string) {
   const [profile, setProfile] = useState<ProfileData>({});
   const [loading, setLoading] = useState(true);
@@ -21,17 +15,35 @@ export function useProfile(userId?: string) {
     setLoading(true);
     setFetchError(null);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, username, avatar_index, games, balance, is_admin')
-        .eq('id', userId)
-        .single();
+      const [userRes, walletRes, adminRes, gamesRes] = await Promise.all([
+        supabase.from('users').select('id, name, username, avatar_url').eq('id', userId).maybeSingle(),
+        supabase.from('wallets').select('balance').eq('user_id', userId).maybeSingle(),
+        supabase.from('admin_users').select('user_id').eq('user_id', userId).maybeSingle(),
+        supabase.from('user_games').select('game_id, uid, games(name)').eq('user_id', userId),
+      ]);
 
-      if (error && error.code !== 'PGRST116') {
-        setFetchError(error.message);
-      }
-      if (data) {
-        setProfile({ ...data, games: toGamesArray(data.games) });
+      const user = userRes.data;
+      const wallet = walletRes.data;
+      const isAdmin = !!adminRes.data;
+      const rawGames = gamesRes.data ?? [];
+
+      const games = rawGames.map((g: any) => ({
+        game: (Array.isArray(g.games) ? g.games[0]?.name : g.games?.name) ?? g.game_id ?? '',
+        uid: g.uid ?? '',
+      }));
+
+      if (user) {
+        setProfile({
+          id: user.id,
+          full_name: user.name ?? '',
+          username: user.username,
+          avatar_index: 0,
+          games,
+          balance: wallet?.balance ?? 0,
+          is_admin: isAdmin,
+        });
+      } else if (userRes.error && userRes.error.code !== 'PGRST116') {
+        setFetchError(userRes.error.message);
       }
     } catch (e: any) {
       setFetchError(e?.message ?? 'Failed to load profile');
@@ -43,24 +55,23 @@ export function useProfile(userId?: string) {
   const save = async (updates: Partial<ProfileData>): Promise<{ error: Error | null }> => {
     if (!userId) return { error: new Error('Not authenticated') };
     try {
-      const payload = {
-        id: userId,
-        full_name: updates.full_name ?? '',
-        username: updates.username ?? null,
-        avatar_index: updates.avatar_index ?? 0,
-        games: toGamesArray(updates.games),
-        updated_at: new Date().toISOString(),
-      };
-
       const { error: upsertErr } = await supabase
-        .from('profiles')
-        .upsert(payload, { onConflict: 'id' });
+        .from('users')
+        .upsert({
+          id: userId,
+          name: updates.full_name ?? '',
+          username: updates.username ?? null,
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
 
       if (upsertErr) return { error: new Error(upsertErr.message) };
 
       setProfile(prev => ({
         ...prev,
-        ...payload,
+        full_name: updates.full_name ?? prev.full_name,
+        username: updates.username ?? prev.username,
+        avatar_index: updates.avatar_index ?? prev.avatar_index,
+        games: updates.games ?? prev.games,
       }));
       return { error: null };
     } catch (e: any) {

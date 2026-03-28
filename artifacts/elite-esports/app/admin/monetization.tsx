@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, Switch, Modal, FlatList,
+  ScrollView, ActivityIndicator, Alert, Switch, Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +13,6 @@ interface AdUnit { id: string; name: string; type: string; unit_id: string; enab
 interface AdTrigger { id: string; trigger_type: string; ad_unit_id: string; enabled: boolean; cooldown_seconds: number; }
 
 const AD_TYPES = ['interstitial', 'rewarded', 'app_open'];
-const TRIGGER_TYPES = ['join_match', 'leave_match', 'app_open', 'reward_claim'];
 
 export default function AdminMonetizationScreen() {
   const insets = useSafeAreaInsets();
@@ -21,6 +20,7 @@ export default function AdminMonetizationScreen() {
   const [triggers, setTriggers] = useState<AdTrigger[]>([]);
   const [adsEnabled, setAdsEnabled] = useState(true);
   const [defaultCooldown, setDefaultCooldown] = useState('60');
+  const [settingsId, setSettingsId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showUnitModal, setShowUnitModal] = useState(false);
   const [unitForm, setUnitForm] = useState({ name: '', type: 'interstitial', unit_id: '' });
@@ -31,13 +31,29 @@ export default function AdminMonetizationScreen() {
   const load = async () => {
     setLoading(true);
     const [units, trigs, settings] = await Promise.all([
-      supabase.from('ad_units').select('*').order('name'),
-      supabase.from('ad_triggers').select('*'),
-      supabase.from('ad_settings').select('*').single(),
+      supabase.from('ad_units').select('id, name, type, ad_unit_id, status').order('name'),
+      supabase.from('ad_triggers').select('id, trigger, ad_unit_id, enabled, cooldown_seconds'),
+      supabase.from('ad_settings').select('*').limit(1).maybeSingle(),
     ]);
-    setAdUnits(units.data ?? []);
-    setTriggers(trigs.data ?? []);
+
+    setAdUnits((units.data ?? []).map(u => ({
+      id: u.id,
+      name: u.name,
+      type: u.type,
+      unit_id: u.ad_unit_id,
+      enabled: u.status === 'active',
+    })));
+
+    setTriggers((trigs.data ?? []).map(t => ({
+      id: t.id,
+      trigger_type: t.trigger,
+      ad_unit_id: t.ad_unit_id,
+      enabled: t.enabled ?? false,
+      cooldown_seconds: t.cooldown_seconds ?? 60,
+    })));
+
     if (settings.data) {
+      setSettingsId(settings.data.id ?? null);
       setAdsEnabled(settings.data.ads_enabled ?? true);
       setDefaultCooldown(String(settings.data.default_cooldown ?? 60));
     }
@@ -45,7 +61,8 @@ export default function AdminMonetizationScreen() {
   };
 
   const toggleUnit = async (unit: AdUnit) => {
-    await supabase.from('ad_units').update({ enabled: !unit.enabled }).eq('id', unit.id);
+    const newStatus = unit.enabled ? 'inactive' : 'active';
+    await supabase.from('ad_units').update({ status: newStatus }).eq('id', unit.id);
     load();
   };
 
@@ -59,7 +76,12 @@ export default function AdminMonetizationScreen() {
   const addUnit = async () => {
     if (!unitForm.name.trim() || !unitForm.unit_id.trim()) { Alert.alert('Required', 'Fill all fields.'); return; }
     setSaving(true);
-    await supabase.from('ad_units').insert({ name: unitForm.name.trim(), type: unitForm.type, unit_id: unitForm.unit_id.trim(), enabled: true });
+    await supabase.from('ad_units').insert({
+      name: unitForm.name.trim(),
+      type: unitForm.type,
+      ad_unit_id: unitForm.unit_id.trim(),
+      status: 'active',
+    });
     setSaving(false);
     setShowUnitModal(false);
     setUnitForm({ name: '', type: 'interstitial', unit_id: '' });
@@ -72,7 +94,12 @@ export default function AdminMonetizationScreen() {
   };
 
   const saveSettings = async () => {
-    await supabase.from('ad_settings').upsert({ id: 1, ads_enabled: adsEnabled, default_cooldown: parseInt(defaultCooldown) || 60 });
+    const cooldown = parseInt(defaultCooldown) || 60;
+    if (settingsId) {
+      await supabase.from('ad_settings').update({ ads_enabled: adsEnabled, default_cooldown: cooldown }).eq('id', settingsId);
+    } else {
+      await supabase.from('ad_settings').insert({ ads_enabled: adsEnabled, default_cooldown: cooldown });
+    }
     Alert.alert('Saved', 'Global ad settings updated.');
   };
 
@@ -87,7 +114,6 @@ export default function AdminMonetizationScreen() {
       <AdminHeader title="Monetization" />
       <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]} showsVerticalScrollIndicator={false}>
 
-        {/* Ad Units */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Ad Units</Text>
           <TouchableOpacity style={styles.addBtn} onPress={() => setShowUnitModal(true)} activeOpacity={0.8}>
@@ -112,17 +138,16 @@ export default function AdminMonetizationScreen() {
           ))
         )}
 
-        {/* Ad Triggers */}
         <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 12 }]}>Ad Triggers</Text>
         {triggers.length === 0 ? (
-          <Text style={styles.empty}>No triggers yet.</Text>
+          <Text style={styles.empty}>No triggers configured.</Text>
         ) : (
           triggers.map(t => {
             const unit = adUnits.find(u => u.id === t.ad_unit_id);
             return (
               <View key={t.id} style={styles.card}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.cardTitle}>{t.trigger_type.replace('_', ' ')}</Text>
+                  <Text style={styles.cardTitle}>{t.trigger_type.replace(/_/g, ' ')}</Text>
                   <Text style={styles.cardSub}>{unit?.name ?? 'Unknown unit'} · {t.cooldown_seconds}s cooldown</Text>
                 </View>
                 <Switch value={t.enabled} onValueChange={() => toggleTrigger(t)} thumbColor="#fff" trackColor={{ true: Colors.primary, false: Colors.border.default }} />
@@ -131,7 +156,6 @@ export default function AdminMonetizationScreen() {
           })
         )}
 
-        {/* Global Settings */}
         <Text style={[styles.sectionTitle, { marginTop: 24, marginBottom: 12 }]}>Global Settings</Text>
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Ads Enabled</Text>

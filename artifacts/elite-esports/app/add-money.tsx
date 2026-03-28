@@ -29,9 +29,9 @@ export default function AddMoneyScreen() {
   const handleSubmit = async () => {
     if (!utr.trim()) { Alert.alert('Required', 'Please enter transaction ID'); return; }
     setLoading(true);
-    const { error } = await supabase.from('transactions').insert({
-      user_id: user?.id, type: 'credit', amount: parseFloat(amount),
-      status: 'pending', description: `Deposit via UPI — UTR: ${utr}`,
+    const { error } = await supabase.from('payments').insert({
+      user_id: user?.id, amount: parseFloat(amount),
+      utr: utr.trim(), status: 'pending',
     });
     setLoading(false);
     if (error) Alert.alert('Error', error.message);

@@ -28,16 +28,30 @@ export default function AdminBroadcastScreen() {
           text: 'Send',
           onPress: async () => {
             setSending(true);
-            const { error } = await supabase.from('broadcasts').insert({
+            const { data: users } = await supabase.from('users').select('id');
+            if (!users || users.length === 0) {
+              setSending(false);
+              Alert.alert('Info', 'No users found to broadcast to.');
+              return;
+            }
+            const notifications = users.map(u => ({
+              user_id: u.id,
               title: title.trim(),
               message: message.trim(),
-              sent_at: new Date().toISOString(),
-            });
+              is_read: false,
+            }));
+            const chunkSize = 50;
+            let hasError = false;
+            for (let i = 0; i < notifications.length; i += chunkSize) {
+              const chunk = notifications.slice(i, i + chunkSize);
+              const { error } = await supabase.from('notifications').insert(chunk);
+              if (error) { hasError = true; break; }
+            }
             setSending(false);
-            if (error) {
-              Alert.alert('Error', error.message);
+            if (hasError) {
+              Alert.alert('Error', 'Some notifications could not be sent.');
             } else {
-              Alert.alert('Sent!', 'Broadcast notification sent to all users.');
+              Alert.alert('Sent!', `Broadcast notification sent to ${users.length} users.`);
               setTitle('');
               setMessage('');
             }
@@ -57,7 +71,7 @@ export default function AdminBroadcastScreen() {
         <View style={styles.infoCard}>
           <Ionicons name="notifications-outline" size={20} color={Colors.status.info} />
           <Text style={styles.infoText}>
-            Broadcasts are sent to all registered users as push notifications.
+            Broadcasts are sent to all registered users as in-app notifications.
           </Text>
         </View>
 

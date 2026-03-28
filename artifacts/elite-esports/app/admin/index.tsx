@@ -43,9 +43,9 @@ export default function AdminDashboard() {
   const loadStats = async () => {
     setLoading(true);
     const [usersRes, matchesRes, paymentsRes, withdrawRes] = await Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact', head: true }),
+      supabase.from('users').select('id', { count: 'exact', head: true }),
       supabase.from('matches').select('id', { count: 'exact', head: true }),
-      supabase.from('transactions').select('amount, status').eq('type', 'credit'),
+      supabase.from('payments').select('amount, status'),
       supabase.from('withdrawals').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     ]);
     const payments = paymentsRes.data ?? [];

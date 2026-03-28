@@ -9,33 +9,51 @@ import { supabase } from '@/services/supabase';
 
 interface Report {
   id: string;
+  user_id: string;
   description: string;
-  match_id: string | null;
-  status: string;
+  related_match_id: string | null;
   created_at: string;
-  profiles?: { full_name: string | null; username: string | null } | null;
+  userName?: string | null;
 }
 
 export default function AdminReportsScreen() {
   const insets = useSafeAreaInsets();
   const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
+  const [resolved, setResolved] = useState<Set<string>>(new Set());
 
   useEffect(() => { load(); }, []);
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
+    const { data: rows } = await supabase
       .from('reports')
-      .select('id, description, match_id, status, created_at, profiles(full_name, username)')
+      .select('id, user_id, description, related_match_id, created_at')
       .order('created_at', { ascending: false });
-    setReports(data ?? []);
+
+    if (!rows || rows.length === 0) {
+      setReports([]);
+      setLoading(false);
+      return;
+    }
+
+    const userIds = [...new Set(rows.map(r => r.user_id))];
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, name')
+      .in('id', userIds);
+
+    const userMap: Record<string, string | null> = {};
+    for (const u of (usersData ?? [])) {
+      userMap[u.id] = u.name ?? null;
+    }
+
+    setReports(rows.map(r => ({ ...r, userName: userMap[r.user_id] ?? null })));
     setLoading(false);
   };
 
-  const resolve = async (id: string) => {
-    await supabase.from('reports').update({ status: 'resolved' }).eq('id', id);
-    load();
+  const resolve = (id: string) => {
+    setResolved(prev => new Set([...prev, id]));
   };
 
   return (
@@ -51,19 +69,21 @@ export default function AdminReportsScreen() {
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
           ListEmptyComponent={<Text style={styles.empty}>No reports yet.</Text>}
           renderItem={({ item }) => {
-            const user = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
+            const isResolved = resolved.has(item.id);
             return (
               <View style={styles.card}>
                 <View style={styles.top}>
-                  <Text style={styles.name}>{user?.full_name ?? 'Unknown'}</Text>
-                  <View style={[styles.badge, { backgroundColor: item.status === 'resolved' ? Colors.status.success + '22' : Colors.status.warning + '22' }]}>
-                    <Text style={[styles.badgeText, { color: item.status === 'resolved' ? Colors.status.success : Colors.status.warning }]}>{item.status}</Text>
+                  <Text style={styles.name}>{item.userName ?? 'Unknown'}</Text>
+                  <View style={[styles.badge, { backgroundColor: isResolved ? Colors.status.success + '22' : Colors.status.warning + '22' }]}>
+                    <Text style={[styles.badgeText, { color: isResolved ? Colors.status.success : Colors.status.warning }]}>
+                      {isResolved ? 'resolved' : 'open'}
+                    </Text>
                   </View>
                 </View>
                 <Text style={styles.desc}>{item.description}</Text>
-                {item.match_id && <Text style={styles.matchId}>Match ID: {item.match_id}</Text>}
+                {item.related_match_id && <Text style={styles.matchId}>Match ID: {item.related_match_id}</Text>}
                 <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()}</Text>
-                {item.status !== 'resolved' && (
+                {!isResolved && (
                   <TouchableOpacity style={styles.resolveBtn} onPress={() => resolve(item.id)} activeOpacity={0.8}>
                     <Text style={styles.resolveTxt}>Mark Resolved</Text>
                   </TouchableOpacity>

@@ -14,7 +14,8 @@ interface Withdrawal {
   amount: number;
   status: string;
   created_at: string;
-  profiles?: { full_name: string | null; username: string | null } | null;
+  userName?: string | null;
+  userUsername?: string | null;
 }
 
 type Filter = 'pending' | 'approved' | 'rejected' | 'all';
@@ -31,9 +32,31 @@ export default function AdminWithdrawalsScreen() {
     setLoading(true);
     const { data: rows } = await supabase
       .from('withdrawals')
-      .select('id, user_id, amount, status, created_at, profiles(full_name, username)')
+      .select('id, user_id, amount, status, created_at')
       .order('created_at', { ascending: false });
-    setData(rows ?? []);
+
+    if (!rows || rows.length === 0) {
+      setData([]);
+      setLoading(false);
+      return;
+    }
+
+    const userIds = [...new Set(rows.map(r => r.user_id))];
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, name, username')
+      .in('id', userIds);
+
+    const userMap: Record<string, { name: string | null; username: string | null }> = {};
+    for (const u of (usersData ?? [])) {
+      userMap[u.id] = { name: u.name ?? null, username: u.username ?? null };
+    }
+
+    setData(rows.map(r => ({
+      ...r,
+      userName: userMap[r.user_id]?.name ?? null,
+      userUsername: userMap[r.user_id]?.username ?? null,
+    })));
     setLoading(false);
   };
 
@@ -46,9 +69,9 @@ export default function AdminWithdrawalsScreen() {
         onPress: async () => {
           await supabase.from('withdrawals').update({ status: action }).eq('id', item.id);
           if (action === 'rejected') {
-            const { data: profile } = await supabase.from('profiles').select('balance').eq('id', item.user_id).single();
-            const restored = (profile?.balance ?? 0) + item.amount;
-            await supabase.from('profiles').update({ balance: restored }).eq('id', item.user_id);
+            const { data: wallet } = await supabase.from('wallets').select('balance').eq('user_id', item.user_id).maybeSingle();
+            const restored = (wallet?.balance ?? 0) + item.amount;
+            await supabase.from('wallets').upsert({ user_id: item.user_id, balance: restored, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
           }
           load();
         },
@@ -86,36 +109,33 @@ export default function AdminWithdrawalsScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
           ListEmptyComponent={<Text style={styles.empty}>No {filter} withdrawals.</Text>}
-          renderItem={({ item }) => {
-            const user = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
-            return (
-              <View style={styles.card}>
-                <View style={styles.top}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.name}>{user?.full_name ?? 'Unknown'}</Text>
-                    <Text style={styles.username}>@{user?.username ?? '—'}</Text>
-                  </View>
-                  <View style={[styles.badge, { backgroundColor: statusColor(item.status) + '22' }]}>
-                    <Text style={[styles.badgeText, { color: statusColor(item.status) }]}>{item.status}</Text>
-                  </View>
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={styles.top}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.name}>{item.userName ?? 'Unknown'}</Text>
+                  <Text style={styles.username}>@{item.userUsername ?? '—'}</Text>
                 </View>
-                <Text style={styles.amount}>₹{item.amount}</Text>
-                <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()}</Text>
-                {item.status === 'pending' && (
-                  <View style={styles.actions}>
-                    <TouchableOpacity style={styles.approveBtn} onPress={() => handle(item, 'approved')} activeOpacity={0.8}>
-                      <Ionicons name="checkmark" size={15} color="#fff" />
-                      <Text style={styles.btnTxt}>Approve</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.rejectBtn} onPress={() => handle(item, 'rejected')} activeOpacity={0.8}>
-                      <Ionicons name="close" size={15} color="#fff" />
-                      <Text style={styles.btnTxt}>Reject</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
+                <View style={[styles.badge, { backgroundColor: statusColor(item.status) + '22' }]}>
+                  <Text style={[styles.badgeText, { color: statusColor(item.status) }]}>{item.status}</Text>
+                </View>
               </View>
-            );
-          }}
+              <Text style={styles.amount}>₹{item.amount}</Text>
+              <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()}</Text>
+              {item.status === 'pending' && (
+                <View style={styles.actions}>
+                  <TouchableOpacity style={styles.approveBtn} onPress={() => handle(item, 'approved')} activeOpacity={0.8}>
+                    <Ionicons name="checkmark" size={15} color="#fff" />
+                    <Text style={styles.btnTxt}>Approve</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.rejectBtn} onPress={() => handle(item, 'rejected')} activeOpacity={0.8}>
+                    <Ionicons name="close" size={15} color="#fff" />
+                    <Text style={styles.btnTxt}>Reject</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
         />
       )}
     </View>

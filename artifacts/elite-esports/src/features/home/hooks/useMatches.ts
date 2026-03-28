@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/services/supabase';
 import { Match } from '@/utils/types';
+import { adaptMatch } from '@/services/dbAdapters';
 
 export function useMatches() {
   const [matches, setMatches] = useState<Match[]>([]);
@@ -10,9 +11,9 @@ export function useMatches() {
   const fetch = async () => {
     const { data } = await supabase
       .from('matches')
-      .select('*')
+      .select('*, games(name, banner_url)')
       .order('created_at', { ascending: false });
-    if (data) setMatches(data);
+    if (data) setMatches(data.map(adaptMatch));
     setLoading(false);
     setRefreshing(false);
   };

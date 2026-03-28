@@ -16,7 +16,8 @@ interface Payment {
   utr: string | null;
   status: string;
   created_at: string;
-  profiles?: { full_name: string | null; username: string | null } | null;
+  userName?: string | null;
+  userUsername?: string | null;
 }
 
 type Filter = 'all' | 'pending' | 'approved' | 'rejected';
@@ -31,12 +32,33 @@ export default function AdminPaymentsScreen() {
 
   const load = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from('transactions')
-      .select('id, user_id, amount, utr, status, created_at, profiles(full_name, username)')
-      .eq('type', 'credit')
+    const { data: rows } = await supabase
+      .from('payments')
+      .select('id, user_id, amount, utr, status, created_at')
       .order('created_at', { ascending: false });
-    setPayments(data ?? []);
+
+    if (!rows || rows.length === 0) {
+      setPayments([]);
+      setLoading(false);
+      return;
+    }
+
+    const userIds = [...new Set(rows.map(r => r.user_id))];
+    const { data: usersData } = await supabase
+      .from('users')
+      .select('id, name, username')
+      .in('id', userIds);
+
+    const userMap: Record<string, { name: string | null; username: string | null }> = {};
+    for (const u of (usersData ?? [])) {
+      userMap[u.id] = { name: u.name ?? null, username: u.username ?? null };
+    }
+
+    setPayments(rows.map(r => ({
+      ...r,
+      userName: userMap[r.user_id]?.name ?? null,
+      userUsername: userMap[r.user_id]?.username ?? null,
+    })));
     setLoading(false);
   };
 
@@ -45,10 +67,10 @@ export default function AdminPaymentsScreen() {
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Approve', onPress: async () => {
-          await supabase.from('transactions').update({ status: 'approved' }).eq('id', p.id);
-          const { data: profile } = await supabase.from('profiles').select('balance').eq('id', p.user_id).single();
-          const newBalance = (profile?.balance ?? 0) + p.amount;
-          await supabase.from('profiles').update({ balance: newBalance }).eq('id', p.user_id);
+          await supabase.from('payments').update({ status: 'approved' }).eq('id', p.id);
+          const { data: wallet } = await supabase.from('wallets').select('balance').eq('user_id', p.user_id).maybeSingle();
+          const newBalance = (wallet?.balance ?? 0) + p.amount;
+          await supabase.from('wallets').upsert({ user_id: p.user_id, balance: newBalance, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
           load();
         },
       },
@@ -60,7 +82,7 @@ export default function AdminPaymentsScreen() {
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Reject', style: 'destructive', onPress: async () => {
-          await supabase.from('transactions').update({ status: 'rejected' }).eq('id', p.id);
+          await supabase.from('payments').update({ status: 'rejected' }).eq('id', p.id);
           load();
         },
       },
@@ -68,7 +90,6 @@ export default function AdminPaymentsScreen() {
   };
 
   const filtered = filter === 'all' ? payments : payments.filter(p => p.status === filter);
-
   const FILTERS: Filter[] = ['pending', 'approved', 'rejected', 'all'];
 
   return (
@@ -97,39 +118,36 @@ export default function AdminPaymentsScreen() {
           contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 24 }}
           ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
           ListEmptyComponent={<Text style={styles.empty}>No {filter} payments.</Text>}
-          renderItem={({ item }) => {
-            const user = Array.isArray(item.profiles) ? item.profiles[0] : item.profiles;
-            return (
-              <View style={styles.card}>
-                <View style={styles.cardTop}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.userName}>{user?.full_name ?? 'Unknown'}</Text>
-                    <Text style={styles.userUsername}>@{user?.username ?? '—'}</Text>
-                  </View>
-                  <View style={[styles.statusBadge, { backgroundColor: statusColor(item.status) + '22' }]}>
-                    <Text style={[styles.statusText, { color: statusColor(item.status) }]}>{item.status}</Text>
-                  </View>
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={styles.cardTop}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.userName}>{item.userName ?? 'Unknown'}</Text>
+                  <Text style={styles.userUsername}>@{item.userUsername ?? '—'}</Text>
                 </View>
-                <View style={styles.cardMid}>
-                  <Text style={styles.amount}>₹{item.amount}</Text>
-                  {item.utr && <Text style={styles.utr}>UTR: {item.utr}</Text>}
-                  <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: statusColor(item.status) + '22' }]}>
+                  <Text style={[styles.statusText, { color: statusColor(item.status) }]}>{item.status}</Text>
                 </View>
-                {item.status === 'pending' && (
-                  <View style={styles.actions}>
-                    <TouchableOpacity style={styles.approveBtn} onPress={() => handleApprove(item)} activeOpacity={0.8}>
-                      <Ionicons name="checkmark" size={15} color="#fff" />
-                      <Text style={styles.approveTxt}>Approve</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.rejectBtn} onPress={() => handleReject(item)} activeOpacity={0.8}>
-                      <Ionicons name="close" size={15} color="#fff" />
-                      <Text style={styles.rejectTxt}>Reject</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
               </View>
-            );
-          }}
+              <View style={styles.cardMid}>
+                <Text style={styles.amount}>₹{item.amount}</Text>
+                {item.utr && <Text style={styles.utr}>UTR: {item.utr}</Text>}
+                <Text style={styles.date}>{new Date(item.created_at).toLocaleDateString()}</Text>
+              </View>
+              {item.status === 'pending' && (
+                <View style={styles.actions}>
+                  <TouchableOpacity style={styles.approveBtn} onPress={() => handleApprove(item)} activeOpacity={0.8}>
+                    <Ionicons name="checkmark" size={15} color="#fff" />
+                    <Text style={styles.approveTxt}>Approve</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.rejectBtn} onPress={() => handleReject(item)} activeOpacity={0.8}>
+                    <Ionicons name="close" size={15} color="#fff" />
+                    <Text style={styles.rejectTxt}>Reject</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
         />
       )}
     </View>
