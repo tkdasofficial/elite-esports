@@ -91,6 +91,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
     paddingVertical: 0,
+    backgroundColor: 'transparent',
   },
   inputPassword: {
     paddingRight: 36,
