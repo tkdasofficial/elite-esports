@@ -15,6 +15,15 @@ import { AuthInput } from '@/features/auth/components/AuthInput';
 type Step = 'email' | 'password';
 type Mode = 'signin' | 'signup';
 
+async function navigateAfterAuth(userId: string) {
+  const { data } = await supabase.from('profiles').select('is_admin').eq('id', userId).single();
+  if (data?.is_admin === true) {
+    router.replace('/admin');
+  } else {
+    router.replace('/(tabs)');
+  }
+}
+
 export default function EmailAuthScreen() {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState<Step>('email');
@@ -45,7 +54,7 @@ export default function EmailAuthScreen() {
     setError('');
     setLoading(true);
     try {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email: email.trim().toLowerCase(),
         password,
       });
@@ -58,8 +67,8 @@ export default function EmailAuthScreen() {
         } else {
           setError(signInError.message);
         }
-      } else {
-        router.replace('/(tabs)');
+      } else if (data.user) {
+        await navigateAfterAuth(data.user.id);
       }
     } catch (err: any) {
       setError(err?.message ?? 'Something went wrong. Please try again.');
@@ -84,7 +93,6 @@ export default function EmailAuthScreen() {
         setError(signUpError.message);
         return;
       }
-      // identities.length === 0 means the email is already registered
       if (data?.user?.identities?.length === 0) {
         setMode('signin');
         setError('This email is already registered. Enter your password to sign in.');
@@ -128,7 +136,6 @@ export default function EmailAuthScreen() {
         locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
-
       <TouchableOpacity
         style={[styles.backBtn, { top: topPad + 10 }]}
         onPress={goBack}
@@ -139,14 +146,10 @@ export default function EmailAuthScreen() {
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView
-          contentContainerStyle={[
-            styles.scroll,
-            { paddingTop: topPad + 72, paddingBottom: bottomPad + 48 },
-          ]}
+          contentContainerStyle={[styles.scroll, { paddingTop: topPad + 72, paddingBottom: bottomPad + 48 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Step icon */}
           <View style={styles.iconWrap}>
             <Ionicons
               name={step === 'email' ? 'mail-outline' : isSignIn ? 'person-circle-outline' : 'shield-checkmark-outline'}
@@ -155,19 +158,17 @@ export default function EmailAuthScreen() {
             />
           </View>
 
-          {/* Heading */}
           <Text style={styles.title}>
             {step === 'email' ? 'Your email address' : isSignIn ? 'Welcome back!' : 'Create a password'}
           </Text>
           <Text style={styles.subtitle}>
             {step === 'email'
-              ? "Enter your email to get started"
+              ? 'Enter your email to get started'
               : isSignIn
                 ? 'Enter your password to sign in'
                 : 'Choose a strong password (min. 6 characters)'}
           </Text>
 
-          {/* Email pill — shown on step 2 */}
           {step === 'password' && (
             <TouchableOpacity
               style={styles.emailPill}
@@ -180,7 +181,6 @@ export default function EmailAuthScreen() {
             </TouchableOpacity>
           )}
 
-          {/* Field */}
           <View style={styles.fieldWrap}>
             {step === 'email' ? (
               <AuthInput
@@ -205,7 +205,6 @@ export default function EmailAuthScreen() {
             )}
           </View>
 
-          {/* Error */}
           {!!error && (
             <View style={styles.errorWrap}>
               <Ionicons name="alert-circle-outline" size={14} color="#EF4444" />
@@ -213,7 +212,6 @@ export default function EmailAuthScreen() {
             </View>
           )}
 
-          {/* Primary action */}
           <TouchableOpacity
             style={[styles.btn, loading && styles.btnDisabled]}
             onPress={step === 'email' ? handleEmailContinue : isSignIn ? handleSignIn : handleSignUp}
@@ -227,7 +225,6 @@ export default function EmailAuthScreen() {
                 </Text>}
           </TouchableOpacity>
 
-          {/* Mode switcher — shown on step 2 only */}
           {step === 'password' && (
             <TouchableOpacity style={styles.switchMode} onPress={switchMode} activeOpacity={0.7}>
               <Text style={styles.switchModeText}>
@@ -237,7 +234,6 @@ export default function EmailAuthScreen() {
             </TouchableOpacity>
           )}
 
-          {/* Back to options */}
           <TouchableOpacity
             style={styles.altLink}
             onPress={() => router.replace('/(auth)/options')}
@@ -245,7 +241,6 @@ export default function EmailAuthScreen() {
           >
             <Text style={styles.altLinkText}>Other sign-in options</Text>
           </TouchableOpacity>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -254,135 +249,38 @@ export default function EmailAuthScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0A0A0A' },
-
   backBtn: {
-    position: 'absolute',
-    left: 16,
-    zIndex: 10,
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    position: 'absolute', left: 16, zIndex: 10,
+    width: 38, height: 38, borderRadius: 19,
     backgroundColor: '#1A1A1A',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: 'center', justifyContent: 'center',
   },
-
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 25,
-  },
-
+  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 25 },
   iconWrap: {
-    alignSelf: 'center',
-    width: 72,
-    height: 72,
-    borderRadius: 36,
-    backgroundColor: '#1C0A04',
-    borderWidth: 1.5,
+    alignSelf: 'center', width: 72, height: 72, borderRadius: 36,
+    backgroundColor: '#1C0A04', borderWidth: 1.5,
     borderColor: Colors.primary + '35',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 22,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 22,
   },
-
-  title: {
-    fontSize: 22,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    marginBottom: 6,
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: '#606060',
-    textAlign: 'center',
-    marginBottom: 28,
-    lineHeight: 20,
-  },
-
+  title: { fontSize: 22, fontFamily: 'Inter_700Bold', color: '#FFFFFF', textAlign: 'center', marginBottom: 6 },
+  subtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: '#606060', textAlign: 'center', marginBottom: 28, lineHeight: 20 },
   emailPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#141414',
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: '#252525',
-    paddingHorizontal: 16,
-    paddingVertical: 11,
-    marginBottom: 20,
-    gap: 8,
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#141414', borderRadius: 22,
+    borderWidth: 1, borderColor: '#252525',
+    paddingHorizontal: 16, paddingVertical: 11, marginBottom: 20, gap: 8,
   },
-  emailPillText: {
-    flex: 1,
-    color: '#999999',
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-  },
-  changeTxt: {
-    color: Colors.primary,
-    fontSize: 13,
-    fontFamily: 'Inter_600SemiBold',
-  },
-
+  emailPillText: { flex: 1, color: '#999999', fontSize: 13, fontFamily: 'Inter_400Regular' },
+  changeTxt: { color: Colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
   fieldWrap: { marginBottom: 8 },
-
-  errorWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginBottom: 12,
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    textAlign: 'center',
-    flex: 1,
-  },
-
-  btn: {
-    backgroundColor: Colors.primary,
-    borderRadius: 25,
-    height: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 8,
-  },
+  errorWrap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12 },
+  errorText: { color: '#EF4444', fontSize: 13, fontFamily: 'Inter_400Regular', textAlign: 'center', flex: 1 },
+  btn: { backgroundColor: Colors.primary, borderRadius: 25, height: 50, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
   btnDisabled: { opacity: 0.5 },
-  btnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.2,
-  },
-
-  switchMode: {
-    alignItems: 'center',
-    marginTop: 16,
-    paddingVertical: 6,
-  },
-  switchModeText: {
-    color: '#555555',
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    textAlign: 'center',
-  },
-  switchModeLink: {
-    color: Colors.primary,
-    fontFamily: 'Inter_600SemiBold',
-  },
-
-  altLink: {
-    alignItems: 'center',
-    marginTop: 16,
-    paddingVertical: 6,
-  },
-  altLinkText: {
-    color: '#404040',
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-  },
+  btnText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
+  switchMode: { alignItems: 'center', marginTop: 16, paddingVertical: 6 },
+  switchModeText: { color: '#555555', fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center' },
+  switchModeLink: { color: Colors.primary, fontFamily: 'Inter_600SemiBold' },
+  altLink: { alignItems: 'center', marginTop: 16, paddingVertical: 6 },
+  altLinkText: { color: '#404040', fontSize: 13, fontFamily: 'Inter_400Regular' },
 });

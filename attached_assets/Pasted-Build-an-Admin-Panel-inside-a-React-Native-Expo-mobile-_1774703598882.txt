@@ -1,0 +1,332 @@
+Build an Admin Panel inside a React Native Expo mobile app for "Elite eSports".
+
+This admin panel is ONLY accessible to admin users.
+
+---
+
+IMPORTANT RULES:
+
+- Use React Native (Expo)
+
+- Use Supabase as backend
+
+- Use environment variables:
+  VITE_SUPABASE_PROJECT_ID
+  VITE_SUPABASE_PUBLISHABLE_KEY
+  VITE_SUPABASE_URL
+
+- Do NOT hardcode credentials
+
+- Use clean modular structure
+
+---
+
+ADMIN ACCESS CONTROL:
+
+- Only users with role = "admin" can access admin panel
+- Non-admin users must NOT see admin screens
+
+---
+
+NAVIGATION STRUCTURE:
+
+Create a separate Admin Stack inside the app.
+
+Admin Screens:
+
+- Admin Dashboard
+- Users
+- Matches
+- Games
+- Payments
+- Withdrawals
+- Support
+- Reports
+- Broadcast
+- Monetization
+
+Use Stack Navigation for admin pages.
+
+---
+
+COMMON HEADER:
+
+All admin pages:
+
+- Left: Back button (if not dashboard)
+- Center: Page title
+
+---
+
+1. ADMIN DASHBOARD:
+
+Show overview stats:
+
+- Total users
+- Total matches
+- Total revenue
+- Pending payments
+- Pending withdrawals
+
+Use simple cards layout.
+
+---
+
+2. USERS PAGE:
+
+- List all users
+- Show:
+  - Name
+  - Username
+  - Balance
+
+Features:
+
+- Search users
+- View user details
+- (Optional) Block user
+
+---
+
+3. MATCHES PAGE:
+
+- List all matches
+- Show:
+  - Game
+  - Entry fee
+  - Players count
+  - Status
+
+Features:
+
+- Create Match button
+
+CREATE MATCH FORM:
+
+- Select Game
+- Title
+- Entry fee
+- Prize pool
+- Max players
+- Match time
+
+---
+
+EDIT MATCH:
+
+- Update match details
+- Set status:
+  - upcoming
+  - ongoing
+  - completed
+  - cancelled
+
+---
+
+LIVE SETTINGS:
+
+- Add live stream URL
+
+---
+
+RESULT MANAGEMENT:
+
+- Input:
+  - Rank
+  - Kills
+  - Points
+
+---
+
+4. GAMES PAGE:
+
+- List games
+- Show:
+  - Banner
+  - Name
+  - Status
+
+Features:
+
+ADD GAME:
+
+- Game name
+- Upload banner (ONLY 16:9 allowed)
+
+VALIDATION:
+
+- Check image ratio before upload
+
+EDIT GAME:
+
+- Update name or banner
+- Enable/Disable game
+
+DELETE GAME:
+
+- Delete game and its image
+
+---
+
+5. PAYMENTS PAGE:
+
+- List all deposit requests
+
+Show:
+
+- User
+- Amount
+- UTR
+- Status
+
+Features:
+
+- Approve
+- Reject
+
+When approved:
+
+- Add money to wallet
+- Update status
+- Send notification
+
+---
+
+6. WITHDRAWALS PAGE:
+
+- List withdrawal requests
+
+Show:
+
+- User
+- Amount
+- Status
+
+Features:
+
+- Approve
+- Reject
+
+---
+
+7. SUPPORT PAGE:
+
+- List user support messages
+
+Show:
+
+- User
+- Message
+- Status
+
+---
+
+8. REPORTS PAGE:
+
+- List reports
+
+Show:
+
+- User
+- Description
+- Related match
+
+---
+
+9. BROADCAST PAGE:
+
+- Send push notification to all users
+
+Fields:
+
+- Title
+- Message
+
+---
+
+10. MONETIZATION PAGE:
+
+SECTION 1: AD UNITS
+
+- List ad units
+- Add Ad Unit:
+  - Name
+  - Type (interstitial, rewarded, app_open)
+  - Ad Unit ID
+  - Enable/Disable
+
+---
+
+SECTION 2: AD TRIGGERS
+
+- List triggers
+
+ADD TRIGGER:
+
+- Trigger type:
+  
+  - join_match
+  - leave_match
+  - app_open
+  - reward_claim
+
+- Select Ad Unit
+
+- Enable/Disable
+
+- Cooldown
+
+---
+
+SECTION 3: GLOBAL SETTINGS
+
+- Ads enabled toggle
+- Default cooldown
+
+---
+
+REAL-TIME REQUIREMENTS:
+
+Use Supabase real-time for:
+
+- Payments updates
+- Withdrawals
+- Matches
+
+---
+
+UI REQUIREMENTS:
+
+- Clean mobile UI
+- Use cards and lists
+- Use toggles for enable/disable
+- Use forms for create/edit
+
+---
+
+PROJECT STRUCTURE:
+
+- screens/admin/
+- components/admin/
+- services/
+- navigation/
+
+---
+
+IMPORTANT:
+
+- Keep UI simple
+- Focus on functionality
+- Use reusable components
+- Avoid overcomplication
+
+---
+
+DELIVERABLE:
+
+Generate complete admin panel screens with:
+
+- Navigation
+- Forms
+- API integration
+- Real-time updates

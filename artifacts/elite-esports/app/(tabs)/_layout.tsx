@@ -1,6 +1,6 @@
 import { BlurView } from 'expo-blur';
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -9,6 +9,7 @@ import { Platform, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
+import { useAuth } from '@/store/AuthContext';
 
 function NativeTabLayout() {
   return (
@@ -93,5 +94,7 @@ function ClassicTabLayout() {
 }
 
 export default function TabLayout() {
+  const { isAdmin, adminLoading } = useAuth();
+  if (!adminLoading && isAdmin) return <Redirect href="/admin" />;
   return isLiquidGlassAvailable() ? <NativeTabLayout /> : <ClassicTabLayout />;
 }

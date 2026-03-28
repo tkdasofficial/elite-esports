@@ -8,7 +8,6 @@ import { GlobalHeader } from '@/components/GlobalHeader';
 import { AvatarSVG, AVATAR_NAMES } from '@/components/AvatarSVG';
 import { useAuth } from '@/store/AuthContext';
 import { useProfile } from '@/features/profile/hooks/useProfile';
-import { useIsAdmin } from '@/features/admin/hooks/useIsAdmin';
 import { useGames } from '@/features/games/hooks/useGames';
 
 const MENU_ITEMS = [
@@ -21,7 +20,6 @@ const MENU_ITEMS = [
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
   const { profile, loading } = useProfile(user?.id);
-  const { isAdmin } = useIsAdmin(user?.id);
   const { games: allGames } = useGames();
   const tabBarHeight = useBottomTabBarHeight();
 
@@ -127,24 +125,6 @@ export default function ProfileScreen() {
           </View>
         )}
 
-        {/* Admin Panel entry */}
-        {isAdmin && (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Administration</Text>
-            <TouchableOpacity
-              style={styles.adminRow}
-              onPress={() => router.push('/admin')}
-              activeOpacity={0.8}
-            >
-              <View style={styles.adminIconBox}>
-                <Ionicons name="shield-checkmark-outline" size={19} color={Colors.primary} />
-              </View>
-              <Text style={styles.adminLabel}>Admin Panel</Text>
-              <Ionicons name="chevron-forward" size={17} color={Colors.text.muted} />
-            </TouchableOpacity>
-          </View>
-        )}
-
         {/* Menu */}
         <View style={styles.section}>
           {MENU_ITEMS.map(item => (
@@ -244,19 +224,6 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(254,76,17,0.15)', borderStyle: 'dashed',
   },
   addGameBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: Colors.primary },
-
-  adminRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    backgroundColor: 'rgba(254,76,17,0.06)',
-    borderRadius: 14, padding: 16, marginBottom: 8,
-    borderWidth: 1, borderColor: 'rgba(254,76,17,0.2)',
-  },
-  adminIconBox: {
-    width: 38, height: 38, borderRadius: 10,
-    backgroundColor: 'rgba(254,76,17,0.1)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  adminLabel: { flex: 1, fontSize: 15, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
 
   menuRow: {
     flexDirection: 'row', alignItems: 'center', gap: 14,

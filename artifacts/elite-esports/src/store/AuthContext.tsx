@@ -7,6 +7,8 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   loading: boolean;
+  isAdmin: boolean;
+  adminLoading: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -15,22 +17,18 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(true);
 
   useEffect(() => {
-    // Subscribe first so we never miss an event between getSession and subscribe.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
-
-      // Only navigate on explicit sign-out. We do NOT navigate on SIGNED_IN here
-      // because that event also fires on token refresh, which would cause unwanted
-      // redirects while the user is already inside the app. Auth screens handle
-      // their own navigation to /(tabs) after a successful sign-in.
       if (event === 'SIGNED_OUT') {
+        setIsAdmin(false);
         router.replace('/(auth)/options');
       }
     });
 
-    // Hydrate initial session state and stop the loading spinner.
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setLoading(false);
@@ -39,17 +37,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (loading) return;
+    if (!session?.user?.id) {
+      setIsAdmin(false);
+      setAdminLoading(false);
+      return;
+    }
+    setAdminLoading(true);
+    supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', session.user.id)
+      .single()
+      .then(({ data }) => {
+        setIsAdmin(data?.is_admin === true);
+        setAdminLoading(false);
+      });
+  }, [session?.user?.id, loading]);
+
   const signOut = async () => {
     await supabase.auth.signOut();
-    // Navigation is handled by the SIGNED_OUT event above
   };
 
   const value = useMemo(() => ({
     session,
     user: session?.user ?? null,
     loading,
+    isAdmin,
+    adminLoading,
     signOut,
-  }), [session, loading]);
+  }), [session, loading, isAdmin, adminLoading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

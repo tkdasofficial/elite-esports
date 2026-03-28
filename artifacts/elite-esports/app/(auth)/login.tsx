@@ -24,7 +24,7 @@ export default function LoginScreen() {
   const handleLogin = async () => {
     if (!email || !password) { Alert.alert('Error', 'Please fill in all fields'); return; }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
     if (error) {
       const msg = error.message.toLowerCase();
@@ -35,8 +35,9 @@ export default function LoginScreen() {
       } else {
         Alert.alert('Login Failed', error.message);
       }
-    } else {
-      router.replace('/(tabs)');
+    } else if (data.user) {
+      const { data: profile } = await supabase.from('profiles').select('is_admin').eq('id', data.user.id).single();
+      router.replace(profile?.is_admin === true ? '/admin' : '/(tabs)');
     }
   };
 
