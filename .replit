@@ -36,7 +36,7 @@ outputType = "webview"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "pnpm --filter @workspace/elite-esports run dev"
-waitForPort = 8081
+waitForPort = 8080
 
 [agent]
 stack = "PNPM_WORKSPACE"
