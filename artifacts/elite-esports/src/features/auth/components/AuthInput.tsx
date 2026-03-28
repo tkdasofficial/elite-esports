@@ -15,7 +15,7 @@ interface Props {
   autoComplete?: any;
 }
 
-const INPUT_HEIGHT = 25;
+const INPUT_HEIGHT = 50;
 
 export function AuthInput({
   label, value, onChangeText, placeholder, iconName,
@@ -31,11 +31,10 @@ export function AuthInput({
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.wrapper, focused && styles.wrapperFocused]}>
 
-        {/* Left icon — fixed-width slot, always locked */}
         <View style={styles.iconSlot}>
           <Ionicons
             name={iconName}
-            size={12}
+            size={16}
             color={focused ? Colors.primary : '#606060'}
           />
         </View>
@@ -58,12 +57,12 @@ export function AuthInput({
           <TouchableOpacity
             onPress={() => setShowText(v => !v)}
             style={styles.eyeSlot}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             activeOpacity={0.6}
           >
             <Ionicons
               name={showText ? 'eye-outline' : 'eye-off-outline'}
-              size={12}
+              size={16}
               color="#606060"
             />
           </TouchableOpacity>
@@ -81,10 +80,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   label: {
-    fontSize: 10,
+    fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
     color: '#888888',
-    marginBottom: 6,
+    marginBottom: 7,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
   },
@@ -93,7 +92,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#161616',
     borderRadius: INPUT_HEIGHT / 2,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#2A2A2A',
     height: INPUT_HEIGHT,
     overflow: 'hidden',
@@ -103,7 +102,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C0A04',
   },
   iconSlot: {
-    width: 30,
+    width: 44,
     height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
@@ -112,18 +111,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignSelf: 'stretch',
     color: Colors.text.primary,
-    fontSize: 11,
+    fontSize: 14,
     fontFamily: 'Inter_400Regular',
     paddingVertical: 0,
     backgroundColor: 'transparent',
   },
   eyeSlot: {
-    width: 30,
+    width: 44,
     height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rightSpacer: {
-    width: 12,
+    width: 16,
   },
 });

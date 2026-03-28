@@ -47,42 +47,40 @@ export default function LoginScreen() {
         >
           <AuthLogo />
 
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Welcome back</Text>
-            <Text style={styles.cardSubtitle}>Sign in to your account</Text>
+          <Text style={styles.title}>Welcome back</Text>
+          <Text style={styles.subtitle}>Sign in to your account</Text>
 
-            <View style={styles.fields}>
-              <AuthInput
-                label="Email"
-                value={email}
-                onChangeText={setEmail}
-                placeholder="your@email.com"
-                iconName="mail-outline"
-                keyboardType="email-address"
-                autoComplete="email"
-              />
-              <AuthInput
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                placeholder="Password"
-                iconName="lock-closed-outline"
-                secureTextEntry
-                autoComplete="password"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.btn, loading && styles.btnDisabled]}
-              onPress={handleLogin}
-              disabled={loading}
-              activeOpacity={0.85}
-            >
-              {loading
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={styles.btnText}>Sign In</Text>}
-            </TouchableOpacity>
+          <View style={styles.fields}>
+            <AuthInput
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="your@email.com"
+              iconName="mail-outline"
+              keyboardType="email-address"
+              autoComplete="email"
+            />
+            <AuthInput
+              label="Password"
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Password"
+              iconName="lock-closed-outline"
+              secureTextEntry
+              autoComplete="password"
+            />
           </View>
+
+          <TouchableOpacity
+            style={[styles.btn, loading && styles.btnDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+            activeOpacity={0.85}
+          >
+            {loading
+              ? <ActivityIndicator color="#fff" />
+              : <Text style={styles.btnText}>Sign In</Text>}
+          </TouchableOpacity>
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account?</Text>
@@ -102,39 +100,31 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 20,
+    paddingHorizontal: 25,
   },
-  card: {
-    backgroundColor: '#111111',
-    borderRadius: 20,
-    padding: 28,
-    borderWidth: 1,
-    borderColor: '#202020',
-  },
-  cardTitle: {
+  title: {
     fontSize: 22,
     fontFamily: 'Inter_700Bold',
     color: Colors.text.primary,
     marginBottom: 4,
   },
-  cardSubtitle: {
+  subtitle: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
     color: '#666666',
-    marginBottom: 28,
+    marginBottom: 24,
   },
   fields: {
     flexDirection: 'row',
     gap: 20,
-    marginBottom: 16,
+    marginBottom: 20,
   },
   btn: {
     backgroundColor: Colors.primary,
-    borderRadius: 14,
-    height: 54,
+    borderRadius: 25,
+    height: 50,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
   },
   btnDisabled: { opacity: 0.5 },
   btnText: {
