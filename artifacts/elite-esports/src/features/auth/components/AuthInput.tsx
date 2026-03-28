@@ -78,6 +78,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.border.default,
     paddingHorizontal: 14,
     height: 52,
+    overflow: 'hidden',
   },
   wrapperFocused: {
     borderColor: Colors.primary,
@@ -86,7 +87,7 @@ const styles = StyleSheet.create({
   icon: { marginRight: 10 },
   input: {
     flex: 1,
-    height: 52,
+    alignSelf: 'stretch',
     color: Colors.text.primary,
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
