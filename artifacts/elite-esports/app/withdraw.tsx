@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
+import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/store/AuthContext';
 import { useWallet } from '@/store/WalletContext';
@@ -32,8 +34,9 @@ export default function WithdrawScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom + (Platform.OS === 'web' ? 34 : 0) }]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      <ScreenHeader title="Withdraw" />
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]} showsVerticalScrollIndicator={false}>
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Available Balance</Text>
           <Text style={styles.balanceAmount}>₹{balance.toFixed(2)}</Text>

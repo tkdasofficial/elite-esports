@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, Platform,
+  ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
+import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { useAuth } from '@/store/AuthContext';
 import { useProfile } from '@/features/profile/hooks/useProfile';
 
@@ -49,8 +51,9 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom + (Platform.OS === 'web' ? 34 : 0) }]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      <ScreenHeader title="Edit Profile" />
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]} showsVerticalScrollIndicator={false}>
 
         <Text style={styles.sectionLabel}>Choose Avatar</Text>
         <View style={styles.avatarGrid}>

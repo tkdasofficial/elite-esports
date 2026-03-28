@@ -4,8 +4,11 @@ import {
   Platform, Alert, Modal, TextInput, KeyboardAvoidingView, Pressable,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
+import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { useTheme } from '@/store/ThemeContext';
 import { useAuth } from '@/store/AuthContext';
 import { supabase } from '@/services/supabase';
@@ -53,8 +56,8 @@ export default function SettingsScreen() {
     {
       title: 'Legal',
       rows: [
-        { icon: 'document-text-outline', label: 'Terms & Conditions', type: 'arrow' as const },
-        { icon: 'shield-checkmark-outline', label: 'Privacy Policy', type: 'arrow' as const },
+        { icon: 'document-text-outline', label: 'Terms & Conditions', type: 'arrow' as const, onPress: () => router.push('/terms') },
+        { icon: 'shield-checkmark-outline', label: 'Privacy Policy', type: 'arrow' as const, onPress: () => router.push('/privacy') },
         { icon: 'information-circle-outline', label: 'About', type: 'arrow' as const },
       ],
     },
@@ -73,8 +76,9 @@ export default function SettingsScreen() {
   ];
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom + (Platform.OS === 'web' ? 34 : 0) }]}>
-      <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      <ScreenHeader title="Settings" />
+      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]} showsVerticalScrollIndicator={false}>
         {sections.map(section => (
           <View key={section.title} style={styles.section}>
             <Text style={styles.sectionTitle}>{section.title}</Text>

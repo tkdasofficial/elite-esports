@@ -1,9 +1,11 @@
 import React from 'react';
-import { View, FlatList, StyleSheet, Platform } from 'react-native';
+import { View, FlatList, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
+import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { useWallet } from '@/store/WalletContext';
 import { TransactionItem } from '@/features/wallet/components/TransactionItem';
 
@@ -12,12 +14,13 @@ export default function TransactionHistoryScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom + (Platform.OS === 'web' ? 34 : 0) }]}>
+    <View style={styles.container}>
+      <ScreenHeader title="Transaction History" />
       <FlatList
         data={transactions}
         keyExtractor={item => item.id}
         renderItem={({ item }) => <TransactionItem tx={item} />}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         ListEmptyComponent={
           <View style={styles.empty}>

@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
+import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { useNotifications, Notification } from '@/store/NotificationsContext';
 
 const ICON_MAP: Record<string, string> = {
@@ -40,12 +42,13 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingBottom: insets.bottom + (Platform.OS === 'web' ? 34 : 0) }]}>
+    <View style={styles.container}>
+      <ScreenHeader title="Notifications" />
       <FlatList
         data={notifications}
         keyExtractor={item => item.id}
         renderItem={({ item }) => <NotifCard notif={item} onPress={() => markAsRead(item.id)} />}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         ListHeaderComponent={
           notifications.some(n => !n.is_read) ? (

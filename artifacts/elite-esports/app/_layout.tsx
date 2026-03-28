@@ -25,27 +25,23 @@ const queryClient = new QueryClient({
   },
 });
 
-const HEADER_OPTS = {
-  headerStyle: { backgroundColor: '#0A0A0A' },
-  headerTintColor: '#FFFFFF',
-  headerBackTitle: 'Back',
-};
-
 function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="notifications" options={{ headerShown: true, headerTitle: 'Notifications', ...HEADER_OPTS }} />
-      <Stack.Screen name="settings" options={{ headerShown: true, headerTitle: 'Settings', ...HEADER_OPTS }} />
-      <Stack.Screen name="edit-profile" options={{ headerShown: true, headerTitle: 'Edit Profile', ...HEADER_OPTS }} />
-      <Stack.Screen name="tournament/[id]" options={{ headerShown: true, headerTitle: 'Tournament', ...HEADER_OPTS }} />
-      <Stack.Screen name="match/[id]" options={{ headerShown: true, headerTitle: 'Match Details', ...HEADER_OPTS }} />
-      <Stack.Screen name="add-money" options={{ headerShown: true, headerTitle: 'Add Money', ...HEADER_OPTS }} />
-      <Stack.Screen name="withdraw" options={{ headerShown: true, headerTitle: 'Withdraw', ...HEADER_OPTS }} />
-      <Stack.Screen name="transaction-history" options={{ headerShown: true, headerTitle: 'Transaction History', ...HEADER_OPTS }} />
-      <Stack.Screen name="support" options={{ headerShown: true, headerTitle: 'Support', ...HEADER_OPTS }} />
+      <Stack.Screen name="notifications" />
+      <Stack.Screen name="settings" />
+      <Stack.Screen name="edit-profile" />
+      <Stack.Screen name="tournament/[id]" />
+      <Stack.Screen name="match/[id]" />
+      <Stack.Screen name="add-money" />
+      <Stack.Screen name="withdraw" />
+      <Stack.Screen name="transaction-history" />
+      <Stack.Screen name="support" />
+      <Stack.Screen name="terms" />
+      <Stack.Screen name="privacy" />
     </Stack>
   );
 }
