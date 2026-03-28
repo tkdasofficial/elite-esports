@@ -21,13 +21,19 @@ export function AuthInput({
   secureTextEntry = false, autoComplete,
 }: Props) {
   const [showText, setShowText] = useState(false);
+  const [focused, setFocused] = useState(false);
   const isPassword = secureTextEntry;
 
   return (
     <View style={styles.group}>
       <Text style={styles.label}>{label}</Text>
-      <View style={styles.wrapper}>
-        <Ionicons name={iconName} size={18} color={Colors.text.muted} style={styles.icon} />
+      <View style={[styles.wrapper, focused && styles.wrapperFocused]}>
+        <Ionicons
+          name={iconName}
+          size={17}
+          color={focused ? Colors.primary : Colors.text.muted}
+          style={styles.icon}
+        />
         <TextInput
           style={styles.input}
           value={value}
@@ -38,10 +44,16 @@ export function AuthInput({
           autoCapitalize={autoCapitalize}
           secureTextEntry={isPassword && !showText}
           autoComplete={autoComplete}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
         />
         {isPassword && (
           <TouchableOpacity onPress={() => setShowText(v => !v)} style={styles.eyeBtn}>
-            <Ionicons name={showText ? 'eye-outline' : 'eye-off-outline'} size={18} color={Colors.text.muted} />
+            <Ionicons
+              name={showText ? 'eye-outline' : 'eye-off-outline'}
+              size={17}
+              color={Colors.text.muted}
+            />
           </TouchableOpacity>
         )}
       </View>
@@ -51,14 +63,33 @@ export function AuthInput({
 
 const styles = StyleSheet.create({
   group: { marginBottom: 16 },
-  label: { fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.text.secondary, marginBottom: 8 },
+  label: {
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
+    color: Colors.text.secondary,
+    marginBottom: 8,
+  },
   wrapper: {
-    flexDirection: 'row', alignItems: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: Colors.background.elevated,
-    borderRadius: 12, borderWidth: 1, borderColor: Colors.border.default,
-    paddingHorizontal: 14, height: 52,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.border.default,
+    paddingHorizontal: 14,
+    height: 52,
+  },
+  wrapperFocused: {
+    borderColor: Colors.primary,
+    backgroundColor: '#1A0800',
   },
   icon: { marginRight: 10 },
-  input: { flex: 1, color: Colors.text.primary, fontSize: 15, fontFamily: 'Inter_400Regular', paddingRight: 8 },
-  eyeBtn: { paddingHorizontal: 6, paddingVertical: 8, marginLeft: 4 },
+  input: {
+    flex: 1,
+    color: Colors.text.primary,
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    paddingRight: 8,
+  },
+  eyeBtn: { paddingHorizontal: 6, paddingVertical: 8, marginLeft: 2 },
 });

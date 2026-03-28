@@ -9,10 +9,10 @@ import { useNotifications } from '@/store/NotificationsContext';
 export function GlobalHeader() {
   const insets = useSafeAreaInsets();
   const { unreadCount } = useNotifications();
-  const topPad = insets.top;
+  const topPad = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
 
   return (
-    <View style={[styles.header, { paddingTop: topPad }]}>
+    <View style={[styles.header, { paddingTop: topPad + 8 }]}>
       <View style={styles.left}>
         <View style={styles.logoMark}>
           <Ionicons name="flash" size={18} color={Colors.primary} />
@@ -40,23 +40,47 @@ export function GlobalHeader() {
 
 const styles = StyleSheet.create({
   header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: Colors.background.dark,
-    paddingHorizontal: 20, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: Colors.border.subtle,
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.subtle,
   },
   left: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   logoMark: {
-    width: 34, height: 34, borderRadius: 8, backgroundColor: '#1A0500',
-    alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: Colors.primary,
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    backgroundColor: '#1A0500',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.primary,
   },
   logoText: { fontSize: 18, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
   logoHighlight: { color: Colors.primary },
-  right: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  iconBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', borderRadius: 20 },
+  right: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  iconBtn: {
+    width: 42,
+    height: 42,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 21,
+  },
   badge: {
-    position: 'absolute', top: 4, right: 4, backgroundColor: Colors.primary,
-    borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
+    position: 'absolute',
+    top: 6,
+    right: 5,
+    backgroundColor: Colors.primary,
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
   },
   badgeText: { color: '#fff', fontSize: 9, fontFamily: 'Inter_700Bold' },
 });

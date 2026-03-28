@@ -11,21 +11,39 @@ export function AuthLogo({ tagline = 'Compete. Win. Dominate.' }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.logoCircle}>
-        <Ionicons name="flash" size={48} color={Colors.primary} />
+        <Ionicons name="flash" size={46} color={Colors.primary} />
       </View>
-      <Text style={styles.appName}>Elite eSports</Text>
+      <Text style={styles.appName}>Elite <Text style={styles.highlight}>eSports</Text></Text>
       <Text style={styles.tagline}>{tagline}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { alignItems: 'center', marginBottom: 36 },
+  container: { alignItems: 'center', marginBottom: 32 },
   logoCircle: {
-    width: 88, height: 88, borderRadius: 24, backgroundColor: '#1A0500',
-    borderWidth: 2, borderColor: Colors.primary,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+    width: 86,
+    height: 86,
+    borderRadius: 22,
+    backgroundColor: '#1A0500',
+    borderWidth: 2,
+    borderColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
-  appName: { fontSize: 32, fontFamily: 'Inter_700Bold', color: Colors.text.primary, letterSpacing: -1 },
-  tagline: { fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, marginTop: 4 },
+  appName: {
+    fontSize: 30,
+    fontFamily: 'Inter_700Bold',
+    color: Colors.text.primary,
+    letterSpacing: -0.5,
+  },
+  highlight: { color: Colors.primary },
+  tagline: {
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: Colors.text.secondary,
+    marginTop: 5,
+    letterSpacing: 0.2,
+  },
 });

@@ -19,6 +19,9 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const topPad = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
+  const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
+
   const handleSignup = async () => {
     if (!name || !username || !email || !password) { Alert.alert('Error', 'Please fill in all fields'); return; }
     setLoading(true);
@@ -34,10 +37,13 @@ export default function SignupScreen() {
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
+    <View style={styles.container}>
       <LinearGradient colors={['#1A0500', '#000000']} style={StyleSheet.absoluteFill} />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
-        <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={[styles.scroll, { paddingTop: topPad + 16, paddingBottom: bottomPad + 32 }]}
+          showsVerticalScrollIndicator={false}
+        >
           <AuthLogo tagline="Join the Arena" />
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Create Account</Text>
@@ -61,13 +67,26 @@ export default function SignupScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
   flex: { flex: 1 },
-  scroll: { flexGrow: 1, justifyContent: 'center', padding: 24, paddingBottom: 48 },
-  card: { backgroundColor: Colors.background.card, borderRadius: 20, padding: 24, borderWidth: 1, borderColor: Colors.border.default },
+  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24 },
+  card: {
+    backgroundColor: Colors.background.card,
+    borderRadius: 20,
+    padding: 24,
+    borderWidth: 1,
+    borderColor: Colors.border.default,
+  },
   cardTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 20 },
-  btn: { backgroundColor: Colors.primary, borderRadius: 14, height: 52, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+  btn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    height: 54,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 8,
+  },
   btnDisabled: { opacity: 0.6 },
   btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
-  link: { alignItems: 'center', marginTop: 16 },
+  link: { alignItems: 'center', marginTop: 18 },
   linkText: { color: Colors.text.secondary, fontSize: 14, fontFamily: 'Inter_400Regular' },
   linkBold: { color: Colors.primary, fontFamily: 'Inter_600SemiBold' },
 });

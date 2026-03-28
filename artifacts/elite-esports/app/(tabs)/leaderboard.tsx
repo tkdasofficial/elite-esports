@@ -20,7 +20,12 @@ export default function LeaderboardScreen() {
       <GlobalHeader />
       <View style={styles.tabBar}>
         {TABS.map(tab => (
-          <TouchableOpacity key={tab} style={[styles.tab, activeTab === tab && styles.tabActive]} onPress={() => setActiveTab(tab)} activeOpacity={0.8}>
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tab, activeTab === tab && styles.tabActive]}
+            onPress={() => setActiveTab(tab)}
+            activeOpacity={0.8}
+          >
             <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
           </TouchableOpacity>
         ))}
@@ -38,9 +43,13 @@ export default function LeaderboardScreen() {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
           ListHeaderComponent={
             <View style={styles.listHeader}>
-              <Text style={styles.colRank}>#</Text>
-              <Text style={styles.colPlayer}>Player</Text>
-              <Text style={styles.colStats}>Kills / Points</Text>
+              <View style={styles.colRankWrapper}>
+                <Text style={styles.colLabel}>#</Text>
+              </View>
+              <View style={styles.colPlayerWrapper}>
+                <Text style={styles.colLabel}>Player</Text>
+              </View>
+              <Text style={styles.colLabel}>Kills / Points</Text>
             </View>
           }
           ListEmptyComponent={
@@ -59,16 +68,32 @@ export default function LeaderboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  tabBar: { flexDirection: 'row', margin: 16, backgroundColor: Colors.background.elevated, borderRadius: 12, padding: 4 },
+  tabBar: {
+    flexDirection: 'row',
+    margin: 16,
+    marginBottom: 8,
+    backgroundColor: Colors.background.elevated,
+    borderRadius: 12,
+    padding: 4,
+  },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
   tabActive: { backgroundColor: Colors.primary },
   tabText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.muted },
   tabTextActive: { color: '#fff' },
-  list: { paddingHorizontal: 16, gap: 6 },
-  listHeader: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, marginBottom: 4 },
-  colRank: { width: 36, fontSize: 11, fontFamily: 'Inter_500Medium', color: Colors.text.muted },
-  colPlayer: { flex: 1, fontSize: 11, fontFamily: 'Inter_500Medium', color: Colors.text.muted, marginLeft: 40 },
-  colStats: { fontSize: 11, fontFamily: 'Inter_500Medium', color: Colors.text.muted },
+  list: { paddingHorizontal: 16, paddingTop: 4, gap: 6 },
+  listHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginBottom: 4,
+  },
+  colRankWrapper: { width: 36, alignItems: 'center' },
+  colPlayerWrapper: {
+    flex: 1,
+    marginLeft: 46,
+  },
+  colLabel: { fontSize: 11, fontFamily: 'Inter_500Medium', color: Colors.text.muted },
   empty: { alignItems: 'center', paddingTop: 60, gap: 12 },
   emptyTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: Colors.text.secondary },
   emptyText: { fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.muted, textAlign: 'center' },

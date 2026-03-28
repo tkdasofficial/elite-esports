@@ -1,7 +1,7 @@
 import React from 'react';
 import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator,
-  TouchableOpacity, Alert,
+  TouchableOpacity, Alert, Platform,
 } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
@@ -19,6 +19,8 @@ export default function MatchDetailScreen() {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const { match, loading, hasJoined, joining, joinMatch } = useMatchDetail(id, user?.id);
+
+  const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
   const handleJoin = async () => {
     const { error } = await joinMatch();
@@ -45,7 +47,10 @@ export default function MatchDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 110 }]} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 110 }]}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.bannerContainer}>
           {match.banner_url ? (
             <Image source={{ uri: match.banner_url }} style={styles.banner} contentFit="cover" />
@@ -105,8 +110,13 @@ export default function MatchDetailScreen() {
       </ScrollView>
 
       {canJoin && (
-        <View style={[styles.cta, { paddingBottom: insets.bottom + 16 }]}>
-          <TouchableOpacity style={[styles.joinBtn, joining && styles.disabled]} onPress={handleJoin} disabled={joining} activeOpacity={0.85}>
+        <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
+          <TouchableOpacity
+            style={[styles.joinBtn, joining && styles.disabled]}
+            onPress={handleJoin}
+            disabled={joining}
+            activeOpacity={0.85}
+          >
             {joining ? <ActivityIndicator color="#fff" /> : (
               <>
                 <Ionicons name="add-circle-outline" size={20} color="#fff" />
@@ -118,7 +128,7 @@ export default function MatchDetailScreen() {
       )}
 
       {hasJoined && (
-        <View style={[styles.cta, { paddingBottom: insets.bottom + 16 }]}>
+        <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
           <View style={styles.joinedBadge}>
             <Ionicons name="checkmark-circle" size={20} color={Colors.status.success} />
             <Text style={styles.joinedText}>You've joined this match</Text>
@@ -136,30 +146,98 @@ const styles = StyleSheet.create({
   bannerContainer: { position: 'relative' },
   banner: { width: '100%', aspectRatio: 16 / 9, alignItems: 'center', justifyContent: 'center' },
   bannerOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 100 },
-  statusBadge: { position: 'absolute', top: 12, left: 12, flexDirection: 'row', alignItems: 'center', gap: 5, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
+  statusBadge: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
   statusText: { color: '#fff', fontSize: 11, fontFamily: 'Inter_700Bold' },
   content: { padding: 20 },
-  gameTag: { fontSize: 11, fontFamily: 'Inter_700Bold', color: Colors.primary, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6 },
-  title: { fontSize: 26, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 10, lineHeight: 32 },
+  gameTag: {
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+    color: Colors.primary,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+    marginBottom: 6,
+  },
+  title: { fontSize: 24, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 8, lineHeight: 30 },
   desc: { fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, lineHeight: 22, marginBottom: 20 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
-  statCard: { flex: 1, minWidth: '45%', backgroundColor: Colors.background.card, borderRadius: 14, padding: 16, alignItems: 'center', gap: 6, borderWidth: 1, borderColor: Colors.border.default },
+  statCard: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: Colors.background.card,
+    borderRadius: 14,
+    padding: 16,
+    alignItems: 'center',
+    gap: 6,
+    borderWidth: 1,
+    borderColor: Colors.border.default,
+  },
   statValue: { fontSize: 16, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
   statLabel: { fontSize: 11, fontFamily: 'Inter_400Regular', color: Colors.text.secondary },
   slotSection: { marginBottom: 20 },
-  slotHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  slotHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   slotTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
   slotCount: { fontSize: 14, fontFamily: 'Inter_500Medium', color: Colors.text.secondary },
   progressTrack: { height: 6, backgroundColor: Colors.background.elevated, borderRadius: 3 },
   progressFill: { height: 6, backgroundColor: Colors.primary, borderRadius: 3 },
-  infoBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(245,158,11,0.1)', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)' },
+  infoBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: 'rgba(245,158,11,0.1)',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: 'rgba(245,158,11,0.2)',
+  },
   infoText: { fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.status.warning, flex: 1 },
-  cta: { position: 'absolute', bottom: 0, left: 0, right: 0, padding: 16, backgroundColor: Colors.background.dark, borderTopWidth: 1, borderTopColor: Colors.border.default },
-  joinBtn: { backgroundColor: Colors.primary, borderRadius: 14, height: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  cta: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: Colors.background.dark,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.default,
+  },
+  joinBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    height: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
   disabled: { opacity: 0.6 },
   joinBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
-  joinedBadge: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: 'rgba(34,197,94,0.1)', borderRadius: 14, height: 54, borderWidth: 1, borderColor: 'rgba(34,197,94,0.3)' },
+  joinedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: 'rgba(34,197,94,0.1)',
+    borderRadius: 14,
+    height: 54,
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.3)',
+  },
   joinedText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: Colors.status.success },
   emptyTitle: { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: Colors.text.secondary },
 });
