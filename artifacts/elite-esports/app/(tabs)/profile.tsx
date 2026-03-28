@@ -102,7 +102,7 @@ export default function ProfileScreen() {
             <TouchableOpacity
               key={item.label}
               style={styles.menuRow}
-              onPress={() => item.route && router.push(item.route as any)}
+              onPress={() => { if (item.route) router.push(item.route as any); }}
               activeOpacity={0.75}
             >
               <View style={styles.menuIconBox}>
