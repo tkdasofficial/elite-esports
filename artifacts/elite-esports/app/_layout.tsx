@@ -34,6 +34,7 @@ const HEADER_OPTS = {
 function RootLayoutNav() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="onboarding" />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="notifications" options={{ headerShown: true, headerTitle: 'Notifications', ...HEADER_OPTS }} />

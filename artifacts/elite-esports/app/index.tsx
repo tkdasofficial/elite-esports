@@ -2,11 +2,20 @@ import { Redirect } from 'expo-router';
 import { ActivityIndicator, View } from 'react-native';
 import { useAuth } from '@/store/AuthContext';
 import { Colors } from '@/utils/colors';
+import { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Index() {
   const { session, loading } = useAuth();
+  const [onboardingSeen, setOnboardingSeen] = useState<boolean | null>(null);
 
-  if (loading) {
+  useEffect(() => {
+    AsyncStorage.getItem('onboarding_seen').then(val => {
+      setOnboardingSeen(val === 'true');
+    });
+  }, []);
+
+  if (loading || onboardingSeen === null) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background.dark }}>
         <ActivityIndicator color={Colors.primary} size="large" />
@@ -14,5 +23,9 @@ export default function Index() {
     );
   }
 
-  return session ? <Redirect href="/(tabs)" /> : <Redirect href="/(auth)/login" />;
+  if (!onboardingSeen) {
+    return <Redirect href="/onboarding" />;
+  }
+
+  return session ? <Redirect href="/(tabs)" /> : <Redirect href="/(auth)/options" />;
 }
