@@ -26,11 +26,10 @@ export function GlobalHeader({ onSearch }: Props) {
 
   const openSearch = () => {
     setSearching(true);
-    Animated.spring(anim, {
+    Animated.timing(anim, {
       toValue: 1,
-      useNativeDriver: false,
-      tension: 120,
-      friction: 10,
+      duration: 220,
+      useNativeDriver: true,
     }).start(() => inputRef.current?.focus());
   };
 
@@ -38,11 +37,10 @@ export function GlobalHeader({ onSearch }: Props) {
     Keyboard.dismiss();
     setQuery('');
     onSearch?.('');
-    Animated.spring(anim, {
+    Animated.timing(anim, {
       toValue: 0,
-      useNativeDriver: false,
-      tension: 120,
-      friction: 10,
+      duration: 180,
+      useNativeDriver: true,
     }).start(() => setSearching(false));
   };
 
@@ -51,53 +49,57 @@ export function GlobalHeader({ onSearch }: Props) {
     onSearch?.(text);
   };
 
-  // Interpolated values for the animation
-  const logoOpacity = anim.interpolate({ inputRange: [0, 0.4], outputRange: [1, 0], extrapolate: 'clamp' });
-  const searchWidth = anim.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'], extrapolate: 'clamp' });
-  const searchOpacity = anim.interpolate({ inputRange: [0.3, 1], outputRange: [0, 1], extrapolate: 'clamp' });
+  const logoOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0], extrapolate: 'clamp' });
+  const searchOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
 
   return (
     <View style={[styles.header, { paddingTop: topInset }]}>
       <View style={styles.content}>
 
-        {/* Left — logo (fades out when searching) */}
-        <Animated.View style={[styles.left, { opacity: logoOpacity }]} pointerEvents={searching ? 'none' : 'auto'}>
-          <View style={styles.logoMark}>
-            <Ionicons name="flash" size={17} color={Colors.primary} />
-          </View>
-          <Text style={styles.logoText}>
-            Elite <Text style={styles.logoHighlight}>eSports</Text>
-          </Text>
-        </Animated.View>
-
-        {/* Animated search bar (expands over the full row) */}
-        {searching && (
-          <Animated.View style={[styles.searchBar, { width: searchWidth, opacity: searchOpacity }]}>
-            <Ionicons name="search-outline" size={18} color={Colors.text.muted} style={styles.searchIcon} />
-            <TextInput
-              ref={inputRef}
-              style={styles.searchInput}
-              value={query}
-              onChangeText={handleChange}
-              placeholder="Search by game, prize pool…"
-              placeholderTextColor={Colors.text.muted}
-              autoCorrect={false}
-              autoCapitalize="none"
-              returnKeyType="search"
-              onSubmitEditing={() => Keyboard.dismiss()}
-            />
-            {query.length > 0 && (
-              <TouchableOpacity onPress={() => handleChange('')} activeOpacity={0.7} style={styles.clearBtn}>
-                <Ionicons name="close-circle" size={18} color={Colors.text.muted} />
-              </TouchableOpacity>
-            )}
+        {/* Center flex — logo and search bar share the same space via stacking */}
+        <View style={styles.centerFlex}>
+          {/* Logo — fades out when searching */}
+          <Animated.View
+            style={[styles.logoRow, { opacity: logoOpacity }]}
+            pointerEvents={searching ? 'none' : 'auto'}
+          >
+            <View style={styles.logoMark}>
+              <Ionicons name="flash" size={17} color={Colors.primary} />
+            </View>
+            <Text style={styles.logoText}>
+              Elite <Text style={styles.logoHighlight}>eSports</Text>
+            </Text>
           </Animated.View>
-        )}
 
-        {/* Right — icons */}
+          {/* Search bar — fades in over the logo */}
+          {searching && (
+            <Animated.View style={[StyleSheet.absoluteFill, styles.searchBar, { opacity: searchOpacity }]}>
+              <Ionicons name="search-outline" size={17} color={Colors.text.muted} />
+              <TextInput
+                ref={inputRef}
+                style={styles.searchInput}
+                value={query}
+                onChangeText={handleChange}
+                placeholder="Game, prize pool, status…"
+                placeholderTextColor={Colors.text.muted}
+                autoCorrect={false}
+                autoCapitalize="none"
+                returnKeyType="search"
+                onSubmitEditing={() => Keyboard.dismiss()}
+              />
+              {query.length > 0 && (
+                <TouchableOpacity onPress={() => handleChange('')} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Ionicons name="close-circle" size={17} color={Colors.text.muted} />
+                </TouchableOpacity>
+              )}
+            </Animated.View>
+          )}
+        </View>
+
+        {/* Right actions */}
         <View style={styles.right}>
           {searching ? (
-            <TouchableOpacity style={styles.iconBtn} onPress={closeSearch} activeOpacity={0.7}>
+            <TouchableOpacity onPress={closeSearch} activeOpacity={0.7} style={styles.cancelBtn}>
               <Text style={styles.cancelText}>Cancel</Text>
             </TouchableOpacity>
           ) : (
@@ -136,15 +138,22 @@ const styles = StyleSheet.create({
     height: 54,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    gap: 10,
+    paddingLeft: 16,
+    paddingRight: 4,
+    gap: 8,
   },
-  left: {
+
+  /* The flex:1 zone shared by logo and search bar */
+  centerFlex: {
+    flex: 1,
+    height: 40,
+    justifyContent: 'center',
+  },
+
+  logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    flex: 1,
   },
   logoMark: {
     width: 32,
@@ -164,49 +173,46 @@ const styles = StyleSheet.create({
   },
   logoHighlight: { color: Colors.primary },
 
+  /* Search bar fills the centerFlex absolutely — respects its bounds */
   searchBar: {
-    position: 'absolute',
-    left: 16,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.background.surface,
-    borderRadius: 12,
+    borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.primary + '60',
-    height: 40,
+    borderColor: Colors.primary + '55',
     paddingHorizontal: 10,
-    overflow: 'hidden',
+    gap: 7,
   },
-  searchIcon: { marginRight: 6 },
   searchInput: {
     flex: 1,
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
     color: Colors.text.primary,
     height: '100%',
-  },
-  clearBtn: {
-    padding: 2,
-    marginLeft: 4,
+    paddingVertical: 0,
   },
 
   right: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexShrink: 0,
   },
   iconBtn: {
     width: 40,
     height: 40,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 20,
+  },
+  cancelBtn: {
+    paddingHorizontal: 12,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   cancelText: {
     fontSize: 14,
     fontFamily: 'Inter_600SemiBold',
     color: Colors.primary,
-    paddingHorizontal: 4,
   },
   badge: {
     position: 'absolute',
