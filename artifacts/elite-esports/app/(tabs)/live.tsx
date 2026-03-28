@@ -32,15 +32,7 @@ export default function LiveScreen() {
         contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
-        ListHeaderComponent={
-          <View style={styles.sectionHeader}>
-            <View style={styles.liveRow}>
-              <View style={styles.liveDot} />
-              <Text style={styles.liveLabel}>LIVE NOW</Text>
-            </View>
-            <Text style={styles.sectionTitle}>Active Matches</Text>
-          </View>
-        }
+        ListHeaderComponent={null}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="radio-outline" size={56} color={Colors.text.muted} />

@@ -38,12 +38,7 @@ export default function HomeScreen() {
         contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Tournaments</Text>
-            <Text style={styles.sectionSub}>Join & compete for prizes</Text>
-          </View>
-        }
+        ListHeaderComponent={null}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons name="game-controller-outline" size={56} color={Colors.text.muted} />
