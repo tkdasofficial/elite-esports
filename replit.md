@@ -14,8 +14,8 @@ The Supabase connection is fully driven by environment variables — no credenti
 | `EXPO_PUBLIC_SUPABASE_PROJECT_ID` | Supabase project ID (derived from URL) |
 
 These are stored in:
-- **Replit shared environment** (dev + production, set via environment secrets panel)
-- **`.env`** file at the project root (local development fallback)
+- **`artifacts/elite-esports/.env`** — Expo reads its `.env` from its own project directory, not the workspace root. This file is the primary source for the dev server.
+- **Replit shared environment** (dev + production, set via environment secrets panel) — backup / production reference.
 - **`artifacts/elite-esports/eas.json`** (all EAS build profiles — development, preview, production)
 
 The Supabase client (`artifacts/elite-esports/src/services/supabase.ts`) throws a hard error on startup if any credential is missing or still set to a placeholder, so misconfiguration is immediately visible rather than causing silent failures.
