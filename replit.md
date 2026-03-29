@@ -22,7 +22,6 @@ Stored in Replit shared userenv and available at runtime. The app falls back to 
 
 `eas.json` is at the **workspace root** (required for monorepo EAS builds). The root `package.json` pins `"packageManager": "pnpm@10.26.1"` so EAS build servers use the correct pnpm version and can read the `pnpm-lock.yaml` (lockfileVersion 9.0).
 
-`artifacts/elite-esports/.npmrc` sets `shamefully-hoist=true` for native build compatibility.
 
 ## Supabase Backend
 
