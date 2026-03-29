@@ -123,6 +123,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   rightSpacer: {
-    width: 16,
+    width: 44,
   },
 });
