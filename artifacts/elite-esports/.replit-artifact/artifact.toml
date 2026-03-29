@@ -15,11 +15,11 @@ paths = [ "/" ]
 localPort = 18977
 
 [services.development]
-run = "pnpm --filter @workspace/elite-esports run dev"
+run = "sh -c 'cd /home/runner/workspace && npm run dev -w @workspace/elite-esports'"
 
 [services.production]
-build = [ "pnpm", "--filter", "@workspace/elite-esports", "run", "build" ]
-run = [ "pnpm", "--filter", "@workspace/elite-esports", "run", "serve" ]
+build = [ "sh", "-c", "cd /home/runner/workspace && npm run build -w @workspace/elite-esports" ]
+run = [ "sh", "-c", "cd /home/runner/workspace && npm run serve -w @workspace/elite-esports" ]
 
 [services.env]
 PORT = "18977"

@@ -5,7 +5,7 @@ A professional React Native Expo mobile app (Android-first, web-previewed) for c
 
 ## Replit Environment Setup
 
-The project runs on Replit with the Expo dev server via the `Start application` workflow.
+The project runs on Replit with the Expo dev server via the `artifacts/elite-esports: expo` workflow. Package management has been fully migrated from pnpm to **npm** to resolve EAS build failures (`ERR_PNPM_NO_LOCKFILE`). A `package-lock.json` is committed at the workspace root for EAS builds.
 
 ### Environment Variables
 Stored in Replit shared userenv and available at runtime. The app falls back to defaults in `supabase.config.ts` if these are not set:
@@ -20,11 +20,11 @@ Stored in Replit shared userenv and available at runtime. The app falls back to 
 
 ## EAS Build Setup
 
-`eas.json` is at the **workspace root** (required for monorepo EAS builds). The root `package.json` pins `"packageManager": "pnpm@10.26.1"` so EAS build servers use the correct pnpm version and can read the `pnpm-lock.yaml` (lockfileVersion 9.0).
+`eas.json` is at the **workspace root** (required for monorepo EAS builds). Package management is **npm** — a `package-lock.json` is committed at the workspace root so EAS build servers detect npm automatically (no pnpm required on the build server).
 
-`eas-build-pre-install.sh` (at workspace root and inside `artifacts/elite-esports/`) runs before EAS's install step to explicitly enable corepack and activate pnpm 10.
+`eas-build-pre-install.sh` (at workspace root and inside `artifacts/elite-esports/`) runs before EAS's install step. Both scripts have been updated to use `npm install` (no pnpm activation).
 
-**Important:** The `catalog:` protocol has been intentionally removed from all workspace `package.json` files and the `catalog:` section removed from `pnpm-workspace.yaml`. The pnpm catalog feature introduces a `catalogs:` block in `pnpm-lock.yaml` that older pnpm versions (pre-9.4) on EAS build servers cannot parse — causing `WARN Ignoring not compatible lockfile` and `pnpm install --frozen-lockfile exited with non-zero code: 1`. All package versions are now specified explicitly in each `package.json`.
+**Migration note:** The project was migrated from pnpm to npm because EAS builds repeatedly failed with `ERR_PNPM_NO_LOCKFILE`. The `packageManager` field was removed from root `package.json`, `pnpm-workspace.yaml` and `pnpm-lock.yaml` were deleted, and `package-lock.json` was generated. The `artifacts/api-server` package was excluded from npm workspaces (esbuild version incompatibility). `.npmrc` uses `legacy-peer-deps=true` instead of pnpm-specific settings.
 
 
 ## Supabase Backend
