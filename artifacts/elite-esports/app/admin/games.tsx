@@ -6,7 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
-import { ScreenHeader } from '@/components/ScreenHeader';
+import { AdminHeader } from '@/components/admin/AdminHeader';
 import { useGames } from '@/features/games/hooks/useGames';
 import { useAdminGames } from '@/features/admin/hooks/useAdminGames';
 import { Game } from '@/utils/types';
@@ -75,7 +75,7 @@ export default function AdminGamesScreen() {
 
   return (
     <View style={styles.container}>
-      <ScreenHeader
+      <AdminHeader
         title="Games"
         rightElement={
           <TouchableOpacity onPress={() => setShowAdd(true)} style={styles.addIconBtn} activeOpacity={0.8}>
