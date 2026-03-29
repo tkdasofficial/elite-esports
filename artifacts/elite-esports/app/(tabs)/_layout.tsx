@@ -1,5 +1,4 @@
 import { BlurView } from 'expo-blur';
-import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Tabs, Redirect } from 'expo-router';
 import { Icon, NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
@@ -125,7 +124,7 @@ function ClassicTabLayout() {
 export default function TabLayout() {
   const { isAdmin, adminLoading } = useAuth();
   if (!adminLoading && isAdmin) return <Redirect href="/admin" />;
-  return isLiquidGlassAvailable() ? <NativeTabLayout /> : <ClassicTabLayout />;
+  return Platform.OS === 'ios' ? <NativeTabLayout /> : <ClassicTabLayout />;
 }
 
 const styles = StyleSheet.create({
