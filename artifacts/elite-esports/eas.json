@@ -29,7 +29,10 @@
     },
     "production": {
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
+      },
+      "ios": {
+        "buildConfiguration": "Release"
       },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://azxhcalksgudjemwjekd.supabase.co",
@@ -37,9 +40,10 @@
         "EXPO_PUBLIC_SUPABASE_PROJECT_ID": "azxhcalksgudjemwjekd"
       }
     },
-    "production-aab": {
+    "production-apk": {
+      "distribution": "internal",
       "android": {
-        "buildType": "app-bundle"
+        "buildType": "apk"
       },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://azxhcalksgudjemwjekd.supabase.co",
@@ -49,6 +53,10 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "track": "internal"
+      }
+    }
   }
 }

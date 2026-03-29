@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, TextInput, Modal, KeyboardAvoidingView, Platform,
+  ActivityIndicator, Alert, TextInput, Modal, KeyboardAvoidingView, Platform, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -92,8 +92,7 @@ export default function MyTeamScreen() {
         <ScrollView
           contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
           showsVerticalScrollIndicator={false}
-          onRefresh={refresh}
-          refreshing={refreshing}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} colors={[Colors.primary]} />}
         >
           {/* Team Banner */}
           <View style={styles.banner}>

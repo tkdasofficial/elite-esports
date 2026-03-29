@@ -5,7 +5,7 @@ A professional React Native Expo mobile app (Android-first, web-previewed) for c
 
 ## Replit Environment Setup
 
-The project runs on Replit with the Expo dev server. The workflow `Start application` starts the Expo bundler and serves the web version at port 8080.
+The project runs on Replit with the Expo dev server. The workflow `artifacts/elite-esports: expo` starts the Expo bundler and serves the web version. The old `Start application` duplicate workflow has been removed.
 
 ### Environment Variables
 Stored in Replit shared userenv and available at runtime:
@@ -139,7 +139,8 @@ artifacts/elite-esports/
     │   └── team/hooks/useMyTeam.ts       # uses teams + team_members + users
     ├── services/
     │   ├── supabase.ts           # Supabase client (SecureStore adapter)
-    │   └── dbAdapters.ts         # adaptMatch(), matchToDbPayload()
+    │   ├── dbAdapters.ts         # adaptMatch(), matchToDbPayload()
+    │   └── NotificationService.ts  # Push permission, Android channels, token registration
     ├── store/
     │   ├── AuthContext.tsx        # Session, user, isAdmin (via admin_users)
     │   ├── WalletContext.tsx      # Balance, realtime subscription
@@ -161,10 +162,10 @@ artifacts/elite-esports/
 ## EAS Build Profiles (`eas.json`)
 | Profile | Type | Output | Use |
 |---|---|---|---|
-| `development` | internal | debug APK | Dev testing |
-| `preview` | internal | APK | Internal testing |
-| `production` | store | APK | Play Store APK |
-| `production-aab` | store | AAB | Play Store (recommended) |
+| `development` | internal | debug APK | Dev/testing with dev client |
+| `preview` | internal | APK | Internal QA testing |
+| `production` | store | **AAB** | Play Store submission (standard) |
+| `production-apk` | internal | APK | Direct APK distribution |
 
 ## Key Tech Decisions
 - Supabase Auth — email + password
@@ -174,5 +175,24 @@ artifacts/elite-esports/
 - `support_tickets` — category + subject are encoded into the `message` field as `[Category] Subject\n\nMessage`
 - Admin check: `admin_users` table lookup on every auth state change
 
+## Notification System
+- **expo-notifications ~0.32.16** installed and configured
+- **5 notification channels** on Android: Default, Match Alerts, Rewards, Tournaments, Account & Security — all HIGH importance
+- **Permission requested at app startup** (`initNotifications()` in `_layout.tsx`)
+- **Settings screen** shows real system permission status with "Open System Settings" link when blocked
+- **Notification preference toggles** (All, Match, Reward, Tournament, Account) stored in AsyncStorage — disabled when system permission denied
+- Push tokens registered via Expo push token system, stored in AsyncStorage
+
+## Location Permission
+- **expo-location ~19.0.8** installed with proper iOS `infoPlist` entries and Android permissions in `app.json`
+- iOS: `NSLocationWhenInUseUsageDescription` and `NSLocationAlwaysAndWhenInUseUsageDescription`
+- Android: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`
+
+## Package Identity
+- **Android package**: `com.elite.esports.android`
+- **iOS bundle ID**: `com.elite.esports.ios`
+- **App name**: Elite eSports
+- **Version**: 1.0.0 (versionCode 1)
+
 ## Workflows
-- `Start application` — Expo dev server (`@workspace/elite-esports`, port `$PORT`, default 8080)
+- `artifacts/elite-esports: expo` — Expo dev server (`@workspace/elite-esports`, port `$PORT`, default 8080)

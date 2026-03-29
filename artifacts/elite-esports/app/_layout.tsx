@@ -17,6 +17,7 @@ import { ProfileProvider } from '@/store/ProfileContext';
 import { ThemeProvider } from '@/store/ThemeContext';
 import { NotificationsProvider } from '@/store/NotificationsContext';
 import { WalletProvider } from '@/store/WalletContext';
+import { initNotifications } from '@/services/NotificationService';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -59,6 +60,10 @@ export default function RootLayout() {
   useEffect(() => {
     if (fontsLoaded || fontError) SplashScreen.hideAsync();
   }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
+    initNotifications().catch(() => {});
+  }, []);
 
   if (!fontsLoaded && !fontError) return null;
 

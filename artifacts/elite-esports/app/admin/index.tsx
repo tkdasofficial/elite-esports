@@ -425,7 +425,7 @@ export default function AdminDashboard() {
                 activeOpacity={0.8}
               >
                 <View style={[styles.quickIcon, { backgroundColor: item.color + '18' }]}>
-                  <Ionicons name={item.icon} size={20} color={item.color} />
+                  <Ionicons name={item.icon as any} size={20} color={item.color} />
                 </View>
                 <Text style={styles.quickLabel}>{item.label}</Text>
                 {item.badge ? (
@@ -563,16 +563,16 @@ function ActivityRow({ item, isLast }: { item: Activity; isLast: boolean }) {
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
-const QUICK_NAV = [
-  { icon: 'people-outline' as const,          label: 'Users',        route: '/admin/users',        color: '#3B82F6' },
-  { icon: 'trophy-outline' as const,           label: 'Matches',      route: '/admin/matches',      color: '#F59E0B' },
-  { icon: 'game-controller-outline' as const,  label: 'Games',        route: '/admin/games',        color: '#8B5CF6' },
-  { icon: 'card-outline' as const,             label: 'Payments',     route: '/admin/payments',     color: '#22C55E' },
-  { icon: 'cash-outline' as const,             label: 'Withdrawals',  route: '/admin/withdrawals',  color: '#EF4444' },
-  { icon: 'headset-outline' as const,          label: 'Support',      route: '/admin/support',      color: '#06B6D4' },
-  { icon: 'flag-outline' as const,             label: 'Reports',      route: '/admin/reports',      color: '#F97316' },
-  { icon: 'megaphone-outline' as const,        label: 'Broadcast',    route: '/admin/broadcast',    color: '#EC4899' },
-  { icon: 'bar-chart-outline' as const,        label: 'Monetization', route: '/admin/monetization', color: '#84CC16' },
+const QUICK_NAV: Array<{ icon: string; label: string; route: string; color: string; badge?: string | number }> = [
+  { icon: 'people-outline',          label: 'Users',        route: '/admin/users',        color: '#3B82F6' },
+  { icon: 'trophy-outline',          label: 'Matches',      route: '/admin/matches',      color: '#F59E0B' },
+  { icon: 'game-controller-outline', label: 'Games',        route: '/admin/games',        color: '#8B5CF6' },
+  { icon: 'card-outline',            label: 'Payments',     route: '/admin/payments',     color: '#22C55E' },
+  { icon: 'cash-outline',            label: 'Withdrawals',  route: '/admin/withdrawals',  color: '#EF4444' },
+  { icon: 'headset-outline',         label: 'Support',      route: '/admin/support',      color: '#06B6D4' },
+  { icon: 'flag-outline',            label: 'Reports',      route: '/admin/reports',      color: '#F97316' },
+  { icon: 'megaphone-outline',       label: 'Broadcast',    route: '/admin/broadcast',    color: '#EC4899' },
+  { icon: 'bar-chart-outline',       label: 'Monetization', route: '/admin/monetization', color: '#84CC16' },
 ];
 
 // ─── Styles ───────────────────────────────────────────────────────────────────

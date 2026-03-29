@@ -71,9 +71,9 @@ export default function AdminUsersScreen() {
     setLoading(true);
     const [usersRes, walletsRes, paymentsRes, withdrawalsRes] = await Promise.all([
       supabase.from('users').select('*').order('created_at', { ascending: false }),
-      supabase.from('wallets').select('user_id, balance').then(r => r).catch(() => ({ data: null })),
-      supabase.from('payments').select('user_id, amount, status').then(r => r).catch(() => ({ data: null })),
-      supabase.from('withdrawals').select('user_id, amount, status').then(r => r).catch(() => ({ data: null })),
+      supabase.from('wallets').select('user_id, balance').then(r => r, () => ({ data: null })),
+      supabase.from('payments').select('user_id, amount, status').then(r => r, () => ({ data: null })),
+      supabase.from('withdrawals').select('user_id, amount, status').then(r => r, () => ({ data: null })),
     ]);
 
     const walletMap: Record<string, number> = {};
