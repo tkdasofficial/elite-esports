@@ -1,5 +1,33 @@
 # Elite eSports — Replit Project
 
+---
+
+## ⚠️ CRITICAL — READ BEFORE MAKING ANY CHANGES
+
+### Supabase is the sole, permanent, and authoritative backend. This is non-negotiable.
+
+**DO NOT:**
+- Create, suggest, or scaffold any local database schema (no Drizzle tables, no Prisma models, no raw SQL `CREATE TABLE`)
+- Use `lib/db/` for anything — it exists in the monorepo but is NOT used by the mobile app
+- Use Replit's built-in PostgreSQL database for any app data
+- Replace or wrap Supabase with any other auth system, ORM, or database
+- Generate migration files targeting any database other than the live Supabase project
+- Move Supabase queries to a backend API layer — the mobile app queries Supabase directly
+
+**DO:**
+- Query data via the `supabase` client from `@/services/supabase`
+- Add new tables by writing SQL and running it in the **Supabase Dashboard → SQL Editor**
+- Use `supabase.auth.*` for all authentication
+- Use `supabase.from('table_name')` for all database reads and writes
+- Use `supabase.storage` for all file uploads
+- Use `supabase.channel()` for all real-time subscriptions
+- Reference `supabase/migrations/` for the canonical schema — these files show what tables exist
+
+### Why
+This is a React Native / Expo mobile app. The Supabase project (`azxhcalksgudjemwjekd`) holds all production data, user accounts, RLS policies, real-time channels, and file storage. Rewriting or duplicating this infrastructure would destroy live user data and break all platform features.
+
+---
+
 ## Overview
 A professional React Native Expo mobile app (Android-first, web-previewed) for competitive eSports tournaments. Package: `com.elite.esports.android`, version 1.0.0 Alpha. Built with Expo Router v6, Supabase as the sole backend, and a fully modular feature-based architecture. All currencies in Indian Rupees (₹).
 
