@@ -3,24 +3,6 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { SUPABASE_CONFIG } from '../config/supabase.config';
 
-// ---------------------------------------------------------------------------
-// Credential resolution — priority order:
-//   1. Environment variables (EXPO_PUBLIC_SUPABASE_URL / ANON_KEY)
-//      — allows overriding per environment without touching source code
-//   2. supabase.config.ts — committed defaults, always present in the
-//      codebase so any environment or AI tool can build the connection
-//      without any extra setup
-// ---------------------------------------------------------------------------
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || SUPABASE_CONFIG.url;
-const supabaseAnonKey =
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || SUPABASE_CONFIG.anonKey;
-
-export const SUPABASE_PROJECT_ID =
-  process.env.EXPO_PUBLIC_SUPABASE_PROJECT_ID || SUPABASE_CONFIG.projectId;
-
-// ---------------------------------------------------------------------------
-// Secure session storage — uses SecureStore on native, localStorage on web
-// ---------------------------------------------------------------------------
 const ExpoSecureStoreAdapter = {
   getItem: (key: string): string | null | Promise<string | null> => {
     if (Platform.OS === 'web') {
@@ -44,10 +26,7 @@ const ExpoSecureStoreAdapter = {
   },
 };
 
-// ---------------------------------------------------------------------------
-// Supabase client — single shared instance for the entire app
-// ---------------------------------------------------------------------------
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey, {
   auth: {
     storage: ExpoSecureStoreAdapter,
     autoRefreshToken: true,
@@ -56,4 +35,5 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   },
 });
 
-export const SUPABASE_URL = supabaseUrl;
+export const SUPABASE_URL = SUPABASE_CONFIG.url;
+export const SUPABASE_PROJECT_ID = SUPABASE_CONFIG.projectId;

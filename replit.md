@@ -5,10 +5,10 @@ A professional React Native Expo mobile app (Android-first, web-previewed) for c
 
 ## Replit Environment Setup
 
-The project runs on Replit with the Expo dev server. The workflow `artifacts/elite-esports: expo` starts the Expo bundler and serves the web version. The old `Start application` duplicate workflow has been removed.
+The project runs on Replit with the Expo dev server via the `Start application` workflow.
 
 ### Environment Variables
-Stored in Replit shared userenv and available at runtime:
+Stored in Replit shared userenv and available at runtime. The app falls back to defaults in `supabase.config.ts` if these are not set:
 
 | Variable | Description |
 |---|---|
@@ -16,12 +16,13 @@ Stored in Replit shared userenv and available at runtime:
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Public anonymous/client API key |
 | `EXPO_PUBLIC_SUPABASE_PROJECT_ID` | Supabase project ID |
 
-### Secrets
-Stored securely in Replit secrets (not in source code):
+> No service role key or secret key is stored in the app. Only the three public keys above are used.
 
-| Secret | Description |
-|---|---|
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key — server-side only, never bundled in mobile app. Add via Replit Secrets if server-side admin calls are needed. |
+## EAS Build Setup
+
+`eas.json` is at the **workspace root** (required for monorepo EAS builds). The root `package.json` pins `"packageManager": "pnpm@10.26.1"` so EAS build servers use the correct pnpm version and can read the `pnpm-lock.yaml` (lockfileVersion 9.0).
+
+`artifacts/elite-esports/.npmrc` sets `shamefully-hoist=true` for native build compatibility.
 
 ## Supabase Backend
 
