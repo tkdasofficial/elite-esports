@@ -4,12 +4,11 @@ import {
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
 } from 'react-native';
 import { router } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '@/services/supabase';
 import { Colors } from '@/utils/colors';
 import { WEB_TOP_INSET, WEB_BOTTOM_INSET } from '@/utils/webInsets';
-import { AuthLogo } from '@/features/auth/components/AuthLogo';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 
 export default function LoginScreen() {
@@ -29,9 +28,9 @@ export default function LoginScreen() {
     if (error) {
       const msg = error.message.toLowerCase();
       if (msg.includes('invalid login credentials') || msg.includes('invalid email or password')) {
-        Alert.alert('Login Failed', 'Incorrect email or password. Please check your details and try again.');
+        Alert.alert('Login Failed', 'Incorrect email or password. Please try again.');
       } else if (msg.includes('email not confirmed')) {
-        Alert.alert('Email Not Verified', 'Please verify your email before signing in. Check your inbox for the confirmation link.');
+        Alert.alert('Email Not Verified', 'Please verify your email before signing in.');
       } else {
         Alert.alert('Login Failed', error.message);
       }
@@ -47,11 +46,6 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.container}>
-      <LinearGradient
-        colors={['#140400', '#0A0A0A', '#0A0A0A']}
-        locations={[0, 0.45, 1]}
-        style={StyleSheet.absoluteFill}
-      />
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.flex}>
         <ScrollView
           contentContainerStyle={[
@@ -61,10 +55,15 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <AuthLogo showName={false} />
+          {/* Logo mark */}
+          <View style={styles.logoWrap}>
+            <View style={styles.logoMark}>
+              <Ionicons name="flash" size={28} color={Colors.primary} />
+            </View>
+          </View>
 
           <Text style={styles.title}>Welcome back</Text>
-          <Text style={styles.subtitle}>Sign in to your account</Text>
+          <Text style={styles.subtitle}>Sign in to your Elite eSports account</Text>
 
           <View style={styles.fields}>
             <AuthInput
@@ -80,7 +79,7 @@ export default function LoginScreen() {
               label="Password"
               value={password}
               onChangeText={setPassword}
-              placeholder="Password"
+              placeholder="Your password"
               iconName="lock-closed-outline"
               secureTextEntry
               autoComplete="password"
@@ -111,34 +110,48 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0A' },
+  container: { flex: 1, backgroundColor: Colors.background.dark },
   flex: { flex: 1 },
   scroll: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: 25,
+    paddingHorizontal: 24,
+  },
+  logoWrap: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  logoMark: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   title: {
-    fontSize: 22,
+    fontSize: 26,
     fontFamily: 'Inter_700Bold',
     color: Colors.text.primary,
-    marginBottom: 4,
+    marginBottom: 6,
     textAlign: 'center',
+    letterSpacing: -0.5,
   },
   subtitle: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    color: '#666666',
-    marginBottom: 24,
+    color: Colors.text.muted,
+    marginBottom: 32,
     textAlign: 'center',
+    lineHeight: 20,
   },
   fields: {
-    gap: 16,
-    marginBottom: 20,
+    gap: 14,
+    marginBottom: 22,
   },
   btn: {
     backgroundColor: Colors.primary,
-    borderRadius: 14,
+    borderRadius: 12,
     height: 54,
     alignItems: 'center',
     justifyContent: 'center',
@@ -148,7 +161,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   footer: {
     flexDirection: 'row',
@@ -157,7 +170,7 @@ const styles = StyleSheet.create({
     marginTop: 28,
   },
   footerText: {
-    color: '#666666',
+    color: Colors.text.muted,
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
   },

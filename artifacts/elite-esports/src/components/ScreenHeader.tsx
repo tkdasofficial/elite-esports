@@ -18,12 +18,12 @@ export function ScreenHeader({ title, rightElement }: ScreenHeaderProps) {
   return (
     <View style={[styles.header, { paddingTop: topInset }]}>
       <View style={styles.content}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={24} color={Colors.text.primary} />
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.6}>
+          <Ionicons name="chevron-back" size={24} color={Colors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
         <View style={styles.right}>
-          {rightElement ?? <View style={{ width: 48 }} />}
+          {rightElement ?? <View style={{ width: 44 }} />}
         </View>
       </View>
     </View>
@@ -33,33 +33,32 @@ export function ScreenHeader({ title, rightElement }: ScreenHeaderProps) {
 const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.background.dark,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.subtle,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: Colors.border.default,
   },
   content: {
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
   },
   backBtn: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 24,
+    borderRadius: 22,
   },
   title: {
     flex: 1,
     fontSize: 17,
     fontFamily: 'Inter_700Bold',
     color: Colors.text.primary,
-    marginLeft: 4,
     letterSpacing: -0.3,
   },
   right: {
-    width: 48,
-    height: 48,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },

@@ -5,20 +5,20 @@ export const Colors = {
   black: '#000000',
   white: '#FFFFFF',
   background: {
-    dark: '#0A0A0A',
-    card: '#111111',
-    elevated: '#1A1A1A',
-    surface: '#222222',
+    dark: '#000000',
+    card: '#0F0F0F',
+    elevated: '#161616',
+    surface: '#1E1E1E',
   },
   text: {
     primary: '#FFFFFF',
-    secondary: '#AAAAAA',
-    muted: '#666666',
+    secondary: '#9E9E9E',
+    muted: '#555555',
     inverse: '#000000',
   },
   border: {
-    default: '#2A2A2A',
-    subtle: '#1E1E1E',
+    default: '#272727',
+    subtle: '#141414',
   },
   status: {
     success: '#22C55E',
@@ -27,12 +27,12 @@ export const Colors = {
     info: '#3B82F6',
     upcoming: '#3B82F6',
     ongoing: '#22C55E',
-    completed: '#666666',
+    completed: '#555555',
     cancelled: '#EF4444',
   },
   tab: {
     active: '#FE4C11',
-    inactive: '#555555',
+    inactive: '#444444',
   },
 };
 
