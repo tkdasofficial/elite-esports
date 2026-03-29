@@ -28,9 +28,20 @@ Stored in Replit shared userenv and available at runtime. The app falls back to 
 
 **Android Gradle SDK versions** are explicitly set in `app.json` (`compileSdkVersion: 35`, `targetSdkVersion: 35`, `minSdkVersion: 24`) to prevent the "A problem occurred evaluating project ':app'" Gradle error on EAS build servers.
 
-**`withGradleProperties` config plugin** (`plugins/withGradleProperties.js`) injects `KeyboardController_*` properties into `android/gradle.properties` at prebuild time. This fixes the root cause of the "A problem occurred evaluating project ':app'" error — `react-native-keyboard-controller`'s `build.gradle` reads `kotlinVersion` and SDK versions from `gradle.properties` during Gradle configuration phase; without these, `kotlin_version` is `null` and Gradle fails to evaluate the project.
-
 **`expo-glass-effect` removed** from `package.json` — it was not used anywhere in the codebase, is iOS-only (`"platforms": ["apple"]`), and had an empty `"android": {}` in its `expo-module.config.json` that could trigger broken Android autolinking.
+
+## Android Native Project (Bare Workflow)
+
+The `android/` directory is **committed to the repo** (bare workflow). EAS detects this and skips `expo prebuild`, using the native files directly.
+
+Key files:
+- `android/build.gradle` — Root Gradle build file. Has an explicit `buildscript.ext` block with all SDK versions and `kotlinVersion = "2.0.21"`. This fixes `react-native-keyboard-controller`'s `build.gradle` which reads `rootProject.ext.kotlinVersion` during Gradle configuration. Without this, `kotlin_version` is `null` and Gradle fails with "A problem occurred evaluating project ':app'".
+- `android/gradle.properties` — Has `KeyboardController_*` fallback properties (used if `rootProject.ext.*` isn't set) and `newArchEnabled=true`.
+- `android/app/build.gradle` — App module Gradle file with namespace `com.elite.esports.android`, uses `rootProject.ext.*` for SDK versions.
+- `android/settings.gradle` — Auto-linking setup via Expo + React Native Gradle Plugin.
+- `android/app/src/main/java/com/elite/esports/android/` — `MainActivity.kt` and `MainApplication.kt`.
+
+**Important:** If `app.json` plugins are updated (e.g., adding native modules), run `expo prebuild --platform android` to regenerate the `android/` directory, then commit the changes.
 
 
 ## Supabase Backend

@@ -1,7 +1,7 @@
-const { withAndroidGradleProperties } = require('@expo/config-plugins');
+const { withGradleProperties } = require('@expo/config-plugins');
 
-module.exports = function withGradleProperties(config) {
-  return withAndroidGradleProperties(config, (config) => {
+module.exports = function withKeyboardControllerGradleProperties(config) {
+  return withGradleProperties(config, (config) => {
     const props = config.modResults;
 
     const set = (key, value) => {
