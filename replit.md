@@ -22,6 +22,8 @@ Stored in Replit shared userenv and available at runtime. The app falls back to 
 
 `eas.json` is at the **workspace root** (required for monorepo EAS builds). The root `package.json` pins `"packageManager": "pnpm@10.26.1"` so EAS build servers use the correct pnpm version and can read the `pnpm-lock.yaml` (lockfileVersion 9.0).
 
+`eas-build-pre-install.sh` (at workspace root and inside `artifacts/elite-esports/`) runs before EAS's install step to explicitly enable corepack and activate pnpm 10. This ensures EAS does not fall back to its bundled pnpm 8 (which cannot read lockfileVersion 9.0), preventing the `WARN Ignoring not compatible lockfile` and `pnpm install --frozen-lockfile exited with non-zero code: 1` errors.
+
 
 ## Supabase Backend
 
