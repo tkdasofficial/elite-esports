@@ -19,7 +19,7 @@ const MENU_ITEMS = [
   { icon: 'headset-outline',         label: 'Support',    route: '/support' },
 ];
 
-type LinkedGame = { game_id?: string; game: string; uid: string };
+type LinkedGame = { game_id?: string; game: string; uid: string; inGameName?: string };
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
@@ -111,7 +111,7 @@ export default function ProfileScreen() {
                         <Ionicons name="game-controller-outline" size={15} color={Colors.primary} />
                       </View>
                       <Text style={styles.gameRowName} numberOfLines={1}>{g.game}</Text>
-                      <Text style={styles.gameRowUID} numberOfLines={1}>{g.uid}</Text>
+                      <Text style={styles.gameRowUID} numberOfLines={1}>{g.inGameName ?? g.uid}</Text>
                       <Ionicons name="chevron-forward" size={14} color={Colors.text.muted} />
                     </TouchableOpacity>
                     {i < linkedGames.length - 1 && <View style={styles.gameDivider} />}
@@ -174,17 +174,17 @@ export default function ProfileScreen() {
                 </View>
 
                 {/* Fields */}
-                <View style={styles.popupField}>
-                  <Text style={styles.popupFieldLabel}>In-game ID / Username</Text>
-                  <Text style={styles.popupFieldVal}>{selectedGame.uid}</Text>
-                </View>
-
-                {selectedGame.game_id && (
+                {selectedGame.inGameName && (
                   <View style={styles.popupField}>
-                    <Text style={styles.popupFieldLabel}>Game ID</Text>
-                    <Text style={styles.popupFieldVal}>{selectedGame.game_id}</Text>
+                    <Text style={styles.popupFieldLabel}>In-game Name</Text>
+                    <Text style={styles.popupFieldVal}>{selectedGame.inGameName}</Text>
                   </View>
                 )}
+
+                <View style={styles.popupField}>
+                  <Text style={styles.popupFieldLabel}>Player UID</Text>
+                  <Text style={styles.popupFieldVal}>{selectedGame.uid}</Text>
+                </View>
 
                 {/* CTA → edit profile */}
                 <TouchableOpacity

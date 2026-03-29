@@ -23,7 +23,7 @@ export default function EditProfileScreen() {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [avatarIndex, setAvatarIndex] = useState(0);
-  const [games, setGames] = useState<{ game_id?: string; game: string; uid: string }[]>([]);
+  const [games, setGames] = useState<{ game_id?: string; game: string; uid: string; inGameName?: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [showAddGame, setShowAddGame] = useState(false);
 
@@ -74,8 +74,8 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleAddGame = (game_id: string, game: string, uid: string) => {
-    setGames(prev => [...prev, { game_id, game, uid }]);
+  const handleAddGame = (game_id: string, game: string, uid: string, inGameName: string) => {
+    setGames(prev => [...prev, { game_id, game, uid, inGameName }]);
   };
 
   const handleRemoveGame = (index: number) => {
@@ -215,7 +215,11 @@ export default function EditProfileScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.gameName}>{g.game}</Text>
-                  <Text style={styles.gameUID}>UID: {g.uid}</Text>
+                  {g.inGameName ? (
+                    <Text style={styles.gameUID}>Name: {g.inGameName}  ·  UID: {g.uid}</Text>
+                  ) : (
+                    <Text style={styles.gameUID}>UID: {g.uid}</Text>
+                  )}
                 </View>
                 <TouchableOpacity onPress={() => handleRemoveGame(i)} style={styles.removeBtn} activeOpacity={0.7}>
                   <Ionicons name="close-circle" size={22} color={Colors.status.error} />

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Modal,
-  Image, TextInput, ScrollView, ActivityIndicator, FlatList,
+  Image, TextInput, ScrollView, ActivityIndicator,
+  FlatList, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors } from '@/utils/colors';
@@ -12,28 +13,33 @@ interface AddGameModalProps {
   visible: boolean;
   existingGames: { game: string; uid: string }[];
   onClose: () => void;
-  onAdd: (game_id: string, game: string, uid: string) => void;
+  onAdd: (game_id: string, game: string, uid: string, inGameName: string) => void;
 }
 
-type Step = 'select' | 'uid';
+type Step = 'select' | 'details';
 
 export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGameModalProps) {
   const { games, loading } = useGames();
   const [step, setStep] = useState<Step>('select');
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
+  const [inGameName, setInGameName] = useState('');
   const [uid, setUid] = useState('');
 
+  const uidRef = useRef<TextInput>(null);
   const existingNames = existingGames.map(g => g.game.toLowerCase());
 
   const handleSelectGame = (game: Game) => {
     setSelectedGame(game);
+    setInGameName('');
     setUid('');
-    setStep('uid');
+    setStep('details');
   };
 
+  const canAdd = inGameName.trim().length > 0 && uid.trim().length > 0;
+
   const handleAdd = () => {
-    if (!selectedGame || !uid.trim()) return;
-    onAdd(selectedGame.id, selectedGame.name, uid.trim());
+    if (!selectedGame || !canAdd) return;
+    onAdd(selectedGame.id, selectedGame.name, uid.trim(), inGameName.trim());
     reset();
     onClose();
   };
@@ -41,32 +47,47 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
   const reset = () => {
     setStep('select');
     setSelectedGame(null);
+    setInGameName('');
     setUid('');
   };
 
-  const handleClose = () => {
-    reset();
-    onClose();
-  };
+  const handleClose = () => { reset(); onClose(); };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={handleClose}
+    >
       <View style={styles.container}>
+
+        {/* ── Header ── */}
         <View style={styles.header}>
-          {step === 'uid' ? (
-            <TouchableOpacity onPress={() => setStep('select')} style={styles.backBtn} activeOpacity={0.7}>
-              <Ionicons name="arrow-back" size={20} color={Colors.text.primary} />
+          {step === 'details' ? (
+            <TouchableOpacity onPress={() => setStep('select')} style={styles.navBtn} activeOpacity={0.7}>
+              <Ionicons name="chevron-back" size={22} color={Colors.text.primary} />
             </TouchableOpacity>
           ) : (
-            <View style={{ width: 36 }} />
+            <View style={styles.navBtn} />
           )}
-          <Text style={styles.title}>{step === 'select' ? 'Select Game' : 'Enter Your UID'}</Text>
-          <TouchableOpacity onPress={handleClose} style={styles.closeBtn} activeOpacity={0.7}>
+          <Text style={styles.headerTitle}>
+            {step === 'select' ? 'Select Game' : 'Game Details'}
+          </Text>
+          <TouchableOpacity onPress={handleClose} style={styles.navBtn} activeOpacity={0.7}>
             <Ionicons name="close" size={22} color={Colors.text.primary} />
           </TouchableOpacity>
         </View>
 
-        {step === 'select' ? (
+        {/* ── Step indicator ── */}
+        <View style={styles.stepIndicator}>
+          <View style={[styles.stepDot, step === 'select' && styles.stepDotActive]} />
+          <View style={styles.stepLine} />
+          <View style={[styles.stepDot, step === 'details' && styles.stepDotActive]} />
+        </View>
+
+        {/* ── Step 1: Select game ── */}
+        {step === 'select' && (
           loading ? (
             <View style={styles.centered}>
               <ActivityIndicator color={Colors.primary} size="large" />
@@ -74,14 +95,14 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
           ) : games.length === 0 ? (
             <View style={styles.centered}>
               <Ionicons name="game-controller-outline" size={48} color={Colors.text.muted} />
-              <Text style={styles.emptyText}>No games available</Text>
+              <Text style={styles.emptyTitle}>No games available</Text>
               <Text style={styles.emptyHint}>Ask the admin to add games first</Text>
             </View>
           ) : (
             <FlatList
               data={games}
               keyExtractor={item => item.id}
-              contentContainerStyle={styles.list}
+              contentContainerStyle={styles.gameList}
               showsVerticalScrollIndicator={false}
               renderItem={({ item }) => {
                 const alreadyAdded = existingNames.includes(item.name.toLowerCase());
@@ -93,14 +114,16 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
                     disabled={alreadyAdded}
                   >
                     {item.banner_url ? (
-                      <Image source={{ uri: item.banner_url }} style={styles.banner} resizeMode="cover" />
+                      <Image source={{ uri: item.banner_url }} style={styles.gameBanner} resizeMode="cover" />
                     ) : (
-                      <View style={[styles.banner, styles.bannerPlaceholder]}>
-                        <Ionicons name="game-controller-outline" size={28} color={Colors.text.muted} />
+                      <View style={[styles.gameBanner, styles.gameBannerPlaceholder]}>
+                        <Ionicons name="game-controller-outline" size={22} color={Colors.text.muted} />
                       </View>
                     )}
                     <View style={styles.gameInfo}>
-                      <Text style={[styles.gameName, alreadyAdded && styles.textMuted]}>{item.name}</Text>
+                      <Text style={[styles.gameName, alreadyAdded && styles.textMuted]} numberOfLines={1}>
+                        {item.name}
+                      </Text>
                       {alreadyAdded && (
                         <View style={styles.addedBadge}>
                           <Ionicons name="checkmark-circle" size={12} color={Colors.status.success} />
@@ -109,52 +132,94 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
                       )}
                     </View>
                     {!alreadyAdded && (
-                      <Ionicons name="chevron-forward" size={18} color={Colors.text.muted} />
+                      <Ionicons name="chevron-forward" size={18} color={Colors.text.muted} style={{ marginRight: 4 }} />
                     )}
                   </TouchableOpacity>
                 );
               }}
             />
           )
-        ) : (
-          <ScrollView contentContainerStyle={styles.uidBody} showsVerticalScrollIndicator={false}>
-            {selectedGame && (
-              <>
+        )}
+
+        {/* ── Step 2: Enter details ── */}
+        {step === 'details' && selectedGame && (
+          <KeyboardAvoidingView
+            style={{ flex: 1 }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={20}
+          >
+            <ScrollView
+              contentContainerStyle={styles.detailsBody}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+            >
+              {/* Selected game chip */}
+              <View style={styles.selectedGameChip}>
                 {selectedGame.banner_url ? (
-                  <Image source={{ uri: selectedGame.banner_url }} style={styles.bigBanner} resizeMode="cover" />
+                  <Image source={{ uri: selectedGame.banner_url }} style={styles.chipBanner} resizeMode="cover" />
                 ) : (
-                  <View style={[styles.bigBanner, styles.bannerPlaceholder]}>
-                    <Ionicons name="game-controller-outline" size={40} color={Colors.text.muted} />
+                  <View style={[styles.chipBanner, styles.gameBannerPlaceholder]}>
+                    <Ionicons name="game-controller-outline" size={16} color={Colors.text.muted} />
                   </View>
                 )}
-                <Text style={styles.selectedGameName}>{selectedGame.name}</Text>
-              </>
-            )}
-            <Text style={styles.fieldLabel}>Your Player UID</Text>
-            <View style={styles.inputWrapper}>
-              <TextInput
-                style={styles.input}
-                value={uid}
-                onChangeText={setUid}
-                placeholder="Enter your in-game UID"
-                placeholderTextColor={Colors.text.muted}
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={handleAdd}
-              />
-            </View>
-            <Text style={styles.hint}>
-              Your UID is your unique player ID found in the game's profile or settings screen.
-            </Text>
-            <TouchableOpacity
-              style={[styles.addBtn, !uid.trim() && styles.disabled]}
-              onPress={handleAdd}
-              disabled={!uid.trim()}
-              activeOpacity={0.85}
-            >
-              <Text style={styles.addBtnText}>Add Game</Text>
-            </TouchableOpacity>
-          </ScrollView>
+                <Text style={styles.chipName} numberOfLines={1}>{selectedGame.name}</Text>
+                <TouchableOpacity
+                  onPress={() => setStep('select')}
+                  style={styles.chipChange}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.chipChangeText}>Change</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* In-game Name */}
+              <Text style={styles.fieldLabel}>In-game Name</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={16} color={Colors.text.muted} style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  value={inGameName}
+                  onChangeText={setInGameName}
+                  placeholder="Your username / gamertag"
+                  placeholderTextColor={Colors.text.muted}
+                  autoFocus
+                  autoCapitalize="none"
+                  returnKeyType="next"
+                  onSubmitEditing={() => uidRef.current?.focus()}
+                />
+              </View>
+              <Text style={styles.fieldHint}>The name other players see in-game</Text>
+
+              {/* Player UID */}
+              <Text style={[styles.fieldLabel, { marginTop: 22 }]}>Player UID</Text>
+              <View style={styles.inputWrapper}>
+                <Ionicons name="key-outline" size={16} color={Colors.text.muted} style={styles.inputIcon} />
+                <TextInput
+                  ref={uidRef}
+                  style={styles.input}
+                  value={uid}
+                  onChangeText={setUid}
+                  placeholder="Your unique player ID"
+                  placeholderTextColor={Colors.text.muted}
+                  autoCapitalize="none"
+                  returnKeyType="done"
+                  onSubmitEditing={handleAdd}
+                />
+              </View>
+              <Text style={styles.fieldHint}>Find this in the game's profile or settings screen</Text>
+
+              {/* Add button */}
+              <TouchableOpacity
+                style={[styles.addBtn, !canAdd && styles.addBtnDisabled]}
+                onPress={handleAdd}
+                disabled={!canAdd}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="add-circle-outline" size={19} color="#fff" />
+                <Text style={styles.addBtnText}>Add Game</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </KeyboardAvoidingView>
         )}
       </View>
     </Modal>
@@ -163,67 +228,108 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
+
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 16, paddingTop: 20, paddingBottom: 14,
+    paddingHorizontal: 12, paddingTop: 18, paddingBottom: 12,
     borderBottomWidth: 1, borderBottomColor: Colors.border.default,
   },
-  backBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  closeBtn: { width: 36, height: 36, alignItems: 'center', justifyContent: 'center' },
-  title: { fontSize: 17, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  emptyText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: Colors.text.secondary },
-  emptyHint: { fontSize: 13, fontFamily: 'Inter_400Regular', color: Colors.text.muted },
+  navBtn: {
+    width: 40, height: 40, alignItems: 'center', justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 17, fontFamily: 'Inter_700Bold', color: Colors.text.primary,
+  },
 
-  list: { padding: 16, gap: 10 },
+  stepIndicator: {
+    flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', paddingVertical: 14, gap: 0,
+  },
+  stepDot: {
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: Colors.border.default,
+  },
+  stepDotActive: { backgroundColor: Colors.primary, width: 20, borderRadius: 4 },
+  stepLine: {
+    width: 40, height: 2,
+    backgroundColor: Colors.border.default,
+    marginHorizontal: 6,
+  },
+
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
+  emptyTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: Colors.text.secondary },
+  emptyHint:  { fontSize: 13, fontFamily: 'Inter_400Regular', color: Colors.text.muted },
+
+  /* Game list */
+  gameList: { padding: 16, gap: 10 },
   gameCard: {
-    flexDirection: 'row', alignItems: 'center', gap: 14,
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: Colors.background.card,
     borderRadius: 14, overflow: 'hidden',
     borderWidth: 1, borderColor: Colors.border.default,
-    paddingRight: 14,
+    paddingRight: 10,
   },
-  gameCardDisabled: { opacity: 0.5 },
-  banner: { width: 80, aspectRatio: 16 / 9, height: 50 },
-  bannerPlaceholder: {
+  gameCardDisabled: { opacity: 0.45 },
+  gameBanner: { width: 76, height: 52 },
+  gameBannerPlaceholder: {
     backgroundColor: Colors.background.elevated,
     alignItems: 'center', justifyContent: 'center',
   },
-  gameInfo: { flex: 1 },
+  gameInfo: { flex: 1, paddingHorizontal: 12 },
   gameName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
   textMuted: { color: Colors.text.muted },
   addedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
   addedText: { fontSize: 11, fontFamily: 'Inter_500Medium', color: Colors.status.success },
 
-  uidBody: { padding: 20 },
-  bigBanner: {
-    width: '100%', aspectRatio: 16 / 9,
-    borderRadius: 14, overflow: 'hidden', marginBottom: 14,
+  /* Details step */
+  detailsBody: { padding: 20, paddingBottom: 48 },
+
+  selectedGameChip: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: Colors.background.card,
+    borderRadius: 12, overflow: 'hidden',
+    borderWidth: 1, borderColor: Colors.border.default,
+    marginBottom: 24,
   },
-  selectedGameName: {
-    fontSize: 20, fontFamily: 'Inter_700Bold',
-    color: Colors.text.primary, marginBottom: 24,
+  chipBanner: { width: 56, height: 38 },
+  chipName: {
+    flex: 1, fontSize: 14, fontFamily: 'Inter_600SemiBold',
+    color: Colors.text.primary, paddingHorizontal: 12,
   },
+  chipChange: {
+    paddingHorizontal: 14, paddingVertical: 10,
+  },
+  chipChangeText: {
+    fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.primary,
+  },
+
   fieldLabel: {
     fontSize: 11, fontFamily: 'Inter_600SemiBold',
     color: Colors.text.muted, textTransform: 'uppercase',
-    letterSpacing: 1, marginBottom: 10,
+    letterSpacing: 1, marginBottom: 8,
   },
   inputWrapper: {
+    flexDirection: 'row', alignItems: 'center',
     backgroundColor: Colors.background.card,
     borderRadius: 12, borderWidth: 1,
     borderColor: Colors.border.default,
-    paddingHorizontal: 14, height: 52, justifyContent: 'center',
+    paddingHorizontal: 14, height: 52,
   },
-  input: { color: Colors.text.primary, fontSize: 15, fontFamily: 'Inter_400Regular' },
-  hint: {
-    fontSize: 12, fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted, marginTop: 10, lineHeight: 18,
+  inputIcon: { marginRight: 10 },
+  input: {
+    flex: 1, color: Colors.text.primary,
+    fontSize: 15, fontFamily: 'Inter_400Regular',
   },
+  fieldHint: {
+    fontSize: 11, fontFamily: 'Inter_400Regular',
+    color: Colors.text.muted, marginTop: 6, marginLeft: 2,
+  },
+
   addBtn: {
-    backgroundColor: Colors.primary, borderRadius: 14,
-    height: 54, alignItems: 'center', justifyContent: 'center', marginTop: 32,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, backgroundColor: Colors.primary,
+    borderRadius: 14, height: 54, marginTop: 32,
   },
-  disabled: { opacity: 0.5 },
+  addBtnDisabled: { opacity: 0.45 },
   addBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
 });
