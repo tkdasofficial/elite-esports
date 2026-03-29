@@ -34,11 +34,13 @@ export function useProfile(userId?: string) {
       }));
 
       if (user) {
+        const rawAvatarUrl = user.avatar_url ?? '';
+        const avatarIndex = /^\d+$/.test(rawAvatarUrl) ? parseInt(rawAvatarUrl, 10) : 0;
         setProfile({
           id: user.id,
           full_name: user.name ?? '',
           username: user.username,
-          avatar_index: 0,
+          avatar_index: avatarIndex,
           games,
           balance: wallet?.balance ?? 0,
           is_admin: isAdmin,
@@ -62,6 +64,7 @@ export function useProfile(userId?: string) {
           id: userId,
           name: updates.full_name ?? '',
           username: updates.username ?? null,
+          avatar_url: String(updates.avatar_index ?? 0),
         }, { onConflict: 'id' });
 
       if (upsertErr) return { error: new Error(upsertErr.message) };

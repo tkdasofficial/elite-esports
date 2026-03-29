@@ -10,17 +10,15 @@ import { Colors } from '@/utils/colors';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { AvatarSVG, AVATAR_NAMES, AVATAR_COUNT } from '@/components/AvatarSVG';
-import { useAuth } from '@/store/AuthContext';
-import { useProfile } from '@/features/profile/hooks/useProfile';
+import { useProfileCtx } from '@/store/ProfileContext';
 import { AddGameModal } from '@/features/profile/components/AddGameModal';
 
 const AVATAR_SIZE = 68;
 const AVATAR_GAP = 10;
 
 export default function EditProfileScreen() {
-  const { user } = useAuth();
   const insets = useSafeAreaInsets();
-  const { profile, loading, fetchError, save } = useProfile(user?.id);
+  const { profile, loading, fetchError, save } = useProfileCtx();
 
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');

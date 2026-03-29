@@ -7,7 +7,7 @@ import { Colors } from '@/utils/colors';
 import { GlobalHeader } from '@/components/GlobalHeader';
 import { AvatarSVG, AVATAR_NAMES } from '@/components/AvatarSVG';
 import { useAuth } from '@/store/AuthContext';
-import { useProfile } from '@/features/profile/hooks/useProfile';
+import { useProfileCtx } from '@/store/ProfileContext';
 import { useGames } from '@/features/games/hooks/useGames';
 
 const MENU_ITEMS = [
@@ -19,7 +19,7 @@ const MENU_ITEMS = [
 
 export default function ProfileScreen() {
   const { user, signOut } = useAuth();
-  const { profile, loading } = useProfile(user?.id);
+  const { profile, loading } = useProfileCtx();
   const { games: allGames } = useGames();
   const tabBarHeight = useBottomTabBarHeight();
 

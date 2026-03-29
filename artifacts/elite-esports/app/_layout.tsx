@@ -13,6 +13,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/store/AuthContext';
+import { ProfileProvider } from '@/store/ProfileContext';
 import { ThemeProvider } from '@/store/ThemeContext';
 import { NotificationsProvider } from '@/store/NotificationsContext';
 import { WalletProvider } from '@/store/WalletContext';
@@ -67,6 +68,7 @@ export default function RootLayout() {
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
             <AuthProvider>
+              <ProfileProvider>
               <NotificationsProvider>
                 <WalletProvider>
                   <GestureHandlerRootView style={{ flex: 1 }}>
@@ -76,6 +78,7 @@ export default function RootLayout() {
                   </GestureHandlerRootView>
                 </WalletProvider>
               </NotificationsProvider>
+              </ProfileProvider>
             </AuthProvider>
           </ThemeProvider>
         </QueryClientProvider>
