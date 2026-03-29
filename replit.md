@@ -28,6 +28,10 @@ Stored in Replit shared userenv and available at runtime. The app falls back to 
 
 **Android Gradle SDK versions** are explicitly set in `app.json` (`compileSdkVersion: 35`, `targetSdkVersion: 35`, `minSdkVersion: 24`) to prevent the "A problem occurred evaluating project ':app'" Gradle error on EAS build servers.
 
+**`withGradleProperties` config plugin** (`plugins/withGradleProperties.js`) injects `KeyboardController_*` properties into `android/gradle.properties` at prebuild time. This fixes the root cause of the "A problem occurred evaluating project ':app'" error — `react-native-keyboard-controller`'s `build.gradle` reads `kotlinVersion` and SDK versions from `gradle.properties` during Gradle configuration phase; without these, `kotlin_version` is `null` and Gradle fails to evaluate the project.
+
+**`expo-glass-effect` removed** from `package.json` — it was not used anywhere in the codebase, is iOS-only (`"platforms": ["apple"]`), and had an empty `"android": {}` in its `expo-module.config.json` that could trigger broken Android autolinking.
+
 
 ## Supabase Backend
 
