@@ -69,15 +69,15 @@ export default function RootLayout() {
           <ThemeProvider>
             <AuthProvider>
               <ProfileProvider>
-              <NotificationsProvider>
-                <WalletProvider>
-                  <GestureHandlerRootView style={{ flex: 1 }}>
-                    <KeyboardProvider>
-                      <RootLayoutNav />
-                    </KeyboardProvider>
-                  </GestureHandlerRootView>
-                </WalletProvider>
-              </NotificationsProvider>
+                <NotificationsProvider>
+                  <WalletProvider>
+                    <GestureHandlerRootView style={{ flex: 1 }}>
+                      <KeyboardProvider>
+                        <RootLayoutNav />
+                      </KeyboardProvider>
+                    </GestureHandlerRootView>
+                  </WalletProvider>
+                </NotificationsProvider>
               </ProfileProvider>
             </AuthProvider>
           </ThemeProvider>
