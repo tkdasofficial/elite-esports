@@ -15,7 +15,13 @@ Stored in Replit shared userenv and available at runtime:
 | `EXPO_PUBLIC_SUPABASE_URL` | Full Supabase project URL |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Public anonymous/client API key |
 | `EXPO_PUBLIC_SUPABASE_PROJECT_ID` | Supabase project ID |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key — server-side only, NOT bundled in mobile app |
+
+### Secrets
+Stored securely in Replit secrets (not in source code):
+
+| Secret | Description |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | Service role key — server-side only, never bundled in mobile app. Add via Replit Secrets if server-side admin calls are needed. |
 
 ## Supabase Backend
 
