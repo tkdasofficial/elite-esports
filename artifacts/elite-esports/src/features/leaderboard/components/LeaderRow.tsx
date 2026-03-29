@@ -19,7 +19,7 @@ export function LeaderRow({ item }: Props) {
     <View style={[styles.row, isTop3 && styles.topRow]}>
       <View style={styles.rankCol}>
         {isTop3 ? (
-          <Ionicons name={RANK_ICONS[item.rank - 1]} size={20} color={rankColor} />
+          <Ionicons name={RANK_ICONS[item.rank - 1]} size={22} color={rankColor} />
         ) : (
           <Text style={[styles.rankText, { color: rankColor }]}>{item.rank}</Text>
         )}
@@ -30,7 +30,7 @@ export function LeaderRow({ item }: Props) {
       <Text style={styles.username} numberOfLines={1}>{item.username}</Text>
       <View style={styles.statsCol}>
         <View style={styles.killChip}>
-          <MaterialCommunityIcons name="sword" size={11} color={Colors.primary} />
+          <MaterialCommunityIcons name="sword" size={12} color={Colors.primary} />
           <Text style={styles.killText}>{item.kills}</Text>
         </View>
         <Text style={[styles.points, isTop3 && { color: rankColor }]}>{item.points} pts</Text>
@@ -44,8 +44,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.background.card,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 14,
     borderWidth: 1,
     borderColor: Colors.border.subtle,
   },
@@ -53,31 +53,31 @@ const styles = StyleSheet.create({
     borderColor: Colors.border.default,
     backgroundColor: Colors.background.elevated,
   },
-  rankCol: { width: 36, alignItems: 'center' },
-  rankText: { fontSize: 14, fontFamily: 'Inter_700Bold' },
+  rankCol: { width: 40, alignItems: 'center' },
+  rankText: { fontSize: 15, fontFamily: 'Inter_700Bold' },
   avatarCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: Colors.background.surface,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 10,
+    marginRight: 12,
     borderWidth: 1,
     borderColor: Colors.border.default,
   },
-  avatarText: { fontSize: 15, fontFamily: 'Inter_700Bold', color: Colors.primary },
-  username: { flex: 1, fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
-  statsCol: { alignItems: 'flex-end', gap: 4 },
+  avatarText: { fontSize: 16, fontFamily: 'Inter_700Bold', color: Colors.primary },
+  username: { flex: 1, fontSize: 15, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
+  statsCol: { alignItems: 'flex-end', gap: 5 },
   killChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 3,
+    gap: 4,
     backgroundColor: 'rgba(254,76,17,0.1)',
     borderRadius: 6,
-    paddingHorizontal: 7,
+    paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  killText: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: Colors.primary },
-  points: { fontSize: 13, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
+  killText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: Colors.primary },
+  points: { fontSize: 14, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
 });

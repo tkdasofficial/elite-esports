@@ -31,7 +31,7 @@ export function MatchCard({ match, onPress }: Props) {
           <Image source={{ uri: match.banner_url }} style={styles.banner} contentFit="cover" />
         ) : (
           <LinearGradient colors={['#1E0800', '#2E1200']} style={styles.banner}>
-            <Ionicons name="game-controller-outline" size={48} color={Colors.primary} />
+            <Ionicons name="game-controller-outline" size={52} color={Colors.primary} />
           </LinearGradient>
         )}
         <LinearGradient
@@ -97,28 +97,28 @@ export function MatchCard({ match, onPress }: Props) {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.background.card,
-    borderRadius: 16,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: Colors.border.default,
     overflow: 'hidden',
   },
   bannerContainer: { position: 'relative' },
   banner: { width: '100%', aspectRatio: 16 / 9, alignItems: 'center', justifyContent: 'center' },
-  bannerTopGrad: { position: 'absolute', top: 0, left: 0, right: 0, height: 56 },
+  bannerTopGrad: { position: 'absolute', top: 0, left: 0, right: 0, height: 60 },
   statusBadge: {
     position: 'absolute',
-    top: 10,
-    left: 10,
+    top: 12,
+    left: 12,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 11,
+    paddingVertical: 5,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
   },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
   statusText: { color: '#fff', fontSize: 11, fontFamily: 'Inter_700Bold' },
-  body: { padding: 16 },
+  body: { padding: 18 },
   gameLabel: {
     fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
@@ -127,18 +127,18 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 4,
   },
-  title: { fontSize: 17, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 16 },
-  statsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  stat: { flex: 1, alignItems: 'center', gap: 2 },
+  title: { fontSize: 18, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 18 },
+  statsRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 14 },
+  stat: { flex: 1, alignItems: 'center', gap: 3 },
   statLbl: { fontSize: 10, fontFamily: 'Inter_400Regular', color: Colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.5 },
-  statVal: { fontSize: 15, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
-  divider: { width: 1, height: 28, backgroundColor: Colors.border.default },
-  progressTrack: { height: 4, backgroundColor: Colors.background.elevated, borderRadius: 2, marginBottom: 14 },
+  statVal: { fontSize: 16, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
+  divider: { width: 1, height: 30, backgroundColor: Colors.border.default },
+  progressTrack: { height: 4, backgroundColor: Colors.background.elevated, borderRadius: 2, marginBottom: 16 },
   progressFill: { height: 4, backgroundColor: Colors.primary, borderRadius: 2 },
   joinBtn: {
     backgroundColor: Colors.primary,
-    borderRadius: 10,
-    height: 44,
+    borderRadius: 12,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
     flexDirection: 'row',
@@ -160,7 +160,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: Colors.status.ongoing,
   },
-  joinBtnText: { color: '#fff', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  joinBtnText: { color: '#fff', fontSize: 15, fontFamily: 'Inter_700Bold' },
   joinBtnTextSecondary: { color: Colors.text.secondary },
   joinBtnTextFull: { color: Colors.text.muted },
 });

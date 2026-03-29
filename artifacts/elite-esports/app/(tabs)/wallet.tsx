@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     gap: 7,
     backgroundColor: Colors.primary,
     borderRadius: 12,
-    height: 46,
+    height: 52,
   },
   actionBtnOutline: {
     backgroundColor: 'transparent',

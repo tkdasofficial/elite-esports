@@ -11,7 +11,7 @@ import { Colors } from '@/utils/colors';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { useAuth } from '@/store/AuthContext';
 
-const TAB_HEIGHT = 58;
+const TAB_HEIGHT = 64;
 
 /* ── Tab icon map ── */
 const isIOS = Platform.OS === 'ios';
@@ -20,24 +20,24 @@ function getTabIcon(routeName: string, color: string) {
   switch (routeName) {
     case 'index':
       return isIOS
-        ? <SymbolView name="house" tintColor={color} size={25} />
-        : <Feather name="home" size={23} color={color} />;
+        ? <SymbolView name="house" tintColor={color} size={26} />
+        : <Feather name="home" size={24} color={color} />;
     case 'live':
       return isIOS
-        ? <SymbolView name="play.circle" tintColor={color} size={25} />
-        : <Ionicons name="play-circle-outline" size={25} color={color} />;
+        ? <SymbolView name="play.circle" tintColor={color} size={26} />
+        : <Ionicons name="play-circle-outline" size={26} color={color} />;
     case 'leaderboard':
       return isIOS
-        ? <SymbolView name="trophy" tintColor={color} size={25} />
-        : <Ionicons name="trophy-outline" size={25} color={color} />;
+        ? <SymbolView name="trophy" tintColor={color} size={26} />
+        : <Ionicons name="trophy-outline" size={26} color={color} />;
     case 'wallet':
       return isIOS
-        ? <SymbolView name="creditcard" tintColor={color} size={25} />
-        : <Ionicons name="wallet-outline" size={25} color={color} />;
+        ? <SymbolView name="creditcard" tintColor={color} size={26} />
+        : <Ionicons name="wallet-outline" size={26} color={color} />;
     case 'profile':
       return isIOS
-        ? <SymbolView name="person" tintColor={color} size={25} />
-        : <Ionicons name="person-outline" size={25} color={color} />;
+        ? <SymbolView name="person" tintColor={color} size={26} />
+        : <Ionicons name="person-outline" size={26} color={color} />;
     default:
       return null;
   }
@@ -139,7 +139,6 @@ const styles = StyleSheet.create({
   tabBarBg: {
     backgroundColor: '#0A0A0A',
   },
-  /* Exact TAB_HEIGHT row — icons are its only children, so they are centered */
   iconRow: {
     height: TAB_HEIGHT,
     flexDirection: 'row',

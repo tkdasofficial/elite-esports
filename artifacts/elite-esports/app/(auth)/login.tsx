@@ -138,8 +138,8 @@ const styles = StyleSheet.create({
   },
   btn: {
     backgroundColor: Colors.primary,
-    borderRadius: 25,
-    height: 50,
+    borderRadius: 14,
+    height: 54,
     alignItems: 'center',
     justifyContent: 'center',
   },

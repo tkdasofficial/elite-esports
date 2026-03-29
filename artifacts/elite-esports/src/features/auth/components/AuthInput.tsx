@@ -15,7 +15,7 @@ interface Props {
   autoComplete?: any;
 }
 
-const INPUT_HEIGHT = 50;
+const INPUT_HEIGHT = 54;
 
 export function AuthInput({
   label, value, onChangeText, placeholder, iconName,
@@ -34,7 +34,7 @@ export function AuthInput({
         <View style={styles.iconSlot}>
           <Ionicons
             name={iconName}
-            size={16}
+            size={18}
             color={focused ? Colors.primary : '#606060'}
           />
         </View>
@@ -62,7 +62,7 @@ export function AuthInput({
           >
             <Ionicons
               name={showText ? 'eye-outline' : 'eye-off-outline'}
-              size={16}
+              size={18}
               color="#606060"
             />
           </TouchableOpacity>
@@ -83,8 +83,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
     color: '#888888',
-    marginBottom: 7,
-    letterSpacing: 0.5,
+    marginBottom: 8,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   wrapper: {
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C0A04',
   },
   iconSlot: {
-    width: 44,
+    width: 48,
     height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
@@ -111,18 +111,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignSelf: 'stretch',
     color: Colors.text.primary,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
     paddingVertical: 0,
     backgroundColor: 'transparent',
   },
   eyeSlot: {
-    width: 44,
+    width: 48,
     height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
   },
   rightSpacer: {
-    width: 44,
+    width: 48,
   },
 });

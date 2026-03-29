@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   rupee: { fontSize: 20, fontFamily: 'Inter_700Bold', color: Colors.text.secondary, marginRight: 8 },
   amtInput: { flex: 1, fontSize: 24, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
   hint: { fontSize: 11, fontFamily: 'Inter_400Regular', color: Colors.text.muted },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.background.card, borderRadius: 12, borderWidth: 1, borderColor: Colors.border.default, paddingHorizontal: 14, height: 50 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.background.card, borderRadius: 12, borderWidth: 1, borderColor: Colors.border.default, paddingHorizontal: 14, height: 54 },
   input: { flex: 1, color: Colors.text.primary, fontSize: 15, fontFamily: 'Inter_400Regular' },
   infoBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: 'rgba(245,158,11,0.1)', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)', marginTop: 20 },
   infoText: { flex: 1, fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.status.warning, lineHeight: 18 },

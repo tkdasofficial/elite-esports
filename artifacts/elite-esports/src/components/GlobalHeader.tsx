@@ -64,7 +64,7 @@ export function GlobalHeader({ onSearch }: Props) {
             pointerEvents={searching ? 'none' : 'auto'}
           >
             <View style={styles.logoMark}>
-              <Ionicons name="flash" size={17} color={Colors.primary} />
+              <Ionicons name="flash" size={18} color={Colors.primary} />
             </View>
             <Text style={styles.logoText}>
               Elite <Text style={styles.logoHighlight}>eSports</Text>
@@ -74,7 +74,7 @@ export function GlobalHeader({ onSearch }: Props) {
           {/* Search bar — fades in over the logo */}
           {searching && (
             <Animated.View style={[StyleSheet.absoluteFill, styles.searchBar, { opacity: searchOpacity }]}>
-              <Ionicons name="search-outline" size={17} color={Colors.text.muted} />
+              <Ionicons name="search-outline" size={18} color={Colors.text.muted} />
               <TextInput
                 ref={inputRef}
                 style={styles.searchInput}
@@ -89,7 +89,7 @@ export function GlobalHeader({ onSearch }: Props) {
               />
               {query.length > 0 && (
                 <TouchableOpacity onPress={() => handleChange('')} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Ionicons name="close-circle" size={17} color={Colors.text.muted} />
+                  <Ionicons name="close-circle" size={18} color={Colors.text.muted} />
                 </TouchableOpacity>
               )}
             </Animated.View>
@@ -105,14 +105,14 @@ export function GlobalHeader({ onSearch }: Props) {
           ) : (
             <>
               <TouchableOpacity style={styles.iconBtn} onPress={openSearch} activeOpacity={0.7}>
-                <Ionicons name="search-outline" size={21} color={Colors.text.secondary} />
+                <Ionicons name="search-outline" size={22} color={Colors.text.secondary} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.iconBtn}
                 onPress={() => router.push('/notifications')}
                 activeOpacity={0.7}
               >
-                <Ionicons name="notifications-outline" size={21} color={Colors.text.secondary} />
+                <Ionicons name="notifications-outline" size={22} color={Colors.text.secondary} />
                 {unreadCount > 0 && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.border.subtle,
   },
   content: {
-    height: 54,
+    height: 56,
     flexDirection: 'row',
     alignItems: 'center',
     paddingLeft: 16,
@@ -143,10 +143,9 @@ const styles = StyleSheet.create({
     gap: 8,
   },
 
-  /* The flex:1 zone shared by logo and search bar */
   centerFlex: {
     flex: 1,
-    height: 40,
+    height: 44,
     justifyContent: 'center',
   },
 
@@ -156,9 +155,9 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   logoMark: {
-    width: 32,
-    height: 32,
-    borderRadius: 8,
+    width: 34,
+    height: 34,
+    borderRadius: 9,
     backgroundColor: '#1A0500',
     alignItems: 'center',
     justifyContent: 'center',
@@ -166,27 +165,26 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary + '99',
   },
   logoText: {
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: 'Inter_700Bold',
     color: Colors.text.primary,
     letterSpacing: -0.3,
   },
   logoHighlight: { color: Colors.primary },
 
-  /* Search bar fills the centerFlex absolutely — respects its bounds */
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: Colors.background.surface,
-    borderRadius: 10,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.primary + '55',
-    paddingHorizontal: 10,
-    gap: 7,
+    paddingHorizontal: 12,
+    gap: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
     color: Colors.text.primary,
     height: '100%',
@@ -198,19 +196,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   iconBtn: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelBtn: {
-    paddingHorizontal: 12,
-    height: 40,
+    paddingHorizontal: 14,
+    height: 44,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cancelText: {
-    fontSize: 14,
+    fontSize: 15,
     fontFamily: 'Inter_600SemiBold',
     color: Colors.primary,
   },
@@ -220,11 +218,11 @@ const styles = StyleSheet.create({
     right: 5,
     backgroundColor: Colors.primary,
     borderRadius: 7,
-    minWidth: 14,
-    height: 14,
+    minWidth: 15,
+    height: 15,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
-  badgeText: { color: '#fff', fontSize: 8, fontFamily: 'Inter_700Bold' },
+  badgeText: { color: '#fff', fontSize: 9, fontFamily: 'Inter_700Bold' },
 });

@@ -154,7 +154,7 @@ export default function AuthOptionsScreen() {
   );
 }
 
-const BTN_HEIGHT = 50;
+const BTN_HEIGHT = 54;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0A0A0A' },

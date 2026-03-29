@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.elevated,
   },
   gameRow: {
-    height: 50,
+    height: 52,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
@@ -370,7 +370,7 @@ const styles = StyleSheet.create({
   popupEditBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, backgroundColor: Colors.primary,
-    borderRadius: 12, height: 46, marginTop: 6,
+    borderRadius: 12, height: 52, marginTop: 6,
   },
   popupEditBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#fff' },
 });
