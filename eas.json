@@ -5,7 +5,6 @@
   },
   "build": {
     "development": {
-      "projectRoot": "artifacts/elite-esports",
       "developmentClient": true,
       "distribution": "internal",
       "node": "20.18.0",
@@ -20,7 +19,6 @@
       }
     },
     "preview": {
-      "projectRoot": "artifacts/elite-esports",
       "distribution": "internal",
       "node": "20.18.0",
       "android": {
@@ -34,7 +32,6 @@
       }
     },
     "production": {
-      "projectRoot": "artifacts/elite-esports",
       "node": "20.18.0",
       "android": {
         "buildType": "app-bundle"
@@ -50,7 +47,6 @@
       }
     },
     "production-apk": {
-      "projectRoot": "artifacts/elite-esports",
       "distribution": "internal",
       "node": "20.18.0",
       "android": {
