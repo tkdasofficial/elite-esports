@@ -25,26 +25,22 @@ export default function EditProfileScreen() {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [avatarIndex, setAvatarIndex] = useState(0);
-  const [games, setGames] = useState<{ game: string; uid: string }[]>([]);
+  const [games, setGames] = useState<{ game_id?: string; game: string; uid: string }[]>([]);
   const [saving, setSaving] = useState(false);
   const [showAddGame, setShowAddGame] = useState(false);
 
-  // Only initialise the form fields once — when the first real profile arrives.
-  // Using a ref prevents overwriting the user's in-progress edits on subsequent
-  // re-renders, and ensures we catch data even if loading cycles more than once.
+  // Initialise form fields once — only after real profile data has loaded.
+  // We gate on profile.id so a transient loading=false with no userId
+  // (before AuthContext is ready) never locks in empty values.
   const initialized = useRef(false);
   useEffect(() => {
-    if (!loading && !initialized.current) {
-      const hasData = profile.full_name || profile.username || profile.avatar_index !== undefined;
-      if (hasData || !fetchError) {
-        initialized.current = true;
-        setName(profile.full_name ?? '');
-        setUsername(profile.username ?? '');
-        setAvatarIndex(profile.avatar_index ?? 0);
-        setGames(Array.isArray(profile.games) ? profile.games : []);
-      }
-    }
-  }, [loading, profile, fetchError]);
+    if (loading || initialized.current || !profile.id) return;
+    initialized.current = true;
+    setName(profile.full_name ?? '');
+    setUsername(profile.username ?? '');
+    setAvatarIndex(profile.avatar_index ?? 0);
+    setGames(Array.isArray(profile.games) ? profile.games : []);
+  }, [loading, profile.id]);
 
   const handleSave = async () => {
     const trimmedName = name.trim();
@@ -80,8 +76,8 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleAddGame = (game: string, uid: string) => {
-    setGames(prev => [...prev, { game, uid }]);
+  const handleAddGame = (game_id: string, game: string, uid: string) => {
+    setGames(prev => [...prev, { game_id, game, uid }]);
   };
 
   const handleRemoveGame = (index: number) => {

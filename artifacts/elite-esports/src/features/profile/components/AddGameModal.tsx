@@ -12,7 +12,7 @@ interface AddGameModalProps {
   visible: boolean;
   existingGames: { game: string; uid: string }[];
   onClose: () => void;
-  onAdd: (game: string, uid: string) => void;
+  onAdd: (game_id: string, game: string, uid: string) => void;
 }
 
 type Step = 'select' | 'uid';
@@ -33,7 +33,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
 
   const handleAdd = () => {
     if (!selectedGame || !uid.trim()) return;
-    onAdd(selectedGame.name, uid.trim());
+    onAdd(selectedGame.id, selectedGame.name, uid.trim());
     reset();
     onClose();
   };

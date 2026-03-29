@@ -29,7 +29,7 @@ export interface ProfileData {
   full_name?: string;
   username?: string | null;
   avatar_index?: number;
-  games?: { game: string; uid: string }[] | null;
+  games?: { game_id?: string; game: string; uid: string }[] | null;
   balance?: number;
   is_admin?: boolean;
   updated_at?: string;

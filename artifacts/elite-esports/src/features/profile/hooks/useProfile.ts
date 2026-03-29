@@ -28,6 +28,7 @@ export function useProfile(userId?: string) {
       const rawGames = gamesRes.data ?? [];
 
       const games = rawGames.map((g: any) => ({
+        game_id: g.game_id ?? '',
         game: (Array.isArray(g.games) ? g.games[0]?.name : g.games?.name) ?? g.game_id ?? '',
         uid: g.uid ?? '',
       }));
@@ -64,6 +65,26 @@ export function useProfile(userId?: string) {
         }, { onConflict: 'id' });
 
       if (upsertErr) return { error: new Error(upsertErr.message) };
+
+      if (updates.games !== undefined) {
+        const { error: delErr } = await supabase
+          .from('user_games')
+          .delete()
+          .eq('user_id', userId);
+        if (delErr) return { error: new Error(delErr.message) };
+
+        const validGames = (updates.games ?? []).filter(g => g.game_id);
+        if (validGames.length > 0) {
+          const { error: insertErr } = await supabase
+            .from('user_games')
+            .insert(validGames.map(g => ({
+              user_id: userId,
+              game_id: g.game_id,
+              uid: g.uid,
+            })));
+          if (insertErr) return { error: new Error(insertErr.message) };
+        }
+      }
 
       setProfile(prev => ({
         ...prev,
