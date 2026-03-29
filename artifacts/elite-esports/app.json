@@ -3,6 +3,7 @@
     "name": "Elite eSports",
     "slug": "elite-esports",
     "version": "1.0.0",
+    "owner": "avzio-expo",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "elite-esports",
@@ -70,6 +71,11 @@
         }
       ]
     ],
+    "extra": {
+      "eas": {
+        "projectId": "76a1d1cf-d260-4bc6-bec6-a1da46bb819d"
+      }
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
