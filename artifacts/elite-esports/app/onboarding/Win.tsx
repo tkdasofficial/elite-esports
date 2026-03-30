@@ -21,9 +21,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const { width, height } = Dimensions.get('window');
 
 const RANKS = [
-  { rank: '1', name: 'ProSniper_X', kills: 18, pts: 210, color: '#F59E0B' },
-  { rank: '2', name: 'StormRider',  kills: 14, pts: 175, color: '#9CA3AF' },
-  { rank: '3', name: 'EliteGhost',  kills: 12, pts: 145, color: '#CD7C3D' },
+  { pos: 1, name: 'ProSniper_X', score: '18 kills',  prize: '₹2,100', accent: '#F59E0B', medal: 'medal-outline'  as const },
+  { pos: 2, name: 'StormRider',  score: '14 kills',  prize: '₹1,400', accent: '#9CA3AF', medal: 'medal-outline'  as const },
+  { pos: 3, name: 'EliteGhost',  score: '12 kills',  prize: '₹1,050', accent: '#CD7C3D', medal: 'ribbon-outline' as const },
 ];
 
 export default function WinScreen() {
@@ -34,9 +34,8 @@ export default function WinScreen() {
   const nextStyle = useAnimatedStyle(() => ({ transform: [{ scale: scaleNext.value }] }));
   const backStyle = useAnimatedStyle(() => ({ transform: [{ scale: scaleBack.value }] }));
 
-  const ILLUS_H = height * 0.48;
-  const topPad = Platform.OS === 'web' ? Math.max(56, insets.top) : insets.top;
-  const botPad = Platform.OS === 'web' ? Math.max(32, insets.bottom) : insets.bottom;
+  const topPad = Platform.OS === 'web' ? Math.max(52, insets.top) : insets.top;
+  const botPad = Platform.OS === 'web' ? Math.max(28, insets.bottom) : insets.bottom + 8;
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -50,45 +49,62 @@ export default function WinScreen() {
   return (
     <View style={[styles.root, { paddingTop: topPad, paddingBottom: botPad }]}>
       <LinearGradient
-        colors={['#0F0A00', '#080500', '#000000']}
-        locations={[0, 0.45, 1]}
+        colors={['#0D0800', '#070400', '#000000']}
+        locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
 
       {/* ── Illustration ── */}
-      <View style={[styles.illus, { height: ILLUS_H }]}>
-        <View style={styles.glowRing} />
+      <View style={styles.illus}>
+        {/* Rings */}
+        <View style={styles.ring3} />
+        <View style={styles.ring2} />
+        <View style={styles.ring1} />
 
-        <LinearGradient
-          colors={['#F59E0B22', '#F59E0B06']}
-          style={styles.trophyCircle}
-        >
-          <Ionicons name="trophy" size={68} color="#F59E0B" />
-        </LinearGradient>
-
-        <View style={styles.rankList}>
-          {RANKS.map((r) => (
-            <View key={r.rank} style={styles.rankRow}>
-              <View style={[styles.rankNumBox, { borderColor: r.color + '55' }]}>
-                <Text style={[styles.rankNum, { color: r.color }]}>#{r.rank}</Text>
-              </View>
-              <View style={styles.rankInfo}>
-                <Text style={styles.rankName}>{r.name}</Text>
-                <Text style={styles.rankSub}>{r.kills} kills · {r.pts} pts</Text>
-              </View>
-              <Text style={[styles.rankPrize, { color: r.color }]}>₹{r.pts * 10}</Text>
-            </View>
-          ))}
+        {/* Trophy */}
+        <View style={styles.iconWrap}>
+          <LinearGradient
+            colors={['#F59E0B20', '#F59E0B06']}
+            style={styles.iconGrad}
+          >
+            <Ionicons name="trophy-outline" size={62} color="#F59E0B" />
+          </LinearGradient>
         </View>
 
-        <View style={styles.crownChip}>
-          <Ionicons name="star" size={12} color="#F59E0B" />
-          <Text style={styles.crownTxt}>TOP EARNER THIS WEEK</Text>
+        {/* Prize pool banner */}
+        <View style={styles.prizePool}>
+          <Ionicons name="cash-outline" size={14} color="#F59E0B" />
+          <Text style={styles.prizePoolTxt}>MONTHLY PRIZE POOL</Text>
+          <Text style={styles.prizePoolAmt}>₹50,00,000</Text>
+        </View>
+
+        {/* Leaderboard */}
+        <View style={styles.board}>
+          {RANKS.map((r) => (
+            <View key={r.pos} style={styles.boardRow}>
+              <View style={[styles.posBox, { borderColor: r.accent + '45' }]}>
+                <Text style={[styles.posNum, { color: r.accent }]}>#{r.pos}</Text>
+              </View>
+              <View style={styles.playerInfo}>
+                <Text style={styles.playerName}>{r.name}</Text>
+                <Text style={styles.playerScore}>{r.score}</Text>
+              </View>
+              <View style={styles.prizeBox}>
+                <Ionicons name={r.medal} size={13} color={r.accent} />
+                <Text style={[styles.prizeAmt, { color: r.accent }]}>{r.prize}</Text>
+              </View>
+            </View>
+          ))}
         </View>
       </View>
 
       {/* ── Text ── */}
       <View style={styles.textBlock}>
+        <View style={styles.eyebrow}>
+          <View style={styles.eyebrowLine} />
+          <Text style={styles.eyebrowTxt}>LEADERBOARD</Text>
+          <View style={styles.eyebrowLine} />
+        </View>
         <Text style={styles.headline}>DOMINATE{'\n'}THE RANKS</Text>
         <Text style={styles.subtext}>
           Rise to the top and become an Elite Champion.
@@ -108,27 +124,27 @@ export default function WinScreen() {
           <Pressable
             onPress={handleBack}
             onPressIn={() => { scaleBack.value = withTiming(0.94, { duration: 90 }); }}
-            onPressOut={() => { scaleBack.value = withTiming(1, { duration: 110 }); }}
+            onPressOut={() => { scaleBack.value = withTiming(1.00, { duration: 120 }); }}
             style={styles.backBtn}
           >
-            <Ionicons name="arrow-back" size={22} color="#666" />
+            <Ionicons name="arrow-back-outline" size={22} color="#444" />
           </Pressable>
         </Animated.View>
 
-        <Animated.View style={[styles.nextBtnWrap, nextStyle]}>
+        <Animated.View style={[styles.nextWrap, nextStyle]}>
           <Pressable
             onPress={handleNext}
             onPressIn={() => { scaleNext.value = withTiming(0.96, { duration: 90 }); }}
-            onPressOut={() => { scaleNext.value = withTiming(1, { duration: 110 }); }}
+            onPressOut={() => { scaleNext.value = withTiming(1.00, { duration: 120 }); }}
           >
             <LinearGradient
               colors={['#50C878', '#2E9E52']}
               start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+              end={{ x: 1, y: 0 }}
               style={styles.nextGrad}
             >
               <Text style={styles.nextTxt}>NEXT</Text>
-              <Ionicons name="arrow-forward" size={20} color="#000" />
+              <Ionicons name="arrow-forward-outline" size={20} color="#000" />
             </LinearGradient>
           </Pressable>
         </Animated.View>
@@ -137,74 +153,122 @@ export default function WinScreen() {
   );
 }
 
+const R1 = width * 0.42;
+const R2 = width * 0.58;
+const R3 = width * 0.74;
+
 const styles = StyleSheet.create({
   root: { flex: 1, alignItems: 'center' },
 
   illus: {
     width,
+    height: height * 0.50,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  glowRing: {
-    position: 'absolute',
-    width: width * 0.6,
-    height: width * 0.6,
-    borderRadius: width * 0.3,
-    backgroundColor: '#F59E0B07',
-    borderWidth: 1,
-    borderColor: '#F59E0B15',
-  },
-  trophyCircle: {
-    width: 136,
-    height: 136,
-    borderRadius: 68,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#F59E0B30',
-    marginBottom: 18,
   },
 
-  rankList: { width: width - 48, gap: 8 },
-  rankRow: {
+  ring3: {
+    position: 'absolute',
+    width: R3, height: R3, borderRadius: R3 / 2,
+    borderWidth: 1, borderColor: '#F59E0B0C',
+  },
+  ring2: {
+    position: 'absolute',
+    width: R2, height: R2, borderRadius: R2 / 2,
+    borderWidth: 1, borderColor: '#F59E0B18',
+  },
+  ring1: {
+    position: 'absolute',
+    width: R1, height: R1, borderRadius: R1 / 2,
+    borderWidth: 1, borderColor: '#F59E0B28',
+  },
+
+  iconWrap: { marginBottom: 16 },
+  iconGrad: {
+    width: 112,
+    height: 112,
+    borderRadius: 56,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F59E0B35',
+  },
+
+  prizePool: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0E0C08',
+    gap: 7,
+    backgroundColor: '#100A00',
     borderWidth: 1,
-    borderColor: '#1E1A10',
-    borderRadius: 14,
+    borderColor: '#F59E0B25',
+    borderRadius: 8,
     paddingHorizontal: 14,
-    paddingVertical: 11,
+    paddingVertical: 9,
+    marginBottom: 14,
+    width: width - 48,
+  },
+  prizePoolTxt: {
+    flex: 1,
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#666',
+    letterSpacing: 0.8,
+  },
+  prizePoolAmt: {
+    fontSize: 14,
+    fontFamily: 'Inter_700Bold',
+    color: '#F59E0B',
+  },
+
+  board: {
+    width: width - 48,
+    gap: 7,
+  },
+  boardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#0C0A06',
+    borderWidth: 1,
+    borderColor: '#1C1A12',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     gap: 12,
   },
-  rankNumBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
+  posBox: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#120F06',
+    backgroundColor: '#0E0C08',
   },
-  rankNum: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-  rankInfo: { flex: 1 },
-  rankName: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: '#FFFFFF', marginBottom: 2 },
-  rankSub: { fontSize: 11, fontFamily: 'Inter_400Regular', color: '#555' },
-  rankPrize: { fontSize: 14, fontFamily: 'Inter_700Bold' },
-
-  crownChip: {
+  posNum: {
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
+  },
+  playerInfo: { flex: 1 },
+  playerName: {
+    fontSize: 13,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#E0E0E0',
+    marginBottom: 2,
+  },
+  playerScore: {
+    fontSize: 11,
+    fontFamily: 'Inter_400Regular',
+    color: '#444',
+  },
+  prizeBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    marginTop: 14,
-    backgroundColor: '#130F03',
-    borderWidth: 1,
-    borderColor: '#F59E0B30',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    gap: 4,
   },
-  crownTxt: { fontSize: 10, fontFamily: 'Inter_700Bold', color: '#F59E0B', letterSpacing: 1 },
+  prizeAmt: {
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
+  },
 
   textBlock: {
     flex: 1,
@@ -212,61 +276,81 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 32,
   },
+  eyebrow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+  },
+  eyebrowLine: {
+    flex: 1,
+    maxWidth: 32,
+    height: 1,
+    backgroundColor: '#F59E0B50',
+  },
+  eyebrowTxt: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#F59E0B',
+    letterSpacing: 2,
+  },
   headline: {
-    fontSize: 36,
+    fontSize: 38,
     fontFamily: 'Inter_700Bold',
     color: '#FFFFFF',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
     textAlign: 'center',
-    lineHeight: 44,
-    marginBottom: 14,
+    lineHeight: 46,
+    marginBottom: 12,
     textTransform: 'uppercase',
   },
   subtext: {
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    color: '#888888',
+    color: '#606060',
     textAlign: 'center',
-    lineHeight: 24,
-    maxWidth: 280,
+    lineHeight: 22,
   },
 
-  dots: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 },
-  dot: { height: 8, borderRadius: 4 },
-  dotActive: { width: 28, backgroundColor: '#50C878' },
-  dotInactive: { width: 8, backgroundColor: '#2A2A2A' },
+  dots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 18,
+  },
+  dot: { height: 6, borderRadius: 3 },
+  dotActive: { width: 24, backgroundColor: '#50C878' },
+  dotInactive: { width: 6, backgroundColor: '#222222' },
 
   cta: {
     flexDirection: 'row',
     width: '100%',
-    paddingHorizontal: 28,
-    paddingBottom: 8,
+    paddingHorizontal: 24,
     gap: 12,
     alignItems: 'center',
   },
   backBtn: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
-    backgroundColor: '#111111',
+    width: 58,
+    height: 58,
+    borderRadius: 14,
+    backgroundColor: '#0E0E0E',
     borderWidth: 1,
-    borderColor: '#222222',
+    borderColor: '#1E1E1E',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  nextBtnWrap: { flex: 1, borderRadius: 16, overflow: 'hidden' },
+  nextWrap: { flex: 1, borderRadius: 14, overflow: 'hidden' },
   nextGrad: {
-    height: 60,
+    height: 58,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    borderRadius: 16,
   },
   nextTxt: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Inter_700Bold',
     color: '#000000',
-    letterSpacing: 1.5,
+    letterSpacing: 2,
   },
 });
