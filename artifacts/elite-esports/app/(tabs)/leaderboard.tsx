@@ -18,21 +18,17 @@ export default function LeaderboardScreen() {
   return (
     <View style={styles.container}>
       <GlobalHeader />
-
-      {/* Segment control */}
-      <View style={styles.segmentWrap}>
-        <View style={styles.segment}>
-          {TABS.map(tab => (
-            <TouchableOpacity
-              key={tab}
-              style={[styles.segBtn, activeTab === tab && styles.segBtnActive]}
-              onPress={() => setActiveTab(tab)}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.segText, activeTab === tab && styles.segTextActive]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
+      <View style={styles.tabBar}>
+        {TABS.map(tab => (
+          <TouchableOpacity
+            key={tab}
+            style={[styles.tab, activeTab === tab && styles.tabActive]}
+            onPress={() => setActiveTab(tab)}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       {loading ? (
@@ -48,17 +44,21 @@ export default function LeaderboardScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
           ListHeaderComponent={
-            <View style={styles.colHeader}>
-              <Text style={[styles.colLabel, { width: 36, textAlign: 'center' }]}>#</Text>
-              <Text style={[styles.colLabel, { flex: 1, marginLeft: 50 }]}>Player</Text>
-              <Text style={styles.colLabel}>Stats</Text>
+            <View style={styles.listHeader}>
+              <View style={styles.colRankWrapper}>
+                <Text style={styles.colLabel}>#</Text>
+              </View>
+              <View style={styles.colPlayerWrapper}>
+                <Text style={styles.colLabel}>Player</Text>
+              </View>
+              <Text style={styles.colLabel}>Kills / Points</Text>
             </View>
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="trophy-outline" size={52} color={Colors.text.muted} />
+              <Ionicons name="trophy-outline" size={56} color={Colors.text.muted} />
               <Text style={styles.emptyTitle}>No Data Yet</Text>
-              <Text style={styles.emptyText}>Leaderboard populates after matches end</Text>
+              <Text style={styles.emptyText}>Leaderboard populates after matches</Text>
             </View>
           }
         />
@@ -70,60 +70,33 @@ export default function LeaderboardScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-
-  segmentWrap: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
-  segment: {
+  tabBar: {
     flexDirection: 'row',
+    margin: 16,
+    marginBottom: 8,
     backgroundColor: Colors.background.elevated,
-    borderRadius: 10,
-    padding: 3,
+    borderRadius: 12,
+    padding: 4,
   },
-  segBtn: {
-    flex: 1,
-    paddingVertical: 9,
-    alignItems: 'center',
-    borderRadius: 8,
-  },
-  segBtnActive: {
-    backgroundColor: Colors.background.surface,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.border.default,
-  },
-  segText: {
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.muted,
-  },
-  segTextActive: {
-    color: Colors.text.primary,
-  },
-
-  colHeader: {
+  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
+  tabActive: { backgroundColor: Colors.primary },
+  tabText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.muted },
+  tabTextActive: { color: '#fff' },
+  list: { paddingHorizontal: 16, paddingTop: 4, gap: 6 },
+  listHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 8,
-    paddingHorizontal: 14,
-    marginBottom: 6,
+    paddingHorizontal: 12,
+    marginBottom: 4,
   },
-  colLabel: {
-    fontSize: 10,
-    fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+  colRankWrapper: { width: 36, alignItems: 'center' },
+  colPlayerWrapper: {
+    flex: 1,
+    marginLeft: 46,
   },
-
-  list: { paddingHorizontal: 16, paddingTop: 0, gap: 6 },
-  empty: { alignItems: 'center', paddingTop: 72, gap: 12 },
+  colLabel: { fontSize: 11, fontFamily: 'Inter_500Medium', color: Colors.text.muted },
+  empty: { alignItems: 'center', paddingTop: 60, gap: 12 },
   emptyTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: Colors.text.secondary },
-  emptyText: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted,
-    textAlign: 'center',
-    lineHeight: 21,
-  },
+  emptyText: { fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.muted, textAlign: 'center' },
 });

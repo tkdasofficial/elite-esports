@@ -26,18 +26,22 @@ export function GlobalHeader({ onSearch }: Props) {
 
   const openSearch = () => {
     setSearching(true);
-    Animated.timing(anim, { toValue: 1, duration: 200, useNativeDriver: true }).start(
-      () => inputRef.current?.focus()
-    );
+    Animated.timing(anim, {
+      toValue: 1,
+      duration: 220,
+      useNativeDriver: true,
+    }).start(() => inputRef.current?.focus());
   };
 
   const closeSearch = () => {
     Keyboard.dismiss();
     setQuery('');
     onSearch?.('');
-    Animated.timing(anim, { toValue: 0, duration: 160, useNativeDriver: true }).start(
-      () => setSearching(false)
-    );
+    Animated.timing(anim, {
+      toValue: 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start(() => setSearching(false));
   };
 
   const handleChange = (text: string) => {
@@ -52,28 +56,31 @@ export function GlobalHeader({ onSearch }: Props) {
     <View style={[styles.header, { paddingTop: topInset }]}>
       <View style={styles.content}>
 
+        {/* Center flex — logo and search bar share the same space via stacking */}
         <View style={styles.centerFlex}>
+          {/* Logo — fades out when searching */}
           <Animated.View
             style={[styles.logoRow, { opacity: logoOpacity }]}
             pointerEvents={searching ? 'none' : 'auto'}
           >
             <View style={styles.logoMark}>
-              <Ionicons name="flash" size={16} color={Colors.primary} />
+              <Ionicons name="flash" size={18} color={Colors.primary} />
             </View>
             <Text style={styles.logoText}>
-              Elite<Text style={styles.logoAccent}> eSports</Text>
+              Elite <Text style={styles.logoHighlight}>eSports</Text>
             </Text>
           </Animated.View>
 
+          {/* Search bar — fades in over the logo */}
           {searching && (
             <Animated.View style={[StyleSheet.absoluteFill, styles.searchBar, { opacity: searchOpacity }]}>
-              <Ionicons name="search-outline" size={17} color={Colors.text.muted} />
+              <Ionicons name="search-outline" size={18} color={Colors.text.muted} />
               <TextInput
                 ref={inputRef}
                 style={styles.searchInput}
                 value={query}
                 onChangeText={handleChange}
-                placeholder="Search games, tournaments…"
+                placeholder="Game, prize pool, status…"
                 placeholderTextColor={Colors.text.muted}
                 autoCorrect={false}
                 autoCapitalize="none"
@@ -81,19 +88,16 @@ export function GlobalHeader({ onSearch }: Props) {
                 onSubmitEditing={() => Keyboard.dismiss()}
               />
               {query.length > 0 && (
-                <TouchableOpacity
-                  onPress={() => handleChange('')}
-                  activeOpacity={0.7}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Ionicons name="close-circle" size={17} color={Colors.text.muted} />
+                <TouchableOpacity onPress={() => handleChange('')} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                  <Ionicons name="close-circle" size={18} color={Colors.text.muted} />
                 </TouchableOpacity>
               )}
             </Animated.View>
           )}
         </View>
 
-        <View style={styles.actions}>
+        {/* Right actions */}
+        <View style={styles.right}>
           {searching ? (
             <TouchableOpacity onPress={closeSearch} activeOpacity={0.7} style={styles.cancelBtn}>
               <Text style={styles.cancelText}>Cancel</Text>
@@ -101,14 +105,14 @@ export function GlobalHeader({ onSearch }: Props) {
           ) : (
             <>
               <TouchableOpacity style={styles.iconBtn} onPress={openSearch} activeOpacity={0.7}>
-                <Ionicons name="search-outline" size={21} color={Colors.text.secondary} />
+                <Ionicons name="search-outline" size={22} color={Colors.text.secondary} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.iconBtn}
                 onPress={() => router.push('/notifications')}
                 activeOpacity={0.7}
               >
-                <Ionicons name="notifications-outline" size={21} color={Colors.text.secondary} />
+                <Ionicons name="notifications-outline" size={22} color={Colors.text.secondary} />
                 {unreadCount > 0 && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -127,50 +131,54 @@ export function GlobalHeader({ onSearch }: Props) {
 const styles = StyleSheet.create({
   header: {
     backgroundColor: Colors.background.dark,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.border.default,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.subtle,
   },
   content: {
     height: 56,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingLeft: 20,
-    paddingRight: 6,
+    paddingLeft: 16,
+    paddingRight: 4,
     gap: 8,
   },
+
   centerFlex: {
     flex: 1,
-    height: 40,
+    height: 44,
     justifyContent: 'center',
   },
+
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
   logoMark: {
-    width: 28,
-    height: 28,
-    borderRadius: 7,
-    backgroundColor: Colors.primary,
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    backgroundColor: '#1A0500',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.primary + '99',
   },
   logoText: {
-    fontSize: 17,
+    fontSize: 18,
     fontFamily: 'Inter_700Bold',
     color: Colors.text.primary,
-    letterSpacing: -0.4,
+    letterSpacing: -0.3,
   },
-  logoAccent: { color: Colors.primary },
+  logoHighlight: { color: Colors.primary },
 
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background.elevated,
-    borderRadius: 10,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.border.default,
+    backgroundColor: Colors.background.surface,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.primary + '55',
     paddingHorizontal: 12,
     gap: 8,
   },
@@ -183,7 +191,7 @@ const styles = StyleSheet.create({
     paddingVertical: 0,
   },
 
-  actions: {
+  right: {
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -201,20 +209,20 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     fontSize: 15,
-    fontFamily: 'Inter_500Medium',
+    fontFamily: 'Inter_600SemiBold',
     color: Colors.primary,
   },
   badge: {
     position: 'absolute',
-    top: 8,
-    right: 6,
+    top: 7,
+    right: 5,
     backgroundColor: Colors.primary,
-    borderRadius: 6,
-    minWidth: 14,
-    height: 14,
+    borderRadius: 7,
+    minWidth: 15,
+    height: 15,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
-  badgeText: { color: '#fff', fontSize: 8, fontFamily: 'Inter_700Bold' },
+  badgeText: { color: '#fff', fontSize: 9, fontFamily: 'Inter_700Bold' },
 });

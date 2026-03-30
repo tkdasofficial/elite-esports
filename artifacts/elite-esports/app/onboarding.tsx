@@ -18,7 +18,7 @@ const SLIDES = [
     icon: 'trophy' as const,
     title: 'Enter the Arena',
     body: 'Join elite eSports tournaments and battle the best players. Every match is your chance to prove yourself.',
-    gradient: ['#1A0400', '#000000'] as [string, string],
+    gradient: ['#200800', '#0A0A0A'] as [string, string],
     accent: '#FE4C11',
   },
   {
@@ -26,7 +26,7 @@ const SLIDES = [
     icon: 'pulse' as const,
     title: 'Track Live Battles',
     body: 'Follow matches in real time. Watch leaderboards shift as the competition heats up — stay in the action.',
-    gradient: ['#000D1A', '#000000'] as [string, string],
+    gradient: ['#000E1F', '#0A0A0A'] as [string, string],
     accent: '#3B82F6',
   },
   {
@@ -34,7 +34,7 @@ const SLIDES = [
     icon: 'wallet' as const,
     title: 'Win Real Rewards',
     body: 'Compete for prize pools paid directly to your wallet in Indian Rupees. Every match counts.',
-    gradient: ['#001A00', '#000000'] as [string, string],
+    gradient: ['#051A00', '#0A0A0A'] as [string, string],
     accent: '#22C55E',
   },
 ];
@@ -69,6 +69,7 @@ export default function OnboardingScreen() {
     <View style={styles.container}>
       <LinearGradient colors={slide.gradient} style={StyleSheet.absoluteFill} />
 
+      {/* Skip — top right */}
       {!isLast && (
         <TouchableOpacity
           style={[styles.skipBtn, { top: topPad + 12 }]}
@@ -79,6 +80,7 @@ export default function OnboardingScreen() {
         </TouchableOpacity>
       )}
 
+      {/* Slides */}
       <FlatList
         ref={listRef}
         data={SLIDES}
@@ -90,30 +92,36 @@ export default function OnboardingScreen() {
         style={{ flex: 1 }}
         renderItem={({ item }) => (
           <View style={[styles.slide, { width, paddingTop: topPad + 60 }]}>
-            <View style={[styles.iconRing, { borderColor: item.accent + '35' }]}>
-              <View style={[styles.iconFill, { backgroundColor: item.accent + '12' }]}>
-                <Ionicons name={item.icon} size={60} color={item.accent} />
+            {/* Icon */}
+            <View style={[styles.iconRing, { borderColor: item.accent + '40' }]}>
+              <View style={[styles.iconFill, { backgroundColor: item.accent + '16' }]}>
+                <Ionicons name={item.icon} size={56} color={item.accent} />
               </View>
             </View>
+
+            {/* Text */}
             <Text style={styles.slideTitle}>{item.title}</Text>
             <Text style={styles.slideBody}>{item.body}</Text>
           </View>
         )}
       />
 
+      {/* Bottom section */}
       <View style={[styles.bottom, { paddingBottom: bottomPad + 28 }]}>
+        {/* Dots */}
         <View style={styles.dots}>
           {SLIDES.map((s, i) => (
             <View
               key={i}
               style={[
                 styles.dot,
-                i === activeIndex && { backgroundColor: slide.accent, width: 24, borderRadius: 4 },
+                i === activeIndex && { backgroundColor: slide.accent, width: 22, borderRadius: 4 },
               ]}
             />
           ))}
         </View>
 
+        {/* CTA */}
         <TouchableOpacity
           style={[styles.cta, { backgroundColor: slide.accent }]}
           onPress={goNext}
@@ -124,11 +132,12 @@ export default function OnboardingScreen() {
             name={isLast ? 'arrow-forward-circle-outline' : 'chevron-forward'}
             size={20}
             color="#fff"
-            style={{ marginLeft: 4 }}
+            style={{ marginLeft: 6 }}
           />
         </TouchableOpacity>
 
-        <Text style={styles.counter}>{activeIndex + 1} / {SLIDES.length}</Text>
+        {/* Page counter */}
+        <Text style={styles.counter}>{activeIndex + 1} of {SLIDES.length}</Text>
       </View>
     </View>
   );
@@ -137,22 +146,20 @@ export default function OnboardingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: '#0A0A0A',
   },
 
   skipBtn: {
     position: 'absolute',
-    right: 20,
+    right: 24,
     zIndex: 10,
     paddingHorizontal: 14,
-    paddingVertical: 8,
+    paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: Colors.background.elevated,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: Colors.border.default,
+    backgroundColor: '#1A1A1A',
   },
   skipText: {
-    color: Colors.text.secondary,
+    color: '#888888',
     fontSize: 13,
     fontFamily: 'Inter_500Medium',
   },
@@ -165,37 +172,36 @@ const styles = StyleSheet.create({
   },
 
   iconRing: {
-    width: 156,
-    height: 156,
-    borderRadius: 78,
-    borderWidth: 1,
+    width: 148,
+    height: 148,
+    borderRadius: 74,
+    borderWidth: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 48,
+    marginBottom: 44,
   },
   iconFill: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 116,
+    height: 116,
+    borderRadius: 58,
     alignItems: 'center',
     justifyContent: 'center',
   },
 
   slideTitle: {
-    fontSize: 32,
+    fontSize: 30,
     fontFamily: 'Inter_700Bold',
     color: '#FFFFFF',
     textAlign: 'center',
-    letterSpacing: -0.8,
+    letterSpacing: -0.5,
     marginBottom: 16,
-    lineHeight: 38,
   },
   slideBody: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted,
+    color: '#777777',
     textAlign: 'center',
-    lineHeight: 25,
+    lineHeight: 24,
     maxWidth: 300,
   },
 
@@ -205,26 +211,26 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     alignItems: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 25,
     gap: 16,
   },
 
   dots: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 7,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: Colors.border.default,
+    backgroundColor: '#2A2A2A',
   },
 
   cta: {
     width: '100%',
     height: 54,
-    borderRadius: 14,
+    borderRadius: 27,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -233,11 +239,11 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.1,
+    letterSpacing: 0.2,
   },
 
   counter: {
-    color: Colors.text.muted,
+    color: '#3A3A3A',
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',

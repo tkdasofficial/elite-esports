@@ -11,49 +11,53 @@ import { Colors } from '@/utils/colors';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { useAuth } from '@/store/AuthContext';
 
-const TAB_HEIGHT = 62;
+const TAB_HEIGHT = 64;
 
+/* ── Tab icon map ── */
 const isIOS = Platform.OS === 'ios';
 
-function getTabIcon(routeName: string, color: string, size: number = 24) {
+function getTabIcon(routeName: string, color: string) {
   switch (routeName) {
     case 'index':
       return isIOS
-        ? <SymbolView name="house" tintColor={color} size={size} />
-        : <Feather name="home" size={size} color={color} />;
+        ? <SymbolView name="house" tintColor={color} size={26} />
+        : <Feather name="home" size={24} color={color} />;
     case 'live':
       return isIOS
-        ? <SymbolView name="play.circle" tintColor={color} size={size} />
-        : <Ionicons name="play-circle-outline" size={size + 2} color={color} />;
+        ? <SymbolView name="play.circle" tintColor={color} size={26} />
+        : <Ionicons name="play-circle-outline" size={26} color={color} />;
     case 'leaderboard':
       return isIOS
-        ? <SymbolView name="trophy" tintColor={color} size={size} />
-        : <Ionicons name="trophy-outline" size={size} color={color} />;
+        ? <SymbolView name="trophy" tintColor={color} size={26} />
+        : <Ionicons name="trophy-outline" size={26} color={color} />;
     case 'wallet':
       return isIOS
-        ? <SymbolView name="creditcard" tintColor={color} size={size} />
-        : <Ionicons name="wallet-outline" size={size} color={color} />;
+        ? <SymbolView name="creditcard" tintColor={color} size={26} />
+        : <Ionicons name="wallet-outline" size={26} color={color} />;
     case 'profile':
       return isIOS
-        ? <SymbolView name="person" tintColor={color} size={size} />
-        : <Ionicons name="person-outline" size={size} color={color} />;
+        ? <SymbolView name="person" tintColor={color} size={26} />
+        : <Ionicons name="person-outline" size={26} color={color} />;
     default:
       return null;
   }
 }
 
+/* ── Fully custom tab bar — icons perfectly centered ── */
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'web' ? WEB_BOTTOM_INSET : insets.bottom;
 
   return (
     <View style={[styles.tabBar, { height: TAB_HEIGHT + bottomPad }]}>
+      {/* Background */}
       {isIOS ? (
-        <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.tabBarBg]} />
       )}
 
+      {/* Icon row — sits above safe area */}
       <View style={styles.iconRow}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
@@ -81,8 +85,6 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               accessibilityState={isFocused ? { selected: true } : {}}
               accessibilityLabel={descriptors[route.key].options.tabBarAccessibilityLabel}
             >
-              {/* Active indicator pill */}
-              {isFocused && <View style={styles.activePill} />}
               {getTabIcon(route.name, color)}
             </TouchableOpacity>
           );
@@ -131,11 +133,11 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
     borderTopColor: Colors.border.default,
   },
   tabBarBg: {
-    backgroundColor: Colors.background.dark,
+    backgroundColor: '#0A0A0A',
   },
   iconRow: {
     height: TAB_HEIGHT,
@@ -147,13 +149,5 @@ const styles = StyleSheet.create({
     height: TAB_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  activePill: {
-    position: 'absolute',
-    top: 10,
-    width: 40,
-    height: 3,
-    borderRadius: 2,
-    backgroundColor: Colors.primary,
   },
 });

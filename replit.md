@@ -202,18 +202,11 @@ artifacts/elite-esports/
 ### Path Alias
 `@/*` → `./src/*`
 
-## Design System — Grok/YouTube Premium Level
-- **Primary**: `#FE4C11` (orange-red) — used sparingly for CTAs and key accents
-- **Background**: `#000000` true black (bg.dark), `#0F0F0F` cards (bg.card), `#161616` elevated (bg.elevated), `#1E1E1E` surface (bg.surface)
-- **Borders**: `#272727` (border.default), `#141414` (border.subtle) — hairline only
-- **Text**: `#FFFFFF` primary, `#9E9E9E` secondary, `#555555` muted
+## Design System
+- **Primary color**: `#FE4C11` (orange-red)
+- **Background**: `#0A0A0A` (near-black)
 - **Font**: Inter (400, 500, 600, 700 weights via @expo-google-fonts/inter)
-- **Theme**: Forced dark mode — OLED-friendly true black
-- **Logo mark**: Solid orange square `#FE4C11` with white bolt icon — no border or dark bg
-- **Tab bar**: 62px height, hairline top border, orange pill indicator (3px top bar) above active icon
-- **Cards**: `borderRadius: 16`, hairline border, YouTube-quality gradient overlays on banners
-- **Buttons**: `height: 48-54`, `borderRadius: 10-14`, no pill shape (except onboarding CTA)
-- **Input fields**: `height: 54`, elevated bg `#161616`, orange border on focus
+- **Theme**: Forced dark mode
 
 ## EAS Build Profiles (`eas.json`)
 | Profile | Type | Output | Use |

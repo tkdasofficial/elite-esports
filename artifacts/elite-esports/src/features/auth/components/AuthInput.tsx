@@ -30,11 +30,12 @@ export function AuthInput({
     <View style={styles.group}>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.wrapper, focused && styles.wrapperFocused]}>
+
         <View style={styles.iconSlot}>
           <Ionicons
             name={iconName}
-            size={17}
-            color={focused ? Colors.primary : Colors.text.muted}
+            size={18}
+            color={focused ? Colors.primary : '#606060'}
           />
         </View>
 
@@ -43,7 +44,7 @@ export function AuthInput({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={Colors.text.muted}
+          placeholderTextColor="#484848"
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           secureTextEntry={isPassword && !showText}
@@ -56,45 +57,49 @@ export function AuthInput({
           <TouchableOpacity
             onPress={() => setShowText(v => !v)}
             style={styles.eyeSlot}
-            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             activeOpacity={0.6}
           >
             <Ionicons
               name={showText ? 'eye-outline' : 'eye-off-outline'}
-              size={17}
-              color={Colors.text.muted}
+              size={18}
+              color="#606060"
             />
           </TouchableOpacity>
         ) : (
           <View style={styles.rightSpacer} />
         )}
+
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  group: { flex: 1 },
+  group: {
+    flex: 1,
+  },
   label: {
     fontSize: 11,
     fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.muted,
+    color: '#888888',
     marginBottom: 8,
-    letterSpacing: 0.7,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   wrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background.elevated,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.border.default,
+    backgroundColor: '#161616',
+    borderRadius: INPUT_HEIGHT / 2,
+    borderWidth: 1.5,
+    borderColor: '#2A2A2A',
     height: INPUT_HEIGHT,
+    overflow: 'hidden',
   },
   wrapperFocused: {
     borderColor: Colors.primary,
-    backgroundColor: '#1A0800',
+    backgroundColor: '#1C0A04',
   },
   iconSlot: {
     width: 48,
@@ -117,5 +122,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rightSpacer: { width: 48 },
+  rightSpacer: {
+    width: 48,
+  },
 });

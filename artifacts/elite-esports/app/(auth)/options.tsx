@@ -157,7 +157,7 @@ export default function AuthOptionsScreen() {
 const BTN_HEIGHT = 54;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background.dark },
+  container: { flex: 1, backgroundColor: '#0A0A0A' },
 
   content: {
     flex: 1,
@@ -172,28 +172,30 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   logoCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 16,
-    backgroundColor: Colors.primary,
+    width: 68,
+    height: 68,
+    borderRadius: 20,
+    backgroundColor: '#1A0500',
+    borderWidth: 1.5,
+    borderColor: '#4A1800',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   appName: {
-    fontSize: 26,
+    fontSize: 24,
     fontFamily: 'Inter_700Bold',
     color: '#FFFFFF',
-    letterSpacing: -0.5,
+    letterSpacing: -0.4,
     textAlign: 'center',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   accent: { color: Colors.primary },
   tagline: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted,
-    letterSpacing: 0.3,
+    color: '#555555',
+    letterSpacing: 0.5,
     textAlign: 'center',
   },
 
@@ -270,11 +272,11 @@ const styles = StyleSheet.create({
   },
   dividerLine: {
     flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: Colors.border.default,
+    height: 1,
+    backgroundColor: '#202020',
   },
   dividerText: {
-    color: Colors.text.muted,
+    color: '#484848',
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',
@@ -285,11 +287,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted,
+    color: '#3A3A3A',
     lineHeight: 20,
   },
   termsLink: {
-    color: Colors.text.secondary,
+    color: '#585858',
     fontFamily: 'Inter_500Medium',
   },
 });

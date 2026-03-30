@@ -25,61 +25,50 @@ export default function WalletScreen() {
         refreshing={loading}
         ListHeaderComponent={
           <View>
-            {/* Balance Card */}
-            <View style={styles.balanceCard}>
-              <LinearGradient
-                colors={['#1C0800', '#0A0300', '#000000']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={StyleSheet.absoluteFill}
-                borderRadius={18}
-              />
-              <View style={styles.balanceCardInner}>
-                <View style={styles.balanceTop}>
-                  <View style={styles.walletIconBox}>
-                    <Ionicons name="wallet" size={18} color={Colors.primary} />
-                  </View>
-                  <Text style={styles.balanceLabel}>Available Balance</Text>
-                </View>
-                <Text style={styles.balanceAmount}>₹{balance.toFixed(2)}</Text>
-                <View style={styles.actionRow}>
-                  <TouchableOpacity
-                    style={styles.actionBtn}
-                    onPress={() => router.push('/add-money')}
-                    activeOpacity={0.85}
-                  >
-                    <Ionicons name="add" size={18} color="#fff" />
-                    <Text style={styles.actionBtnText}>Add Money</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.actionBtn, styles.actionBtnGhost]}
-                    onPress={() => router.push('/withdraw')}
-                    activeOpacity={0.85}
-                  >
-                    <Ionicons name="arrow-up" size={18} color={Colors.primary} />
-                    <Text style={[styles.actionBtnText, { color: Colors.primary }]}>Withdraw</Text>
-                  </TouchableOpacity>
-                </View>
+            <LinearGradient
+              colors={['#2D0A00', '#180400']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.balanceCard}
+            >
+              <Text style={styles.balanceLabel}>Available Balance</Text>
+              <Text style={styles.balanceAmount}>₹{balance.toFixed(2)}</Text>
+              <View style={styles.actionRow}>
+                <TouchableOpacity
+                  style={styles.actionBtn}
+                  onPress={() => router.push('/add-money')}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="add-circle" size={18} color="#fff" />
+                  <Text style={styles.actionBtnText}>Add Money</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.actionBtn, styles.actionBtnOutline]}
+                  onPress={() => router.push('/withdraw')}
+                  activeOpacity={0.85}
+                >
+                  <Ionicons name="arrow-up-circle-outline" size={18} color={Colors.primary} />
+                  <Text style={[styles.actionBtnText, { color: Colors.primary }]}>Withdraw</Text>
+                </TouchableOpacity>
               </View>
-            </View>
+            </LinearGradient>
 
-            {/* History link */}
             <TouchableOpacity
-              style={styles.historyRow}
+              style={styles.historyBtn}
               onPress={() => router.push('/transaction-history')}
               activeOpacity={0.8}
             >
-              <View style={styles.historyLeft}>
+              <View style={styles.historyBtnLeft}>
                 <View style={styles.historyIconBox}>
-                  <Ionicons name="receipt-outline" size={15} color={Colors.primary} />
+                  <Ionicons name="receipt-outline" size={16} color={Colors.primary} />
                 </View>
-                <Text style={styles.historyLabel}>Full Transaction History</Text>
+                <Text style={styles.historyBtnText}>Full Transaction History</Text>
               </View>
-              <Ionicons name="chevron-forward" size={15} color={Colors.text.muted} />
+              <Ionicons name="chevron-forward" size={16} color={Colors.text.muted} />
             </TouchableOpacity>
 
             {transactions.length > 0 && (
-              <Text style={styles.sectionTitle}>Recent</Text>
+              <Text style={styles.sectionTitle}>Recent Transactions</Text>
             )}
           </View>
         }
@@ -87,14 +76,12 @@ export default function WalletScreen() {
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         ListEmptyComponent={
           loading ? (
-            <View style={styles.centered}>
-              <ActivityIndicator color={Colors.primary} />
-            </View>
+            <View style={styles.centered}><ActivityIndicator color={Colors.primary} /></View>
           ) : (
             <View style={styles.empty}>
-              <Ionicons name="wallet-outline" size={52} color={Colors.text.muted} />
-              <Text style={styles.emptyTitle}>No Transactions Yet</Text>
-              <Text style={styles.emptyText}>Add money to your wallet to get started</Text>
+              <Ionicons name="wallet-outline" size={56} color={Colors.text.muted} />
+              <Text style={styles.emptyTitle}>No Transactions</Text>
+              <Text style={styles.emptyText}>Add money to get started</Text>
             </View>
           )
         }
@@ -105,47 +92,29 @@ export default function WalletScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
-  list: { padding: 16, gap: 0 },
-
+  list: { padding: 16 },
   balanceCard: {
-    borderRadius: 18,
+    borderRadius: 20,
+    padding: 24,
     marginBottom: 12,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderColor: Colors.primary + '44',
-    overflow: 'hidden',
-  },
-  balanceCardInner: {
-    padding: 22,
-  },
-  balanceTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 14,
-  },
-  walletIconBox: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    backgroundColor: Colors.primary + '20',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   balanceLabel: {
     fontSize: 13,
     fontFamily: 'Inter_500Medium',
-    color: Colors.text.secondary,
-    letterSpacing: 0.2,
+    color: 'rgba(255,255,255,0.55)',
+    marginBottom: 6,
+    letterSpacing: 0.3,
   },
   balanceAmount: {
-    fontSize: 44,
+    fontSize: 40,
     fontFamily: 'Inter_700Bold',
-    color: Colors.text.primary,
-    marginBottom: 24,
-    letterSpacing: -1.5,
-    lineHeight: 50,
+    color: '#fff',
+    marginBottom: 22,
+    letterSpacing: -1,
   },
-  actionRow: { flexDirection: 'row', gap: 10 },
+  actionRow: { flexDirection: 'row', gap: 12 },
   actionBtn: {
     flex: 1,
     flexDirection: 'row',
@@ -153,67 +122,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 7,
     backgroundColor: Colors.primary,
-    borderRadius: 10,
-    height: 48,
+    borderRadius: 12,
+    height: 52,
   },
-  actionBtnGhost: {
+  actionBtnOutline: {
     backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Colors.primary + '80',
+    borderWidth: 1.5,
+    borderColor: Colors.primary,
   },
-  actionBtnText: {
-    color: '#fff',
-    fontSize: 14,
-    fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.1,
-  },
-
-  historyRow: {
+  actionBtnText: { color: '#fff', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  historyBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: Colors.background.card,
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
-    marginBottom: 22,
-    borderWidth: StyleSheet.hairlineWidth,
+    marginBottom: 20,
+    borderWidth: 1,
     borderColor: Colors.border.default,
   },
-  historyLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  historyBtnLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   historyIconBox: {
-    width: 30,
-    height: 30,
+    width: 32,
+    height: 32,
     borderRadius: 8,
-    backgroundColor: Colors.primary + '18',
+    backgroundColor: 'rgba(254,76,17,0.1)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  historyLabel: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-    color: Colors.text.primary,
-  },
-
+  historyBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
   sectionTitle: {
-    fontSize: 13,
+    fontSize: 17,
     fontFamily: 'Inter_700Bold',
-    color: Colors.text.muted,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 10,
+    color: Colors.text.primary,
+    marginBottom: 12,
   },
-
-  centered: { paddingTop: 40, alignItems: 'center' },
+  centered: { padding: 40, alignItems: 'center' },
   empty: { alignItems: 'center', paddingTop: 40, gap: 10 },
-  emptyTitle: {
-    fontSize: 18,
-    fontFamily: 'Inter_700Bold',
-    color: Colors.text.secondary,
-  },
-  emptyText: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted,
-    textAlign: 'center',
-  },
+  emptyTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: Colors.text.secondary },
+  emptyText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: Colors.text.muted },
 });
