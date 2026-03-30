@@ -1,6 +1,5 @@
 /**
- * SkeletonCard — mirrors the new MatchCard layout exactly.
- * Banner (16:9) + title bar + prize & button row, all shimmer.
+ * SkeletonLiveCard — shimmer placeholder that mirrors LiveMatchCard layout.
  */
 import React from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
@@ -11,22 +10,25 @@ const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W   = SCREEN_W - 32;
 const BANNER_H = Math.round(CARD_W * (9 / 16));
 
-export function SkeletonCard() {
+export function SkeletonLiveCard() {
   return (
     <View style={styles.card}>
       {/* Banner */}
       <SkeletonBar width={CARD_W} height={BANNER_H} radius={0} />
 
-      {/* Info strip */}
-      <View style={styles.strip}>
-        {/* Line 1 — title */}
-        <SkeletonBar width="72%" height={15} radius={7} />
-
-        {/* Line 2 — prize + button */}
-        <View style={styles.bottomRow}>
-          <SkeletonBar width={90} height={14} radius={6} />
-          <SkeletonBar width={88} height={33} radius={8} />
+      {/* Body */}
+      <View style={styles.body}>
+        {/* Game tag */}
+        <SkeletonBar width={64} height={10} radius={5} style={{ marginBottom: 8 }} />
+        {/* Title */}
+        <SkeletonBar width="78%" height={16} radius={7} style={{ marginBottom: 12 }} />
+        {/* Info row */}
+        <View style={styles.infoRow}>
+          <SkeletonBar width={80} height={14} radius={6} />
+          <SkeletonBar width={80} height={14} radius={6} />
         </View>
+        {/* Button */}
+        <SkeletonBar width="100%" height={44} radius={10} style={{ marginTop: 12 }} />
       </View>
     </View>
   );
@@ -40,15 +42,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border.default,
   },
-  strip: {
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 12,
-    gap: 10,
+  body: {
+    padding: 14,
   },
-  bottomRow: {
+  infoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 12,
   },
 });

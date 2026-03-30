@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
-  ActivityIndicator, Modal, Pressable, Platform,
+  Modal, Pressable, Platform,
 } from 'react-native';
 import { router } from 'expo-router';
 import { Feather, Ionicons } from '@expo/vector-icons';
@@ -11,6 +11,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Colors } from '@/utils/colors';
 import { GlobalHeader } from '@/components/GlobalHeader';
 import { AvatarSVG, AVATAR_NAMES } from '@/components/AvatarSVG';
+import { SkeletonBar } from '@/components/SkeletonBar';
 import { useAuth } from '@/store/AuthContext';
 import { useProfileCtx } from '@/store/ProfileContext';
 import { WEB_TOP_INSET } from '@/utils/webInsets';
@@ -39,9 +40,37 @@ export default function ProfileScreen() {
     return (
       <View style={styles.container}>
         <GlobalHeader />
-        <View style={[styles.centered, { paddingBottom: tabBarHeight }]}>
-          <ActivityIndicator color={Colors.primary} size="large" />
-        </View>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
+        >
+          {/* Cover shimmer */}
+          <SkeletonBar width="100%" height={170} radius={0} />
+          {/* Avatar circle */}
+          <View style={{ alignItems: 'center', marginTop: -48, marginBottom: 16 }}>
+            <SkeletonBar width={104} height={104} radius={52} />
+          </View>
+          {/* Name + username */}
+          <View style={{ alignItems: 'center', gap: 8, marginBottom: 24, paddingHorizontal: 20 }}>
+            <SkeletonBar width={160} height={20} radius={8} />
+            <SkeletonBar width={100} height={14} radius={6} />
+          </View>
+          {/* Action buttons */}
+          <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginBottom: 16 }}>
+            <SkeletonBar width="50%" height={42} radius={21} />
+            <SkeletonBar width="50%" height={42} radius={21} style={{ flex: 1 }} />
+          </View>
+          {/* Stats strip */}
+          <SkeletonBar width="90%" height={80} radius={16} style={{ alignSelf: 'center', marginBottom: 20 }} />
+          {/* Section bars */}
+          <View style={{ paddingHorizontal: 20, gap: 10 }}>
+            <SkeletonBar width="40%" height={15} radius={7} />
+            <SkeletonBar width="100%" height={56} radius={14} />
+            <SkeletonBar width="100%" height={56} radius={14} />
+            <SkeletonBar width="100%" height={56} radius={14} />
+            <SkeletonBar width="100%" height={56} radius={14} />
+          </View>
+        </ScrollView>
       </View>
     );
   }

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, FlatList, Text, StyleSheet, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
+import { Dimensions, View, FlatList, Text, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Colors } from '@/utils/colors';
@@ -7,8 +7,34 @@ import { LeaderboardTab } from '@/utils/types';
 import { GlobalHeader } from '@/components/GlobalHeader';
 import { LeaderRow } from '@/features/leaderboard/components/LeaderRow';
 import { useLeaderboard } from '@/features/leaderboard/hooks/useLeaderboard';
+import { SkeletonBar } from '@/components/SkeletonBar';
 
 const TABS: LeaderboardTab[] = ['Solo', 'Squad'];
+const SKELETON_COUNT = 8;
+const SCREEN_W = Dimensions.get('window').width;
+
+function SkeletonLeaderRow({ rank }: { rank: number }) {
+  return (
+    <View style={skStyles.row}>
+      <SkeletonBar width={28} height={14} radius={5} style={{ marginRight: 8 }} />
+      <SkeletonBar width={36} height={36} radius={18} style={{ marginRight: 10 }} />
+      <View style={{ flex: 1, gap: 5 }}>
+        <SkeletonBar width="55%" height={13} radius={5} />
+        <SkeletonBar width="35%" height={10} radius={4} />
+      </View>
+      <SkeletonBar width={56} height={13} radius={5} />
+    </View>
+  );
+}
+
+const skStyles = StyleSheet.create({
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+});
 
 export default function LeaderboardScreen() {
   const [activeTab, setActiveTab] = useState<LeaderboardTab>('Solo');
@@ -31,10 +57,22 @@ export default function LeaderboardScreen() {
         ))}
       </View>
 
-      {loading ? (
-        <View style={[styles.centered, { paddingBottom: tabBarHeight }]}>
-          <ActivityIndicator color={Colors.primary} size="large" />
-        </View>
+      {loading && data.length === 0 ? (
+        <FlatList
+          data={Array.from({ length: SKELETON_COUNT }, (_, i) => i)}
+          keyExtractor={i => `skel-lb-${i}`}
+          renderItem={({ index }) => <SkeletonLeaderRow rank={index + 1} />}
+          contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <View style={styles.listHeader}>
+              <SkeletonBar width={12} height={10} radius={4} style={{ marginRight: 36 }} />
+              <SkeletonBar width={60} height={10} radius={4} />
+              <View style={{ flex: 1 }} />
+              <SkeletonBar width={80} height={10} radius={4} />
+            </View>
+          }
+        />
       ) : (
         <FlatList
           data={data}
@@ -42,7 +80,9 @@ export default function LeaderboardScreen() {
           renderItem={({ item }) => <LeaderRow item={item} />}
           contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
           showsVerticalScrollIndicator={false}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />
+          }
           ListHeaderComponent={
             <View style={styles.listHeader}>
               <View style={styles.colRankWrapper}>
@@ -69,7 +109,6 @@ export default function LeaderboardScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   tabBar: {
     flexDirection: 'row',
     margin: 16,
@@ -91,10 +130,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   colRankWrapper: { width: 36, alignItems: 'center' },
-  colPlayerWrapper: {
-    flex: 1,
-    marginLeft: 46,
-  },
+  colPlayerWrapper: { flex: 1, marginLeft: 46 },
   colLabel: { fontSize: 11, fontFamily: 'Inter_500Medium', color: Colors.text.muted },
   empty: { alignItems: 'center', paddingTop: 60, gap: 12 },
   emptyTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: Colors.text.secondary },

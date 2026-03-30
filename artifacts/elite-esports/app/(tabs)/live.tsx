@@ -1,11 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { View, FlatList, Text, StyleSheet, ActivityIndicator, RefreshControl } from 'react-native';
+import { View, FlatList, Text, StyleSheet, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Colors } from '@/utils/colors';
 import { GlobalHeader } from '@/components/GlobalHeader';
 import { LiveMatchCard } from '@/features/live/components/LiveMatchCard';
+import { SkeletonLiveCard } from '@/features/live/components/SkeletonLiveCard';
 import { useLiveMatches } from '@/features/live/hooks/useLiveMatches';
+
+const SKELETON_COUNT = 3;
 
 export default function LiveScreen() {
   const { matches, loading, refreshing, refresh } = useLiveMatches();
@@ -24,13 +27,18 @@ export default function LiveScreen() {
     );
   }, [matches, query]);
 
-  if (loading) {
+  if (loading && matches.length === 0) {
     return (
       <View style={styles.container}>
         <GlobalHeader onSearch={setQuery} />
-        <View style={[styles.centered, { paddingBottom: tabBarHeight }]}>
-          <ActivityIndicator color={Colors.primary} size="large" />
-        </View>
+        <FlatList
+          data={Array.from({ length: SKELETON_COUNT }, (_, i) => i)}
+          keyExtractor={i => `skel-${i}`}
+          renderItem={() => <SkeletonLiveCard />}
+          contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
+          ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
+          showsVerticalScrollIndicator={false}
+        />
       </View>
     );
   }
@@ -44,7 +52,14 @@ export default function LiveScreen() {
         renderItem={({ item }) => <LiveMatchCard match={item} />}
         contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor={Colors.primary}
+          />
+        }
+        ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Ionicons
@@ -67,8 +82,7 @@ export default function LiveScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  list: { padding: 16, gap: 14 },
+  list: { padding: 16 },
   empty: { alignItems: 'center', paddingTop: 80, gap: 12 },
   emptyTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: Colors.text.secondary },
   emptyText: {

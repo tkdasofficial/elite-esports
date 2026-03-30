@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { Colors } from '@/utils/colors';
 import { GlobalHeader } from '@/components/GlobalHeader';
+import { SkeletonBar } from '@/components/SkeletonBar';
 import { useWallet } from '@/store/WalletContext';
 import { TransactionItem } from '@/features/wallet/components/TransactionItem';
 
@@ -76,7 +77,18 @@ export default function WalletScreen() {
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         ListEmptyComponent={
           loading ? (
-            <View style={styles.centered}><ActivityIndicator color={Colors.primary} /></View>
+            <View style={styles.skeletonList}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <View key={i} style={styles.skeletonRow}>
+                  <SkeletonBar width={36} height={36} radius={10} />
+                  <View style={{ flex: 1, gap: 6 }}>
+                    <SkeletonBar width="60%" height={13} radius={6} />
+                    <SkeletonBar width="40%" height={10} radius={5} />
+                  </View>
+                  <SkeletonBar width={64} height={13} radius={6} />
+                </View>
+              ))}
+            </View>
           ) : (
             <View style={styles.empty}>
               <Ionicons name="wallet-outline" size={56} color={Colors.text.muted} />
@@ -158,7 +170,14 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     marginBottom: 12,
   },
-  centered: { padding: 40, alignItems: 'center' },
+  skeletonList: { paddingTop: 8, gap: 10 },
+  skeletonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+  },
   empty: { alignItems: 'center', paddingTop: 40, gap: 10 },
   emptyTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: Colors.text.secondary },
   emptyText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: Colors.text.muted },
