@@ -16,6 +16,7 @@ interface Props {
 }
 
 const INPUT_HEIGHT = 54;
+const ICON_SLOT = 48;
 
 export function AuthInput({
   label, value, onChangeText, placeholder, iconName,
@@ -31,6 +32,7 @@ export function AuthInput({
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.wrapper, focused && styles.wrapperFocused]}>
 
+        {/* Left icon — absolutely pinned to the left */}
         <View style={styles.iconSlot}>
           <Ionicons
             name={iconName}
@@ -39,6 +41,7 @@ export function AuthInput({
           />
         </View>
 
+        {/* Text input — spans full width, padding keeps text clear of both icons */}
         <TextInput
           style={styles.input}
           value={value}
@@ -53,7 +56,8 @@ export function AuthInput({
           onBlur={() => setFocused(false)}
         />
 
-        {isPassword ? (
+        {/* Right icon — absolutely pinned to the right */}
+        {isPassword && (
           <TouchableOpacity
             onPress={() => setShowText(v => !v)}
             style={styles.eyeSlot}
@@ -66,8 +70,6 @@ export function AuthInput({
               color="#606060"
             />
           </TouchableOpacity>
-        ) : (
-          <View style={styles.rightSpacer} />
         )}
 
       </View>
@@ -101,12 +103,18 @@ const styles = StyleSheet.create({
     borderColor: Colors.primary,
     backgroundColor: '#1C0A04',
   },
+  /* Left icon: absolute, pinned to left edge, same width as right slot */
   iconSlot: {
-    width: 48,
-    height: INPUT_HEIGHT,
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: ICON_SLOT,
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 1,
   },
+  /* TextInput: full width, padding reserves space for both icon slots */
   input: {
     flex: 1,
     alignSelf: 'stretch',
@@ -114,18 +122,19 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
     paddingVertical: 0,
+    paddingLeft: ICON_SLOT,
+    paddingRight: ICON_SLOT,
     backgroundColor: 'transparent',
   },
+  /* Right icon: absolute, pinned to right edge, mirrors iconSlot exactly */
   eyeSlot: {
-    width: 48,
-    height: INPUT_HEIGHT,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: ICON_SLOT,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  rightSpacer: {
-    width: 48,
-    height: INPUT_HEIGHT,
-    alignItems: 'center',
-    justifyContent: 'center',
+    zIndex: 1,
   },
 });
