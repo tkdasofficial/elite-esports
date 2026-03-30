@@ -27,7 +27,7 @@
       "googleServicesFile": "./google-services.json",
       "package": "com.elite.esports.android",
       "versionCode": 1,
-      "compileSdkVersion": 35,
+      "compileSdkVersion": 36,
       "targetSdkVersion": 35,
       "minSdkVersion": 24,
       "adaptiveIcon": {
