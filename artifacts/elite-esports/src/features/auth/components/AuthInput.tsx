@@ -91,10 +91,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#161616',
-    borderRadius: 16,
+    borderRadius: INPUT_HEIGHT / 2,
     borderWidth: 1.5,
     borderColor: '#2A2A2A',
     height: INPUT_HEIGHT,
+    overflow: 'hidden',
   },
   wrapperFocused: {
     borderColor: Colors.primary,
