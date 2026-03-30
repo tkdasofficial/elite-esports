@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#161616',
-    borderRadius: INPUT_HEIGHT / 2,
+    borderRadius: 16,
     borderWidth: 1.5,
     borderColor: '#2A2A2A',
     height: INPUT_HEIGHT,
@@ -101,11 +101,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#1C0A04',
   },
   iconSlot: {
-    width: 52,
+    width: 48,
     height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingLeft: 4,
   },
   input: {
     flex: 1,
@@ -117,13 +116,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   eyeSlot: {
-    width: 52,
+    width: 48,
     height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingRight: 4,
   },
   rightSpacer: {
-    width: 52,
+    width: 48,
   },
 });
