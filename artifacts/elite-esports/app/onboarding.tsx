@@ -8,118 +8,68 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
-  useSharedValue, useAnimatedStyle, withTiming,
-  withSpring, interpolate, Extrapolation,
-  useAnimatedScrollHandler,
+  useSharedValue, useAnimatedStyle, withSpring,
+  useAnimatedScrollHandler, interpolate, Extrapolation,
 } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
+const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<number>);
 
-const SLIDES = [
-  {
-    id: '1',
-    number: '01',
-    icon: 'trophy' as const,
-    label: 'TOURNAMENTS',
-    title: 'Enter the\nArena',
-    body: 'Join elite eSports tournaments and battle the best players. Every match is your chance to prove yourself.',
-    bg: '#0A0A0A',
-    gradTop: ['#3D1100', '#200800', '#0A0A0A'] as [string, string, string],
-    accent: '#FE4C11',
-    dimAccent: '#7A2508',
-    ringA: '#FE4C1122',
-    ringB: '#FE4C1110',
-  },
-  {
-    id: '2',
-    number: '02',
-    icon: 'pulse' as const,
-    label: 'LIVE MATCHES',
-    title: 'Track Live\nBattles',
-    body: 'Follow matches in real time. Watch leaderboards shift as the competition heats up — stay in the action.',
-    bg: '#0A0A0A',
-    gradTop: ['#001A3D', '#000E1F', '#0A0A0A'] as [string, string, string],
-    accent: '#3B82F6',
-    dimAccent: '#1A3A6E',
-    ringA: '#3B82F622',
-    ringB: '#3B82F610',
-  },
-  {
-    id: '3',
-    number: '03',
-    icon: 'wallet' as const,
-    label: 'REAL REWARDS',
-    title: 'Win Real\nRewards',
-    body: 'Compete for prize pools paid directly to your wallet in Indian Rupees. Every match counts.',
-    bg: '#0A0A0A',
-    gradTop: ['#003818', '#051A00', '#0A0A0A'] as [string, string, string],
-    accent: '#22C55E',
-    dimAccent: '#0E5A2A',
-    ringA: '#22C55E22',
-    ringB: '#22C55E10',
-  },
-];
-
-const AnimatedFlatList = Animated.createAnimatedComponent(FlatList<typeof SLIDES[0]>);
+const TOTAL = 3;
 
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
-  const [activeIndex, setActiveIndex] = useState(0);
-  const flatListRef = useRef<FlatList>(null);
+  const [active, setActive] = useState(0);
+  const flatRef = useRef<FlatList>(null);
   const scrollX = useSharedValue(0);
   const ctaScale = useSharedValue(1);
 
   const topPad = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
   const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
 
-  const scrollHandler = useAnimatedScrollHandler({
-    onScroll: (e) => {
-      scrollX.value = e.contentOffset.x;
-    },
+  const onScroll = useAnimatedScrollHandler(e => {
+    scrollX.value = e.contentOffset.x;
   });
 
   const goNext = useCallback(async () => {
-    ctaScale.value = withSpring(0.94, { damping: 10 }, () => {
-      ctaScale.value = withSpring(1);
+    ctaScale.value = withSpring(0.93, { damping: 8 }, () => {
+      ctaScale.value = withSpring(1, { damping: 10 });
     });
-    if (activeIndex < SLIDES.length - 1) {
-      const next = activeIndex + 1;
-      flatListRef.current?.scrollToIndex({ index: next, animated: true });
-      setActiveIndex(next);
+    if (active < TOTAL - 1) {
+      const n = active + 1;
+      flatRef.current?.scrollToIndex({ index: n, animated: true });
+      setActive(n);
     } else {
       await AsyncStorage.setItem('onboarding_seen', 'true');
       router.replace('/(auth)/options');
     }
-  }, [activeIndex]);
+  }, [active]);
 
   const skip = useCallback(async () => {
     await AsyncStorage.setItem('onboarding_seen', 'true');
     router.replace('/(auth)/options');
   }, []);
 
-  const slide = SLIDES[activeIndex];
-  const isLast = activeIndex === SLIDES.length - 1;
+  const isLast = active === TOTAL - 1;
+  const accent = active === 0 ? '#FE4C11' : active === 1 ? '#3B82F6' : '#22C55E';
+  const dimAccent = active === 0 ? '#7A2508' : active === 1 ? '#1A3A6E' : '#0E5A2A';
 
-  const ctaAnimStyle = useAnimatedStyle(() => ({
+  const ctaAnim = useAnimatedStyle(() => ({
     transform: [{ scale: ctaScale.value }],
   }));
 
   return (
-    <View style={styles.container}>
-      {/* Background gradient — updates with active slide */}
+    <View style={styles.root}>
+      {/* Dynamic top gradient */}
       <LinearGradient
-        colors={slide.gradTop}
-        locations={[0, 0.38, 1]}
+        colors={
+          active === 0 ? ['#2A0900', '#150400', '#0A0A0A'] :
+          active === 1 ? ['#001B3E', '#000D1F', '#0A0A0A'] :
+          ['#003A18', '#001A0A', '#0A0A0A']
+        }
+        locations={[0, 0.4, 1]}
         style={StyleSheet.absoluteFill}
-      />
-
-      {/* Large ambient glow disc behind content */}
-      <View
-        style={[
-          styles.glowDisc,
-          { backgroundColor: slide.accent + '12', top: topPad + 20 },
-        ]}
       />
 
       {/* Skip */}
@@ -128,290 +78,267 @@ export default function OnboardingScreen() {
           style={[styles.skipBtn, { top: topPad + 16 }]}
           onPress={skip}
           activeOpacity={0.7}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Text style={styles.skipText}>Skip</Text>
-          <Ionicons name="chevron-forward" size={12} color="#666" />
+          <Text style={styles.skipTxt}>Skip</Text>
+          <Ionicons name="chevron-forward" size={12} color="#555" />
         </TouchableOpacity>
       )}
 
-      {/* Slide number top-left */}
-      <View style={[styles.slideNumWrap, { top: topPad + 16 }]}>
-        <Text style={[styles.slideNum, { color: slide.accent + '55' }]}>
-          {slide.number}
+      {/* Step indicator top-left */}
+      <View style={[styles.stepWrap, { top: topPad + 18 }]}>
+        <Text style={[styles.stepNum, { color: accent }]}>
+          {String(active + 1).padStart(2, '0')}
         </Text>
-        <Text style={[styles.slideNumOf, { color: slide.accent + '30' }]}>
-          /{SLIDES.length.toString().padStart(2, '0')}
-        </Text>
+        <Text style={styles.stepOf}>/ 03</Text>
       </View>
 
       {/* Slides */}
       <AnimatedFlatList
-        ref={flatListRef as any}
-        data={SLIDES}
-        keyExtractor={item => item.id}
+        ref={flatRef as any}
+        data={[0, 1, 2]}
+        keyExtractor={i => String(i)}
         horizontal
         pagingEnabled
         scrollEnabled={false}
         showsHorizontalScrollIndicator={false}
-        onScroll={scrollHandler}
+        onScroll={onScroll}
         scrollEventThrottle={16}
         style={{ flex: 1 }}
-        renderItem={({ item, index }) => (
-          <SlideItem
-            item={item}
-            index={index}
-            scrollX={scrollX}
-            topPad={topPad}
-          />
-        )}
+        renderItem={({ index }) => {
+          if (index === 0) return (
+            <Slide0 scrollX={scrollX} topPad={topPad} />
+          );
+          if (index === 1) return (
+            <Slide1 scrollX={scrollX} topPad={topPad} />
+          );
+          return (
+            <Slide2 scrollX={scrollX} topPad={topPad} />
+          );
+        }}
       />
 
-      {/* Bottom section */}
-      <View style={[styles.bottom, { paddingBottom: bottomPad + 24 }]}>
+      {/* Bottom */}
+      <View style={[styles.bottom, { paddingBottom: bottomPad + 20 }]}>
+        {/* Segment progress */}
+        <View style={styles.segRow}>
+          {[0, 1, 2].map(i => (
+            <View
+              key={i}
+              style={[
+                styles.seg,
+                {
+                  flex: i === active ? 2.2 : 1,
+                  height: i === active ? 4 : 3,
+                  backgroundColor:
+                    i < active ? accent + '80' :
+                    i === active ? accent : '#252525',
+                },
+              ]}
+            />
+          ))}
+        </View>
 
-        {/* Progress track */}
-        <ProgressBar
-          total={SLIDES.length}
-          activeIndex={activeIndex}
-          accent={slide.accent}
-        />
-
-        {/* CTA button */}
-        <Animated.View style={[styles.ctaWrap, ctaAnimStyle]}>
-          <TouchableOpacity
-            style={styles.ctaTouchable}
-            onPress={goNext}
-            activeOpacity={1}
-          >
+        {/* CTA */}
+        <Animated.View style={[styles.ctaWrap, ctaAnim]}>
+          <TouchableOpacity onPress={goNext} activeOpacity={1} style={styles.ctaTouch}>
             <LinearGradient
-              colors={[slide.accent, slide.dimAccent]}
+              colors={[accent, dimAccent]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.ctaGradient}
+              style={styles.ctaGrad}
             >
-              <Text style={styles.ctaText}>
+              <Text style={styles.ctaTxt}>
                 {isLast ? 'Get Started' : 'Continue'}
               </Text>
-              <View style={styles.ctaIconBg}>
+              <View style={[styles.ctaIcon, { backgroundColor: '#fff2' }]}>
                 <Ionicons
                   name={isLast ? 'flash' : 'arrow-forward'}
-                  size={17}
-                  color={slide.accent}
+                  size={16}
+                  color="#fff"
                 />
               </View>
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
 
-        {/* Terms hint on last slide */}
-        {isLast ? (
-          <Text style={styles.termsHint}>
-            By continuing you agree to our Terms & Privacy Policy
-          </Text>
-        ) : (
-          <Text style={styles.swipeHint}>
-            {activeIndex + 1} of {SLIDES.length}
-          </Text>
-        )}
+        <Text style={styles.hint}>
+          {isLast
+            ? 'By continuing you agree to our Terms & Privacy Policy'
+            : `${active + 1} of 3`}
+        </Text>
       </View>
     </View>
   );
 }
 
-/* ─── Slide item ─────────────────────────────────────────────────────────── */
-function SlideItem({
-  item,
-  index,
-  scrollX,
-  topPad,
-}: {
-  item: typeof SLIDES[0];
-  index: number;
-  scrollX: Animated.SharedValue<number>;
-  topPad: number;
-}) {
-  const iconWrapStyle = useAnimatedStyle(() => {
-    const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
-    const scale = interpolate(scrollX.value, inputRange, [0.7, 1, 0.7], Extrapolation.CLAMP);
-    const opacity = interpolate(scrollX.value, inputRange, [0, 1, 0], Extrapolation.CLAMP);
-    const translateY = interpolate(scrollX.value, inputRange, [40, 0, 40], Extrapolation.CLAMP);
-    return { opacity, transform: [{ scale }, { translateY }] };
-  });
-
-  const textWrapStyle = useAnimatedStyle(() => {
-    const inputRange = [(index - 1) * width, index * width, (index + 1) * width];
-    const opacity = interpolate(scrollX.value, inputRange, [0, 1, 0], Extrapolation.CLAMP);
-    const translateY = interpolate(scrollX.value, inputRange, [30, 0, 30], Extrapolation.CLAMP);
-    return { opacity, transform: [{ translateY }] };
+/* ═══════════════════════════════════════════════════════════════════════════
+   SLIDE 0 — "Enter the Arena"
+   Theme: Tournament brackets, rank podium, competitor count chips
+═══════════════════════════════════════════════════════════════════════════ */
+function Slide0({
+  scrollX, topPad,
+}: { scrollX: Animated.SharedValue<number>; topPad: number }) {
+  const fadeUp = useAnimatedStyle(() => {
+    const op = interpolate(scrollX.value, [0, width], [1, 0], Extrapolation.CLAMP);
+    const ty = interpolate(scrollX.value, [0, width], [0, 30], Extrapolation.CLAMP);
+    return { opacity: op, transform: [{ translateY: ty }] };
   });
 
   return (
-    <View style={[styles.slide, { width, paddingTop: topPad + 80 }]}>
+    <View style={[S0.slide, { width, paddingTop: topPad + 72 }]}>
+      {/* Trophy visual */}
+      <Animated.View style={[S0.iconBlock, fadeUp]}>
+        {/* Outer glow ring */}
+        <View style={S0.outerRing}>
+          <View style={S0.midRing}>
+            <LinearGradient
+              colors={['#FE4C1130', '#FE4C1108']}
+              style={S0.innerGrad}
+            >
+              <View style={S0.iconBox}>
+                <Ionicons name="trophy" size={52} color="#FE4C11" />
+              </View>
+            </LinearGradient>
+          </View>
+        </View>
 
-      {/* Decorative outer ring */}
-      <Animated.View style={[styles.iconOuterRing, { borderColor: item.ringB }, iconWrapStyle]}>
-        {/* Middle ring */}
-        <View style={[styles.iconMidRing, { borderColor: item.ringA }]}>
-          {/* Inner glow fill */}
-          <LinearGradient
-            colors={[item.accent + '28', item.accent + '08']}
-            style={styles.iconInnerFill}
-          >
-            {/* Icon container */}
-            <View style={[styles.iconBox, { backgroundColor: item.accent + '18', borderColor: item.accent + '40' }]}>
-              <Ionicons name={item.icon} size={48} color={item.accent} />
-            </View>
-          </LinearGradient>
+        {/* Rank badges flanking the trophy */}
+        <View style={S0.ranks}>
+          <View style={[S0.rankBadge, { backgroundColor: '#C0C0C015', borderColor: '#C0C0C040' }]}>
+            <Text style={[S0.rankIcon]}>🥈</Text>
+            <Text style={[S0.rankLbl, { color: '#C0C0C0' }]}>2nd</Text>
+          </View>
+          <View style={[S0.rankBadge, S0.rankCenter, { backgroundColor: '#FFD70018', borderColor: '#FFD70060' }]}>
+            <Text style={S0.rankIcon}>🏆</Text>
+            <Text style={[S0.rankLbl, { color: '#FFD700' }]}>1st</Text>
+          </View>
+          <View style={[S0.rankBadge, { backgroundColor: '#CD7F3215', borderColor: '#CD7F3240' }]}>
+            <Text style={S0.rankIcon}>🥉</Text>
+            <Text style={[S0.rankLbl, { color: '#CD7F32' }]}>3rd</Text>
+          </View>
         </View>
       </Animated.View>
 
-      {/* Label chip */}
-      <Animated.View style={[textWrapStyle, { alignItems: 'center' }]}>
-        <View style={[styles.labelChip, { borderColor: item.accent + '35', backgroundColor: item.accent + '12' }]}>
-          <View style={[styles.labelDot, { backgroundColor: item.accent }]} />
-          <Text style={[styles.labelText, { color: item.accent }]}>{item.label}</Text>
+      {/* Text */}
+      <Animated.View style={[S0.textBlock, fadeUp]}>
+        <View style={S0.chip}>
+          <View style={[S0.chipDot, { backgroundColor: '#FE4C11' }]} />
+          <Text style={[S0.chipTxt, { color: '#FE4C11' }]}>TOURNAMENTS</Text>
         </View>
 
-        {/* Title */}
-        <Text style={styles.slideTitle}>{item.title}</Text>
+        <Text style={S0.title}>
+          Enter the{'\n'}
+          <Text style={{ color: '#FE4C11' }}>Arena</Text>
+        </Text>
 
-        {/* Accent underline */}
-        <View style={[styles.titleUnderline, { backgroundColor: item.accent }]} />
+        <Text style={S0.body}>
+          Join elite eSports tournaments and battle the best players. Every match is your chance to prove yourself.
+        </Text>
 
-        {/* Body */}
-        <Text style={styles.slideBody}>{item.body}</Text>
+        {/* Stat row */}
+        <View style={S0.statRow}>
+          <View style={S0.statBox}>
+            <Ionicons name="people-outline" size={14} color="#FE4C11" />
+            <Text style={S0.statVal}>2,400+</Text>
+            <Text style={S0.statLbl}>Players</Text>
+          </View>
+          <View style={S0.statDivider} />
+          <View style={S0.statBox}>
+            <Ionicons name="calendar-outline" size={14} color="#FE4C11" />
+            <Text style={S0.statVal}>Daily</Text>
+            <Text style={S0.statLbl}>Tournaments</Text>
+          </View>
+          <View style={S0.statDivider} />
+          <View style={S0.statBox}>
+            <Ionicons name="game-controller-outline" size={14} color="#FE4C11" />
+            <Text style={S0.statVal}>5+</Text>
+            <Text style={S0.statLbl}>Games</Text>
+          </View>
+        </View>
       </Animated.View>
     </View>
   );
 }
 
-/* ─── Progress bar ──────────────────────────────────────────────────────── */
-function ProgressBar({
-  total, activeIndex, accent,
-}: {
-  total: number;
-  activeIndex: number;
-  accent: string;
-}) {
-  return (
-    <View style={styles.progressRow}>
-      {Array.from({ length: total }).map((_, i) => {
-        const active = i === activeIndex;
-        const done = i < activeIndex;
-        return (
-          <View
-            key={i}
-            style={[
-              styles.progressSeg,
-              {
-                backgroundColor: done ? accent + 'AA' : active ? accent : '#2A2A2A',
-                flex: active ? 2 : 1,
-                height: active ? 4 : 3,
-              },
-            ]}
-          />
-        );
-      })}
-    </View>
-  );
-}
-
-/* ─── Styles ──────────────────────────────────────────────────────────────── */
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0A0A0A',
-  },
-
-  glowDisc: {
-    position: 'absolute',
-    width: width * 1.1,
-    height: width * 1.1,
-    borderRadius: width * 0.55,
-    alignSelf: 'center',
-  },
-
-  skipBtn: {
-    position: 'absolute',
-    right: 22,
-    zIndex: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#1C1C1C',
-    borderWidth: 1,
-    borderColor: '#2C2C2C',
-  },
-  skipText: {
-    color: '#666666',
-    fontSize: 12,
-    fontFamily: 'Inter_500Medium',
-  },
-
-  slideNumWrap: {
-    position: 'absolute',
-    left: 24,
-    zIndex: 10,
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: 2,
-  },
-  slideNum: {
-    fontSize: 28,
-    fontFamily: 'Inter_700Bold',
-    letterSpacing: -1,
-  },
-  slideNumOf: {
-    fontSize: 14,
-    fontFamily: 'Inter_500Medium',
-  },
-
+const S0 = StyleSheet.create({
   slide: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingBottom: 220,
+    paddingHorizontal: 28,
+    paddingBottom: 230,
     gap: 0,
   },
-
-  iconOuterRing: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
+  iconBlock: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  outerRing: {
+    width: 180,
+    height: 180,
+    borderRadius: 90,
     borderWidth: 1,
+    borderColor: '#FE4C1120',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 40,
+    marginBottom: 20,
   },
-  iconMidRing: {
-    width: 164,
-    height: 164,
-    borderRadius: 82,
+  midRing: {
+    width: 144,
+    height: 144,
+    borderRadius: 72,
     borderWidth: 1.5,
+    borderColor: '#FE4C1138',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  iconInnerFill: {
+  innerGrad: {
     width: '100%',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconBox: {
-    width: 90,
-    height: 90,
-    borderRadius: 26,
+    width: 88,
+    height: 88,
+    borderRadius: 24,
+    backgroundColor: '#FE4C1118',
     borderWidth: 1.5,
+    borderColor: '#FE4C1145',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  labelChip: {
+  ranks: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 10,
+  },
+  rankBadge: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1,
+    gap: 2,
+  },
+  rankCenter: {
+    paddingVertical: 12,
+    borderRadius: 14,
+  },
+  rankIcon: {
+    fontSize: 20,
+  },
+  rankLbl: {
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 0.5,
+  },
+  textBlock: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
@@ -419,43 +346,688 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
     borderRadius: 20,
     borderWidth: 1,
-    marginBottom: 18,
+    borderColor: '#FE4C1135',
+    backgroundColor: '#FE4C1112',
+    marginBottom: 16,
   },
-  labelDot: {
+  chipDot: {
     width: 5,
     height: 5,
     borderRadius: 3,
   },
-  labelText: {
+  chipTxt: {
     fontSize: 10,
     fontFamily: 'Inter_700Bold',
     letterSpacing: 2,
   },
-
-  slideTitle: {
-    fontSize: 40,
+  title: {
+    fontSize: 38,
     fontFamily: 'Inter_700Bold',
     color: '#FFFFFF',
     textAlign: 'center',
-    letterSpacing: -1.5,
-    lineHeight: 46,
+    letterSpacing: -1.2,
+    lineHeight: 44,
+    marginBottom: 14,
+  },
+  body: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#5A5A5A',
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 300,
+    marginBottom: 24,
+  },
+  statRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#141414',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#222',
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    gap: 0,
+    width: '100%',
+  },
+  statBox: {
+    flex: 1,
+    alignItems: 'center',
+    gap: 3,
+  },
+  statVal: {
+    fontSize: 14,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
+  },
+  statLbl: {
+    fontSize: 10,
+    fontFamily: 'Inter_400Regular',
+    color: '#444',
+  },
+  statDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: '#222',
+  },
+});
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   SLIDE 1 — "Track Live Battles"
+   Theme: Live match ticker, mini leaderboard rows, real-time pulse
+═══════════════════════════════════════════════════════════════════════════ */
+function Slide1({
+  scrollX, topPad,
+}: { scrollX: Animated.SharedValue<number>; topPad: number }) {
+  const fadeUp = useAnimatedStyle(() => {
+    const op = interpolate(scrollX.value, [0, width, width * 2], [0, 1, 0], Extrapolation.CLAMP);
+    const ty = interpolate(scrollX.value, [0, width, width * 2], [30, 0, 30], Extrapolation.CLAMP);
+    return { opacity: op, transform: [{ translateY: ty }] };
+  });
+
+  const LEADERS = [
+    { name: 'ArjunX99', pts: 1840, kills: 42, rank: 1 },
+    { name: 'ShadowBlaze', pts: 1720, kills: 38, rank: 2 },
+    { name: 'NightRaider', pts: 1650, kills: 35, rank: 3 },
+  ];
+
+  return (
+    <View style={[S1.slide, { width, paddingTop: topPad + 72 }]}>
+      {/* Icon block with LIVE badge */}
+      <Animated.View style={[S1.iconBlock, fadeUp]}>
+        <View style={S1.liveWrapper}>
+          {/* Pulse ring */}
+          <View style={S1.pulseRingOuter}>
+            <View style={S1.pulseRingInner}>
+              <LinearGradient
+                colors={['#3B82F630', '#3B82F608']}
+                style={S1.innerGrad}
+              >
+                <View style={S1.iconBox}>
+                  <Ionicons name="pulse" size={48} color="#3B82F6" />
+                </View>
+              </LinearGradient>
+            </View>
+          </View>
+          {/* LIVE badge */}
+          <View style={S1.liveBadge}>
+            <View style={S1.liveDot} />
+            <Text style={S1.liveTxt}>LIVE</Text>
+          </View>
+        </View>
+      </Animated.View>
+
+      {/* Text + leaderboard */}
+      <Animated.View style={[S1.textBlock, fadeUp]}>
+        <View style={S1.chip}>
+          <View style={[S1.chipDot, { backgroundColor: '#3B82F6' }]} />
+          <Text style={[S1.chipTxt, { color: '#3B82F6' }]}>LIVE MATCHES</Text>
+        </View>
+
+        <Text style={S1.title}>
+          Track{' '}
+          <Text style={{ color: '#3B82F6' }}>Live</Text>
+          {'\n'}Battles
+        </Text>
+
+        <Text style={S1.body}>
+          Follow matches in real time. Watch leaderboards shift as the competition heats up — stay in the action.
+        </Text>
+
+        {/* Mini leaderboard */}
+        <View style={S1.leaderCard}>
+          <View style={S1.leaderHeader}>
+            <Text style={S1.leaderTitle}>Live Leaderboard</Text>
+            <View style={S1.liveTagSmall}>
+              <View style={S1.liveTagDot} />
+              <Text style={S1.liveTagTxt}>LIVE</Text>
+            </View>
+          </View>
+          {LEADERS.map((p) => (
+            <View key={p.rank} style={S1.leaderRow}>
+              <Text style={[S1.leaderRank, p.rank === 1 && { color: '#FFD700' }]}>
+                #{p.rank}
+              </Text>
+              <View style={[S1.leaderAvatar, {
+                backgroundColor: p.rank === 1 ? '#FFD70018' : p.rank === 2 ? '#C0C0C012' : '#CD7F3212',
+                borderColor: p.rank === 1 ? '#FFD70040' : p.rank === 2 ? '#C0C0C030' : '#CD7F3230',
+              }]}>
+                <Ionicons name="person" size={11} color={p.rank === 1 ? '#FFD700' : p.rank === 2 ? '#C0C0C0' : '#CD7F32'} />
+              </View>
+              <Text style={S1.leaderName}>{p.name}</Text>
+              <View style={{ flex: 1 }} />
+              <View style={S1.killBadge}>
+                <Ionicons name="flame" size={9} color="#FE4C11" />
+                <Text style={S1.killTxt}>{p.kills}</Text>
+              </View>
+              <Text style={S1.leaderPts}>{p.pts.toLocaleString()}</Text>
+            </View>
+          ))}
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
+const S1 = StyleSheet.create({
+  slide: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+    paddingBottom: 230,
+    gap: 0,
+  },
+  iconBlock: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  liveWrapper: {
+    alignItems: 'center',
+  },
+  pulseRingOuter: {
+    width: 170,
+    height: 170,
+    borderRadius: 85,
+    borderWidth: 1,
+    borderColor: '#3B82F618',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 12,
   },
-  titleUnderline: {
-    width: 36,
-    height: 3,
-    borderRadius: 2,
+  pulseRingInner: {
+    width: 136,
+    height: 136,
+    borderRadius: 68,
+    borderWidth: 1.5,
+    borderColor: '#3B82F635',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  innerGrad: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBox: {
+    width: 82,
+    height: 82,
+    borderRadius: 22,
+    backgroundColor: '#3B82F618',
+    borderWidth: 1.5,
+    borderColor: '#3B82F640',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FF000018',
+    borderWidth: 1,
+    borderColor: '#FF000040',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  liveDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#FF3B3B',
+  },
+  liveTxt: {
+    color: '#FF3B3B',
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 2,
+  },
+  textBlock: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#3B82F635',
+    backgroundColor: '#3B82F612',
+    marginBottom: 14,
+  },
+  chipDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  chipTxt: {
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 2,
+  },
+  title: {
+    fontSize: 38,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: -1.2,
+    lineHeight: 44,
+    marginBottom: 12,
+  },
+  body: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#5A5A5A',
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 300,
     marginBottom: 20,
   },
-  slideBody: {
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-    color: '#636363',
-    textAlign: 'center',
-    lineHeight: 25,
-    maxWidth: 310,
+  leaderCard: {
+    width: '100%',
+    backgroundColor: '#111',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#222',
+    padding: 14,
+    gap: 8,
   },
+  leaderHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 6,
+  },
+  leaderTitle: {
+    color: '#888',
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    letterSpacing: 0.5,
+  },
+  liveTagSmall: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FF3B3B18',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FF3B3B35',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+  },
+  liveTagDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#FF3B3B',
+  },
+  liveTagTxt: {
+    color: '#FF3B3B',
+    fontSize: 9,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 1,
+  },
+  leaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 5,
+    borderTopWidth: 1,
+    borderTopColor: '#1A1A1A',
+  },
+  leaderRank: {
+    width: 22,
+    fontSize: 11,
+    fontFamily: 'Inter_700Bold',
+    color: '#444',
+  },
+  leaderAvatar: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leaderName: {
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    color: '#CCC',
+    flex: 1,
+  },
+  killBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    backgroundColor: '#FE4C1115',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginRight: 6,
+  },
+  killTxt: {
+    fontSize: 10,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FE4C11',
+  },
+  leaderPts: {
+    fontSize: 12,
+    fontFamily: 'Inter_700Bold',
+    color: '#3B82F6',
+    minWidth: 36,
+    textAlign: 'right',
+  },
+});
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   SLIDE 2 — "Win Real Rewards"
+   Theme: Prize pool display, rupee breakdown, wallet graphic
+═══════════════════════════════════════════════════════════════════════════ */
+function Slide2({
+  scrollX, topPad,
+}: { scrollX: Animated.SharedValue<number>; topPad: number }) {
+  const fadeUp = useAnimatedStyle(() => {
+    const op = interpolate(scrollX.value, [width, width * 2], [0, 1], Extrapolation.CLAMP);
+    const ty = interpolate(scrollX.value, [width, width * 2], [30, 0], Extrapolation.CLAMP);
+    return { opacity: op, transform: [{ translateY: ty }] };
+  });
+
+  const PRIZES = [
+    { label: '1st Place', amount: '₹5,000', color: '#FFD700', icon: '🥇' },
+    { label: '2nd Place', amount: '₹3,000', color: '#C0C0C0', icon: '🥈' },
+    { label: '3rd Place', amount: '₹2,000', color: '#CD7F32', icon: '🥉' },
+  ];
+
+  return (
+    <View style={[S2.slide, { width, paddingTop: topPad + 72 }]}>
+      {/* Wallet icon + prize amount */}
+      <Animated.View style={[S2.iconBlock, fadeUp]}>
+        <View style={S2.prizeRing}>
+          <View style={S2.prizeRingInner}>
+            <LinearGradient
+              colors={['#22C55E30', '#22C55E08']}
+              style={S2.innerGrad}
+            >
+              <View style={S2.iconBox}>
+                <Ionicons name="wallet" size={48} color="#22C55E" />
+              </View>
+            </LinearGradient>
+          </View>
+        </View>
+
+        {/* Prize pool pill */}
+        <View style={S2.poolPill}>
+          <Text style={S2.poolLabel}>TOTAL PRIZE POOL</Text>
+          <Text style={S2.poolAmount}>₹10,000</Text>
+          <Text style={S2.poolSub}>per tournament</Text>
+        </View>
+      </Animated.View>
+
+      {/* Text */}
+      <Animated.View style={[S2.textBlock, fadeUp]}>
+        <View style={S2.chip}>
+          <View style={[S2.chipDot, { backgroundColor: '#22C55E' }]} />
+          <Text style={[S2.chipTxt, { color: '#22C55E' }]}>REAL REWARDS</Text>
+        </View>
+
+        <Text style={S2.title}>
+          Win{' '}
+          <Text style={{ color: '#22C55E' }}>Real</Text>
+          {'\n'}Rewards
+        </Text>
+
+        <Text style={S2.body}>
+          Compete for prize pools paid directly to your wallet in Indian Rupees. Every match counts.
+        </Text>
+
+        {/* Prize breakdown */}
+        <View style={S2.prizeCard}>
+          <Text style={S2.prizeCardTitle}>Prize Distribution</Text>
+          {PRIZES.map((p) => (
+            <View key={p.label} style={S2.prizeRow}>
+              <Text style={S2.prizeIcon}>{p.icon}</Text>
+              <Text style={S2.prizeName}>{p.label}</Text>
+              <View style={{ flex: 1 }} />
+              <View style={[S2.prizeAmtBox, { borderColor: p.color + '40', backgroundColor: p.color + '10' }]}>
+                <Text style={[S2.prizeAmt, { color: p.color }]}>{p.amount}</Text>
+              </View>
+            </View>
+          ))}
+          <View style={S2.prizeFooter}>
+            <Ionicons name="flash" size={11} color="#22C55E" />
+            <Text style={S2.prizeFooterTxt}>Instant wallet credit after match ends</Text>
+          </View>
+        </View>
+      </Animated.View>
+    </View>
+  );
+}
+
+const S2 = StyleSheet.create({
+  slide: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+    paddingBottom: 230,
+    gap: 0,
+  },
+  iconBlock: {
+    alignItems: 'center',
+    marginBottom: 28,
+    gap: 14,
+  },
+  prizeRing: {
+    width: 164,
+    height: 164,
+    borderRadius: 82,
+    borderWidth: 1,
+    borderColor: '#22C55E18',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  prizeRingInner: {
+    width: 130,
+    height: 130,
+    borderRadius: 65,
+    borderWidth: 1.5,
+    borderColor: '#22C55E35',
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  innerGrad: {
+    width: '100%',
+    height: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 22,
+    backgroundColor: '#22C55E18',
+    borderWidth: 1.5,
+    borderColor: '#22C55E40',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  poolPill: {
+    alignItems: 'center',
+    backgroundColor: '#22C55E12',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#22C55E30',
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    gap: 2,
+  },
+  poolLabel: {
+    fontSize: 9,
+    fontFamily: 'Inter_700Bold',
+    color: '#22C55E',
+    letterSpacing: 2,
+  },
+  poolAmount: {
+    fontSize: 26,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
+    letterSpacing: -1,
+  },
+  poolSub: {
+    fontSize: 10,
+    fontFamily: 'Inter_400Regular',
+    color: '#444',
+    letterSpacing: 0.3,
+  },
+  textBlock: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#22C55E35',
+    backgroundColor: '#22C55E12',
+    marginBottom: 14,
+  },
+  chipDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  chipTxt: {
+    fontSize: 10,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: 2,
+  },
+  title: {
+    fontSize: 38,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    letterSpacing: -1.2,
+    lineHeight: 44,
+    marginBottom: 12,
+  },
+  body: {
+    fontSize: 14,
+    fontFamily: 'Inter_400Regular',
+    color: '#5A5A5A',
+    textAlign: 'center',
+    lineHeight: 22,
+    maxWidth: 300,
+    marginBottom: 20,
+  },
+  prizeCard: {
+    width: '100%',
+    backgroundColor: '#111',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#222',
+    padding: 14,
+    gap: 0,
+  },
+  prizeCardTitle: {
+    fontSize: 11,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#555',
+    letterSpacing: 0.5,
+    marginBottom: 10,
+  },
+  prizeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 7,
+    borderTopWidth: 1,
+    borderTopColor: '#1A1A1A',
+    gap: 10,
+  },
+  prizeIcon: {
+    fontSize: 18,
+  },
+  prizeName: {
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
+    color: '#888',
+  },
+  prizeAmtBox: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  prizeAmt: {
+    fontSize: 13,
+    fontFamily: 'Inter_700Bold',
+  },
+  prizeFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#1A1A1A',
+  },
+  prizeFooterTxt: {
+    fontSize: 11,
+    fontFamily: 'Inter_400Regular',
+    color: '#3A3A3A',
+  },
+});
+
+/* ─── Shared bottom styles ─────────────────────────────────────────────── */
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#0A0A0A',
+  },
+  skipBtn: {
+    position: 'absolute',
+    right: 20,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+    paddingHorizontal: 13,
+    paddingVertical: 7,
+    borderRadius: 20,
+    backgroundColor: '#1A1A1A',
+    borderWidth: 1,
+    borderColor: '#2A2A2A',
+  },
+  skipTxt: {
+    color: '#555',
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+  },
+  stepWrap: {
+    position: 'absolute',
+    left: 24,
+    zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 3,
+  },
+  stepNum: {
+    fontSize: 26,
+    fontFamily: 'Inter_700Bold',
+    letterSpacing: -1,
+  },
+  stepOf: {
+    fontSize: 13,
+    fontFamily: 'Inter_500Medium',
+    color: '#2A2A2A',
+  },
   bottom: {
     position: 'absolute',
     bottom: 0,
@@ -463,67 +1035,54 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     paddingHorizontal: 24,
-    gap: 18,
+    gap: 16,
   },
-
-  progressRow: {
+  segRow: {
     flexDirection: 'row',
     gap: 5,
     width: '100%',
     alignItems: 'center',
   },
-  progressSeg: {
+  seg: {
     borderRadius: 4,
-    overflow: 'hidden',
   },
-
   ctaWrap: {
     width: '100%',
     borderRadius: 16,
     overflow: 'hidden',
-    elevation: 6,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  ctaTouchable: {
+  ctaTouch: {
     width: '100%',
   },
-  ctaGradient: {
+  ctaGrad: {
     height: 58,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 16,
     gap: 10,
   },
-  ctaText: {
-    color: '#FFFFFF',
+  ctaTxt: {
+    color: '#FFF',
     fontSize: 16,
     fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
-  ctaIconBg: {
+  ctaIcon: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#FFFFFF22',
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  swipeHint: {
-    color: '#303030',
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    textAlign: 'center',
-  },
-  termsHint: {
-    color: '#383838',
+  hint: {
+    color: '#2E2E2E',
     fontSize: 11,
     fontFamily: 'Inter_400Regular',
     textAlign: 'center',
-    lineHeight: 17,
   },
 });
