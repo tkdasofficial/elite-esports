@@ -10,38 +10,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout Repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🟢 Setup Node
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: 📦 Install Dependencies
+      - name: Install Dependencies
         run: npm install
 
-      - name: ☕ Setup Java
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: 🤖 Setup Android SDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: 📁 Generate Android Folder (Expo Prebuild)
+      - name: Generate Android Project (Expo Prebuild)
         run: npx expo prebuild --platform android --no-install
 
-      - name: 🔧 Give Gradle Permission
+      - name: Grant Gradle Permission
         run: chmod +x android/gradlew
 
-      - name: 🏗 Build Debug APK
+      - name: Build Debug APK
         run: |
           cd android
           ./gradlew assembleDebug
 
-      - name: 📦 Upload APK
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
