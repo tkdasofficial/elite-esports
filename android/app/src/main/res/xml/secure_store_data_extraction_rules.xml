@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="secure_storage_key_1">value1</string>
+    <string name="secure_storage_key_2">value2</string>
+    <string name="secure_storage_key_3">value3</string>
+    <!-- Add more key-value pairs as needed -->
+</resources>
