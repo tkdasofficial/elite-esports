@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   ActivityIndicator, Alert, TextInput, Modal, KeyboardAvoidingView, Platform, RefreshControl,
@@ -11,23 +11,34 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { useMyTeam } from '@/features/team/hooks/useMyTeam';
 import { useAuth } from '@/store/AuthContext';
 import { supabase } from '@/services/supabase';
+import { useGames } from '@/features/games/hooks/useGames';
 
 const AVATARS = ['🎮', '⚡', '🔥', '💀', '🎯', '🛡️', '⚔️', '🏆'];
-const GAMES = ['BGMI', 'Free Fire', 'Valorant', 'COD Mobile', 'Clash Royale'];
 
 export default function MyTeamScreen() {
   const { user } = useAuth();
   const { team, loading, refreshing, refresh } = useMyTeam(user?.id);
+  const { games, loading: gamesLoading } = useGames();
   const insets = useSafeAreaInsets();
   const [showCreate, setShowCreate] = useState(false);
   const [teamName, setTeamName] = useState('');
   const [teamTag, setTeamTag] = useState('');
-  const [selectedGame, setSelectedGame] = useState(GAMES[0]);
+  const [selectedGame, setSelectedGame] = useState('');
   const [creating, setCreating] = useState(false);
+
+  useEffect(() => {
+    if (games.length > 0 && !selectedGame) {
+      setSelectedGame(games[0].name);
+    }
+  }, [games]);
 
   const handleCreate = async () => {
     if (!teamName.trim() || !teamTag.trim()) {
       Alert.alert('Required', 'Please fill in team name and tag.');
+      return;
+    }
+    if (!selectedGame) {
+      Alert.alert('No Games', 'No games have been added yet. Ask the admin to add games first.');
       return;
     }
     if (teamTag.length > 5) {
@@ -190,17 +201,25 @@ export default function MyTeamScreen() {
               />
 
               <Text style={styles.inputLabel}>Game</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
-                {GAMES.map(g => (
-                  <TouchableOpacity
-                    key={g}
-                    style={[styles.gamePill, selectedGame === g && styles.gamePillActive]}
-                    onPress={() => setSelectedGame(g)}
-                  >
-                    <Text style={[styles.gamePillText, selectedGame === g && styles.gamePillTextActive]}>{g}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
+              {gamesLoading ? (
+                <ActivityIndicator color={Colors.primary} style={{ marginBottom: 20 }} />
+              ) : games.length === 0 ? (
+                <View style={styles.noGamesWrap}>
+                  <Text style={styles.noGamesText}>No games available. Ask the admin to add games first.</Text>
+                </View>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>
+                  {games.map(g => (
+                    <TouchableOpacity
+                      key={g.id}
+                      style={[styles.gamePill, selectedGame === g.name && styles.gamePillActive]}
+                      onPress={() => setSelectedGame(g.name)}
+                    >
+                      <Text style={[styles.gamePillText, selectedGame === g.name && styles.gamePillTextActive]}>{g.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
 
               <TouchableOpacity
                 style={[styles.createBtnModal, creating && { opacity: 0.6 }]}
@@ -415,4 +434,14 @@ const styles = StyleSheet.create({
   },
   cancelBtn: { alignItems: 'center', padding: 14 },
   cancelText: { fontSize: 14, fontFamily: 'Inter_500Medium', color: Colors.text.muted },
+
+  noGamesWrap: {
+    backgroundColor: Colors.background.elevated,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: Colors.border.default,
+  },
+  noGamesText: { fontSize: 13, fontFamily: 'Inter_400Regular', color: Colors.text.muted, textAlign: 'center' },
 });
