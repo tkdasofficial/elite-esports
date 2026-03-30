@@ -9,6 +9,7 @@
       "distribution": "internal",
       "node": "20.18.0",
       "android": {
+        "image": "ubuntu-22.04-jdk-17.0.3-ndk-r21e",
         "gradleCommand": ":app:assembleDebug"
       },
       "env": {
@@ -22,7 +23,9 @@
       "distribution": "internal",
       "node": "20.18.0",
       "android": {
-        "buildType": "apk"
+        "image": "ubuntu-22.04-jdk-17.0.3-ndk-r21e",
+        "buildType": "apk",
+        "resourceClass": "medium"
       },
       "env": {
         "NPM_CONFIG_FROZEN_LOCKFILE": "false",
@@ -34,10 +37,13 @@
     "production": {
       "node": "20.18.0",
       "android": {
-        "buildType": "app-bundle"
+        "image": "ubuntu-22.04-jdk-17.0.3-ndk-r21e",
+        "buildType": "app-bundle",
+        "resourceClass": "medium"
       },
       "ios": {
-        "buildConfiguration": "Release"
+        "buildConfiguration": "Release",
+        "resourceClass": "medium"
       },
       "env": {
         "NPM_CONFIG_FROZEN_LOCKFILE": "false",
@@ -50,7 +56,9 @@
       "distribution": "internal",
       "node": "20.18.0",
       "android": {
-        "buildType": "apk"
+        "image": "ubuntu-22.04-jdk-17.0.3-ndk-r21e",
+        "buildType": "apk",
+        "resourceClass": "medium"
       },
       "env": {
         "NPM_CONFIG_FROZEN_LOCKFILE": "false",
