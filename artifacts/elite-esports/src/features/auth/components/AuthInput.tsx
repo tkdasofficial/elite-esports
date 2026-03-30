@@ -95,17 +95,17 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#2A2A2A',
     height: INPUT_HEIGHT,
-    overflow: 'hidden',
   },
   wrapperFocused: {
     borderColor: Colors.primary,
     backgroundColor: '#1C0A04',
   },
   iconSlot: {
-    width: 48,
+    width: 52,
     height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingLeft: 4,
   },
   input: {
     flex: 1,
@@ -117,12 +117,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   eyeSlot: {
-    width: 48,
+    width: 52,
     height: INPUT_HEIGHT,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingRight: 4,
   },
   rightSpacer: {
-    width: 48,
+    width: 52,
   },
 });
