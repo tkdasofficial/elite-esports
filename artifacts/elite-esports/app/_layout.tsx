@@ -17,7 +17,9 @@ import { ProfileProvider } from '@/store/ProfileContext';
 import { ThemeProvider } from '@/store/ThemeContext';
 import { NotificationsProvider } from '@/store/NotificationsContext';
 import { WalletProvider } from '@/store/WalletContext';
+import { AdProvider } from '@/store/AdContext';
 import { initNotifications } from '@/services/NotificationService';
+import { initMobileAds } from '@/services/AdMobService';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -61,6 +63,8 @@ export default function RootLayout() {
   }, [fontsLoaded, fontError]);
 
   useEffect(() => {
+    // Initialise AdMob SDK as early as possible (safe on web / Expo Go)
+    initMobileAds().catch(() => {});
     initNotifications().catch(() => {});
   }, []);
 
@@ -76,11 +80,14 @@ export default function RootLayout() {
               <ProfileProvider>
                 <NotificationsProvider>
                   <WalletProvider>
-                    <GestureHandlerRootView style={{ flex: 1 }}>
-                      <KeyboardProvider>
-                        <RootLayoutNav />
-                      </KeyboardProvider>
-                    </GestureHandlerRootView>
+                    {/* AdProvider wraps everything so any screen can call useAds() */}
+                    <AdProvider>
+                      <GestureHandlerRootView style={{ flex: 1 }}>
+                        <KeyboardProvider>
+                          <RootLayoutNav />
+                        </KeyboardProvider>
+                      </GestureHandlerRootView>
+                    </AdProvider>
                   </WalletProvider>
                 </NotificationsProvider>
               </ProfileProvider>

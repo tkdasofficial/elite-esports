@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, ActivityIndicator,
-  TouchableOpacity, Alert, Platform,
+  TouchableOpacity, Alert, Platform, BackHandler,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -13,23 +13,140 @@ import { STATUS_CONFIG } from '@/utils/types';
 import { useAuth } from '@/store/AuthContext';
 import { useMatchDetail } from '@/features/match/hooks/useMatchDetail';
 import { RoomDetails } from '@/features/match/components/RoomDetails';
+import { AdLoadingOverlay } from '@/components/AdLoadingOverlay';
+import { useAdGate } from '@/hooks/useAdGate';
+import { useAds } from '@/store/AdContext';
+import { supabase } from '@/services/supabase';
+import { useWallet } from '@/store/WalletContext';
 
 export default function MatchDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const { user } = useAuth();
-  const insets = useSafeAreaInsets();
+  const { id }                   = useLocalSearchParams<{ id: string }>();
+  const { user }                 = useAuth();
+  const { refreshWallet }        = useWallet();
+  const insets                   = useSafeAreaInsets();
   const { match, loading, hasJoined, joining, joinMatch } = useMatchDetail(id, user?.id);
+  const { adConfig, setInLiveMatch } = useAds();
+  const { gateAction, overlay, dismiss } = useAdGate();
 
-  const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
+  const [claimLoading,   setClaimLoading]   = useState(false);
+  const [claimResult,    setClaimResult]    = useState<{ rank: number; points: number; prize: number } | null>(null);
+  const [alreadyClaimed, setAlreadyClaimed] = useState(false);
 
-  const handleJoin = async () => {
-    const { error } = await joinMatch();
-    if (error) Alert.alert('Error', error.message);
-    else Alert.alert('Joined!', 'You have successfully joined the match.');
-  };
+  const bottomPad  = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
+  const isLive     = match?.status === 'ongoing';
+
+  // ── Mark in-live-match so timer ad is suppressed ─────────────────────────
+  useEffect(() => {
+    if (isLive && hasJoined) {
+      setInLiveMatch(true);
+      return () => setInLiveMatch(false);
+    }
+  }, [isLive, hasJoined, setInLiveMatch]);
+
+  // ── Fetch winner result when match is completed ──────────────────────────
+  useEffect(() => {
+    if (!user || match?.status !== 'completed') return;
+    (async () => {
+      const { data } = await supabase
+        .from('match_results')
+        .select('rank, points')
+        .eq('match_id', id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) {
+        // Calculate prize (top 3 get payouts proportional to prize pool)
+        const pool  = match?.prize_pool ?? 0;
+        const prize = data.rank === 1 ? pool * 0.5
+                    : data.rank === 2 ? pool * 0.3
+                    : data.rank === 3 ? pool * 0.1
+                    : 0;
+        setClaimResult({ rank: data.rank, points: data.points, prize });
+
+        // Check if already claimed via wallet_transactions
+        const { data: txn } = await supabase
+          .from('wallet_transactions')
+          .select('id')
+          .eq('reference_id', `result:${id}`)
+          .eq('user_id', user.id)
+          .maybeSingle();
+        setAlreadyClaimed(!!txn);
+      }
+    })();
+  }, [id, user, match?.status, match?.prize_pool]);
+
+  // ── Android hardware back: show leave ad if in live match ────────────────
+  useEffect(() => {
+    if (!isLive || !hasJoined) return;
+
+    const handler = BackHandler.addEventListener('hardwareBackPress', () => {
+      gateAction(
+        adConfig.leave,
+        () => router.back(),
+        'Loading Ad...',
+      );
+      return true; // prevent default back
+    });
+    return () => handler.remove();
+  }, [isLive, hasJoined, adConfig.leave, gateAction]);
+
+  // ── Join: show interstitial then join ────────────────────────────────────
+  const handleJoin = useCallback(() => {
+    gateAction(
+      adConfig.join,
+      async () => {
+        const { error } = await joinMatch();
+        if (error) Alert.alert('Error', error.message);
+        else Alert.alert('Joined!', 'You have successfully joined this match.');
+      },
+      'Loading Ad...',
+    );
+  }, [adConfig.join, gateAction, joinMatch]);
+
+  // ── Leave: show interstitial then go back ────────────────────────────────
+  const handleLeave = useCallback(() => {
+    gateAction(
+      adConfig.leave,
+      () => router.back(),
+      'Loading Ad...',
+    );
+  }, [adConfig.leave, gateAction]);
+
+  // ── Claim prize: show 60s rewarded ad then credit wallet ─────────────────
+  const handleClaim = useCallback(() => {
+    if (!claimResult || claimResult.prize <= 0 || !user) return;
+    gateAction(
+      adConfig.reward,
+      async () => {
+        setClaimLoading(true);
+        const { error } = await supabase.from('wallet_transactions').insert({
+          user_id:      user.id,
+          type:         'credit',
+          amount:       claimResult.prize,
+          status:       'approved',
+          reference_id: `result:${id}`,
+        });
+        if (!error) {
+          await refreshWallet();
+          setAlreadyClaimed(true);
+          Alert.alert(
+            '🏆 Prize Claimed!',
+            `₹${claimResult.prize.toFixed(2)} has been credited to your wallet.`,
+          );
+        } else {
+          Alert.alert('Error', error.message);
+        }
+        setClaimLoading(false);
+      },
+      'Loading Reward Ad...',
+    );
+  }, [claimResult, user, adConfig.reward, gateAction, id, refreshWallet]);
 
   if (loading) {
-    return <View style={[styles.container, styles.centered]}><ActivityIndicator color={Colors.primary} size="large" /></View>;
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator color={Colors.primary} size="large" />
+      </View>
+    );
   }
 
   if (!match) {
@@ -41,16 +158,31 @@ export default function MatchDetailScreen() {
     );
   }
 
-  const cfg = STATUS_CONFIG[match.status];
+  const cfg    = STATUS_CONFIG[match.status];
   const isFull = match.players_joined >= match.max_players;
   const canJoin = match.status === 'upcoming' && !isFull && !hasJoined;
+  const showLeaveBtn = isLive && hasJoined;
+  const showClaimBtn = match.status === 'completed'
+    && hasJoined
+    && claimResult !== null
+    && claimResult.prize > 0
+    && !alreadyClaimed;
 
   return (
     <View style={styles.container}>
+      {/* ── Ad loading overlay ──────────────────────────────────────────── */}
+      <AdLoadingOverlay
+        visible={overlay.visible}
+        bypassAfter={overlay.duration}
+        onSkip={dismiss}
+        label={overlay.label}
+      />
+
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 110 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 120 }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* Banner */}
         <View style={styles.bannerContainer}>
           {match.banner_url ? (
             <Image source={{ uri: match.banner_url }} style={styles.banner} contentFit="cover" />
@@ -60,6 +192,16 @@ export default function MatchDetailScreen() {
             </LinearGradient>
           )}
           <LinearGradient colors={['transparent', Colors.background.dark]} style={styles.bannerOverlay} />
+
+          {/* Back button — triggers leave ad during live match */}
+          <TouchableOpacity
+            style={styles.backBtn}
+            onPress={showLeaveBtn ? handleLeave : () => router.back()}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="arrow-back" size={22} color="#fff" />
+          </TouchableOpacity>
+
           <View style={[styles.statusBadge, { backgroundColor: cfg.color }]}>
             {match.status === 'ongoing' && <View style={styles.liveDot} />}
             <Text style={styles.statusText}>{cfg.label}</Text>
@@ -73,10 +215,10 @@ export default function MatchDetailScreen() {
 
           <View style={styles.statsGrid}>
             {[
-              { label: 'Entry Fee', value: `₹${match.entry_fee}`, icon: 'ticket-outline', highlight: false },
-              { label: 'Prize Pool', value: `₹${match.prize_pool}`, icon: 'trophy-outline', highlight: true },
-              { label: 'Players', value: `${match.players_joined}/${match.max_players}`, icon: 'people-outline', highlight: false },
-              { label: 'Starts At', value: new Date(match.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), icon: 'time-outline', highlight: false },
+              { label: 'Entry Fee',  value: `₹${match.entry_fee}`,  icon: 'ticket-outline',  highlight: false },
+              { label: 'Prize Pool', value: `₹${match.prize_pool}`, icon: 'trophy-outline',  highlight: true  },
+              { label: 'Players',    value: `${match.players_joined}/${match.max_players}`, icon: 'people-outline', highlight: false },
+              { label: 'Starts At',  value: new Date(match.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), icon: 'time-outline', highlight: false },
             ].map(({ label, value, icon, highlight }) => (
               <View key={label} style={styles.statCard}>
                 <Ionicons name={icon as any} size={18} color={highlight ? Colors.primary : Colors.text.secondary} />
@@ -86,6 +228,7 @@ export default function MatchDetailScreen() {
             ))}
           </View>
 
+          {/* Slot progress */}
           <View style={styles.slotSection}>
             <View style={styles.slotHeader}>
               <Text style={styles.slotTitle}>Slots</Text>
@@ -96,19 +239,37 @@ export default function MatchDetailScreen() {
             </View>
           </View>
 
-          {match.status === 'ongoing' && hasJoined && (
+          {/* Room details — visible once live and joined */}
+          {isLive && hasJoined && (
             <RoomDetails roomId={match.room_id} roomPassword={match.room_password} />
           )}
 
-          {match.status === 'ongoing' && !hasJoined && (
+          {isLive && !hasJoined && (
             <View style={styles.infoBox}>
               <Ionicons name="information-circle-outline" size={18} color={Colors.status.warning} />
               <Text style={styles.infoText}>Join the match to see room credentials</Text>
             </View>
           )}
+
+          {/* Winner result card */}
+          {claimResult !== null && (
+            <View style={styles.winnerCard}>
+              <Ionicons name="trophy" size={28} color="#FFD700" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.winnerRank}>Rank #{claimResult.rank}</Text>
+                <Text style={styles.winnerPoints}>{claimResult.points} points</Text>
+              </View>
+              {claimResult.prize > 0 && (
+                <Text style={styles.winnerPrize}>₹{claimResult.prize.toFixed(0)}</Text>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
 
+      {/* ── CTA Area ─────────────────────────────────────────────────────── */}
+
+      {/* Join button */}
       {canJoin && (
         <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
           <TouchableOpacity
@@ -127,11 +288,43 @@ export default function MatchDetailScreen() {
         </View>
       )}
 
-      {hasJoined && (
+      {/* Joined badge */}
+      {hasJoined && !showClaimBtn && match.status !== 'completed' && (
         <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
           <View style={styles.joinedBadge}>
             <Ionicons name="checkmark-circle" size={20} color={Colors.status.success} />
             <Text style={styles.joinedText}>You've joined this match</Text>
+          </View>
+        </View>
+      )}
+
+      {/* Claim prize button */}
+      {showClaimBtn && (
+        <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
+          <TouchableOpacity
+            style={[styles.claimBtn, claimLoading && styles.disabled]}
+            onPress={handleClaim}
+            disabled={claimLoading}
+            activeOpacity={0.85}
+          >
+            {claimLoading ? <ActivityIndicator color="#000" /> : (
+              <>
+                <Ionicons name="trophy" size={20} color="#000" />
+                <Text style={styles.claimBtnText}>
+                  Claim ₹{claimResult?.prize.toFixed(0)} Prize
+                </Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Already claimed */}
+      {match.status === 'completed' && hasJoined && alreadyClaimed && (
+        <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
+          <View style={styles.joinedBadge}>
+            <Ionicons name="checkmark-circle" size={20} color="#FFD700" />
+            <Text style={[styles.joinedText, { color: '#FFD700' }]}>Prize Claimed</Text>
           </View>
         </View>
       )}
@@ -141,15 +334,26 @@ export default function MatchDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
-  centered: { alignItems: 'center', justifyContent: 'center', gap: 12 },
-  scroll: {},
+  centered:  { alignItems: 'center', justifyContent: 'center', flex: 1, gap: 12 },
+  scroll:    {},
   bannerContainer: { position: 'relative' },
-  banner: { width: '100%', aspectRatio: 16 / 9, alignItems: 'center', justifyContent: 'center' },
+  banner:    { width: '100%', aspectRatio: 16 / 9, alignItems: 'center', justifyContent: 'center' },
   bannerOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 100 },
+  backBtn: {
+    position: 'absolute',
+    top: 48,
+    left: 16,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   statusBadge: {
     position: 'absolute',
     top: 12,
-    left: 12,
+    right: 12,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
@@ -157,9 +361,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
+  liveDot:    { width: 6, height: 6, borderRadius: 3, backgroundColor: '#fff' },
   statusText: { color: '#fff', fontSize: 11, fontFamily: 'Inter_700Bold' },
-  content: { padding: 20 },
+  content:    { padding: 20 },
   gameTag: {
     fontSize: 11,
     fontFamily: 'Inter_700Bold',
@@ -168,8 +372,8 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     marginBottom: 6,
   },
-  title: { fontSize: 24, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 8, lineHeight: 30 },
-  desc: { fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, lineHeight: 22, marginBottom: 20 },
+  title:  { fontSize: 24, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 8, lineHeight: 30 },
+  desc:   { fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, lineHeight: 22, marginBottom: 20 },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
   statCard: {
     flex: 1,
@@ -185,16 +389,11 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 16, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
   statLabel: { fontSize: 11, fontFamily: 'Inter_400Regular', color: Colors.text.secondary },
   slotSection: { marginBottom: 20 },
-  slotHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  slotTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
-  slotCount: { fontSize: 14, fontFamily: 'Inter_500Medium', color: Colors.text.secondary },
+  slotHeader:  { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  slotTitle:   { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
+  slotCount:   { fontSize: 14, fontFamily: 'Inter_500Medium', color: Colors.text.secondary },
   progressTrack: { height: 6, backgroundColor: Colors.background.elevated, borderRadius: 3 },
-  progressFill: { height: 6, backgroundColor: Colors.primary, borderRadius: 3 },
+  progressFill:  { height: 6, backgroundColor: Colors.primary, borderRadius: 3 },
   infoBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -205,7 +404,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(245,158,11,0.2)',
   },
-  infoText: { fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.status.warning, flex: 1 },
+  infoText:  { fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.status.warning, flex: 1 },
+  winnerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: 'rgba(255,215,0,0.08)',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,215,0,0.25)',
+    marginTop: 8,
+  },
+  winnerRank:   { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#FFD700' },
+  winnerPoints: { fontSize: 13, fontFamily: 'Inter_400Regular', color: Colors.text.secondary },
+  winnerPrize:  { fontSize: 22, fontFamily: 'Inter_700Bold', color: Colors.status.success },
   cta: {
     position: 'absolute',
     bottom: 0,
@@ -225,8 +438,18 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 10,
   },
-  disabled: { opacity: 0.6 },
-  joinBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
+  disabled:     { opacity: 0.6 },
+  joinBtnText:  { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
+  claimBtn: {
+    backgroundColor: '#FFD700',
+    borderRadius: 14,
+    height: 54,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  claimBtnText: { color: '#000', fontSize: 16, fontFamily: 'Inter_700Bold' },
   joinedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -238,6 +461,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(34,197,94,0.3)',
   },
-  joinedText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: Colors.status.success },
-  emptyTitle: { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: Colors.text.secondary },
+  joinedText:  { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: Colors.status.success },
+  emptyTitle:  { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: Colors.text.secondary },
 });
