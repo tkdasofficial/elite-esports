@@ -70,8 +70,6 @@ function TabIcon({
           color={iconColor}
         />
       </Animated.View>
-      {/* Active dot */}
-      {isFocused && <View style={styles.activeDot} />}
     </View>
   );
 }
@@ -119,7 +117,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   );
 
   return (
-    <View style={styles.tabBar}>
+    <View style={[styles.tabBar, { height: TAB_HEIGHT + bottomPad }]}>
       {Platform.OS === 'ios' ? (
         <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
       ) : (
@@ -152,7 +150,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: TAB_HEIGHT + 34,
   },
   androidBg: {
     backgroundColor: '#0A0A0AEE',
@@ -192,13 +189,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.8,
     shadowRadius: 10,
     elevation: 6,
-  },
-  activeDot: {
-    position: 'absolute',
-    bottom: 2,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.primary,
   },
 });
