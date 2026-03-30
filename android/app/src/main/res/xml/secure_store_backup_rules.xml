@@ -1,0 +1,7 @@
+<backup_rules>
+    <rule>
+        <name>example_rule</name>
+        <description>This is an example backup rule.</description>
+        <enabled>true</enabled>
+    </rule>
+</backup_rules>
