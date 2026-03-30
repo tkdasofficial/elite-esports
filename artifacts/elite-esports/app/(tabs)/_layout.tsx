@@ -2,7 +2,7 @@ import { BlurView } from 'expo-blur';
 import { Tabs, Redirect } from 'expo-router';
 import { Icon, NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import React from 'react';
 import { Platform, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +13,6 @@ import { useAuth } from '@/store/AuthContext';
 
 const TAB_HEIGHT = 64;
 
-/* ── Tab icon map ── */
 const isIOS = Platform.OS === 'ios';
 
 function getTabIcon(routeName: string, color: string) {
@@ -25,39 +24,36 @@ function getTabIcon(routeName: string, color: string) {
     case 'live':
       return isIOS
         ? <SymbolView name="play.circle" tintColor={color} size={26} />
-        : <Ionicons name="play-circle-outline" size={26} color={color} />;
+        : <Feather name="play-circle" size={24} color={color} />;
     case 'leaderboard':
       return isIOS
         ? <SymbolView name="trophy" tintColor={color} size={26} />
-        : <Ionicons name="trophy-outline" size={26} color={color} />;
+        : <Feather name="award" size={24} color={color} />;
     case 'wallet':
       return isIOS
         ? <SymbolView name="creditcard" tintColor={color} size={26} />
-        : <Ionicons name="wallet-outline" size={26} color={color} />;
+        : <Feather name="credit-card" size={24} color={color} />;
     case 'profile':
       return isIOS
         ? <SymbolView name="person" tintColor={color} size={26} />
-        : <Ionicons name="person-outline" size={26} color={color} />;
+        : <Feather name="user" size={24} color={color} />;
     default:
       return null;
   }
 }
 
-/* ── Fully custom tab bar — icons perfectly centered ── */
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const bottomPad = Platform.OS === 'web' ? WEB_BOTTOM_INSET : insets.bottom;
 
   return (
     <View style={[styles.tabBar, { height: TAB_HEIGHT + bottomPad }]}>
-      {/* Background */}
       {isIOS ? (
         <BlurView intensity={100} tint="dark" style={StyleSheet.absoluteFill} />
       ) : (
         <View style={[StyleSheet.absoluteFill, styles.tabBarBg]} />
       )}
 
-      {/* Icon row — sits above safe area */}
       <View style={styles.iconRow}>
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;

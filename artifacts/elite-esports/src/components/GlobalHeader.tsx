@@ -3,7 +3,7 @@ import {
   View, Text, TouchableOpacity, StyleSheet, Platform,
   Animated, TextInput, Keyboard,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Feather, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
@@ -56,9 +56,7 @@ export function GlobalHeader({ onSearch }: Props) {
     <View style={[styles.header, { paddingTop: topInset }]}>
       <View style={styles.content}>
 
-        {/* Center flex — logo and search bar share the same space via stacking */}
         <View style={styles.centerFlex}>
-          {/* Logo — fades out when searching */}
           <Animated.View
             style={[styles.logoRow, { opacity: logoOpacity }]}
             pointerEvents={searching ? 'none' : 'auto'}
@@ -71,10 +69,9 @@ export function GlobalHeader({ onSearch }: Props) {
             </Text>
           </Animated.View>
 
-          {/* Search bar — fades in over the logo */}
           {searching && (
             <Animated.View style={[StyleSheet.absoluteFill, styles.searchBar, { opacity: searchOpacity }]}>
-              <Ionicons name="search-outline" size={18} color={Colors.text.muted} />
+              <Feather name="search" size={18} color={Colors.text.muted} />
               <TextInput
                 ref={inputRef}
                 style={styles.searchInput}
@@ -88,15 +85,18 @@ export function GlobalHeader({ onSearch }: Props) {
                 onSubmitEditing={() => Keyboard.dismiss()}
               />
               {query.length > 0 && (
-                <TouchableOpacity onPress={() => handleChange('')} activeOpacity={0.7} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                  <Ionicons name="close-circle" size={18} color={Colors.text.muted} />
+                <TouchableOpacity
+                  onPress={() => handleChange('')}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Feather name="x-circle" size={18} color={Colors.text.muted} />
                 </TouchableOpacity>
               )}
             </Animated.View>
           )}
         </View>
 
-        {/* Right actions */}
         <View style={styles.right}>
           {searching ? (
             <TouchableOpacity onPress={closeSearch} activeOpacity={0.7} style={styles.cancelBtn}>
@@ -105,14 +105,14 @@ export function GlobalHeader({ onSearch }: Props) {
           ) : (
             <>
               <TouchableOpacity style={styles.iconBtn} onPress={openSearch} activeOpacity={0.7}>
-                <Ionicons name="search-outline" size={22} color={Colors.text.secondary} />
+                <Feather name="search" size={22} color={Colors.text.secondary} />
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.iconBtn}
                 onPress={() => router.push('/notifications')}
                 activeOpacity={0.7}
               >
-                <Ionicons name="notifications-outline" size={22} color={Colors.text.secondary} />
+                <Feather name="bell" size={22} color={Colors.text.secondary} />
                 {unreadCount > 0 && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
@@ -142,13 +142,11 @@ const styles = StyleSheet.create({
     paddingRight: 4,
     gap: 8,
   },
-
   centerFlex: {
     flex: 1,
     height: 44,
     justifyContent: 'center',
   },
-
   logoRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -171,7 +169,6 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
   },
   logoHighlight: { color: Colors.primary },
-
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -190,7 +187,6 @@ const styles = StyleSheet.create({
     height: '100%',
     paddingVertical: 0,
   },
-
   right: {
     flexDirection: 'row',
     alignItems: 'center',
