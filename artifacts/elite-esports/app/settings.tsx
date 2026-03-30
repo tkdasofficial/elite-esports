@@ -83,8 +83,9 @@ function SettingRow({
           value={value}
           onValueChange={onToggle}
           disabled={disabled}
-          trackColor={{ false: Colors.background.surface, true: Colors.primary }}
-          thumbColor="#fff"
+          trackColor={{ false: Colors.background.elevated, true: Colors.primary }}
+          thumbColor={value ? '#fff' : Colors.primary}
+          ios_backgroundColor={Colors.background.elevated}
         />
       )}
       {type === 'arrow' && <Ionicons name="chevron-forward" size={16} color={Colors.text.muted} />}
