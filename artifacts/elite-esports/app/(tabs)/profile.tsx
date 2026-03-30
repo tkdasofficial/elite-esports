@@ -188,7 +188,7 @@ export default function ProfileScreen() {
 
         {/* ── Menu ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>More</Text>
           <View style={styles.menuCard}>
             {MENU_ITEMS.map((item, i) => (
               <React.Fragment key={item.label}>
@@ -425,8 +425,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(254,76,17,0.1)',
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
-  gameRowName: { flex: 1, fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
-  gameRowUID:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.text.muted, flexShrink: 1, maxWidth: 110 },
+  gameRowName: { flex: 1, fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
+  gameRowUID:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.text.muted, flexShrink: 1, maxWidth: 110, includeFontPadding: false, textAlignVertical: 'center' },
   gameDivider: { height: 1, backgroundColor: Colors.border.subtle, marginHorizontal: 16 },
 
   /* ── Menu Card ── */
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(254,76,17,0.1)',
     alignItems: 'center', justifyContent: 'center',
   },
-  menuLabel: { flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary },
+  menuLabel: { flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
   menuDivider: { height: 1, backgroundColor: Colors.border.subtle, marginLeft: 66 },
 
   /* ── Sign Out ── */
