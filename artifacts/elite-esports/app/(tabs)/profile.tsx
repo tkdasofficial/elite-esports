@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(254,76,17,0.1)',
     alignItems: 'center', justifyContent: 'center',
   },
-  menuLabel: { flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
+  menuLabel: { flex: 1, fontSize: 15, lineHeight: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
   menuDivider: { height: 1, backgroundColor: Colors.border.subtle, marginLeft: 66 },
 
   /* ── Sign Out ── */
