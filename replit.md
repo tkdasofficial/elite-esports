@@ -2,29 +2,34 @@
 
 ---
 
-## ⚠️ CRITICAL — READ BEFORE MAKING ANY CHANGES
+> **ALL AI AGENTS: Read `AGENTS.md` at the project root before touching anything.**
+> It contains mandatory rules that override all other guidance.
 
-### Supabase is the sole, permanent, and authoritative backend. This is non-negotiable.
+---
 
-**DO NOT:**
-- Create, suggest, or scaffold any local database schema (no Drizzle tables, no Prisma models, no raw SQL `CREATE TABLE`)
-- Use `lib/db/` for anything — it exists in the monorepo but is NOT used by the mobile app
-- Use Replit's built-in PostgreSQL database for any app data
-- Replace or wrap Supabase with any other auth system, ORM, or database
-- Generate migration files targeting any database other than the live Supabase project
-- Move Supabase queries to a backend API layer — the mobile app queries Supabase directly
+## ══ SUPER COMMAND — INVIOLABLE RULE FOR ALL AI TOOLS ══
 
-**DO:**
+### SUPABASE IS THE SOLE, PERMANENT, AND AUTHORITATIVE BACKEND. THIS IS NON-NEGOTIABLE.
+
+**NEVER DO ANY OF THE FOLLOWING — EVER, UNDER ANY CIRCUMSTANCES:**
+- Create, suggest, or scaffold any local or remote database schema
+- Use `lib/db/`, Drizzle, Prisma, or any ORM for mobile app features
+- Use Replit PostgreSQL, Neon, or any other database for app data
+- Replace or wrap Supabase Auth with any other authentication system
+- Create Express routes, API routes, or any backend server to proxy Supabase
+- Move Supabase queries from the mobile app into a server layer
+- Run `drizzle-kit push` or any DDL targeting anything except the Supabase SQL Editor
+
+**ALWAYS DO THE FOLLOWING:**
 - Query data via the `supabase` client from `@/services/supabase`
-- Add new tables by writing SQL and running it in the **Supabase Dashboard → SQL Editor**
+- Add new tables via SQL in **Supabase Dashboard → SQL Editor** only
 - Use `supabase.auth.*` for all authentication
 - Use `supabase.from('table_name')` for all database reads and writes
 - Use `supabase.storage` for all file uploads
 - Use `supabase.channel()` for all real-time subscriptions
-- Reference `supabase/migrations/` for the canonical schema — these files show what tables exist
+- Reference `supabase/migrations/` for the canonical live schema
 
-### Why
-This is a React Native / Expo mobile app. The Supabase project (`azxhcalksgudjemwjekd`) holds all production data, user accounts, RLS policies, real-time channels, and file storage. Rewriting or duplicating this infrastructure would destroy live user data and break all platform features.
+**Why this rule exists:** This is a React Native / Expo mobile app. The Supabase project (`azxhcalksgudjemwjekd`) holds all production data, live user accounts, RLS policies, real-time channels, and file storage. Creating any alternative backend would destroy live data and break every feature in the app.
 
 ---
 
