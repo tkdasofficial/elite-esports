@@ -12,7 +12,7 @@ version = "1.0.0"
 [[services]]
 name = "expo"
 paths = [ "/" ]
-localPort = 8080
+localPort = 8081
 
 [services.development]
 run = "sh -c 'cd /home/runner/workspace && npm run dev -w @workspace/elite-esports'"
@@ -22,5 +22,5 @@ build = [ "sh", "-c", "cd /home/runner/workspace && npm run build -w @workspace/
 run = [ "sh", "-c", "cd /home/runner/workspace && npm run serve -w @workspace/elite-esports" ]
 
 [services.env]
-PORT = "8080"
+PORT = "8081"
 BASE_PATH = "/"

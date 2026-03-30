@@ -4,6 +4,7 @@
   "license": "MIT",
   "packageManager": "npm@10.8.2",
   "workspaces": [
+    "artifacts/api-server",
     "artifacts/elite-esports",
     "artifacts/mockup-sandbox",
     "lib/*",
