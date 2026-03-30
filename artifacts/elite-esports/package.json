@@ -58,9 +58,10 @@
     "zod-validation-error": "^3.4.0"
   },
   "dependencies": {
+    "@shopify/flash-list": "^2.0.2",
     "@supabase/supabase-js": "^2.100.0",
-    "expo-secure-store": "^15.0.8",
     "expo": "~54.0.33",
+    "expo-secure-store": "^15.0.8",
     "react": "19.1.0",
     "react-native": "0.81.5"
   }

@@ -1,11 +1,13 @@
 import React, { useRef, useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Platform,
+  View, Text, Pressable, StyleSheet, Platform,
   Animated, TextInput, Keyboard,
 } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Haptics from 'expo-haptics';
 import { Colors } from '@/utils/colors';
 import { useNotifications } from '@/store/NotificationsContext';
 import { WEB_TOP_INSET } from '@/utils/webInsets';
@@ -25,23 +27,20 @@ export function GlobalHeader({ onSearch }: Props) {
   const anim = useRef(new Animated.Value(0)).current;
 
   const openSearch = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     setSearching(true);
-    Animated.timing(anim, {
-      toValue: 1,
-      duration: 220,
-      useNativeDriver: true,
-    }).start(() => inputRef.current?.focus());
+    Animated.timing(anim, { toValue: 1, duration: 220, useNativeDriver: true }).start(
+      () => inputRef.current?.focus(),
+    );
   };
 
   const closeSearch = () => {
     Keyboard.dismiss();
     setQuery('');
     onSearch?.('');
-    Animated.timing(anim, {
-      toValue: 0,
-      duration: 180,
-      useNativeDriver: true,
-    }).start(() => setSearching(false));
+    Animated.timing(anim, { toValue: 0, duration: 180, useNativeDriver: true }).start(
+      () => setSearching(false),
+    );
   };
 
   const handleChange = (text: string) => {
@@ -52,8 +51,8 @@ export function GlobalHeader({ onSearch }: Props) {
   const logoOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0], extrapolate: 'clamp' });
   const searchOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
 
-  return (
-    <View style={[styles.header, { paddingTop: topInset }]}>
+  const Inner = (
+    <View style={[styles.inner, { paddingTop: topInset }]}>
       <View style={styles.content}>
 
         <View style={styles.centerFlex}>
@@ -62,16 +61,18 @@ export function GlobalHeader({ onSearch }: Props) {
             pointerEvents={searching ? 'none' : 'auto'}
           >
             <View style={styles.logoMark}>
-              <Ionicons name="flash" size={18} color={Colors.primary} />
+              <Ionicons name="flash" size={17} color={Colors.primary} />
             </View>
             <Text style={styles.logoText}>
-              Elite <Text style={styles.logoHighlight}>eSports</Text>
+              Elite <Text style={styles.logoAccent}>eSports</Text>
             </Text>
           </Animated.View>
 
           {searching && (
-            <Animated.View style={[StyleSheet.absoluteFill, styles.searchBar, { opacity: searchOpacity }]}>
-              <Feather name="search" size={18} color={Colors.text.muted} />
+            <Animated.View
+              style={[StyleSheet.absoluteFill, styles.searchBar, { opacity: searchOpacity }]}
+            >
+              <Feather name="search" size={17} color={Colors.text.muted} />
               <TextInput
                 ref={inputRef}
                 style={styles.searchInput}
@@ -85,13 +86,12 @@ export function GlobalHeader({ onSearch }: Props) {
                 onSubmitEditing={() => Keyboard.dismiss()}
               />
               {query.length > 0 && (
-                <TouchableOpacity
+                <Pressable
                   onPress={() => handleChange('')}
-                  activeOpacity={0.7}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Feather name="x-circle" size={18} color={Colors.text.muted} />
-                </TouchableOpacity>
+                  <Feather name="x-circle" size={17} color={Colors.text.muted} />
+                </Pressable>
               )}
             </Animated.View>
           )}
@@ -99,40 +99,77 @@ export function GlobalHeader({ onSearch }: Props) {
 
         <View style={styles.right}>
           {searching ? (
-            <TouchableOpacity onPress={closeSearch} activeOpacity={0.7} style={styles.cancelBtn}>
+            <Pressable onPress={closeSearch} style={styles.cancelBtn}>
               <Text style={styles.cancelText}>Cancel</Text>
-            </TouchableOpacity>
+            </Pressable>
           ) : (
             <>
-              <TouchableOpacity style={styles.iconBtn} onPress={openSearch} activeOpacity={0.7}>
-                <Feather name="search" size={22} color={Colors.text.secondary} />
-              </TouchableOpacity>
-              <TouchableOpacity
+              <Pressable
                 style={styles.iconBtn}
-                onPress={() => router.push('/notifications')}
-                activeOpacity={0.7}
+                onPress={openSearch}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
-                <Feather name="bell" size={22} color={Colors.text.secondary} />
+                <Feather name="search" size={21} color={Colors.text.secondary} />
+              </Pressable>
+              <Pressable
+                style={styles.iconBtn}
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.push('/notifications');
+                }}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Feather name="bell" size={21} color={Colors.text.secondary} />
                 {unreadCount > 0 && (
                   <View style={styles.badge}>
-                    <Text style={styles.badgeText}>{unreadCount > 9 ? '9+' : unreadCount}</Text>
+                    <Text style={styles.badgeTxt}>
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </Text>
                   </View>
                 )}
-              </TouchableOpacity>
+              </Pressable>
             </>
           )}
         </View>
-
       </View>
+    </View>
+  );
+
+  if (Platform.OS === 'ios') {
+    return (
+      <BlurView intensity={80} tint="dark" style={styles.blurWrap}>
+        <View style={styles.blurBorder} />
+        {Inner}
+      </BlurView>
+    );
+  }
+
+  return (
+    <View style={styles.androidWrap}>
+      <View style={styles.blurBorder} />
+      {Inner}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    backgroundColor: Colors.background.dark,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.subtle,
+  blurWrap: {
+    zIndex: 10,
+  },
+  androidWrap: {
+    backgroundColor: '#080808EE',
+    zIndex: 10,
+  },
+  blurBorder: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: Colors.border.subtle,
+  },
+  inner: {
+    backgroundColor: Platform.OS === 'ios' ? 'transparent' : undefined,
   },
   content: {
     height: 56,
@@ -153,14 +190,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   logoMark: {
-    width: 34,
-    height: 34,
+    width: 32,
+    height: 32,
     borderRadius: 9,
-    backgroundColor: '#1A0500',
+    backgroundColor: '#1C0400',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.primary + '99',
+    borderColor: Colors.primary + '88',
   },
   logoText: {
     fontSize: 18,
@@ -168,20 +205,20 @@ const styles = StyleSheet.create({
     color: Colors.text.primary,
     letterSpacing: -0.3,
   },
-  logoHighlight: { color: Colors.primary },
+  logoAccent: { color: Colors.primary },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background.surface,
+    backgroundColor: Colors.background.elevated,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.primary + '55',
+    borderColor: Colors.primary + '44',
     paddingHorizontal: 12,
     gap: 8,
   },
   searchInput: {
     flex: 1,
-    fontSize: 15,
+    fontSize: 14,
     fontFamily: 'Inter_400Regular',
     color: Colors.text.primary,
     height: '100%',
@@ -220,5 +257,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 3,
   },
-  badgeText: { color: '#fff', fontSize: 9, fontFamily: 'Inter_700Bold' },
+  badgeTxt: { color: '#fff', fontSize: 9, fontFamily: 'Inter_700Bold' },
 });

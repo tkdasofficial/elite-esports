@@ -36,6 +36,25 @@
 ## Overview
 A professional React Native Expo mobile app (Android-first, web-previewed) for competitive eSports tournaments. Package: `com.elite.esports.android`, version 1.0.0 Alpha. Built with Expo Router v6, Supabase as the sole backend, and a fully modular feature-based architecture. All currencies in Indian Rupees (₹).
 
+## Latest Upgrades (Phase 2)
+
+### UI / Theme
+- **Color tokens** updated: background `#080808`, card `#121212`, accent `#EE3D2D`
+- **GlobalHeader** — iOS BlurView, Pressable instead of TouchableOpacity, haptic feedback on search/bell, red notification badge
+- **MatchCard** — 16:9 aspect ratio banner, bottom `rgba(0,0,0,0.72)` gradient overlay, prize tag with gold ₹, Pressable with press scale, `borderRadius 16`, haptics on tap
+- **Tab bar** — Reanimated spring scale + glow shadow on active icon, Pressable, no labels, active dot indicator; removed iOS NativeTabs in favour of unified `ClassicTabLayout`
+
+### Performance & UX
+- **FlashList** (`@shopify/flash-list@2.0.2`) replaces `FlatList` in Home screen
+- **SkeletonCard** shimmer component: `react-native-reanimated` animated LinearGradient sweep, shown for 4 placeholder slots while first data loads
+- **`useMatches` offline-first**: loads AsyncStorage cache immediately on mount (stale-while-revalidate), then fetches fresh from Supabase in background; persists updates to cache; real-time subscription still active
+
+### Onboarding (3 separate component files)
+- `src/features/onboarding/WelcomeArena.tsx` — Shield icon, PVP/WIN badges, game tags, red concentric arcs, "Enter the Elite Arena"
+- `src/features/onboarding/PlayAndWin.tsx` — Green wallet hero, trophy/lightning side icons, stats card, "Compete, Dominate, Earn"
+- `src/features/onboarding/JoinElite.tsx` — 3×3 player avatar grid, online pill, region badges, big red "Get Started" CTA
+- `app/onboarding.tsx` — scrollEnabled=false FlatList pager calling goTo() to animate between pages
+
 ## Replit Environment Setup
 
 The project runs on Replit with the Expo dev server via the `artifacts/elite-esports: expo` workflow. Package management uses **npm**. A `package-lock.json` is committed at the workspace root for EAS builds.
