@@ -24,7 +24,6 @@
       }
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
       "package": "com.elite.esports.android",
       "versionCode": 1,
       "compileSdkVersion": 36,
@@ -67,19 +66,6 @@
           "locationAlwaysAndWhenInUsePermission": "Elite eSports uses your location to show nearby tournaments and match you with local competitors.",
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
-        }
-      ],
-      [
-        "react-native-google-mobile-ads",
-        {
-          "androidAppId": "ca-app-pub-2219438935030744~5831569923",
-          "iosAppId": "ca-app-pub-2219438935030744~5831569923",
-          "userTrackingUsageDescription": "This identifier will be used to deliver personalized ads to you.",
-          "skAdNetworkItems": [
-            { "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork" },
-            { "SKAdNetworkIdentifier": "4fzdc2evr5.skadnetwork" },
-            { "SKAdNetworkIdentifier": "2fnua5tdw4.skadnetwork" }
-          ]
         }
       ]
     ],

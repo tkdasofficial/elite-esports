@@ -26,6 +26,10 @@ author = "agent"
 task = "workflow.run"
 args = "Start application"
 
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "artifacts/elite-esports: expo"
+
 [[workflows.workflow]]
 name = "Start application"
 author = "agent"
@@ -36,6 +40,18 @@ outputType = "console"
 [[workflows.workflow.tasks]]
 task = "shell.exec"
 args = "echo 'Expo is managed by the artifacts/elite-esports workflow'"
+
+[[workflows.workflow]]
+name = "artifacts/elite-esports: expo"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run dev -w @workspace/elite-esports"
+waitForPort = 18977
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [agent]
 stack = "PNPM_WORKSPACE"
