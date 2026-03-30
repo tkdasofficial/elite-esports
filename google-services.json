@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "312741101403",
+    "project_id": "elite-esports-mob",
+    "storage_bucket": "elite-esports-mob.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:312741101403:android:9453d8c209603c581f247e",
+        "android_client_info": {
+          "package_name": "com.elite.esports.android"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAxC2FDf5h3NwTjodWWGSBGL4AigvldTg4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
