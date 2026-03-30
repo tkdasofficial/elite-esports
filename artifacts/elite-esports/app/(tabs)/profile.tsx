@@ -140,7 +140,7 @@ export default function ProfileScreen() {
         {/* ── Linked Games ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Linked Games</Text>
+            <Text style={[styles.sectionTitle, { marginTop: -3 }]}>Linked Games</Text>
             <TouchableOpacity
               style={styles.sectionAction}
               onPress={() => router.push('/edit-profile')}
@@ -188,7 +188,7 @@ export default function ProfileScreen() {
 
         {/* ── Menu ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>More</Text>
+          <Text style={[styles.sectionTitle, { marginTop: -4 }]}>More</Text>
           <View style={styles.menuCard}>
             {MENU_ITEMS.map((item, i) => (
               <React.Fragment key={item.label}>
