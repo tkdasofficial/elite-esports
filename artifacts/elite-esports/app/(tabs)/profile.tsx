@@ -188,7 +188,7 @@ export default function ProfileScreen() {
 
         {/* ── Menu ── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>More</Text>
+          <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>More</Text>
           <View style={styles.menuCard}>
             {MENU_ITEMS.map((item, i) => (
               <React.Fragment key={item.label}>
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', marginBottom: 12,
   },
-  sectionTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
+  sectionTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', color: Colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
   sectionAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   sectionActionText: { fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.primary },
 
@@ -443,7 +443,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(254,76,17,0.1)',
     alignItems: 'center', justifyContent: 'center',
   },
-  menuLabel: { flex: 1, fontSize: 15, lineHeight: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
+  menuLabel: { flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
   menuDivider: { height: 1, backgroundColor: Colors.border.subtle, marginLeft: 66 },
 
   /* ── Sign Out ── */
