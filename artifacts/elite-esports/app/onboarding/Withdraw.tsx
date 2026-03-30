@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Pressable,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -16,97 +17,91 @@ import Animated, {
 } from 'react-native-reanimated';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
-const ILLUSTRATION_H = height * 0.5;
 
-interface Props {
-  onBack: () => void;
-}
-
-const PAYMENT_METHODS = [
-  { icon: 'phone-portrait', label: 'UPI', color: '#50C878' },
-  { icon: 'wallet', label: 'Wallet', color: '#3B82F6' },
-  { icon: 'card', label: 'Bank', color: '#A78BFA' },
+const METHODS = [
+  { icon: 'phone-portrait' as const, label: 'UPI',    color: '#50C878' },
+  { icon: 'wallet'         as const, label: 'Wallet', color: '#3B82F6' },
+  { icon: 'card'           as const, label: 'Bank',   color: '#A78BFA' },
 ];
 
-export function Withdraw({ onBack }: Props) {
+export default function WithdrawScreen() {
+  const insets = useSafeAreaInsets();
   const scaleStart = useSharedValue(1);
-  const scaleBack = useSharedValue(1);
+  const scaleBack  = useSharedValue(1);
 
-  const startStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scaleStart.value }],
-  }));
-  const backStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scaleBack.value }],
-  }));
+  const startStyle = useAnimatedStyle(() => ({ transform: [{ scale: scaleStart.value }] }));
+  const backStyle  = useAnimatedStyle(() => ({ transform: [{ scale: scaleBack.value }] }));
+
+  const ILLUS_H = height * 0.48;
+  const topPad = Platform.OS === 'web' ? Math.max(56, insets.top) : insets.top;
+  const botPad = Platform.OS === 'web' ? Math.max(32, insets.bottom) : insets.bottom;
 
   const handleStart = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await AsyncStorage.setItem('onboarding_seen', 'true');
     router.replace('/(auth)/options');
   };
-
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onBack();
+    router.back();
   };
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { paddingTop: topPad, paddingBottom: botPad }]}>
       <LinearGradient
         colors={['#001A0D', '#000D06', '#000000']}
-        locations={[0, 0.5, 1]}
+        locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* ─── Illustration Area ─── */}
-      <View style={[styles.illustration, { height: ILLUSTRATION_H }]}>
-        {/* Outer glow */}
+      {/* ── Illustration ── */}
+      <View style={[styles.illus, { height: ILLUS_H }]}>
         <View style={styles.glowRing} />
 
-        {/* Wallet icon */}
         <LinearGradient
-          colors={['#50C87828', '#50C87806']}
+          colors={['#50C87830', '#50C87806']}
           style={styles.walletCircle}
         >
-          <Ionicons name="wallet" size={68} color="#50C878" />
+          <Ionicons name="wallet" size={72} color="#50C878" />
         </LinearGradient>
 
-        {/* Floating coins */}
         <View style={[styles.coinBadge, styles.coinTL]}>
-          <Ionicons name="logo-bitcoin" size={18} color="#F59E0B" />
+          <Ionicons name="logo-bitcoin" size={16} color="#F59E0B" />
           <Text style={styles.coinAmt}>+₹500</Text>
         </View>
         <View style={[styles.coinBadge, styles.coinTR]}>
-          <Ionicons name="cash" size={18} color="#50C878" />
-          <Text style={[styles.coinAmt, { color: '#50C878' }]}>+₹1200</Text>
+          <Ionicons name="cash" size={16} color="#50C878" />
+          <Text style={[styles.coinAmt, { color: '#50C878' }]}>+₹1,200</Text>
         </View>
-        <View style={[styles.coinBadge, styles.coinBM]}>
-          <Ionicons name="diamond" size={16} color="#A78BFA" />
+        <View style={[styles.coinBadge, styles.coinBR]}>
+          <Ionicons name="diamond" size={14} color="#A78BFA" />
           <Text style={[styles.coinAmt, { color: '#A78BFA' }]}>+₹250</Text>
         </View>
 
-        {/* Payment methods row */}
         <View style={styles.methodRow}>
-          {PAYMENT_METHODS.map((m) => (
+          {METHODS.map((m) => (
             <View key={m.label} style={styles.methodCard}>
-              <View style={[styles.methodIcon, { borderColor: m.color + '40', backgroundColor: m.color + '10' }]}>
-                <Ionicons name={m.icon as any} size={20} color={m.color} />
+              <View style={[styles.methodIcon, {
+                borderColor: m.color + '40',
+                backgroundColor: m.color + '12',
+              }]}>
+                <Ionicons name={m.icon} size={22} color={m.color} />
               </View>
               <Text style={styles.methodLabel}>{m.label}</Text>
             </View>
           ))}
         </View>
 
-        {/* Instant tag */}
         <View style={styles.instantPill}>
-          <Ionicons name="flash" size={12} color="#50C878" />
+          <View style={styles.instantDot} />
           <Text style={styles.instantTxt}>INSTANT WITHDRAWAL</Text>
         </View>
       </View>
 
-      {/* ─── Text Block ─── */}
+      {/* ── Text ── */}
       <View style={styles.textBlock}>
         <Text style={styles.headline}>INSTANT{'\n'}REWARDS</Text>
         <Text style={styles.subtext}>
@@ -114,13 +109,20 @@ export function Withdraw({ onBack }: Props) {
         </Text>
       </View>
 
-      {/* ─── CTA ─── */}
-      <View style={styles.ctaArea}>
-        <Animated.View style={[styles.backBtnWrap, backStyle]}>
+      {/* ── Dots ── */}
+      <View style={styles.dots}>
+        <View style={[styles.dot, styles.dotInactive]} />
+        <View style={[styles.dot, styles.dotInactive]} />
+        <View style={[styles.dot, styles.dotActive]} />
+      </View>
+
+      {/* ── Buttons ── */}
+      <View style={styles.cta}>
+        <Animated.View style={backStyle}>
           <Pressable
             onPress={handleBack}
-            onPressIn={() => { scaleBack.value = withTiming(0.94, { duration: 100 }); }}
-            onPressOut={() => { scaleBack.value = withTiming(1, { duration: 120 }); }}
+            onPressIn={() => { scaleBack.value = withTiming(0.94, { duration: 90 }); }}
+            onPressOut={() => { scaleBack.value = withTiming(1, { duration: 110 }); }}
             style={styles.backBtn}
           >
             <Ionicons name="arrow-back" size={22} color="#666" />
@@ -130,9 +132,8 @@ export function Withdraw({ onBack }: Props) {
         <Animated.View style={[styles.startBtnWrap, startStyle]}>
           <Pressable
             onPress={handleStart}
-            onPressIn={() => { scaleStart.value = withTiming(0.96, { duration: 100 }); }}
-            onPressOut={() => { scaleStart.value = withTiming(1, { duration: 120 }); }}
-            style={styles.pressable}
+            onPressIn={() => { scaleStart.value = withTiming(0.96, { duration: 90 }); }}
+            onPressOut={() => { scaleStart.value = withTiming(1, { duration: 110 }); }}
           >
             <LinearGradient
               colors={['#50C878', '#2E9E52']}
@@ -151,36 +152,31 @@ export function Withdraw({ onBack }: Props) {
 }
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    alignItems: 'center',
-  },
+  root: { flex: 1, alignItems: 'center' },
 
-  illustration: {
+  illus: {
     width,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   glowRing: {
     position: 'absolute',
     width: width * 0.62,
     height: width * 0.62,
     borderRadius: width * 0.31,
-    backgroundColor: '#50C87806',
+    backgroundColor: '#50C87807',
     borderWidth: 1,
     borderColor: '#50C87820',
   },
-
   walletCircle: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
+    width: 148,
+    height: 148,
+    borderRadius: 74,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#50C87840',
-    marginBottom: 24,
+    marginBottom: 22,
   },
 
   coinBadge: {
@@ -193,45 +189,29 @@ const styles = StyleSheet.create({
     borderColor: '#1A2E1E',
     borderRadius: 20,
     paddingHorizontal: 10,
-    paddingVertical: 7,
+    paddingVertical: 6,
   },
-  coinAmt: {
-    fontSize: 13,
-    fontFamily: 'Inter_700Bold',
-    color: '#F59E0B',
-  },
-  coinTL: { top: '14%', left: '8%' },
-  coinTR: { top: '14%', right: '8%' },
-  coinBM: { bottom: '30%', right: '8%' },
+  coinAmt: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#F59E0B' },
+  coinTL: { top: '12%', left: '7%' },
+  coinTR: { top: '12%', right: '7%' },
+  coinBR: { bottom: '28%', right: '7%' },
 
-  methodRow: {
-    flexDirection: 'row',
-    gap: 14,
-    marginTop: 4,
-  },
-  methodCard: {
-    alignItems: 'center',
-    gap: 6,
-  },
+  methodRow: { flexDirection: 'row', gap: 18 },
+  methodCard: { alignItems: 'center', gap: 7 },
   methodIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  methodLabel: {
-    fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#666',
-    letterSpacing: 0.5,
-  },
+  methodLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#555', letterSpacing: 0.4 },
 
   instantPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
     marginTop: 14,
     backgroundColor: '#0A1A0F',
     borderWidth: 1,
@@ -240,12 +220,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
   },
-  instantTxt: {
-    fontSize: 10,
-    fontFamily: 'Inter_700Bold',
-    color: '#50C878',
-    letterSpacing: 1,
-  },
+  instantDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#50C878' },
+  instantTxt: { fontSize: 10, fontFamily: 'Inter_700Bold', color: '#50C878', letterSpacing: 1 },
 
   textBlock: {
     flex: 1,
@@ -266,33 +242,36 @@ const styles = StyleSheet.create({
   subtext: {
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    color: '#888',
+    color: '#888888',
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: 280,
   },
 
-  ctaArea: {
+  dots: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 20 },
+  dot: { height: 8, borderRadius: 4 },
+  dotActive: { width: 28, backgroundColor: '#50C878' },
+  dotInactive: { width: 8, backgroundColor: '#2A2A2A' },
+
+  cta: {
     flexDirection: 'row',
     width: '100%',
     paddingHorizontal: 28,
-    paddingBottom: 16,
+    paddingBottom: 8,
     gap: 12,
     alignItems: 'center',
   },
-  backBtnWrap: {},
   backBtn: {
     width: 60,
     height: 60,
     borderRadius: 16,
-    backgroundColor: '#111',
+    backgroundColor: '#111111',
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: '#222222',
     alignItems: 'center',
     justifyContent: 'center',
   },
   startBtnWrap: { flex: 1, borderRadius: 16, overflow: 'hidden' },
-  pressable: { borderRadius: 16, overflow: 'hidden' },
   startGrad: {
     height: 60,
     flexDirection: 'row',
@@ -304,7 +283,7 @@ const styles = StyleSheet.create({
   startTxt: {
     fontSize: 16,
     fontFamily: 'Inter_700Bold',
-    color: '#000',
+    color: '#000000',
     letterSpacing: 1.5,
   },
 });

@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Pressable,
   Dimensions,
+  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,73 +15,71 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
+import { router } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
-const ILLUSTRATION_H = height * 0.5;
 
-interface Props {
-  onNext: () => void;
-}
-
-export function Play({ onNext }: Props) {
+export default function PlayScreen() {
+  const insets = useSafeAreaInsets();
   const scale = useSharedValue(1);
   const btnStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
 
+  const ILLUS_H = height * 0.48;
+  const topPad = Platform.OS === 'web' ? Math.max(56, insets.top) : insets.top;
+  const botPad = Platform.OS === 'web' ? Math.max(32, insets.bottom) : insets.bottom;
+
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    onNext();
+    router.push('/onboarding/Win');
   };
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { paddingTop: topPad, paddingBottom: botPad }]}>
       <LinearGradient
         colors={['#001A0D', '#000D06', '#000000']}
-        locations={[0, 0.5, 1]}
+        locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* ─── Illustration Area ─── */}
-      <View style={[styles.illustration, { height: ILLUSTRATION_H }]}>
-        {/* Outer glow ring */}
+      {/* ── Illustration ── */}
+      <View style={[styles.illus, { height: ILLUS_H }]}>
         <View style={styles.ringOuter} />
         <View style={styles.ringMid} />
 
-        {/* Central icon */}
         <LinearGradient
-          colors={['#50C87830', '#50C87808']}
+          colors={['#50C87835', '#50C87808']}
           style={styles.iconCircle}
         >
-          <Ionicons name="game-controller" size={72} color="#50C878" />
+          <Ionicons name="game-controller" size={76} color="#50C878" />
         </LinearGradient>
 
-        {/* Floating badges */}
-        <View style={[styles.floatBadge, styles.badgeTL]}>
-          <Ionicons name="flame" size={14} color="#FF6B35" />
+        <View style={[styles.badge, styles.badgeTL]}>
+          <Ionicons name="flame" size={13} color="#FF6B35" />
           <Text style={[styles.badgeTxt, { color: '#FF6B35' }]}>FREE FIRE</Text>
         </View>
-        <View style={[styles.floatBadge, styles.badgeTR]}>
-          <Ionicons name="skull" size={14} color="#50C878" />
+        <View style={[styles.badge, styles.badgeTR]}>
+          <Ionicons name="skull" size={13} color="#50C878" />
           <Text style={[styles.badgeTxt, { color: '#50C878' }]}>BGMI</Text>
         </View>
-        <View style={[styles.floatBadge, styles.badgeBL]}>
-          <Ionicons name="flash" size={14} color="#A78BFA" />
+        <View style={[styles.badge, styles.badgeBL]}>
+          <Ionicons name="flash" size={13} color="#A78BFA" />
           <Text style={[styles.badgeTxt, { color: '#A78BFA' }]}>DAILY</Text>
         </View>
-        <View style={[styles.floatBadge, styles.badgeBR]}>
-          <Ionicons name="trophy" size={14} color="#F59E0B" />
+        <View style={[styles.badge, styles.badgeBR]}>
+          <Ionicons name="trophy" size={13} color="#F59E0B" />
           <Text style={[styles.badgeTxt, { color: '#F59E0B' }]}>WIN CASH</Text>
         </View>
 
-        {/* Live pill */}
         <View style={styles.livePill}>
           <View style={styles.liveDot} />
           <Text style={styles.liveTxt}>LIVE TOURNAMENTS</Text>
         </View>
       </View>
 
-      {/* ─── Text Block ─── */}
+      {/* ── Text ── */}
       <View style={styles.textBlock}>
         <Text style={styles.headline}>JOIN THE{'\n'}BATTLE</Text>
         <Text style={styles.subtext}>
@@ -88,14 +87,20 @@ export function Play({ onNext }: Props) {
         </Text>
       </View>
 
-      {/* ─── CTA ─── */}
-      <View style={styles.ctaArea}>
+      {/* ── Dots ── */}
+      <View style={styles.dots}>
+        <View style={[styles.dot, styles.dotActive]} />
+        <View style={[styles.dot, styles.dotInactive]} />
+        <View style={[styles.dot, styles.dotInactive]} />
+      </View>
+
+      {/* ── Button ── */}
+      <View style={styles.cta}>
         <Animated.View style={[styles.btnWrap, btnStyle]}>
           <Pressable
             onPress={handleNext}
-            onPressIn={() => { scale.value = withTiming(0.96, { duration: 100 }); }}
-            onPressOut={() => { scale.value = withTiming(1, { duration: 120 }); }}
-            style={styles.pressable}
+            onPressIn={() => { scale.value = withTiming(0.96, { duration: 90 }); }}
+            onPressOut={() => { scale.value = withTiming(1, { duration: 110 }); }}
           >
             <LinearGradient
               colors={['#50C878', '#2E9E52']}
@@ -116,17 +121,13 @@ export function Play({ onNext }: Props) {
 const RING = width * 0.72;
 
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    alignItems: 'center',
-  },
+  root: { flex: 1, alignItems: 'center' },
 
-  illustration: {
+  illus: {
     width,
     alignItems: 'center',
     justifyContent: 'center',
   },
-
   ringOuter: {
     position: 'absolute',
     width: RING,
@@ -137,24 +138,23 @@ const styles = StyleSheet.create({
   },
   ringMid: {
     position: 'absolute',
-    width: RING * 0.72,
-    height: RING * 0.72,
-    borderRadius: RING * 0.36,
+    width: RING * 0.7,
+    height: RING * 0.7,
+    borderRadius: RING * 0.35,
     borderWidth: 1,
-    borderColor: '#50C87830',
+    borderColor: '#50C87828',
   },
-
   iconCircle: {
-    width: 148,
-    height: 148,
-    borderRadius: 74,
+    width: 152,
+    height: 152,
+    borderRadius: 76,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
     borderColor: '#50C87840',
   },
 
-  floatBadge: {
+  badge: {
     position: 'absolute',
     flexDirection: 'row',
     alignItems: 'center',
@@ -166,41 +166,27 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  badgeTxt: {
-    fontSize: 11,
-    fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.5,
-  },
-  badgeTL: { top: '18%', left: '6%' },
-  badgeTR: { top: '18%', right: '6%' },
-  badgeBL: { bottom: '18%', left: '6%' },
-  badgeBR: { bottom: '18%', right: '6%' },
+  badgeTxt: { fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
+  badgeTL: { top: '16%', left: '5%' },
+  badgeTR: { top: '16%', right: '5%' },
+  badgeBL: { bottom: '16%', left: '5%' },
+  badgeBR: { bottom: '16%', right: '5%' },
 
   livePill: {
     position: 'absolute',
-    bottom: '8%',
+    bottom: '6%',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#0A1A0F',
     borderWidth: 1,
-    borderColor: '#50C87840',
+    borderColor: '#50C87440',
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 7,
   },
-  liveDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: '#50C878',
-  },
-  liveTxt: {
-    fontSize: 11,
-    fontFamily: 'Inter_700Bold',
-    color: '#50C878',
-    letterSpacing: 1,
-  },
+  liveDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#50C878' },
+  liveTxt: { fontSize: 11, fontFamily: 'Inter_700Bold', color: '#50C878', letterSpacing: 1 },
 
   textBlock: {
     flex: 1,
@@ -221,25 +207,24 @@ const styles = StyleSheet.create({
   subtext: {
     fontSize: 15,
     fontFamily: 'Inter_400Regular',
-    color: '#888',
+    color: '#888888',
     textAlign: 'center',
     lineHeight: 24,
     maxWidth: 280,
   },
 
-  ctaArea: {
-    width: '100%',
-    paddingHorizontal: 28,
-    paddingBottom: 16,
+  dots: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 20,
   },
-  btnWrap: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
-  pressable: {
-    borderRadius: 16,
-    overflow: 'hidden',
-  },
+  dot: { height: 8, borderRadius: 4 },
+  dotActive: { width: 28, backgroundColor: '#50C878' },
+  dotInactive: { width: 8, backgroundColor: '#2A2A2A' },
+
+  cta: { width: '100%', paddingHorizontal: 28, paddingBottom: 8 },
+  btnWrap: { borderRadius: 16, overflow: 'hidden' },
   btnGrad: {
     height: 60,
     flexDirection: 'row',
@@ -251,7 +236,7 @@ const styles = StyleSheet.create({
   btnTxt: {
     fontSize: 16,
     fontFamily: 'Inter_700Bold',
-    color: '#000',
+    color: '#000000',
     letterSpacing: 1.5,
   },
 });
