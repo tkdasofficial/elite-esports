@@ -26,7 +26,7 @@
     "android": {
       "package": "com.elite.esports.android",
       "versionCode": 1,
-      "compileSdkVersion": 36,
+      "compileSdkVersion": 35,
       "targetSdkVersion": 35,
       "minSdkVersion": 24,
       "adaptiveIcon": {
