@@ -30,13 +30,13 @@ args = "Start application"
 name = "Start application"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd artifacts/elite-esports && pnpm dev"
-waitForPort = 8080
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd artifacts/elite-esports && npm run dev"
+waitForPort = 8080
 
 [agent]
 stack = "PNPM_WORKSPACE"

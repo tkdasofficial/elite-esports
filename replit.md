@@ -38,7 +38,7 @@ A professional React Native Expo mobile app (Android-first, web-previewed) for c
 
 ## Replit Environment Setup
 
-The project runs on Replit with the Expo dev server via the `artifacts/elite-esports: expo` workflow. Package management has been fully migrated from pnpm to **npm** to resolve EAS build failures (`ERR_PNPM_NO_LOCKFILE`). A `package-lock.json` is committed at the workspace root for EAS builds.
+The project runs on Replit with the Expo dev server via the `artifacts/elite-esports: expo` workflow. Package management uses **npm**. A `package-lock.json` is committed at the workspace root for EAS builds.
 
 ### Environment Variables
 Stored in Replit shared userenv and available at runtime. The app falls back to defaults in `supabase.config.ts` if these are not set:
@@ -53,11 +53,11 @@ Stored in Replit shared userenv and available at runtime. The app falls back to 
 
 ## EAS Build Setup
 
-`eas.json` is at the **workspace root** (required for monorepo EAS builds). Package management is **npm** — a `package-lock.json` is committed at the workspace root so EAS build servers detect npm automatically (no pnpm required on the build server).
+`eas.json` is at the **workspace root** (required for monorepo EAS builds). Package management is **npm** — a `package-lock.json` is committed at the workspace root so EAS build servers detect npm automatically.
 
-`eas-build-pre-install.sh` (at workspace root and inside `artifacts/elite-esports/`) runs before EAS's install step. Both scripts use `npm install` (no pnpm activation). The one inside `artifacts/elite-esports/` does the real work — it resolves the monorepo root (two levels up) and runs `npm install --legacy-peer-deps`.
+`eas-build-pre-install.sh` (at workspace root and inside `artifacts/elite-esports/`) runs before EAS's install step. Both scripts use `npm install`. The one inside `artifacts/elite-esports/` does the real work — it resolves the monorepo root (two levels up) and runs `npm install --legacy-peer-deps`.
 
-**Migration note:** The project was migrated from pnpm to npm because EAS builds repeatedly failed with `ERR_PNPM_NO_LOCKFILE`. The `packageManager` field was removed from root `package.json`, `pnpm-workspace.yaml` and `pnpm-lock.yaml` were deleted (including the one inside `artifacts/elite-esports/`), and `package-lock.json` was generated at the workspace root. The `artifacts/api-server` package was excluded from npm workspaces (esbuild version incompatibility). `.npmrc` uses `legacy-peer-deps=true` instead of pnpm-specific settings.
+**Notes:** The `artifacts/api-server` package is excluded from npm workspaces (esbuild version incompatibility). `.npmrc` uses `legacy-peer-deps=true`.
 
 **Android Gradle SDK versions** are explicitly set in `app.json` (`compileSdkVersion: 35`, `targetSdkVersion: 35`, `minSdkVersion: 24`) to prevent the "A problem occurred evaluating project ':app'" Gradle error on EAS build servers.
 
