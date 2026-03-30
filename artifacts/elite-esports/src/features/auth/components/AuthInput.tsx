@@ -124,5 +124,8 @@ const styles = StyleSheet.create({
   },
   rightSpacer: {
     width: 48,
+    height: INPUT_HEIGHT,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
