@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "rcx4IadF13zL2Y8JLzHmq"
+uri = "file://SYSTEM_MAP.md"
+type = "text"
+title = "SYSTEM_MAP.md — Elite eSports System Architecture"
