@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center',
     justifyContent: 'space-between', marginBottom: 12,
   },
-  sectionTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
+  sectionTitle: { fontSize: 15, lineHeight: 15, fontFamily: 'Inter_700Bold', color: Colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
   sectionAction: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   sectionActionText: { fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.primary },
 
