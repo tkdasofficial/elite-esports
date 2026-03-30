@@ -71,4 +71,29 @@ instruct the user to run it in **Supabase Dashboard → SQL Editor**.
 
 > Every piece of data in this app comes from and goes to Supabase — do not create, suggest, or scaffold any alternative backend, database, server, or auth system under any circumstances.
 
+---
+
+## RULE 5 — NPM ONLY. PNPM IS PERMANENTLY BANNED.
+
+**THIS IS ABSOLUTE AND NON-NEGOTIABLE.**
+
+### YOU MUST NEVER:
+- Run `pnpm install`, `pnpm add`, `pnpm run`, `pnpm exec`, or ANY pnpm command
+- Create `pnpm-lock.yaml` or `pnpm-workspace.yaml`
+- Reference `pnpm` in any script, config, documentation, or workflow
+- Suggest or recommend switching to pnpm for any reason
+
+### YOU MUST ALWAYS:
+- Use `npm install` to install dependencies
+- Use `npm run <script>` to run scripts
+- Use `npm ci` for clean installs in CI
+- Use `npm add <package>` to add new packages
+- Install packages inside `artifacts/elite-esports/` using `npm install` (not root)
+
+### WHY:
+The project owner has permanently banned pnpm. All tooling, scripts, and workflows
+are configured for npm. Using pnpm will break the development environment.
+
+> See `.npmrc` at the project root — it contains the same enforcement rules.
+
 # ══════════════════════════════════════════════════════════════

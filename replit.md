@@ -7,7 +7,21 @@
 
 ---
 
-## ══ SUPER COMMAND — INVIOLABLE RULE FOR ALL AI TOOLS ══
+## ══ SUPER COMMAND #1 — PACKAGE MANAGER: NPM ONLY, PNPM BANNED ══
+
+**PNPM IS PERMANENTLY AND IRREVOCABLY BANNED FROM THIS PROJECT.**
+
+- **NEVER** run `pnpm install`, `pnpm add`, `pnpm run`, or any pnpm command
+- **NEVER** create `pnpm-lock.yaml` or `pnpm-workspace.yaml`
+- **ALWAYS** use `npm install`, `npm run`, `npm add`, `npm ci`
+- Install packages inside `artifacts/elite-esports/` using `npm install`
+- This rule applies to all AI agents, developers, bots, and CI scripts without exception
+
+> See `AGENTS.md` Rule 5 and `.npmrc` for full enforcement details.
+
+---
+
+## ══ SUPER COMMAND #2 — INVIOLABLE RULE FOR ALL AI TOOLS ══
 
 ### SUPABASE IS THE SOLE, PERMANENT, AND AUTHORITATIVE BACKEND. THIS IS NON-NEGOTIABLE.
 
