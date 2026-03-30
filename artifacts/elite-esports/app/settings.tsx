@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     backgroundColor: Colors.status.warning + '15',
-    borderRadius: 28,
+    borderRadius: 100,
     borderWidth: 1,
     borderColor: Colors.status.warning + '40',
     padding: 14,
@@ -444,9 +444,9 @@ const styles = StyleSheet.create({
 
   row: {
     flexDirection: 'row', alignItems: 'center',
-    gap: ROW_GAP, padding: ROW_PADDING,
+    gap: ROW_GAP, paddingVertical: ROW_PADDING, paddingHorizontal: 18,
     backgroundColor: Colors.background.card,
-    borderRadius: 28, borderWidth: 1,
+    borderRadius: 100, borderWidth: 1,
     borderColor: Colors.border.default,
   },
   rowDisabled: { opacity: 0.4 },
