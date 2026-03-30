@@ -31,12 +31,11 @@ name = "Start application"
 author = "agent"
 
 [workflows.workflow.metadata]
-outputType = "webview"
+outputType = "console"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd artifacts/elite-esports && npm run dev"
-waitForPort = 8080
+args = "echo 'Expo is managed by the artifacts/elite-esports workflow'"
 
 [agent]
 stack = "PNPM_WORKSPACE"
