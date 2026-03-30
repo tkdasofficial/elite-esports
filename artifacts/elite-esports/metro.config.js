@@ -13,4 +13,14 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
+// Exclude directories that should not be watched by Metro
+config.resolver.blockList = [
+  // Ignore the .local directory (agent skills, temp files, state)
+  new RegExp(`${workspaceRoot.replace(/\//g, '\\/')}\\/.local\\/.*`),
+  // Ignore old pnpm node_modules directories
+  /node_modules_pnpm_old\/.*/,
+  // Ignore supabase temp files
+  /supabase\/.temp\/.*/,
+];
+
 module.exports = config;

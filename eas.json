@@ -9,7 +9,7 @@
       "distribution": "internal",
       "node": "20.18.0",
       "android": {
-        "image": "ubuntu-22.04-jdk-17.0.3-ndk-r21e",
+        "image": "ubuntu-24.04-jdk-17-ndk-r27b",
         "gradleCommand": ":app:assembleDebug"
       },
       "env": {
@@ -23,7 +23,7 @@
       "distribution": "internal",
       "node": "20.18.0",
       "android": {
-        "image": "ubuntu-22.04-jdk-17.0.3-ndk-r21e",
+        "image": "ubuntu-24.04-jdk-17-ndk-r27b",
         "buildType": "apk",
         "resourceClass": "medium"
       },
@@ -37,7 +37,7 @@
     "production": {
       "node": "20.18.0",
       "android": {
-        "image": "ubuntu-22.04-jdk-17.0.3-ndk-r21e",
+        "image": "ubuntu-24.04-jdk-17-ndk-r27b",
         "buildType": "app-bundle",
         "resourceClass": "medium"
       },
@@ -56,7 +56,7 @@
       "distribution": "internal",
       "node": "20.18.0",
       "android": {
-        "image": "ubuntu-22.04-jdk-17.0.3-ndk-r21e",
+        "image": "ubuntu-24.04-jdk-17-ndk-r27b",
         "buildType": "apk",
         "resourceClass": "medium"
       },
