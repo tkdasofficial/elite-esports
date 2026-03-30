@@ -1,5 +1,5 @@
 import { BlurView } from 'expo-blur';
-import { Tabs, Redirect } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import React, { useRef, useEffect } from 'react';
 import { Platform, StyleSheet, View, Pressable, Animated } from 'react-native';
@@ -8,7 +8,6 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import * as Haptics from 'expo-haptics';
 import { Colors } from '@/utils/colors';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
-import { useAuth } from '@/store/AuthContext';
 
 const TAB_HEIGHT = 62;
 
@@ -133,9 +132,6 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
-  const { isAdmin, adminLoading } = useAuth();
-  if (!adminLoading && isAdmin) return <Redirect href="/admin" />;
-
   return (
     <Tabs
       tabBar={props => <CustomTabBar {...props} />}

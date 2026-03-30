@@ -47,7 +47,6 @@ function RootLayoutNav() {
       <Stack.Screen name="terms" />
       <Stack.Screen name="privacy" />
       <Stack.Screen name="about" />
-      <Stack.Screen name="admin" options={{ gestureEnabled: false }} />
     </Stack>
   );
 }

@@ -15,16 +15,14 @@ export function useProfile(userId?: string) {
     setLoading(true);
     setFetchError(null);
     try {
-      const [userRes, walletRes, adminRes, gamesRes] = await Promise.all([
+      const [userRes, walletRes, gamesRes] = await Promise.all([
         supabase.from('users').select('id, name, username, avatar_url').eq('id', userId).maybeSingle(),
         supabase.from('wallets').select('balance').eq('user_id', userId).maybeSingle(),
-        supabase.from('admin_users').select('user_id').eq('user_id', userId).maybeSingle(),
         supabase.from('user_games').select('game_id, uid, games(name)').eq('user_id', userId),
       ]);
 
       const user = userRes.data;
       const wallet = walletRes.data;
-      const isAdmin = !!adminRes.data;
       const rawGames = gamesRes.data ?? [];
 
       const games = rawGames.map((g: any) => ({
@@ -43,7 +41,6 @@ export function useProfile(userId?: string) {
           avatar_index: avatarIndex,
           games,
           balance: wallet?.balance ?? 0,
-          is_admin: isAdmin,
         });
       } else if (userRes.error && userRes.error.code !== 'PGRST116') {
         setFetchError(userRes.error.message);

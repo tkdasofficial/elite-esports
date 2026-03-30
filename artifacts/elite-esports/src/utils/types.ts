@@ -31,7 +31,6 @@ export interface ProfileData {
   avatar_index?: number;
   games?: { game_id?: string; game: string; uid: string }[] | null;
   balance?: number;
-  is_admin?: boolean;
   updated_at?: string;
 }
 

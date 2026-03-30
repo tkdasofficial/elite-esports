@@ -36,12 +36,7 @@ export default function LoginScreen() {
         Alert.alert('Login Failed', error.message);
       }
     } else if (data.user) {
-      const { data: adminRow } = await supabase
-        .from('admin_users')
-        .select('user_id')
-        .eq('user_id', data.user.id)
-        .maybeSingle();
-      router.replace(adminRow ? '/admin' : '/(tabs)');
+      router.replace('/(tabs)');
     }
   };
 

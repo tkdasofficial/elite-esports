@@ -15,13 +15,8 @@ import { AuthInput } from '@/features/auth/components/AuthInput';
 type Step = 'email' | 'password';
 type Mode = 'signin' | 'signup';
 
-async function navigateAfterAuth(userId: string) {
-  const { data } = await supabase.from('admin_users').select('user_id').eq('user_id', userId).maybeSingle();
-  if (data) {
-    router.replace('/admin');
-  } else {
-    router.replace('/(tabs)');
-  }
+function navigateAfterAuth() {
+  router.replace('/(tabs)');
 }
 
 export default function EmailAuthScreen() {
@@ -68,7 +63,7 @@ export default function EmailAuthScreen() {
           setError(signInError.message);
         }
       } else if (data.user) {
-        await navigateAfterAuth(data.user.id);
+        navigateAfterAuth();
       }
     } catch (err: any) {
       setError(err?.message ?? 'Something went wrong. Please try again.');

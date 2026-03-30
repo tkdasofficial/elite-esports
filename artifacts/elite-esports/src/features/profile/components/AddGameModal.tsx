@@ -96,7 +96,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
             <View style={styles.centered}>
               <Ionicons name="game-controller-outline" size={48} color={Colors.text.muted} />
               <Text style={styles.emptyTitle}>No games available</Text>
-              <Text style={styles.emptyHint}>Ask the admin to add games first</Text>
+              <Text style={styles.emptyHint}>No games available yet. Check back soon.</Text>
             </View>
           ) : (
             <FlatList

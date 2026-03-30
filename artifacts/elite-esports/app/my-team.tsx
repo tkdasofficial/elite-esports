@@ -38,7 +38,7 @@ export default function MyTeamScreen() {
       return;
     }
     if (!selectedGame) {
-      Alert.alert('No Games', 'No games have been added yet. Ask the admin to add games first.');
+      Alert.alert('No Games', 'No games are available yet. Please check back soon.');
       return;
     }
     if (teamTag.length > 5) {
@@ -205,7 +205,7 @@ export default function MyTeamScreen() {
                 <ActivityIndicator color={Colors.primary} style={{ marginBottom: 20 }} />
               ) : games.length === 0 ? (
                 <View style={styles.noGamesWrap}>
-                  <Text style={styles.noGamesText}>No games available. Ask the admin to add games first.</Text>
+                  <Text style={styles.noGamesText}>No games available yet. Please check back soon.</Text>
                 </View>
               ) : (
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 20 }}>

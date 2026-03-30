@@ -7,8 +7,6 @@ interface AuthContextValue {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  isAdmin: boolean;
-  adminLoading: boolean;
   signOut: () => Promise<void>;
 }
 
@@ -17,14 +15,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [adminLoading, setAdminLoading] = useState(true);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
       if (event === 'SIGNED_OUT') {
-        setIsAdmin(false);
         router.replace('/(auth)/options');
       }
     });
@@ -37,25 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (loading) return;
-    if (!session?.user?.id) {
-      setIsAdmin(false);
-      setAdminLoading(false);
-      return;
-    }
-    setAdminLoading(true);
-    supabase
-      .from('admin_users')
-      .select('user_id')
-      .eq('user_id', session.user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        setIsAdmin(!!data);
-        setAdminLoading(false);
-      });
-  }, [session?.user?.id, loading]);
-
   const signOut = async () => {
     await supabase.auth.signOut();
   };
@@ -64,10 +40,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     user: session?.user ?? null,
     loading,
-    isAdmin,
-    adminLoading,
     signOut,
-  }), [session, loading, isAdmin, adminLoading]);
+  }), [session, loading]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
