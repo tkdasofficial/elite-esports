@@ -98,7 +98,7 @@ function Card({ children }: { children: React.ReactNode }) {
 }
 
 function CardDivider() {
-  return <View style={styles.divider} />;
+  return null;
 }
 
 /* ── Permission Status Banner ── */
@@ -391,7 +391,6 @@ export default function SettingsScreen() {
 const ROW_PADDING = 14;
 const ICON_BOX = 36;
 const ROW_GAP = 12;
-const DIVIDER_LEFT = ROW_PADDING + ICON_BOX + ROW_GAP;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Colors.background.dark },
@@ -408,7 +407,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     backgroundColor: Colors.status.warning + '15',
-    borderRadius: 12,
+    borderRadius: 28,
     borderWidth: 1,
     borderColor: Colors.status.warning + '40',
     padding: 14,
@@ -437,21 +436,22 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    backgroundColor: Colors.background.card,
-    borderRadius: 16, borderWidth: 1,
-    borderColor: Colors.border.default, overflow: 'hidden',
+    gap: 8,
   },
   divider: {
-    height: 1, backgroundColor: Colors.border.subtle, marginLeft: DIVIDER_LEFT,
+    height: 0,
   },
 
   row: {
     flexDirection: 'row', alignItems: 'center',
     gap: ROW_GAP, padding: ROW_PADDING,
+    backgroundColor: Colors.background.card,
+    borderRadius: 28, borderWidth: 1,
+    borderColor: Colors.border.default,
   },
   rowDisabled: { opacity: 0.4 },
   iconBox: {
-    width: ICON_BOX, height: ICON_BOX, borderRadius: 10,
+    width: ICON_BOX, height: ICON_BOX, borderRadius: ICON_BOX / 2,
     alignItems: 'center', justifyContent: 'center', flexShrink: 0,
   },
   dangerIconBox: { backgroundColor: 'rgba(239,68,68,0.12)' },
