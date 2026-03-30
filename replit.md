@@ -50,24 +50,23 @@
 ## Overview
 A professional React Native Expo mobile app (Android-first, web-previewed) for competitive eSports tournaments. Package: `com.elite.esports.android`, version 1.0.0 Alpha. Built with Expo Router v6, Supabase as the sole backend, and a fully modular feature-based architecture. All currencies in Indian Rupees (₹).
 
-## Latest Upgrades (Phase 2)
+## Latest Fixes (EAS Build Prep)
 
-### UI / Theme
+### TypeScript / Build Errors Fixed
+- **FlashList v2 breaking change** — `estimatedItemSize` prop was removed in `@shopify/flash-list@2.0.2`; removed from both FlashList usages in `app/(tabs)/index.tsx` (was the sole TypeScript error blocking `tsc --noEmit`)
+- **Dead code removed** — deleted root-level `components/` and `constants/` folders which were duplicates of `src/components/` and `src/utils/` (path alias `@/*` maps to `src/*`; these were never imported)
+- **Unused packages removed** — `expo-image-picker` and `react-native-worklets` were in `package.json` but never imported anywhere in the codebase; both removed
+- **`react-native-keyboard-controller` plugin added** to `app.json` plugins array for proper native module autolinking during EAS Build
+- **`EXPO_PUBLIC_AD_TESTING`** env var now set in all `eas.json` build profiles: `"true"` for development/preview (test ads), `"false"` for production/production-apk (live AdMob ads)
+
+### Previous Phase 2 Upgrades
 - **Color tokens** updated: background `#080808`, card `#121212`, accent `#EE3D2D`
-- **GlobalHeader** — iOS BlurView, Pressable instead of TouchableOpacity, haptic feedback on search/bell, red notification badge
-- **MatchCard** — 16:9 aspect ratio banner, bottom `rgba(0,0,0,0.72)` gradient overlay, prize tag with gold ₹, Pressable with press scale, `borderRadius 16`, haptics on tap
-- **Tab bar** — Reanimated spring scale + glow shadow on active icon, Pressable, no labels, active dot indicator; removed iOS NativeTabs in favour of unified `ClassicTabLayout`
-
-### Performance & UX
+- **GlobalHeader** — iOS BlurView, Pressable, haptic feedback on search/bell, red notification badge
+- **MatchCard** — 16:9 banner, bottom gradient overlay, prize tag with gold ₹, Pressable with press scale, haptics on tap
+- **Tab bar** — Reanimated spring scale + glow shadow on active icon, Pressable, no labels, active dot indicator
 - **FlashList** (`@shopify/flash-list@2.0.2`) replaces `FlatList` in Home screen
-- **SkeletonCard** shimmer component: `react-native-reanimated` animated LinearGradient sweep, shown for 4 placeholder slots while first data loads
-- **`useMatches` offline-first**: loads AsyncStorage cache immediately on mount (stale-while-revalidate), then fetches fresh from Supabase in background; persists updates to cache; real-time subscription still active
-
-### Onboarding (3 separate component files)
-- `src/features/onboarding/WelcomeArena.tsx` — Shield icon, PVP/WIN badges, game tags, red concentric arcs, "Enter the Elite Arena"
-- `src/features/onboarding/PlayAndWin.tsx` — Green wallet hero, trophy/lightning side icons, stats card, "Compete, Dominate, Earn"
-- `src/features/onboarding/JoinElite.tsx` — 3×3 player avatar grid, online pill, region badges, big red "Get Started" CTA
-- `app/onboarding.tsx` — scrollEnabled=false FlatList pager calling goTo() to animate between pages
+- **SkeletonCard** shimmer component: Reanimated animated LinearGradient sweep, 4 placeholder slots while data loads
+- **`useMatches` offline-first**: AsyncStorage cache on mount (stale-while-revalidate), fresh Supabase fetch in background, real-time subscription active
 
 ## Replit Environment Setup
 

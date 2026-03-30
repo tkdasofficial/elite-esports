@@ -39,7 +39,6 @@ export default function HomeScreen() {
         <FlashList
           data={Array.from({ length: SKELETON_COUNT }, (_, i) => i)}
           keyExtractor={i => `skel-${i}`}
-          estimatedItemSize={340}
           renderItem={() => <SkeletonCard />}
           contentContainerStyle={{ padding: 16, paddingBottom: tabBarHeight + 16 }}
           ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
@@ -49,7 +48,6 @@ export default function HomeScreen() {
         <FlashList
           data={filtered as Match[]}
           keyExtractor={item => item.id}
-          estimatedItemSize={340}
           renderItem={({ item }) => (
             <MatchCard
               match={item}
