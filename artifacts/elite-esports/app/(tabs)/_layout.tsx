@@ -79,7 +79,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const bottomPad = Platform.OS === 'web' ? WEB_BOTTOM_INSET : insets.bottom;
 
   const BarContent = (
-    <View style={[styles.iconRow, { paddingBottom: bottomPad }]}>
+    <View style={styles.iconRow}>
       {state.routes.map((route, index) => {
         const isFocused = state.index === index;
 
@@ -117,7 +117,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   );
 
   return (
-    <View style={[styles.tabBar, { height: TAB_HEIGHT + bottomPad }]}>
+    <View style={[styles.tabBar, { paddingBottom: bottomPad }]}>
       {Platform.OS === 'ios' ? (
         <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
       ) : (
