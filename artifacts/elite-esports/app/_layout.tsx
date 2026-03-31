@@ -4,24 +4,20 @@ import {
 } from '@expo-google-fonts/inter';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect, useRef } from 'react';
-import { Animated, StyleSheet, View } from 'react-native';
+import React, { useEffect } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { Ionicons } from '@expo/vector-icons';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/store/AuthContext';
 import { ProfileProvider } from '@/store/ProfileContext';
-import { ThemeProvider } from '@/store/ThemeContext';
+import { ThemeProvider, useTheme } from '@/store/ThemeContext';
 import { NotificationsProvider } from '@/store/NotificationsContext';
 import { WalletProvider } from '@/store/WalletContext';
 import { initNotifications } from '@/services/NotificationService';
-
-SplashScreen.preventAutoHideAsync();
+import { loadHapticPreference } from '@/utils/haptics';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -53,37 +49,32 @@ function RootLayoutNav() {
   );
 }
 
-export default function RootLayout() {
+function ThemedRoot() {
+  const { isDark } = useTheme();
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
   });
 
-  const overlayOpacity = useRef(new Animated.Value(1)).current;
   const ready = fontsLoaded || !!fontError;
 
   useEffect(() => {
-    if (!ready) return;
-
-    const hideSplash = async () => {
-      await SplashScreen.hideAsync();
-      Animated.timing(overlayOpacity, {
-        toValue: 0,
-        duration: 400,
-        useNativeDriver: true,
-      }).start();
-    };
-
-    const timer = setTimeout(hideSplash, 300);
-    return () => clearTimeout(timer);
-  }, [ready]);
-
-  useEffect(() => {
     initNotifications().catch(() => {});
+    loadHapticPreference().catch(() => {});
   }, []);
 
   return (
-    <SafeAreaProvider style={styles.root}>
-      <StatusBar style="light" />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <KeyboardProvider>
+        <StatusBar style={isDark ? 'light' : 'dark'} />
+        {ready && <RootLayoutNav />}
+      </KeyboardProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <ThemeProvider>
@@ -91,17 +82,7 @@ export default function RootLayout() {
               <ProfileProvider>
                 <NotificationsProvider>
                   <WalletProvider>
-                    <GestureHandlerRootView style={styles.root}>
-                      <KeyboardProvider>
-                        {ready && <RootLayoutNav />}
-                        <Animated.View
-                          pointerEvents="none"
-                          style={[styles.overlay, { opacity: overlayOpacity }]}
-                        >
-                          <Ionicons name="flash" size={96} color="#FE4C11" />
-                        </Animated.View>
-                      </KeyboardProvider>
-                    </GestureHandlerRootView>
+                    <ThemedRoot />
                   </WalletProvider>
                 </NotificationsProvider>
               </ProfileProvider>
@@ -112,16 +93,3 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#000000',
-  },
-  overlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#000000',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});

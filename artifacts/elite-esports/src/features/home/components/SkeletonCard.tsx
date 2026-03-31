@@ -1,28 +1,20 @@
-/**
- * SkeletonCard — mirrors the new MatchCard layout exactly.
- * Banner (16:9) + title bar + prize & button row, all shimmer.
- */
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Dimensions, StyleSheet, View } from 'react-native';
+import { useTheme } from '@/store/ThemeContext';
 import { SkeletonBar } from '@/components/SkeletonBar';
-import { Colors } from '@/utils/colors';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 const CARD_W   = SCREEN_W - 32;
 const BANNER_H = Math.round(CARD_W * (9 / 16));
 
 export function SkeletonCard() {
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   return (
     <View style={styles.card}>
-      {/* Banner */}
       <SkeletonBar width={CARD_W} height={BANNER_H} radius={0} />
-
-      {/* Info strip */}
       <View style={styles.strip}>
-        {/* Line 1 — title */}
         <SkeletonBar width="72%" height={15} radius={7} />
-
-        {/* Line 2 — prize + button */}
         <View style={styles.bottomRow}>
           <SkeletonBar width={90} height={14} radius={6} />
           <SkeletonBar width={88} height={33} radius={8} />
@@ -32,23 +24,13 @@ export function SkeletonCard() {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.background.card,
-    borderRadius: 16,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: Colors.border.default,
-  },
-  strip: {
-    paddingHorizontal: 14,
-    paddingTop: 12,
-    paddingBottom: 12,
-    gap: 10,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-});
+function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColors>) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: colors.background.card, borderRadius: 16,
+      overflow: 'hidden', borderWidth: 1, borderColor: colors.border.default,
+    },
+    strip: { paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12, gap: 10 },
+    bottomRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  });
+}

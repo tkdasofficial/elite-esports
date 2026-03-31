@@ -5,29 +5,24 @@ import React, { useRef, useEffect } from 'react';
 import { Platform, StyleSheet, View, Pressable, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import * as Haptics from 'expo-haptics';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
+import { triggerHaptic } from '@/utils/haptics';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 
 const TAB_HEIGHT = 62;
 
 type TabName = 'index' | 'live' | 'leaderboard' | 'wallet' | 'profile';
 
-const TABS: { name: TabName; icon: string; activeIcon: string }[] = [
-  { name: 'index',       icon: 'home',       activeIcon: 'home' },
-  { name: 'live',        icon: 'play-circle', activeIcon: 'play-circle' },
-  { name: 'leaderboard', icon: 'award',       activeIcon: 'award' },
-  { name: 'wallet',      icon: 'credit-card', activeIcon: 'credit-card' },
-  { name: 'profile',     icon: 'user',        activeIcon: 'user' },
+const TABS: { name: TabName; icon: string }[] = [
+  { name: 'index',       icon: 'home' },
+  { name: 'live',        icon: 'play-circle' },
+  { name: 'leaderboard', icon: 'award' },
+  { name: 'wallet',      icon: 'credit-card' },
+  { name: 'profile',     icon: 'user' },
 ];
 
-function TabIcon({
-  routeName,
-  isFocused,
-}: {
-  routeName: TabName;
-  isFocused: boolean;
-}) {
+function TabIcon({ routeName, isFocused }: { routeName: TabName; isFocused: boolean }) {
+  const { colors } = useTheme();
   const tab = TABS.find(t => t.name === routeName);
   const scale = useRef(new Animated.Value(1)).current;
   const glowOpacity = useRef(new Animated.Value(0)).current;
@@ -48,27 +43,18 @@ function TabIcon({
     ]).start();
   }, [isFocused]);
 
-  const iconColor = isFocused ? Colors.tab.active : Colors.tab.inactive;
+  const iconColor = isFocused ? colors.tab.active : colors.tab.inactive;
 
   return (
     <View style={styles.iconWrap}>
-      {/* Glow behind icon */}
       <Animated.View
         style={[
           styles.glow,
-          {
-            opacity: glowOpacity,
-            backgroundColor: Colors.primary + '22',
-            shadowColor: Colors.primary,
-          },
+          { opacity: glowOpacity, backgroundColor: colors.primary + '22' },
         ]}
       />
       <Animated.View style={{ transform: [{ scale }] }}>
-        <Feather
-          name={(tab?.icon ?? 'home') as any}
-          size={23}
-          color={iconColor}
-        />
+        <Feather name={(tab?.icon ?? 'home') as any} size={23} color={iconColor} />
       </Animated.View>
     </View>
   );
@@ -76,6 +62,7 @@ function TabIcon({
 
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { isDark, colors } = useTheme();
   const bottomPad = Platform.OS === 'web' ? WEB_BOTTOM_INSET : insets.bottom;
 
   const BarContent = (
@@ -90,7 +77,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
             canPreventDefault: true,
           });
           if (!isFocused && !event.defaultPrevented) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            triggerHaptic();
             navigation.navigate(route.name);
           }
         };
@@ -116,14 +103,25 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
     </View>
   );
 
+  const tabBarBg = isDark ? '#0A0A0AEE' : '#FFFFFFEE';
+  const borderColor = colors.border.subtle;
+
   return (
-    <View style={[styles.tabBar, { paddingBottom: bottomPad }]}>
+    <View
+      style={[
+        styles.tabBar,
+        { paddingBottom: bottomPad, borderTopColor: borderColor },
+      ]}
+    >
       {Platform.OS === 'ios' ? (
-        <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView
+          intensity={90}
+          tint={isDark ? 'dark' : 'light'}
+          style={StyleSheet.absoluteFill}
+        />
       ) : (
-        <View style={[StyleSheet.absoluteFill, styles.androidBg]} />
+        <View style={[StyleSheet.absoluteFill, { backgroundColor: tabBarBg }]} />
       )}
-      <View style={styles.topBorder} />
       {BarContent}
     </View>
   );
@@ -150,21 +148,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-  },
-  androidBg: {
-    backgroundColor: '#0A0A0AEE',
-  },
-  topBorder: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: Colors.border.subtle,
+    borderTopWidth: 1,
   },
   iconRow: {
     height: TAB_HEIGHT,
-    marginTop: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -185,9 +172,5 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.8,
-    shadowRadius: 10,
-    elevation: 6,
   },
 });

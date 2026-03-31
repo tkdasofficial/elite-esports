@@ -4,7 +4,7 @@ import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
 import { GlobalHeader } from '@/components/GlobalHeader';
 import { MatchCard } from '@/features/home/components/MatchCard';
 import { SkeletonCard } from '@/features/home/components/SkeletonCard';
@@ -14,6 +14,7 @@ import { Match } from '@/utils/types';
 const SKELETON_COUNT = 4;
 
 export default function HomeScreen() {
+  const { colors } = useTheme();
   const { matches, loading, refreshing, refresh } = useMatches();
   const tabBarHeight = useBottomTabBarHeight();
   const [query, setQuery] = useState('');
@@ -30,12 +31,13 @@ export default function HomeScreen() {
     );
   }, [matches, query]);
 
+  const showSkeleton = (loading && matches.length === 0) || refreshing;
+
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: colors.background.dark }}>
       <GlobalHeader onSearch={setQuery} />
 
-      {loading && matches.length === 0 ? (
-        // Full skeleton screen
+      {showSkeleton ? (
         <FlashList
           data={Array.from({ length: SKELETON_COUNT }, (_, i) => i)}
           keyExtractor={i => `skel-${i}`}
@@ -58,9 +60,9 @@ export default function HomeScreen() {
           ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
           refreshControl={
             <RefreshControl
-              refreshing={refreshing}
+              refreshing={false}
               onRefresh={refresh}
-              tintColor={Colors.primary}
+              tintColor={colors.primary}
             />
           }
           showsVerticalScrollIndicator={false}
@@ -69,12 +71,12 @@ export default function HomeScreen() {
               <Ionicons
                 name={query ? 'search-outline' : 'game-controller-outline'}
                 size={56}
-                color={Colors.text.muted}
+                color={colors.text.muted}
               />
-              <Text style={styles.emptyTitle}>
+              <Text style={[styles.emptyTitle, { color: colors.text.secondary }]}>
                 {query ? 'No results found' : 'No Matches Yet'}
               </Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyText, { color: colors.text.muted }]}>
                 {query
                   ? `Nothing matched "${query}". Try a different game or prize.`
                   : 'Check back soon for upcoming tournaments.'}
@@ -88,10 +90,6 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background.dark,
-  },
   empty: {
     alignItems: 'center',
     paddingTop: 80,
@@ -101,13 +99,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontFamily: 'Inter_700Bold',
-    color: Colors.text.secondary,
     textAlign: 'center',
   },
   emptyText: {
     fontSize: 14,
     fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted,
     textAlign: 'center',
     lineHeight: 20,
   },

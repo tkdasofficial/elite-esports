@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView,
   Platform, Alert, Modal, TextInput, KeyboardAvoidingView, Pressable, AppState,
@@ -7,18 +7,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Colors } from '@/utils/colors';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useAuth } from '@/store/AuthContext';
+import { useTheme, ThemeMode } from '@/store/ThemeContext';
 import { supabase } from '@/services/supabase';
 import {
   getNotificationPermissionStatus,
   openSystemNotificationSettings,
   requestNotificationPermissions,
 } from '@/services/NotificationService';
+import { VIBRATION_KEY, setHapticEnabled, isHapticEnabled } from '@/utils/haptics';
 
-/* ── Notification preference keys ── */
 const NOTIF_KEYS = {
   all:        'notif_all',
   match:      'notif_match',
@@ -48,91 +48,32 @@ async function savePref(key: keyof typeof NOTIF_KEYS, value: boolean) {
   await AsyncStorage.setItem(NOTIF_KEYS[key], String(value));
 }
 
-/* ── Reusable row components ── */
-function SectionTitle({ title }: { title: string }) {
-  return <Text style={styles.sectionTitle}>{title}</Text>;
-}
+const THEME_OPTIONS: { label: string; value: ThemeMode; icon: string }[] = [
+  { label: 'Dark',   value: 'dark',   icon: 'moon' },
+  { label: 'Light',  value: 'light',  icon: 'sunny' },
+  { label: 'System', value: 'system', icon: 'phone-portrait' },
+];
 
-function SettingRow({
-  icon, iconColor, label, sublabel, type, value, onToggle, onPress, disabled, rightIcon,
-}: {
-  icon: string; iconColor?: string; label: string; sublabel?: string;
-  type: 'toggle' | 'arrow' | 'danger' | 'info';
-  value?: boolean; onToggle?: (v: boolean) => void;
-  onPress?: () => void; disabled?: boolean; rightIcon?: React.ReactNode;
-}) {
-  const ic = iconColor ?? Colors.primary;
-  return (
-    <TouchableOpacity
-      style={[styles.row, disabled && styles.rowDisabled]}
-      onPress={type !== 'toggle' ? onPress : undefined}
-      activeOpacity={type === 'toggle' || type === 'info' ? 1 : 0.75}
-      disabled={type === 'toggle' || type === 'info' || (!onPress && type !== 'danger')}
-    >
-      <View style={[styles.iconBox, type === 'danger' && styles.dangerIconBox, { backgroundColor: ic + '18' }]}>
-        <Ionicons name={icon as any} size={18} color={ic} />
-      </View>
-      <View style={styles.rowText}>
-        <Text style={[styles.rowLabel, type === 'danger' && styles.dangerLabel, disabled && styles.rowLabelMuted]}>
-          {label}
-        </Text>
-        {sublabel ? <Text style={styles.rowSublabel}>{sublabel}</Text> : null}
-      </View>
-      {type === 'toggle' && (
-        <Switch
-          value={value}
-          onValueChange={onToggle}
-          disabled={disabled}
-          trackColor={{ false: Colors.background.elevated, true: Colors.primary }}
-          thumbColor={value ? '#fff' : Colors.primary}
-          ios_backgroundColor={Colors.background.elevated}
-        />
-      )}
-      {type === 'arrow' && <Ionicons name="chevron-forward" size={16} color={Colors.text.muted} />}
-      {type === 'info' && rightIcon}
-    </TouchableOpacity>
-  );
-}
-
-function Card({ children }: { children: React.ReactNode }) {
-  return <View style={styles.card}>{children}</View>;
-}
-
-function CardDivider() {
-  return null;
-}
-
-/* ── Permission Status Banner ── */
-function PermissionBanner({ status, onEnable }: { status: PermissionStatus; onEnable: () => void }) {
-  if (status === 'granted') return null;
-  return (
-    <TouchableOpacity style={styles.permBanner} onPress={onEnable} activeOpacity={0.8}>
-      <Ionicons name="warning-outline" size={18} color={Colors.status.warning} />
-      <View style={styles.permBannerText}>
-        <Text style={styles.permBannerTitle}>Notifications are blocked</Text>
-        <Text style={styles.permBannerSub}>Tap to open system settings and enable notifications</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={14} color={Colors.status.warning} />
-    </TouchableOpacity>
-  );
-}
-
-/* ── Main screen ── */
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { signOut } = useAuth();
+  const { colors, themeMode, setThemeMode } = useTheme();
   const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS);
   const [permStatus, setPermStatus] = useState<PermissionStatus>('undetermined');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState('');
   const [passwordLoading, setPasswordLoading] = useState(false);
+  const [vibrationOn, setVibrationOn] = useState(true);
 
-  /* Load saved prefs */
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
   useEffect(() => {
     loadPrefs().then(setPrefs);
+    AsyncStorage.getItem(VIBRATION_KEY).then(val => {
+      setVibrationOn(val === null ? true : val === 'true');
+    });
   }, []);
 
-  /* Check system permission — re-check whenever app comes to foreground */
   const refreshPermStatus = useCallback(async () => {
     const s = await getNotificationPermissionStatus();
     setPermStatus(s);
@@ -173,6 +114,11 @@ export default function SettingsScreen() {
     }
   };
 
+  const handleVibrationToggle = (val: boolean) => {
+    setVibrationOn(val);
+    setHapticEnabled(val);
+  };
+
   const handleChangePassword = () => { setNewPassword(''); setShowPasswordModal(true); };
 
   const confirmPasswordChange = async () => {
@@ -194,149 +140,204 @@ export default function SettingsScreen() {
         contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET + 24 }]}
         showsVerticalScrollIndicator={false}
       >
+        {/* ── Preferences ── */}
+        <Text style={styles.sectionTitle}>Preferences</Text>
+
+        <View style={styles.card}>
+          {/* Vibration Feedback */}
+          <View style={styles.row}>
+            <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
+              <Ionicons name="phone-portrait" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.rowText}>
+              <Text style={styles.rowLabel}>Vibration Feedback</Text>
+              <Text style={styles.rowSublabel}>
+                {vibrationOn ? 'Haptic feedback is on' : 'Haptic feedback is off'}
+              </Text>
+            </View>
+            <Switch
+              value={vibrationOn}
+              onValueChange={handleVibrationToggle}
+              trackColor={{ false: colors.background.elevated, true: colors.primary }}
+              thumbColor={vibrationOn ? '#fff' : colors.primary}
+              ios_backgroundColor={colors.background.elevated}
+            />
+          </View>
+        </View>
+
+        {/* ── Theme ── */}
+        <Text style={styles.sectionTitle}>Appearance</Text>
+
+        <View style={styles.themeCard}>
+          {THEME_OPTIONS.map((opt, i) => {
+            const isActive = themeMode === opt.value;
+            return (
+              <TouchableOpacity
+                key={opt.value}
+                style={[
+                  styles.themeOption,
+                  isActive && styles.themeOptionActive,
+                  i < THEME_OPTIONS.length - 1 && styles.themeOptionBorder,
+                ]}
+                onPress={() => setThemeMode(opt.value)}
+                activeOpacity={0.75}
+              >
+                <Ionicons
+                  name={opt.icon as any}
+                  size={20}
+                  color={isActive ? colors.primary : colors.text.muted}
+                />
+                <Text style={[styles.themeLabel, isActive && styles.themeLabelActive]}>
+                  {opt.label}
+                </Text>
+                {isActive && (
+                  <View style={styles.themeCheck}>
+                    <Ionicons name="checkmark" size={14} color={colors.primary} />
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
 
         {/* ── Notifications ── */}
-        <SectionTitle title="Notifications" />
+        <Text style={styles.sectionTitle}>Notifications</Text>
 
-        {/* Permission Banner — only visible on native when blocked */}
         {Platform.OS !== 'web' && permStatus !== 'granted' && (
-          <PermissionBanner status={permStatus} onEnable={handleEnableNotifications} />
+          <TouchableOpacity style={styles.permBanner} onPress={handleEnableNotifications} activeOpacity={0.8}>
+            <Ionicons name="warning-outline" size={18} color={colors.status.warning} />
+            <View style={styles.permBannerText}>
+              <Text style={styles.permBannerTitle}>Notifications are blocked</Text>
+              <Text style={styles.permBannerSub}>Tap to open system settings and enable notifications</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={14} color={colors.status.warning} />
+          </TouchableOpacity>
         )}
 
-        <Card>
-          {/* System permission status row */}
+        <View style={styles.card}>
           {Platform.OS !== 'web' && (
             <>
-              <SettingRow
-                icon={permStatus === 'granted' ? 'shield-checkmark' : 'shield-outline'}
-                iconColor={permStatus === 'granted' ? Colors.status.success : Colors.status.warning}
-                label="System Permission"
-                sublabel={
-                  permStatus === 'granted'
-                    ? 'Allowed — notifications will be delivered'
-                    : permStatus === 'denied'
-                    ? 'Blocked — tap to open system settings'
-                    : 'Not yet requested — tap to enable'
-                }
-                type={permStatus !== 'granted' ? 'arrow' : 'info'}
-                onPress={permStatus !== 'granted' ? handleEnableNotifications : undefined}
-                rightIcon={
-                  permStatus === 'granted' ? (
-                    <View style={[styles.statusPill, styles.statusPillOn]}>
-                      <Text style={styles.statusPillText}>ON</Text>
-                    </View>
-                  ) : null
-                }
-              />
-              <CardDivider />
+              <View style={styles.row}>
+                <View style={[styles.iconBox, {
+                  backgroundColor: (permStatus === 'granted' ? colors.status.success : colors.status.warning) + '18',
+                }]}>
+                  <Ionicons
+                    name={permStatus === 'granted' ? 'shield-checkmark' : 'shield-outline'}
+                    size={18}
+                    color={permStatus === 'granted' ? colors.status.success : colors.status.warning}
+                  />
+                </View>
+                <View style={styles.rowText}>
+                  <Text style={styles.rowLabel}>System Permission</Text>
+                  <Text style={styles.rowSublabel}>
+                    {permStatus === 'granted'
+                      ? 'Allowed — notifications will be delivered'
+                      : permStatus === 'denied'
+                      ? 'Blocked — tap to open system settings'
+                      : 'Not yet requested — tap to enable'}
+                  </Text>
+                </View>
+                {permStatus === 'granted' ? (
+                  <View style={[styles.statusPill, styles.statusPillOn]}>
+                    <Text style={styles.statusPillText}>ON</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity onPress={handleEnableNotifications}>
+                    <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+                  </TouchableOpacity>
+                )}
+              </View>
             </>
           )}
 
-          <SettingRow
-            icon="notifications"
-            label="All Notifications"
-            sublabel={prefs.all ? 'Receiving all alerts' : 'All alerts paused'}
-            type="toggle"
-            value={prefs.all}
-            onToggle={v => togglePref('all', v)}
-            disabled={notifDisabled}
-          />
-          <CardDivider />
-          <SettingRow
-            icon="game-controller-outline"
-            label="Match Notifications"
-            sublabel="Match start, end & score updates"
-            type="toggle"
-            value={prefs.match}
-            onToggle={v => togglePref('match', v)}
-            disabled={notifDisabled || masterOff}
-          />
-          <CardDivider />
-          <SettingRow
-            icon="gift-outline"
-            label="Reward Notifications"
-            sublabel="Prize credits & wallet payouts"
-            type="toggle"
-            value={prefs.reward}
-            onToggle={v => togglePref('reward', v)}
-            disabled={notifDisabled || masterOff}
-          />
-          <CardDivider />
-          <SettingRow
-            icon="trophy-outline"
-            label="Tournament Notifications"
-            sublabel="New tournaments & registration deadlines"
-            type="toggle"
-            value={prefs.tournament}
-            onToggle={v => togglePref('tournament', v)}
-            disabled={notifDisabled || masterOff}
-          />
-          <CardDivider />
-          <SettingRow
-            icon="wallet-outline"
-            label="Account Notifications"
-            sublabel="Wallet & security alerts"
-            type="toggle"
-            value={prefs.account}
-            onToggle={v => togglePref('account', v)}
-            disabled={notifDisabled || masterOff}
-          />
-        </Card>
+          {[
+            { key: 'all' as const,        icon: 'notifications',        label: 'All Notifications',      sub: prefs.all ? 'Receiving all alerts' : 'All alerts paused', disabled: notifDisabled },
+            { key: 'match' as const,      icon: 'game-controller-outline', label: 'Match Notifications',  sub: 'Match start, end & score updates',          disabled: notifDisabled || masterOff },
+            { key: 'reward' as const,     icon: 'gift-outline',           label: 'Reward Notifications',  sub: 'Prize credits & wallet payouts',             disabled: notifDisabled || masterOff },
+            { key: 'tournament' as const, icon: 'trophy-outline',         label: 'Tournament Notifications', sub: 'New tournaments & registration deadlines', disabled: notifDisabled || masterOff },
+            { key: 'account' as const,    icon: 'wallet-outline',         label: 'Account Notifications', sub: 'Wallet & security alerts',                   disabled: notifDisabled || masterOff },
+          ].map(item => (
+            <View key={item.key} style={[styles.row, item.disabled && styles.rowDisabled]}>
+              <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
+                <Ionicons name={item.icon as any} size={18} color={colors.primary} />
+              </View>
+              <View style={styles.rowText}>
+                <Text style={[styles.rowLabel, item.disabled && styles.rowLabelMuted]}>{item.label}</Text>
+                <Text style={styles.rowSublabel}>{item.sub}</Text>
+              </View>
+              <Switch
+                value={prefs[item.key]}
+                onValueChange={v => togglePref(item.key, v)}
+                disabled={item.disabled}
+                trackColor={{ false: colors.background.elevated, true: colors.primary }}
+                thumbColor={prefs[item.key] ? '#fff' : colors.primary}
+                ios_backgroundColor={colors.background.elevated}
+              />
+            </View>
+          ))}
+        </View>
 
         {/* ── Account ── */}
-        <SectionTitle title="Account" />
-        <Card>
-          <SettingRow
-            icon="lock-closed-outline"
-            label="Change Password"
-            type="arrow"
-            onPress={handleChangePassword}
-          />
-        </Card>
+        <Text style={styles.sectionTitle}>Account</Text>
+        <View style={styles.card}>
+          <TouchableOpacity style={styles.row} onPress={handleChangePassword} activeOpacity={0.75}>
+            <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
+              <Ionicons name="lock-closed-outline" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.rowText}>
+              <Text style={styles.rowLabel}>Change Password</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+          </TouchableOpacity>
+        </View>
 
         {/* ── App ── */}
-        <SectionTitle title="App" />
-        <Card>
-          <SettingRow
-            icon="document-text-outline"
-            label="Terms & Conditions"
-            type="arrow"
-            onPress={() => router.push('/terms')}
-          />
-          <CardDivider />
-          <SettingRow
-            icon="shield-checkmark-outline"
-            label="Privacy Policy"
-            type="arrow"
-            onPress={() => router.push('/privacy')}
-          />
-          <CardDivider />
-          <SettingRow
-            icon="information-circle-outline"
-            label="About Elite eSports"
-            type="arrow"
-            onPress={() => router.push('/about')}
-          />
-        </Card>
+        <Text style={styles.sectionTitle}>App</Text>
+        <View style={styles.card}>
+          {[
+            { icon: 'document-text-outline', label: 'Terms & Conditions', route: '/terms' },
+            { icon: 'shield-checkmark-outline', label: 'Privacy Policy', route: '/privacy' },
+            { icon: 'information-circle-outline', label: 'About Elite eSports', route: '/about' },
+          ].map(item => (
+            <TouchableOpacity
+              key={item.route}
+              style={styles.row}
+              onPress={() => router.push(item.route as any)}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
+                <Ionicons name={item.icon as any} size={18} color={colors.primary} />
+              </View>
+              <View style={styles.rowText}>
+                <Text style={styles.rowLabel}>{item.label}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {/* ── Danger Zone ── */}
-        <SectionTitle title="Danger Zone" />
-        <Card>
-          <SettingRow
-            icon="log-out-outline"
-            iconColor={Colors.status.error}
-            label="Sign Out"
-            type="danger"
+        <Text style={styles.sectionTitle}>Danger Zone</Text>
+        <View style={styles.card}>
+          <TouchableOpacity
+            style={styles.row}
             onPress={() =>
               Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
                 { text: 'Cancel', style: 'cancel' },
                 { text: 'Sign Out', style: 'destructive', onPress: signOut },
               ])
             }
-          />
-        </Card>
+            activeOpacity={0.75}
+          >
+            <View style={[styles.iconBox, { backgroundColor: 'rgba(239,68,68,0.12)' }]}>
+              <Ionicons name="log-out-outline" size={18} color={colors.status.error} />
+            </View>
+            <View style={styles.rowText}>
+              <Text style={[styles.rowLabel, { color: colors.status.error }]}>Sign Out</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
-        {/* ── App Info ── */}
         <View style={styles.appInfoRow}>
           <Text style={styles.version}>Elite eSports · v1.0.0</Text>
           <Text style={styles.packageName}>com.elite.esports.android</Text>
@@ -358,7 +359,7 @@ export default function SettingsScreen() {
               <TextInput
                 style={styles.modalInput}
                 placeholder="New password"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 secureTextEntry
                 value={newPassword}
                 onChangeText={setNewPassword}
@@ -393,112 +394,123 @@ const ROW_PADDING = 14;
 const ICON_BOX = 36;
 const ROW_GAP = 12;
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background.dark },
-  scroll: { padding: 16 },
+function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColors>) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background.dark },
+    scroll: { padding: 16 },
 
-  sectionTitle: {
-    fontSize: 11, fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.muted, textTransform: 'uppercase',
-    letterSpacing: 1, marginBottom: 8, marginTop: 20, marginLeft: 4,
-  },
+    sectionTitle: {
+      fontSize: 11, fontFamily: 'Inter_600SemiBold',
+      color: colors.text.muted, textTransform: 'uppercase',
+      letterSpacing: 1, marginBottom: 8, marginTop: 20, marginLeft: 4,
+    },
 
-  permBanner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: Colors.status.warning + '15',
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: Colors.status.warning + '40',
-    padding: 14,
-    marginBottom: 10,
-  },
-  permBannerText: { flex: 1 },
-  permBannerTitle: {
-    fontSize: 13, fontFamily: 'Inter_600SemiBold', color: Colors.status.warning,
-  },
-  permBannerSub: {
-    fontSize: 11, fontFamily: 'Inter_400Regular', color: Colors.text.muted, marginTop: 2,
-  },
+    permBanner: {
+      flexDirection: 'row', alignItems: 'center', gap: 10,
+      backgroundColor: colors.status.warning + '15',
+      borderRadius: 100, borderWidth: 1,
+      borderColor: colors.status.warning + '40',
+      padding: 14, marginBottom: 10,
+    },
+    permBannerText: { flex: 1 },
+    permBannerTitle: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.status.warning },
+    permBannerSub: { fontSize: 11, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginTop: 2 },
 
-  statusPill: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  statusPillOn: {
-    backgroundColor: Colors.status.success + '20',
-    borderWidth: 1,
-    borderColor: Colors.status.success + '50',
-  },
-  statusPillText: {
-    fontSize: 10, fontFamily: 'Inter_700Bold', color: Colors.status.success,
-  },
+    statusPill: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+    statusPillOn: {
+      backgroundColor: colors.status.success + '20',
+      borderWidth: 1, borderColor: colors.status.success + '50',
+    },
+    statusPillText: { fontSize: 10, fontFamily: 'Inter_700Bold', color: colors.status.success },
 
-  card: {
-    gap: 8,
-  },
-  divider: {
-    height: 0,
-  },
+    card: { gap: 8 },
 
-  row: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: ROW_GAP, paddingVertical: ROW_PADDING, paddingHorizontal: 18,
-    backgroundColor: Colors.background.card,
-    borderRadius: 100, borderWidth: 1,
-    borderColor: Colors.border.default,
-  },
-  rowDisabled: { opacity: 0.4 },
-  iconBox: {
-    width: ICON_BOX, height: ICON_BOX, borderRadius: ICON_BOX / 2,
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
-  dangerIconBox: { backgroundColor: 'rgba(239,68,68,0.12)' },
-  rowText: { flex: 1 },
-  rowLabel: { fontSize: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary },
-  rowLabelMuted: { color: Colors.text.muted },
-  rowSublabel: {
-    fontSize: 11, fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted, marginTop: 2,
-  },
-  dangerLabel: { color: Colors.status.error },
+    themeCard: {
+      flexDirection: 'row',
+      gap: 8,
+    },
+    themeOption: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 14,
+      gap: 6,
+      backgroundColor: colors.background.card,
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: colors.border.default,
+    },
+    themeOptionActive: {
+      borderColor: colors.primary,
+      backgroundColor: colors.primary + '10',
+    },
+    themeOptionBorder: {},
+    themeLabel: {
+      fontSize: 12,
+      fontFamily: 'Inter_500Medium',
+      color: colors.text.muted,
+    },
+    themeLabelActive: {
+      color: colors.primary,
+      fontFamily: 'Inter_600SemiBold',
+    },
+    themeCheck: {
+      position: 'absolute',
+      top: 6,
+      right: 8,
+    },
 
-  appInfoRow: { alignItems: 'center', marginTop: 24, marginBottom: 8, gap: 4 },
-  version: {
-    fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.text.muted,
-  },
-  packageName: {
-    fontSize: 10, fontFamily: 'Inter_400Regular', color: Colors.text.muted + 'AA',
-  },
+    row: {
+      flexDirection: 'row', alignItems: 'center',
+      gap: ROW_GAP, paddingVertical: ROW_PADDING, paddingHorizontal: 18,
+      backgroundColor: colors.background.card,
+      borderRadius: 100, borderWidth: 1,
+      borderColor: colors.border.default,
+    },
+    rowDisabled: { opacity: 0.4 },
+    iconBox: {
+      width: ICON_BOX, height: ICON_BOX, borderRadius: ICON_BOX / 2,
+      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    },
+    rowText: { flex: 1 },
+    rowLabel: { fontSize: 15, fontFamily: 'Inter_500Medium', color: colors.text.primary },
+    rowLabelMuted: { color: colors.text.muted },
+    rowSublabel: {
+      fontSize: 11, fontFamily: 'Inter_400Regular',
+      color: colors.text.muted, marginTop: 2,
+    },
 
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.75)',
-    justifyContent: 'center', alignItems: 'center', padding: 24,
-  },
-  modalCard: {
-    backgroundColor: Colors.background.card,
-    borderRadius: 20, padding: 24,
-    width: '100%', maxWidth: 400,
-    borderWidth: 1, borderColor: Colors.border.default,
-  },
-  modalTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 6 },
-  modalSubtitle: { fontSize: 13, fontFamily: 'Inter_400Regular', color: Colors.text.muted, marginBottom: 20 },
-  modalInput: {
-    backgroundColor: Colors.background.surface,
-    borderRadius: 12, borderWidth: 1, borderColor: Colors.border.default,
-    color: Colors.text.primary, fontFamily: 'Inter_400Regular',
-    fontSize: 15, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 20,
-  },
-  modalActions: { flexDirection: 'row', gap: 12 },
-  modalBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  modalBtnCancel: {
-    backgroundColor: Colors.background.surface,
-    borderWidth: 1, borderColor: Colors.border.default,
-  },
-  modalBtnCancelText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: Colors.text.secondary },
-  modalBtnConfirm: { backgroundColor: Colors.primary },
-  modalBtnConfirmText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#fff' },
-  modalBtnDisabled: { opacity: 0.6 },
-});
+    appInfoRow: { alignItems: 'center', marginTop: 24, marginBottom: 8, gap: 4 },
+    version: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted },
+    packageName: { fontSize: 10, fontFamily: 'Inter_400Regular', color: colors.text.muted + 'AA' },
+
+    modalOverlay: {
+      flex: 1, backgroundColor: 'rgba(0,0,0,0.75)',
+      justifyContent: 'center', alignItems: 'center', padding: 24,
+    },
+    modalCard: {
+      backgroundColor: colors.background.card,
+      borderRadius: 20, padding: 24,
+      width: '100%', maxWidth: 400,
+      borderWidth: 1, borderColor: colors.border.default,
+    },
+    modalTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 6 },
+    modalSubtitle: { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginBottom: 20 },
+    modalInput: {
+      backgroundColor: colors.background.surface,
+      borderRadius: 12, borderWidth: 1, borderColor: colors.border.default,
+      color: colors.text.primary, fontFamily: 'Inter_400Regular',
+      fontSize: 15, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 20,
+    },
+    modalActions: { flexDirection: 'row', gap: 12 },
+    modalBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+    modalBtnCancel: {
+      backgroundColor: colors.background.surface,
+      borderWidth: 1, borderColor: colors.border.default,
+    },
+    modalBtnCancelText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: colors.text.secondary },
+    modalBtnConfirm: { backgroundColor: colors.primary },
+    modalBtnConfirmText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#fff' },
+    modalBtnDisabled: { opacity: 0.6 },
+  });
+}

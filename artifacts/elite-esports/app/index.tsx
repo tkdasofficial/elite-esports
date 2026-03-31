@@ -1,7 +1,6 @@
 import { Redirect } from 'expo-router';
-import { ActivityIndicator, View } from 'react-native';
+import { View } from 'react-native';
 import { useAuth } from '@/store/AuthContext';
-import { Colors } from '@/utils/colors';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -16,11 +15,7 @@ export default function Index() {
   }, []);
 
   if (loading || onboardingSeen === null) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.background.dark }}>
-        <ActivityIndicator color={Colors.primary} size="large" />
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: '#080808' }} />;
   }
 
   if (!onboardingSeen) return <Redirect href="/onboarding/Play" />;

@@ -7,13 +7,8 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "elite-esports",
-    "userInterfaceStyle": "dark",
+    "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#000000"
-    },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.elite.esports.ios",

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Dimensions, View, FlatList, Text, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
 import { LeaderboardTab } from '@/utils/types';
 import { GlobalHeader } from '@/components/GlobalHeader';
 import { LeaderRow } from '@/features/leaderboard/components/LeaderRow';
@@ -11,9 +11,8 @@ import { SkeletonBar } from '@/components/SkeletonBar';
 
 const TABS: LeaderboardTab[] = ['Solo', 'Squad'];
 const SKELETON_COUNT = 8;
-const SCREEN_W = Dimensions.get('window').width;
 
-function SkeletonLeaderRow({ rank }: { rank: number }) {
+function SkeletonLeaderRow() {
   return (
     <View style={skStyles.row}>
       <SkeletonBar width={28} height={14} radius={5} style={{ marginRight: 8 }} />
@@ -29,17 +28,19 @@ function SkeletonLeaderRow({ rank }: { rank: number }) {
 
 const skStyles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    flexDirection: 'row', alignItems: 'center',
+    paddingHorizontal: 12, paddingVertical: 8,
   },
 });
 
 export default function LeaderboardScreen() {
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<LeaderboardTab>('Solo');
   const { data, loading, refreshing, refresh } = useLeaderboard(activeTab);
   const tabBarHeight = useBottomTabBarHeight();
+  const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const showSkeleton = (loading && data.length === 0) || refreshing;
 
   return (
     <View style={styles.container}>
@@ -57,11 +58,11 @@ export default function LeaderboardScreen() {
         ))}
       </View>
 
-      {loading && data.length === 0 ? (
+      {showSkeleton ? (
         <FlatList
           data={Array.from({ length: SKELETON_COUNT }, (_, i) => i)}
           keyExtractor={i => `skel-lb-${i}`}
-          renderItem={({ index }) => <SkeletonLeaderRow rank={index + 1} />}
+          renderItem={() => <SkeletonLeaderRow />}
           contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
@@ -81,7 +82,7 @@ export default function LeaderboardScreen() {
           contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={Colors.primary} />
+            <RefreshControl refreshing={false} onRefresh={refresh} tintColor={colors.primary} />
           }
           ListHeaderComponent={
             <View style={styles.listHeader}>
@@ -96,7 +97,7 @@ export default function LeaderboardScreen() {
           }
           ListEmptyComponent={
             <View style={styles.empty}>
-              <Ionicons name="trophy-outline" size={56} color={Colors.text.muted} />
+              <Ionicons name="trophy-outline" size={56} color={colors.text.muted} />
               <Text style={styles.emptyTitle}>No Data Yet</Text>
               <Text style={styles.emptyText}>Leaderboard populates after matches</Text>
             </View>
@@ -107,32 +108,30 @@ export default function LeaderboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background.dark },
-  tabBar: {
-    flexDirection: 'row',
-    margin: 16,
-    marginBottom: 8,
-    backgroundColor: Colors.background.elevated,
-    borderRadius: 12,
-    padding: 4,
-  },
-  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
-  tabActive: { backgroundColor: Colors.primary },
-  tabText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.muted },
-  tabTextActive: { color: '#fff' },
-  list: { paddingHorizontal: 16, paddingTop: 4, gap: 6 },
-  listHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginBottom: 4,
-  },
-  colRankWrapper: { width: 36, alignItems: 'center' },
-  colPlayerWrapper: { flex: 1, marginLeft: 46 },
-  colLabel: { fontSize: 11, fontFamily: 'Inter_500Medium', color: Colors.text.muted },
-  empty: { alignItems: 'center', paddingTop: 60, gap: 12 },
-  emptyTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: Colors.text.secondary },
-  emptyText: { fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.muted, textAlign: 'center' },
-});
+function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColors>) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background.dark },
+    tabBar: {
+      flexDirection: 'row', margin: 16, marginBottom: 8,
+      backgroundColor: colors.background.elevated, borderRadius: 12, padding: 4,
+    },
+    tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
+    tabActive: { backgroundColor: colors.primary },
+    tabText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.muted },
+    tabTextActive: { color: '#fff' },
+    list: { paddingHorizontal: 16, paddingTop: 4, gap: 6 },
+    listHeader: {
+      flexDirection: 'row', alignItems: 'center',
+      paddingVertical: 8, paddingHorizontal: 12, marginBottom: 4,
+    },
+    colRankWrapper: { width: 36, alignItems: 'center' },
+    colPlayerWrapper: { flex: 1, marginLeft: 46 },
+    colLabel: { fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.text.muted },
+    empty: { alignItems: 'center', paddingTop: 60, gap: 12 },
+    emptyTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.text.secondary },
+    emptyText: {
+      fontSize: 14, fontFamily: 'Inter_400Regular',
+      color: colors.text.muted, textAlign: 'center',
+    },
+  });
+}

@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useMemo } from 'react';
 import {
   View, Text, Pressable, StyleSheet, Platform,
   Animated, TextInput, Keyboard,
@@ -7,8 +7,8 @@ import { BlurView } from 'expo-blur';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Haptics from 'expo-haptics';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
+import { triggerHaptic } from '@/utils/haptics';
 import { useNotifications } from '@/store/NotificationsContext';
 import { WEB_TOP_INSET } from '@/utils/webInsets';
 
@@ -18,6 +18,7 @@ interface Props {
 
 export function GlobalHeader({ onSearch }: Props) {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
   const { unreadCount } = useNotifications();
   const topInset = Platform.OS === 'web' ? Math.max(WEB_TOP_INSET, insets.top) : insets.top;
 
@@ -26,8 +27,10 @@ export function GlobalHeader({ onSearch }: Props) {
   const inputRef = useRef<TextInput>(null);
   const anim = useRef(new Animated.Value(0)).current;
 
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+
   const openSearch = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    triggerHaptic();
     setSearching(true);
     Animated.timing(anim, { toValue: 1, duration: 220, useNativeDriver: true }).start(
       () => inputRef.current?.focus(),
@@ -54,14 +57,13 @@ export function GlobalHeader({ onSearch }: Props) {
   const Inner = (
     <View style={[styles.inner, { paddingTop: topInset }]}>
       <View style={styles.content}>
-
         <View style={styles.centerFlex}>
           <Animated.View
             style={[styles.logoRow, { opacity: logoOpacity }]}
             pointerEvents={searching ? 'none' : 'auto'}
           >
             <View style={styles.logoMark}>
-              <Ionicons name="flash" size={17} color={Colors.primary} />
+              <Ionicons name="flash" size={17} color={colors.primary} />
             </View>
             <Text style={styles.logoText}>
               Elite <Text style={styles.logoAccent}>eSports</Text>
@@ -72,14 +74,14 @@ export function GlobalHeader({ onSearch }: Props) {
             <Animated.View
               style={[StyleSheet.absoluteFill, styles.searchBar, { opacity: searchOpacity }]}
             >
-              <Feather name="search" size={17} color={Colors.text.muted} />
+              <Feather name="search" size={17} color={colors.text.muted} />
               <TextInput
                 ref={inputRef}
                 style={styles.searchInput}
                 value={query}
                 onChangeText={handleChange}
                 placeholder="Game, prize pool, status…"
-                placeholderTextColor={Colors.text.muted}
+                placeholderTextColor={colors.text.muted}
                 autoCorrect={false}
                 autoCapitalize="none"
                 returnKeyType="search"
@@ -90,7 +92,7 @@ export function GlobalHeader({ onSearch }: Props) {
                   onPress={() => handleChange('')}
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <Feather name="x-circle" size={17} color={Colors.text.muted} />
+                  <Feather name="x-circle" size={17} color={colors.text.muted} />
                 </Pressable>
               )}
             </Animated.View>
@@ -109,17 +111,17 @@ export function GlobalHeader({ onSearch }: Props) {
                 onPress={openSearch}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
-                <Feather name="search" size={21} color={Colors.text.secondary} />
+                <Feather name="search" size={21} color={colors.text.secondary} />
               </Pressable>
               <Pressable
                 style={styles.iconBtn}
                 onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  triggerHaptic();
                   router.push('/notifications');
                 }}
                 hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
               >
-                <Feather name="bell" size={21} color={Colors.text.secondary} />
+                <Feather name="bell" size={21} color={colors.text.secondary} />
                 {unreadCount > 0 && (
                   <View style={styles.badge}>
                     <Text style={styles.badgeTxt}>
@@ -137,7 +139,7 @@ export function GlobalHeader({ onSearch }: Props) {
 
   if (Platform.OS === 'ios') {
     return (
-      <BlurView intensity={80} tint="dark" style={styles.blurWrap}>
+      <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
         <View style={styles.blurBorder} />
         {Inner}
       </BlurView>
@@ -152,110 +154,61 @@ export function GlobalHeader({ onSearch }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  blurWrap: {
-    zIndex: 10,
-  },
-  androidWrap: {
-    backgroundColor: '#080808EE',
-    zIndex: 10,
-  },
-  blurBorder: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: Colors.border.subtle,
-  },
-  inner: {
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : undefined,
-  },
-  content: {
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingLeft: 16,
-    paddingRight: 4,
-    gap: 8,
-  },
-  centerFlex: {
-    flex: 1,
-    height: 44,
-    justifyContent: 'center',
-  },
-  logoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  logoMark: {
-    width: 32,
-    height: 32,
-    borderRadius: 9,
-    backgroundColor: '#1C0400',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: Colors.primary + '88',
-  },
-  logoText: {
-    fontSize: 18,
-    fontFamily: 'Inter_700Bold',
-    color: Colors.text.primary,
-    letterSpacing: -0.3,
-  },
-  logoAccent: { color: Colors.primary },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.background.elevated,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.primary + '44',
-    paddingHorizontal: 12,
-    gap: 8,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: Colors.text.primary,
-    height: '100%',
-    paddingVertical: 0,
-  },
-  right: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconBtn: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelBtn: {
-    paddingHorizontal: 14,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cancelText: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-    color: Colors.primary,
-  },
-  badge: {
-    position: 'absolute',
-    top: 7,
-    right: 5,
-    backgroundColor: Colors.primary,
-    borderRadius: 7,
-    minWidth: 15,
-    height: 15,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 3,
-  },
-  badgeTxt: { color: '#fff', fontSize: 9, fontFamily: 'Inter_700Bold' },
-});
+function createStyles(
+  colors: ReturnType<typeof import('@/utils/colors').getColors>,
+  isDark: boolean,
+) {
+  return StyleSheet.create({
+    blurWrap: { zIndex: 10 },
+    androidWrap: {
+      backgroundColor: isDark ? '#080808EE' : '#FFFFFFEE',
+      zIndex: 10,
+    },
+    blurBorder: {
+      position: 'absolute', bottom: 0, left: 0, right: 0,
+      height: 1, backgroundColor: colors.border.subtle,
+    },
+    inner: {
+      backgroundColor: Platform.OS === 'ios' ? 'transparent' : undefined,
+    },
+    content: {
+      height: 56, flexDirection: 'row', alignItems: 'center',
+      paddingLeft: 16, paddingRight: 4, gap: 8,
+    },
+    centerFlex: { flex: 1, height: 44, justifyContent: 'center' },
+    logoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    logoMark: {
+      width: 32, height: 32, borderRadius: 9,
+      backgroundColor: isDark ? '#1C0400' : '#FFF0EE',
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: 1, borderColor: colors.primary + '88',
+    },
+    logoText: {
+      fontSize: 18, fontFamily: 'Inter_700Bold',
+      color: colors.text.primary, letterSpacing: -0.3,
+    },
+    logoAccent: { color: colors.primary },
+    searchBar: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.background.elevated,
+      borderRadius: 12, borderWidth: 1,
+      borderColor: colors.primary + '44',
+      paddingHorizontal: 12, gap: 8,
+    },
+    searchInput: {
+      flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular',
+      color: colors.text.primary, height: '100%', paddingVertical: 0,
+    },
+    right: { flexDirection: 'row', alignItems: 'center' },
+    iconBtn: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    cancelBtn: { paddingHorizontal: 14, height: 44, alignItems: 'center', justifyContent: 'center' },
+    cancelText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: colors.primary },
+    badge: {
+      position: 'absolute', top: 7, right: 5,
+      backgroundColor: colors.primary,
+      borderRadius: 7, minWidth: 15, height: 15,
+      alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3,
+    },
+    badgeTxt: { color: '#fff', fontSize: 9, fontFamily: 'Inter_700Bold' },
+  });
+}

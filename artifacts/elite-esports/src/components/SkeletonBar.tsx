@@ -1,7 +1,3 @@
-/**
- * SkeletonBar — shared shimmer bar used by all skeleton loading components.
- * Replicates the YouTube-style left-to-right light sweep.
- */
 import React, { useEffect } from 'react';
 import { StyleSheet, View, ViewStyle } from 'react-native';
 import Animated, {
@@ -13,6 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTheme } from '@/store/ThemeContext';
 
 interface Props {
   width:   number | `${number}%`;
@@ -22,6 +19,7 @@ interface Props {
 }
 
 export function SkeletonBar({ width, height, radius = 8, style }: Props) {
+  const { isDark } = useTheme();
   const shimmer = useSharedValue(-1);
 
   useEffect(() => {
@@ -44,23 +42,22 @@ export function SkeletonBar({ width, height, radius = 8, style }: Props) {
     ],
   }));
 
+  const bgColor = isDark ? '#1C1C1C' : '#E0E0E0';
+  const shimmerLight = isDark
+    ? ['transparent', 'rgba(255,255,255,0.06)', 'rgba(255,255,255,0.12)', 'rgba(255,255,255,0.06)', 'transparent']
+    : ['transparent', 'rgba(255,255,255,0.5)', 'rgba(255,255,255,0.8)', 'rgba(255,255,255,0.5)', 'transparent'];
+
   return (
     <View
       style={[
-        styles.bar,
-        { width: width as any, height, borderRadius: radius },
+        { backgroundColor: bgColor, borderRadius: radius, overflow: 'hidden' },
+        { width: width as any, height },
         style,
       ]}
     >
       <Animated.View style={[StyleSheet.absoluteFill, animStyle]}>
         <LinearGradient
-          colors={[
-            'transparent',
-            'rgba(255,255,255,0.06)',
-            'rgba(255,255,255,0.12)',
-            'rgba(255,255,255,0.06)',
-            'transparent',
-          ]}
+          colors={shimmerLight as any}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{ flex: 1 }}
@@ -69,10 +66,3 @@ export function SkeletonBar({ width, height, radius = 8, style }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  bar: {
-    backgroundColor: '#1C1C1C',
-    overflow: 'hidden',
-  },
-});
