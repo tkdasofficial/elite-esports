@@ -10,8 +10,8 @@ export function useMatches() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Load stale data from cache immediately, then fetch fresh in background
   const loadCache = useCallback(async () => {
     try {
       const cached = await AsyncStorage.getItem(CACHE_KEY);
@@ -26,38 +26,45 @@ export function useMatches() {
 
   const fetchFresh = useCallback(async () => {
     try {
-      const { data } = await supabase
+      setError(null);
+      const { data, error: fetchErr } = await supabase
         .from('matches')
-        .select('*, games(name, banner_url)')
+        .select('id, title, game_id, banner_url, entry_fee, prize_pool, joined_players, max_players, status, starts_at, room_id, room_password, description, live_stream_url, created_at, games(name)')
         .order('created_at', { ascending: false });
+
+      if (fetchErr) throw fetchErr;
 
       if (data) {
         const adapted = data.map(adaptMatch);
         setMatches(adapted);
-        // Persist to cache silently
         AsyncStorage.setItem(CACHE_KEY, JSON.stringify(adapted)).catch(() => {});
       }
     } catch {
-      // Network unavailable — stale cache is already showing
+      if (matches.length === 0) {
+        setError('Could not load matches. Tap to retry.');
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, []);
+  }, [matches.length]);
 
   const refresh = useCallback(() => {
     setRefreshing(true);
     fetchFresh();
   }, [fetchFresh]);
 
+  const retry = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    fetchFresh();
+  }, [fetchFresh]);
+
   useEffect(() => {
-    // Step 1: Show stale data instantly
     loadCache().then(() => {
-      // Step 2: Silently refresh from network
       fetchFresh();
     });
 
-    // Step 3: Subscribe to real-time changes
     const channel = supabase
       .channel('matches-home')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, fetchFresh)
@@ -66,5 +73,5 @@ export function useMatches() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  return { matches, loading, refreshing, refresh };
+  return { matches, loading, refreshing, error, refresh, retry };
 }

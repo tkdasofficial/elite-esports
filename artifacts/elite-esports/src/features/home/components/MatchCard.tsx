@@ -39,16 +39,13 @@ export function MatchCard({ match, onPress }: Props) {
             style={StyleSheet.absoluteFill}
             contentFit="cover"
             transition={250}
+            cachePolicy="memory-disk"
           />
         ) : (
-          <LinearGradient
-            colors={['#1E0500', '#130300', '#0A0A0A']}
-            style={StyleSheet.absoluteFill}
-          >
-            <View style={styles.placeholder}>
-              <Ionicons name="game-controller-outline" size={44} color={colors.primary + '55'} />
-            </View>
-          </LinearGradient>
+          <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
+            <Ionicons name="image-outline" size={32} color={colors.text.muted} />
+            <Text style={styles.placeholderText}>No banner available</Text>
+          </View>
         )}
 
         <LinearGradient
@@ -93,7 +90,8 @@ function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColo
     },
     cardPressed: { opacity: 0.91, transform: [{ scale: 0.985 }] },
     bannerWrap: { width: '100%', overflow: 'hidden', backgroundColor: '#0D0D0D' },
-    placeholder: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+    placeholder: { alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#1A1A1A' },
+    placeholderText: { fontSize: 12, fontFamily: 'Inter_500Medium', color: colors.text.muted },
     statusBadge: {
       position: 'absolute', top: 10, right: 10,
       flexDirection: 'row', alignItems: 'center', gap: 4,

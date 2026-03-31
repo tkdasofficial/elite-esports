@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, RefreshControl, TouchableOpacity } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,7 +15,7 @@ const SKELETON_COUNT = 4;
 
 export default function HomeScreen() {
   const { colors } = useTheme();
-  const { matches, loading, refreshing, refresh } = useMatches();
+  const { matches, loading, refreshing, error, refresh, retry } = useMatches();
   const tabBarHeight = useBottomTabBarHeight();
   const [query, setQuery] = useState('');
 
@@ -31,13 +31,22 @@ export default function HomeScreen() {
     );
   }, [matches, query]);
 
-  const showSkeleton = (loading && matches.length === 0) || refreshing;
+  const showSkeleton = loading && matches.length === 0;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background.dark }}>
       <GlobalHeader onSearch={setQuery} />
 
-      {showSkeleton ? (
+      {error && matches.length === 0 ? (
+        <View style={styles.errorWrap}>
+          <Ionicons name="cloud-offline-outline" size={52} color={colors.text.muted} />
+          <Text style={[styles.emptyTitle, { color: colors.text.secondary }]}>Could not load matches</Text>
+          <TouchableOpacity style={[styles.retryBtn, { backgroundColor: colors.primary }]} onPress={retry}>
+            <Ionicons name="refresh" size={16} color="#fff" />
+            <Text style={styles.retryText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      ) : showSkeleton ? (
         <FlashList
           data={Array.from({ length: SKELETON_COUNT }, (_, i) => i)}
           keyExtractor={i => `skel-${i}`}
@@ -90,6 +99,14 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
+  errorWrap: {
+    flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32,
+  },
+  retryBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12,
+  },
+  retryText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#fff' },
   empty: {
     alignItems: 'center',
     paddingTop: 80,

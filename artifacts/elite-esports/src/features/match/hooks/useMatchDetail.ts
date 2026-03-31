@@ -12,7 +12,7 @@ export function useMatchDetail(id: string, userId?: string) {
   const fetch = async () => {
     const { data } = await supabase
       .from('matches')
-      .select('*, games(name, banner_url)')
+      .select('id, title, game_id, banner_url, entry_fee, prize_pool, joined_players, max_players, status, starts_at, room_id, room_password, description, live_stream_url, created_at, games(name)')
       .eq('id', id)
       .maybeSingle();
     if (data) setMatch(adaptMatch(data));

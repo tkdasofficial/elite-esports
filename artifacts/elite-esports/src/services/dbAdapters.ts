@@ -5,7 +5,7 @@ export function adaptMatch(row: any): Match {
     id: row.id,
     title: row.title ?? '',
     game: row.games?.name ?? row.game ?? 'Unknown',
-    banner_url: row.games?.banner_url ?? row.banner_url ?? undefined,
+    banner_url: row.banner_url ?? undefined,
     entry_fee: row.entry_fee ?? 0,
     prize_pool: row.prize_pool ?? 0,
     players_joined: row.joined_players ?? row.players_joined ?? 0,

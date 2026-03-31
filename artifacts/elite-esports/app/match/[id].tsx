@@ -190,11 +190,17 @@ export default function MatchDetailScreen() {
         {/* Banner */}
         <View style={styles.bannerContainer}>
           {match.banner_url ? (
-            <Image source={{ uri: match.banner_url }} style={styles.banner} contentFit="cover" />
+            <Image
+              source={{ uri: match.banner_url }}
+              style={styles.banner}
+              contentFit="cover"
+              cachePolicy="memory-disk"
+            />
           ) : (
-            <LinearGradient colors={['#2A0900', '#0A0A0A']} style={styles.banner}>
-              <Ionicons name="game-controller-outline" size={64} color={colors.primary} />
-            </LinearGradient>
+            <View style={[styles.banner, styles.bannerPlaceholder]}>
+              <Ionicons name="image-outline" size={48} color="#444" />
+              <Text style={styles.bannerPlaceholderText}>No banner available</Text>
+            </View>
           )}
           <LinearGradient colors={['transparent', colors.background.dark]} style={styles.bannerOverlay} />
 
@@ -326,6 +332,8 @@ function createStyles(colors: AppColors) {
     scroll:    {},
     bannerContainer: { position: 'relative' },
     banner:    { width: '100%', aspectRatio: 16 / 9, alignItems: 'center', justifyContent: 'center' },
+    bannerPlaceholder: { backgroundColor: '#1A1A1A', gap: 10 },
+    bannerPlaceholderText: { fontSize: 13, fontFamily: 'Inter_500Medium', color: '#555' },
     bannerOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 100 },
     statusBadge: {
       position: 'absolute', top: 12, right: 12,

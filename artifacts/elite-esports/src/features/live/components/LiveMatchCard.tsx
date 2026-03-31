@@ -16,11 +16,17 @@ export function LiveMatchCard({ match }: Props) {
     <View style={styles.card}>
       <View style={styles.bannerContainer}>
         {match.banner_url ? (
-          <Image source={{ uri: match.banner_url }} style={styles.banner} contentFit="cover" />
+          <Image
+            source={{ uri: match.banner_url }}
+            style={styles.banner}
+            contentFit="cover"
+            cachePolicy="memory-disk"
+          />
         ) : (
-          <LinearGradient colors={['#1A0500', '#0A0A0A']} style={styles.banner}>
-            <Ionicons name="game-controller-outline" size={48} color={colors.primary} />
-          </LinearGradient>
+          <View style={[styles.banner, styles.placeholder]}>
+            <Ionicons name="image-outline" size={36} color="#555" />
+            <Text style={styles.placeholderText}>No banner available</Text>
+          </View>
         )}
         <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.bannerGradient}>
           <View style={styles.liveBadge}>
@@ -66,6 +72,8 @@ function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColo
     },
     bannerContainer: { position: 'relative' },
     banner: { width: '100%', aspectRatio: 16 / 9, alignItems: 'center', justifyContent: 'center' },
+    placeholder: { backgroundColor: '#1A1A1A', gap: 8 },
+    placeholderText: { fontSize: 12, fontFamily: 'Inter_500Medium', color: '#555' },
     bannerGradient: {
       position: 'absolute', bottom: 0, left: 0, right: 0,
       height: 64, justifyContent: 'flex-end', padding: 14,
