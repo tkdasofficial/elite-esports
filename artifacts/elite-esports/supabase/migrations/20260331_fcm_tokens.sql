@@ -28,18 +28,15 @@ CREATE POLICY "Users manage own tokens"
   USING  (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
--- Service role (used by Firebase Admin SDK on the admin panel) reads ALL tokens
+-- Service role (used by Firebase Admin SDK on the admin panel) can read ALL tokens
 CREATE POLICY "Service role reads all tokens"
   ON public.fcm_tokens
   FOR SELECT
   USING (auth.role() = 'service_role');
 
 -- ============================================================
--- Admin convenience view
--- Gives the admin panel a single query to fetch all user tokens
--- with profile details joined in.
--- Usage (from admin panel using service role key):
---   SELECT * FROM public.admin_fcm_tokens;
+-- Admin view: all tokens with profile details joined in
+-- Query:  SELECT * FROM public.admin_fcm_tokens;
 -- ============================================================
 CREATE OR REPLACE VIEW public.admin_fcm_tokens AS
 SELECT
@@ -54,3 +51,26 @@ SELECT
   ft.updated_at
 FROM public.fcm_tokens ft
 LEFT JOIN public.profiles p ON p.id = ft.user_id;
+
+-- ============================================================
+-- Coverage analysis view: shows every profile and whether it
+-- has an FCM token registered. Use this to identify accounts
+-- that are missing tokens.
+--
+-- Query:  SELECT * FROM public.fcm_coverage;
+-- Filter: SELECT * FROM public.fcm_coverage WHERE has_token = false;
+-- Stats:  SELECT has_token, COUNT(*) FROM public.fcm_coverage GROUP BY has_token;
+-- ============================================================
+CREATE OR REPLACE VIEW public.fcm_coverage AS
+SELECT
+  p.id                                        AS user_id,
+  p.full_name                                 AS display_name,
+  p.username,
+  COALESCE(ft.email, p.id::text)              AS email,
+  ft.token IS NOT NULL                        AS has_token,
+  ft.platform,
+  ft.token,
+  ft.created_at                               AS token_registered_at,
+  ft.updated_at                               AS token_last_synced_at
+FROM public.profiles p
+LEFT JOIN public.fcm_tokens ft ON ft.user_id = p.id;

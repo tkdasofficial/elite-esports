@@ -146,10 +146,27 @@ async function getRawFcmToken(): Promise<string | null> {
   }
 }
 
+async function upsertTokenRecord(user: User, token: string): Promise<void> {
+  const displayName = resolveDisplayName(user);
+  await supabase.from('fcm_tokens').upsert(
+    {
+      user_id: user.id,
+      token,
+      platform: Platform.OS,
+      email: user.email ?? null,
+      display_name: displayName,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'token' },
+  );
+  await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
+}
+
 /**
  * Registers or refreshes the FCM token for a signed-in user.
  * Saves user_id, email, display_name, platform, and token to Supabase.
- * Safe to call multiple times — uses upsert on token uniqueness.
+ * Uses local cache to skip if token is already registered.
+ * Safe to call multiple times.
  */
 export async function saveFcmTokenForUser(user: User): Promise<void> {
   if (Platform.OS === 'web') return;
@@ -163,24 +180,41 @@ export async function saveFcmTokenForUser(user: User): Promise<void> {
     const cached = await AsyncStorage.getItem(PUSH_TOKEN_KEY);
     if (cached === token) return;
 
-    const displayName = resolveDisplayName(user);
-    const now = new Date().toISOString();
-
-    await supabase.from('fcm_tokens').upsert(
-      {
-        user_id: user.id,
-        token,
-        platform: Platform.OS,
-        email: user.email ?? null,
-        display_name: displayName,
-        updated_at: now,
-      },
-      { onConflict: 'token' },
-    );
-
-    await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
+    await upsertTokenRecord(user, token);
   } catch {
     // Fail silently — push notifications are non-critical
+  }
+}
+
+/**
+ * Backup verify-and-sync: bypasses local cache and checks Supabase directly.
+ * If the token is missing from the DB (e.g. DB was wiped, first-time device),
+ * it force-saves it. Returns true if a sync was performed.
+ */
+export async function verifyAndSyncFcmToken(user: User): Promise<boolean> {
+  if (Platform.OS === 'web') return false;
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') return false;
+
+    const token = await getRawFcmToken();
+    if (!token) return false;
+
+    const { data, error } = await supabase
+      .from('fcm_tokens')
+      .select('id')
+      .eq('user_id', user.id)
+      .eq('token', token)
+      .maybeSingle();
+
+    if (error) return false;
+    if (data) return false; // already in DB — no sync needed
+
+    // Token missing from DB — force upsert it
+    await upsertTokenRecord(user, token);
+    return true;
+  } catch {
+    return false;
   }
 }
 
