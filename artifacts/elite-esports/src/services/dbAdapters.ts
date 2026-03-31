@@ -24,7 +24,6 @@ export function adaptMatch(row: any): Match {
     room_id: row.room_id ?? undefined,
     room_password: row.room_password ?? undefined,
     room_visible: row.room_visible ?? false,
-    description: row.description ?? undefined,
     stream_url: row.live_stream_url ?? row.stream_url ?? undefined,
   };
 }

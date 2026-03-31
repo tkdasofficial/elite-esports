@@ -29,7 +29,7 @@ export function useMatches() {
       setError(null);
       const { data, error: fetchErr } = await supabase
         .from('matches')
-        .select('id, title, game_id, banner_url, entry_fee, prize_pool, joined_players, max_players, status, scheduled_at, room_id, room_password, room_visible, description, live_stream_url, created_at, games(name)')
+        .select('id, title, game_id, banner_url, entry_fee, prize_pool, joined_players, max_players, status, scheduled_at, room_id, room_password, room_visible, live_stream_url, created_at, games(name)')
         .order('created_at', { ascending: false });
 
       if (fetchErr) throw fetchErr;
