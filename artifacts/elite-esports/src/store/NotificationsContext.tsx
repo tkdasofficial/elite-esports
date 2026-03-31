@@ -1,6 +1,12 @@
-import React, { createContext, useContext, useState, useEffect, useMemo, useCallback, ReactNode } from 'react';
+import React, {
+  createContext, useContext, useState, useEffect,
+  useMemo, useCallback, ReactNode,
+} from 'react';
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/store/AuthContext';
+import { saveFcmTokenForUser, removeFcmTokenForUser } from '@/services/NotificationService';
 
 export interface Notification {
   id: string;
@@ -47,6 +53,20 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user, fetchNotifications]);
+
+  useEffect(() => {
+    if (!user || Platform.OS === 'web') return;
+
+    saveFcmTokenForUser(user.id).catch(() => {});
+
+    const subscription = Notifications.addPushTokenListener((tokenData) => {
+      if (tokenData?.data) {
+        saveFcmTokenForUser(user.id).catch(() => {});
+      }
+    });
+
+    return () => subscription.remove();
+  }, [user]);
 
   const markAsRead = useCallback(async (id: string) => {
     await supabase.from('notifications').update({ is_read: true }).eq('id', id);

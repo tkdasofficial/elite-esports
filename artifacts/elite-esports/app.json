@@ -12,6 +12,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.elite.esports.ios",
+      "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Elite eSports uses your location to show nearby tournaments and match you with local competitors.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Elite eSports uses your location to show nearby tournaments and match you with local competitors.",
@@ -20,6 +21,7 @@
     },
     "android": {
       "package": "com.elite.esports.android",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "compileSdkVersion": 36,
       "targetSdkVersion": 35,
@@ -51,7 +53,7 @@
           "icon": "./assets/images/icon.png",
           "color": "#FE4C11",
           "defaultChannel": "elite-esports-default",
-          "enableBackgroundRemoteNotifications": false
+          "enableBackgroundRemoteNotifications": true
         }
       ],
       [

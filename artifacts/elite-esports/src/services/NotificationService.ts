@@ -1,8 +1,9 @@
 import * as Notifications from 'expo-notifications';
 import { Platform, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { supabase } from '@/services/supabase';
 
-const PUSH_TOKEN_KEY = 'elite_esports_push_token';
+const PUSH_TOKEN_KEY = 'elite_esports_fcm_token';
 const PERMISSION_PROMPTED_KEY = 'notification_permission_prompted';
 
 Notifications.setNotificationHandler({
@@ -33,7 +34,12 @@ export const CHANNEL_TO_PREF_KEY: Record<string, string> = {
 export async function setupAndroidChannels(): Promise<void> {
   if (Platform.OS !== 'android') return;
 
-  const channels: Array<{ id: string; name: string; importance: Notifications.AndroidImportance; description: string }> = [
+  const channels: Array<{
+    id: string;
+    name: string;
+    importance: Notifications.AndroidImportance;
+    description: string;
+  }> = [
     {
       id: NOTIFICATION_CHANNELS.DEFAULT,
       name: 'General',
@@ -81,7 +87,9 @@ export async function setupAndroidChannels(): Promise<void> {
   }
 }
 
-export async function getNotificationPermissionStatus(): Promise<'granted' | 'denied' | 'undetermined'> {
+export async function getNotificationPermissionStatus(): Promise<
+  'granted' | 'denied' | 'undetermined'
+> {
   if (Platform.OS === 'web') return 'undetermined';
   const { status } = await Notifications.getPermissionsAsync();
   return status as 'granted' | 'denied' | 'undetermined';
@@ -117,34 +125,63 @@ export async function openSystemNotificationSettings(): Promise<void> {
   }
 }
 
-export async function getStoredPushToken(): Promise<string | null> {
-  return AsyncStorage.getItem(PUSH_TOKEN_KEY);
-}
-
-export async function registerPushToken(): Promise<string | null> {
+async function getRawFcmToken(): Promise<string | null> {
   if (Platform.OS === 'web') return null;
   try {
-    const { status } = await Notifications.getPermissionsAsync();
-    if (status !== 'granted') return null;
-
-    const stored = await AsyncStorage.getItem(PUSH_TOKEN_KEY);
-    if (stored) return stored;
-
-    const tokenData = await Notifications.getExpoPushTokenAsync();
-    const token = tokenData.data;
-    await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
-    return token;
+    const tokenData = await Notifications.getDevicePushTokenAsync();
+    return tokenData.data as string;
   } catch {
     return null;
+  }
+}
+
+export async function saveFcmTokenForUser(userId: string): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== 'granted') return;
+
+    const token = await getRawFcmToken();
+    if (!token) return;
+
+    const cached = await AsyncStorage.getItem(PUSH_TOKEN_KEY);
+    if (cached === token) return;
+
+    await supabase.from('fcm_tokens').upsert(
+      {
+        user_id: userId,
+        token,
+        platform: Platform.OS,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'token' },
+    );
+
+    await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
+  } catch {
+    // Fail silently — notifications are non-critical
+  }
+}
+
+export async function removeFcmTokenForUser(userId: string): Promise<void> {
+  if (Platform.OS === 'web') return;
+  try {
+    const token = await AsyncStorage.getItem(PUSH_TOKEN_KEY);
+    if (!token) return;
+    await supabase
+      .from('fcm_tokens')
+      .delete()
+      .eq('user_id', userId)
+      .eq('token', token);
+    await AsyncStorage.removeItem(PUSH_TOKEN_KEY);
+  } catch {
+    // Ignore
   }
 }
 
 export async function initNotifications(): Promise<boolean> {
   await setupAndroidChannels();
   const granted = await requestNotificationPermissions();
-  if (granted) {
-    await registerPushToken();
-  }
   return granted;
 }
 

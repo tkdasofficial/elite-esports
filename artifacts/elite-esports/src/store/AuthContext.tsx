@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo, ReactNo
 import { Session, User } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import { supabase } from '@/services/supabase';
+import { removeFcmTokenForUser } from '@/services/NotificationService';
 
 interface AuthContextValue {
   session: Session | null;
@@ -33,6 +34,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    const userId = session?.user?.id;
+    if (userId) {
+      await removeFcmTokenForUser(userId).catch(() => {});
+    }
     await supabase.auth.signOut();
   };
 
