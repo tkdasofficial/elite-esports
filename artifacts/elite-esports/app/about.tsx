@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   ScrollView, Linking, Platform,
@@ -7,9 +7,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import type { AppColors } from '@/utils/colors';
 
 const APP_VERSION = '1.0.0 Alpha';
 const SUPPORT_EMAIL = 'support@eliteesports.in';
@@ -43,6 +44,8 @@ const LINKS = [
 
 export default function AboutScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={styles.container}>
@@ -59,7 +62,7 @@ export default function AboutScreen() {
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.heroLogoCircle}>
-            <Ionicons name="flash" size={40} color={Colors.primary} />
+            <Ionicons name="flash" size={40} color={colors.primary} />
           </View>
           <Text style={styles.heroName}>
             Elite <Text style={styles.heroAccent}>eSports</Text>
@@ -91,7 +94,7 @@ export default function AboutScreen() {
               {i > 0 && <View style={styles.featureDivider} />}
               <View style={styles.featureRow}>
                 <View style={styles.featureIcon}>
-                  <Ionicons name={f.icon as any} size={17} color={Colors.primary} />
+                  <Ionicons name={f.icon as any} size={17} color={colors.primary} />
                 </View>
                 <Text style={styles.featureText}>{f.text}</Text>
               </View>
@@ -109,12 +112,12 @@ export default function AboutScreen() {
               { icon: 'globe-outline',label: 'Web',     status: 'Preview' },
             ].map(p => (
               <View key={p.label} style={styles.platformItem}>
-                <Ionicons name={p.icon as any} size={22} color={Colors.text.secondary} />
+                <Ionicons name={p.icon as any} size={22} color={colors.text.secondary} />
                 <Text style={styles.platformLabel}>{p.label}</Text>
                 <Text style={[
                   styles.platformStatus,
-                  p.status === 'Supported' && { color: Colors.status.success },
-                  p.status === 'Coming Soon' && { color: Colors.text.muted },
+                  p.status === 'Supported' && { color: colors.status.success },
+                  p.status === 'Coming Soon' && { color: colors.text.muted },
                   p.status === 'Preview' && { color: '#3B82F6' },
                 ]}>
                   {p.status}
@@ -136,10 +139,10 @@ export default function AboutScreen() {
                 activeOpacity={0.75}
               >
                 <View style={styles.featureIcon}>
-                  <Ionicons name={l.icon} size={17} color={Colors.primary} />
+                  <Ionicons name={l.icon} size={17} color={colors.primary} />
                 </View>
                 <Text style={styles.linkLabel}>{l.label}</Text>
-                <Ionicons name="chevron-forward" size={15} color={Colors.text.muted} />
+                <Ionicons name="chevron-forward" size={15} color={colors.text.muted} />
               </TouchableOpacity>
             </React.Fragment>
           ))}
@@ -156,111 +159,111 @@ export default function AboutScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background.dark },
-  scroll: { padding: 16 },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background.dark },
+    scroll: { padding: 16 },
 
-  /* Hero */
-  heroBanner: {
-    borderRadius: 20, overflow: 'hidden',
-    alignItems: 'center', paddingVertical: 32,
-    marginBottom: 24,
-    borderWidth: 1, borderColor: '#3A1200',
-  },
-  heroLogoCircle: {
-    width: 80, height: 80, borderRadius: 24,
-    backgroundColor: '#1C0500',
-    borderWidth: 2, borderColor: '#4A1800',
-    alignItems: 'center', justifyContent: 'center',
-    marginBottom: 16,
-  },
-  heroName: {
-    fontSize: 28, fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF', letterSpacing: -0.5,
-    textAlign: 'center', marginBottom: 4,
-  },
-  heroAccent: { color: Colors.primary },
-  heroTagline: {
-    fontSize: 13, fontFamily: 'Inter_400Regular',
-    color: '#666666', letterSpacing: 0.5,
-    textAlign: 'center', marginBottom: 16,
-  },
-  versionBadge: {
-    backgroundColor: 'rgba(254,76,17,0.15)',
-    borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5,
-    borderWidth: 1, borderColor: 'rgba(254,76,17,0.3)',
-  },
-  versionBadgeText: {
-    fontSize: 12, fontFamily: 'Inter_600SemiBold', color: Colors.primary,
-  },
+    heroBanner: {
+      borderRadius: 20, overflow: 'hidden',
+      alignItems: 'center', paddingVertical: 32,
+      marginBottom: 24,
+      borderWidth: 1, borderColor: '#3A1200',
+    },
+    heroLogoCircle: {
+      width: 80, height: 80, borderRadius: 24,
+      backgroundColor: '#1C0500',
+      borderWidth: 2, borderColor: '#4A1800',
+      alignItems: 'center', justifyContent: 'center',
+      marginBottom: 16,
+    },
+    heroName: {
+      fontSize: 28, fontFamily: 'Inter_700Bold',
+      color: colors.text.primary, letterSpacing: -0.5,
+      textAlign: 'center', marginBottom: 4,
+    },
+    heroAccent: { color: colors.primary },
+    heroTagline: {
+      fontSize: 13, fontFamily: 'Inter_400Regular',
+      color: colors.text.muted, letterSpacing: 0.5,
+      textAlign: 'center', marginBottom: 16,
+    },
+    versionBadge: {
+      backgroundColor: 'rgba(254,76,17,0.15)',
+      borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5,
+      borderWidth: 1, borderColor: 'rgba(254,76,17,0.3)',
+    },
+    versionBadgeText: {
+      fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.primary,
+    },
 
-  sectionLabel: {
-    fontSize: 11, fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.muted, textTransform: 'uppercase',
-    letterSpacing: 1, marginBottom: 8, marginLeft: 4,
-  },
+    sectionLabel: {
+      fontSize: 11, fontFamily: 'Inter_600SemiBold',
+      color: colors.text.muted, textTransform: 'uppercase',
+      letterSpacing: 1, marginBottom: 8, marginLeft: 4,
+    },
 
-  card: {
-    backgroundColor: Colors.background.card,
-    borderRadius: 16, borderWidth: 1,
-    borderColor: Colors.border.default,
-    overflow: 'hidden', marginBottom: 20,
-  },
+    card: {
+      backgroundColor: colors.background.card,
+      borderRadius: 16, borderWidth: 1,
+      borderColor: colors.border.default,
+      overflow: 'hidden', marginBottom: 20,
+    },
 
-  description: {
-    fontSize: 14, fontFamily: 'Inter_400Regular',
-    color: Colors.text.secondary, lineHeight: 22,
-    padding: 16,
-  },
+    description: {
+      fontSize: 14, fontFamily: 'Inter_400Regular',
+      color: colors.text.secondary, lineHeight: 22,
+      padding: 16,
+    },
 
-  featureRow: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 12, paddingHorizontal: 14, paddingVertical: 12,
-  },
-  featureDivider: {
-    height: 1, backgroundColor: Colors.border.subtle,
-    marginLeft: 14 + 36 + 12,
-  },
-  featureIcon: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: 'rgba(254,76,17,0.1)',
-    alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-  },
-  featureText: {
-    flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular', color: Colors.text.primary,
-  },
+    featureRow: {
+      flexDirection: 'row', alignItems: 'center',
+      gap: 12, paddingHorizontal: 14, paddingVertical: 12,
+    },
+    featureDivider: {
+      height: 1, backgroundColor: colors.border.subtle,
+      marginLeft: 14 + 36 + 12,
+    },
+    featureIcon: {
+      width: 36, height: 36, borderRadius: 10,
+      backgroundColor: 'rgba(254,76,17,0.1)',
+      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    },
+    featureText: {
+      flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.primary,
+    },
 
-  /* Platform grid */
-  platformGrid: {
-    flexDirection: 'row', padding: 16, gap: 8,
-  },
-  platformItem: {
-    flex: 1, alignItems: 'center', gap: 6,
-    backgroundColor: Colors.background.elevated,
-    borderRadius: 12, padding: 14,
-  },
-  platformLabel: {
-    fontSize: 13, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary,
-  },
-  platformStatus: {
-    fontSize: 11, fontFamily: 'Inter_500Medium',
-  },
+    platformGrid: {
+      flexDirection: 'row', padding: 16, gap: 8,
+    },
+    platformItem: {
+      flex: 1, alignItems: 'center', gap: 6,
+      backgroundColor: colors.background.elevated,
+      borderRadius: 12, padding: 14,
+    },
+    platformLabel: {
+      fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.text.primary,
+    },
+    platformStatus: {
+      fontSize: 11, fontFamily: 'Inter_500Medium',
+    },
 
-  linkRow: {
-    flexDirection: 'row', alignItems: 'center',
-    gap: 12, paddingHorizontal: 14, paddingVertical: 14,
-  },
-  linkLabel: {
-    flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: Colors.text.primary,
-  },
+    linkRow: {
+      flexDirection: 'row', alignItems: 'center',
+      gap: 12, paddingHorizontal: 14, paddingVertical: 14,
+    },
+    linkLabel: {
+      flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: colors.text.primary,
+    },
 
-  footer: {
-    alignItems: 'center', gap: 4, marginTop: 8,
-  },
-  footerText: {
-    fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.text.muted,
-  },
-  footerCopy: {
-    fontSize: 11, fontFamily: 'Inter_400Regular', color: Colors.text.muted,
-  },
-});
+    footer: {
+      alignItems: 'center', gap: 4, marginTop: 8,
+    },
+    footerText: {
+      fontSize: 13, fontFamily: 'Inter_500Medium', color: colors.text.muted,
+    },
+    footerCopy: {
+      fontSize: 11, fontFamily: 'Inter_400Regular', color: colors.text.muted,
+    },
+  });
+}

@@ -1,13 +1,14 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Modal,
   Image, TextInput, ScrollView, ActivityIndicator,
   FlatList, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
 import { useGames } from '@/features/games/hooks/useGames';
 import { Game } from '@/utils/types';
+import type { AppColors } from '@/utils/colors';
 
 interface AddGameModalProps {
   visible: boolean;
@@ -20,6 +21,8 @@ type Step = 'select' | 'details';
 
 export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGameModalProps) {
   const { games, loading } = useGames();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [step, setStep] = useState<Step>('select');
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [inGameName, setInGameName] = useState('');
@@ -66,7 +69,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
         <View style={styles.header}>
           {step === 'details' ? (
             <TouchableOpacity onPress={() => setStep('select')} style={styles.navBtn} activeOpacity={0.7}>
-              <Ionicons name="chevron-back" size={22} color={Colors.text.primary} />
+              <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
             </TouchableOpacity>
           ) : (
             <View style={styles.navBtn} />
@@ -75,7 +78,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
             {step === 'select' ? 'Select Game' : 'Game Details'}
           </Text>
           <TouchableOpacity onPress={handleClose} style={styles.navBtn} activeOpacity={0.7}>
-            <Ionicons name="close" size={22} color={Colors.text.primary} />
+            <Ionicons name="close" size={22} color={colors.text.primary} />
           </TouchableOpacity>
         </View>
 
@@ -90,11 +93,11 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
         {step === 'select' && (
           loading ? (
             <View style={styles.centered}>
-              <ActivityIndicator color={Colors.primary} size="large" />
+              <ActivityIndicator color={colors.primary} size="large" />
             </View>
           ) : games.length === 0 ? (
             <View style={styles.centered}>
-              <Ionicons name="game-controller-outline" size={48} color={Colors.text.muted} />
+              <Ionicons name="game-controller-outline" size={48} color={colors.text.muted} />
               <Text style={styles.emptyTitle}>No games available</Text>
               <Text style={styles.emptyHint}>No games available yet. Check back soon.</Text>
             </View>
@@ -117,7 +120,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
                       <Image source={{ uri: item.banner_url }} style={styles.gameBanner} resizeMode="cover" />
                     ) : (
                       <View style={[styles.gameBanner, styles.gameBannerPlaceholder]}>
-                        <Ionicons name="game-controller-outline" size={22} color={Colors.text.muted} />
+                        <Ionicons name="game-controller-outline" size={22} color={colors.text.muted} />
                       </View>
                     )}
                     <View style={styles.gameInfo}>
@@ -126,13 +129,13 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
                       </Text>
                       {alreadyAdded && (
                         <View style={styles.addedBadge}>
-                          <Ionicons name="checkmark-circle" size={12} color={Colors.status.success} />
+                          <Ionicons name="checkmark-circle" size={12} color={colors.status.success} />
                           <Text style={styles.addedText}>Already added</Text>
                         </View>
                       )}
                     </View>
                     {!alreadyAdded && (
-                      <Ionicons name="chevron-forward" size={18} color={Colors.text.muted} style={{ marginRight: 4 }} />
+                      <Ionicons name="chevron-forward" size={18} color={colors.text.muted} style={{ marginRight: 4 }} />
                     )}
                   </TouchableOpacity>
                 );
@@ -153,13 +156,12 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              {/* Selected game chip */}
               <View style={styles.selectedGameChip}>
                 {selectedGame.banner_url ? (
                   <Image source={{ uri: selectedGame.banner_url }} style={styles.chipBanner} resizeMode="cover" />
                 ) : (
                   <View style={[styles.chipBanner, styles.gameBannerPlaceholder]}>
-                    <Ionicons name="game-controller-outline" size={16} color={Colors.text.muted} />
+                    <Ionicons name="game-controller-outline" size={16} color={colors.text.muted} />
                   </View>
                 )}
                 <Text style={styles.chipName} numberOfLines={1}>{selectedGame.name}</Text>
@@ -172,16 +174,15 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
                 </TouchableOpacity>
               </View>
 
-              {/* In-game Name */}
               <Text style={styles.fieldLabel}>In-game Name</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="person-outline" size={16} color={Colors.text.muted} style={styles.inputIcon} />
+                <Ionicons name="person-outline" size={16} color={colors.text.muted} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   value={inGameName}
                   onChangeText={setInGameName}
                   placeholder="Your username / gamertag"
-                  placeholderTextColor={Colors.text.muted}
+                  placeholderTextColor={colors.text.muted}
                   autoFocus
                   autoCapitalize="none"
                   returnKeyType="next"
@@ -190,17 +191,16 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
               </View>
               <Text style={styles.fieldHint}>The name other players see in-game</Text>
 
-              {/* Player UID */}
               <Text style={[styles.fieldLabel, { marginTop: 22 }]}>Player UID</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="key-outline" size={16} color={Colors.text.muted} style={styles.inputIcon} />
+                <Ionicons name="key-outline" size={16} color={colors.text.muted} style={styles.inputIcon} />
                 <TextInput
                   ref={uidRef}
                   style={styles.input}
                   value={uid}
                   onChangeText={setUid}
                   placeholder="Your unique player ID"
-                  placeholderTextColor={Colors.text.muted}
+                  placeholderTextColor={colors.text.muted}
                   autoCapitalize="none"
                   returnKeyType="done"
                   onSubmitEditing={handleAdd}
@@ -208,7 +208,6 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
               </View>
               <Text style={styles.fieldHint}>Find this in the game's profile or settings screen</Text>
 
-              {/* Add button */}
               <TouchableOpacity
                 style={[styles.addBtn, !canAdd && styles.addBtnDisabled]}
                 onPress={handleAdd}
@@ -226,110 +225,110 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background.dark },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background.dark },
 
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: 12, paddingTop: 18, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: Colors.border.default,
-  },
-  navBtn: {
-    width: 40, height: 40, alignItems: 'center', justifyContent: 'center',
-  },
-  headerTitle: {
-    fontSize: 17, fontFamily: 'Inter_700Bold', color: Colors.text.primary,
-  },
+    header: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 12, paddingTop: 18, paddingBottom: 12,
+      borderBottomWidth: 1, borderBottomColor: colors.border.default,
+    },
+    navBtn: {
+      width: 40, height: 40, alignItems: 'center', justifyContent: 'center',
+    },
+    headerTitle: {
+      fontSize: 17, fontFamily: 'Inter_700Bold', color: colors.text.primary,
+    },
 
-  stepIndicator: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'center', paddingVertical: 14, gap: 0,
-  },
-  stepDot: {
-    width: 8, height: 8, borderRadius: 4,
-    backgroundColor: Colors.border.default,
-  },
-  stepDotActive: { backgroundColor: Colors.primary, width: 20, borderRadius: 4 },
-  stepLine: {
-    width: 40, height: 2,
-    backgroundColor: Colors.border.default,
-    marginHorizontal: 6,
-  },
+    stepIndicator: {
+      flexDirection: 'row', alignItems: 'center',
+      justifyContent: 'center', paddingVertical: 14, gap: 0,
+    },
+    stepDot: {
+      width: 8, height: 8, borderRadius: 4,
+      backgroundColor: colors.border.default,
+    },
+    stepDotActive: { backgroundColor: colors.primary, width: 20, borderRadius: 4 },
+    stepLine: {
+      width: 40, height: 2,
+      backgroundColor: colors.border.default,
+      marginHorizontal: 6,
+    },
 
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
-  emptyTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: Colors.text.secondary },
-  emptyHint:  { fontSize: 13, fontFamily: 'Inter_400Regular', color: Colors.text.muted },
+    centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 10 },
+    emptyTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: colors.text.secondary },
+    emptyHint:  { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted },
 
-  /* Game list */
-  gameList: { padding: 16, gap: 10 },
-  gameCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.background.card,
-    borderRadius: 14, overflow: 'hidden',
-    borderWidth: 1, borderColor: Colors.border.default,
-    paddingRight: 10,
-  },
-  gameCardDisabled: { opacity: 0.45 },
-  gameBanner: { width: 76, height: 52 },
-  gameBannerPlaceholder: {
-    backgroundColor: Colors.background.elevated,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  gameInfo: { flex: 1, paddingHorizontal: 12 },
-  gameName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
-  textMuted: { color: Colors.text.muted },
-  addedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
-  addedText: { fontSize: 11, fontFamily: 'Inter_500Medium', color: Colors.status.success },
+    gameList: { padding: 16, gap: 10 },
+    gameCard: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.background.card,
+      borderRadius: 14, overflow: 'hidden',
+      borderWidth: 1, borderColor: colors.border.default,
+      paddingRight: 10,
+    },
+    gameCardDisabled: { opacity: 0.45 },
+    gameBanner: { width: 76, height: 52 },
+    gameBannerPlaceholder: {
+      backgroundColor: colors.background.elevated,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    gameInfo: { flex: 1, paddingHorizontal: 12 },
+    gameName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary },
+    textMuted: { color: colors.text.muted },
+    addedBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+    addedText: { fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.status.success },
 
-  /* Details step */
-  detailsBody: { padding: 20, paddingBottom: 48 },
+    detailsBody: { padding: 20, paddingBottom: 48 },
 
-  selectedGameChip: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.background.card,
-    borderRadius: 12, overflow: 'hidden',
-    borderWidth: 1, borderColor: Colors.border.default,
-    marginBottom: 24,
-  },
-  chipBanner: { width: 56, height: 38 },
-  chipName: {
-    flex: 1, fontSize: 14, fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.primary, paddingHorizontal: 12,
-  },
-  chipChange: {
-    paddingHorizontal: 14, paddingVertical: 10,
-  },
-  chipChangeText: {
-    fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.primary,
-  },
+    selectedGameChip: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.background.card,
+      borderRadius: 12, overflow: 'hidden',
+      borderWidth: 1, borderColor: colors.border.default,
+      marginBottom: 24,
+    },
+    chipBanner: { width: 56, height: 38 },
+    chipName: {
+      flex: 1, fontSize: 14, fontFamily: 'Inter_600SemiBold',
+      color: colors.text.primary, paddingHorizontal: 12,
+    },
+    chipChange: {
+      paddingHorizontal: 14, paddingVertical: 10,
+    },
+    chipChangeText: {
+      fontSize: 13, fontFamily: 'Inter_500Medium', color: colors.primary,
+    },
 
-  fieldLabel: {
-    fontSize: 11, fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.muted, textTransform: 'uppercase',
-    letterSpacing: 1, marginBottom: 8,
-  },
-  inputWrapper: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: Colors.background.card,
-    borderRadius: 12, borderWidth: 1,
-    borderColor: Colors.border.default,
-    paddingHorizontal: 14, height: 52,
-  },
-  inputIcon: { marginRight: 10 },
-  input: {
-    flex: 1, color: Colors.text.primary,
-    fontSize: 15, fontFamily: 'Inter_400Regular',
-  },
-  fieldHint: {
-    fontSize: 11, fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted, marginTop: 6, marginLeft: 2,
-  },
+    fieldLabel: {
+      fontSize: 11, fontFamily: 'Inter_600SemiBold',
+      color: colors.text.muted, textTransform: 'uppercase',
+      letterSpacing: 1, marginBottom: 8,
+    },
+    inputWrapper: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.background.card,
+      borderRadius: 12, borderWidth: 1,
+      borderColor: colors.border.default,
+      paddingHorizontal: 14, height: 52,
+    },
+    inputIcon: { marginRight: 10 },
+    input: {
+      flex: 1, color: colors.text.primary,
+      fontSize: 15, fontFamily: 'Inter_400Regular',
+    },
+    fieldHint: {
+      fontSize: 11, fontFamily: 'Inter_400Regular',
+      color: colors.text.muted, marginTop: 6, marginLeft: 2,
+    },
 
-  addBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: Colors.primary,
-    borderRadius: 14, height: 54, marginTop: 32,
-  },
-  addBtnDisabled: { opacity: 0.45 },
-  addBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
-});
+    addBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 8, backgroundColor: colors.primary,
+      borderRadius: 14, height: 54, marginTop: 32,
+    },
+    addBtnDisabled: { opacity: 0.45 },
+    addBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
+  });
+}

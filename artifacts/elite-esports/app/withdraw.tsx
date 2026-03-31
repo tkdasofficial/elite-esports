@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Alert,
@@ -6,7 +6,7 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { supabase } from '@/services/supabase';
@@ -15,6 +15,7 @@ import { useWallet } from '@/store/WalletContext';
 import { AdLoadingOverlay } from '@/components/AdLoadingOverlay';
 import { useAdGate } from '@/hooks/useAdGate';
 import { useAds } from '@/store/AdContext';
+import type { AppColors } from '@/utils/colors';
 
 export default function WithdrawScreen() {
   const { user }              = useAuth();
@@ -22,6 +23,8 @@ export default function WithdrawScreen() {
   const insets                = useSafeAreaInsets();
   const { adConfig }          = useAds();
   const { gateAction, overlay, dismiss } = useAdGate();
+  const { colors }            = useTheme();
+  const styles                = useMemo(() => createStyles(colors), [colors]);
 
   const [amount,  setAmount]  = useState('');
   const [upiId,   setUpiId]   = useState('');
@@ -50,7 +53,6 @@ export default function WithdrawScreen() {
     if (val > balance)           { Alert.alert('Insufficient', 'Not enough balance'); return; }
     if (!upiId.trim())           { Alert.alert('Required', 'Please enter your UPI ID'); return; }
 
-    // Gate submit behind a rewarded ad
     gateAction(
       adConfig.withdraw,
       doSubmit,
@@ -86,7 +88,7 @@ export default function WithdrawScreen() {
             value={amount}
             onChangeText={setAmount}
             placeholder="Enter amount"
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor={colors.text.muted}
             keyboardType="numeric"
           />
         </View>
@@ -94,26 +96,26 @@ export default function WithdrawScreen() {
 
         <Text style={[styles.label, { marginTop: 20 }]}>UPI ID</Text>
         <View style={styles.inputWrapper}>
-          <Ionicons name="phone-portrait-outline" size={18} color={Colors.text.muted} style={{ marginRight: 10 }} />
+          <Ionicons name="phone-portrait-outline" size={18} color={colors.text.muted} style={{ marginRight: 10 }} />
           <TextInput
             style={styles.input}
             value={upiId}
             onChangeText={setUpiId}
             placeholder="yourname@bank"
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor={colors.text.muted}
             autoCapitalize="none"
           />
         </View>
 
         {adConfig.withdraw.enabled && (
           <View style={styles.adNote}>
-            <Ionicons name="play-circle-outline" size={16} color={Colors.primary} />
+            <Ionicons name="play-circle-outline" size={16} color={colors.primary} />
             <Text style={styles.adNoteText}>Watch a short ad to complete your withdrawal</Text>
           </View>
         )}
 
         <View style={styles.infoBox}>
-          <Ionicons name="time-outline" size={16} color={Colors.status.warning} />
+          <Ionicons name="time-outline" size={16} color={colors.status.warning} />
           <Text style={styles.infoText}>Withdrawals are processed within 24–48 hours</Text>
         </View>
 
@@ -134,24 +136,26 @@ export default function WithdrawScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container:    { flex: 1, backgroundColor: Colors.background.dark },
-  scroll:       { padding: 20, paddingBottom: 40 },
-  balanceCard:  { backgroundColor: Colors.background.card, borderRadius: 16, padding: 20, marginBottom: 24, borderWidth: 1, borderColor: Colors.primary + '33', alignItems: 'center' },
-  balanceLabel: { fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.text.secondary, marginBottom: 6 },
-  balanceAmount:{ fontSize: 36, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
-  label:        { fontSize: 13, fontFamily: 'Inter_500Medium', color: Colors.text.secondary, marginBottom: 8 },
-  amtBox:       { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.background.card, borderRadius: 14, borderWidth: 1, borderColor: Colors.border.default, paddingHorizontal: 16, height: 56, marginBottom: 6 },
-  rupee:        { fontSize: 20, fontFamily: 'Inter_700Bold', color: Colors.text.secondary, marginRight: 8 },
-  amtInput:     { flex: 1, fontSize: 24, fontFamily: 'Inter_700Bold', color: Colors.text.primary },
-  hint:         { fontSize: 11, fontFamily: 'Inter_400Regular', color: Colors.text.muted },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: Colors.background.card, borderRadius: 12, borderWidth: 1, borderColor: Colors.border.default, paddingHorizontal: 14, height: 54 },
-  input:        { flex: 1, color: Colors.text.primary, fontSize: 15, fontFamily: 'Inter_400Regular' },
-  adNote:       { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: Colors.primary + '11', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: Colors.primary + '33', marginTop: 16 },
-  adNoteText:   { flex: 1, fontSize: 12, fontFamily: 'Inter_500Medium', color: Colors.primary, lineHeight: 18 },
-  infoBox:      { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: 'rgba(245,158,11,0.1)', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)', marginTop: 16 },
-  infoText:     { flex: 1, fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.status.warning, lineHeight: 18 },
-  btn:          { backgroundColor: Colors.primary, borderRadius: 14, height: 54, alignItems: 'center', justifyContent: 'center', marginTop: 24 },
-  disabled:     { opacity: 0.6 },
-  btnText:      { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container:    { flex: 1, backgroundColor: colors.background.dark },
+    scroll:       { padding: 20, paddingBottom: 40 },
+    balanceCard:  { backgroundColor: colors.background.card, borderRadius: 16, padding: 20, marginBottom: 24, borderWidth: 1, borderColor: colors.primary + '33', alignItems: 'center' },
+    balanceLabel: { fontSize: 13, fontFamily: 'Inter_500Medium', color: colors.text.secondary, marginBottom: 6 },
+    balanceAmount:{ fontSize: 36, fontFamily: 'Inter_700Bold', color: colors.text.primary },
+    label:        { fontSize: 13, fontFamily: 'Inter_500Medium', color: colors.text.secondary, marginBottom: 8 },
+    amtBox:       { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.card, borderRadius: 14, borderWidth: 1, borderColor: colors.border.default, paddingHorizontal: 16, height: 56, marginBottom: 6 },
+    rupee:        { fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.text.secondary, marginRight: 8 },
+    amtInput:     { flex: 1, fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.text.primary },
+    hint:         { fontSize: 11, fontFamily: 'Inter_400Regular', color: colors.text.muted },
+    inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.card, borderRadius: 12, borderWidth: 1, borderColor: colors.border.default, paddingHorizontal: 14, height: 54 },
+    input:        { flex: 1, color: colors.text.primary, fontSize: 15, fontFamily: 'Inter_400Regular' },
+    adNote:       { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary + '11', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: colors.primary + '33', marginTop: 16 },
+    adNoteText:   { flex: 1, fontSize: 12, fontFamily: 'Inter_500Medium', color: colors.primary, lineHeight: 18 },
+    infoBox:      { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: 'rgba(245,158,11,0.1)', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)', marginTop: 16 },
+    infoText:     { flex: 1, fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.status.warning, lineHeight: 18 },
+    btn:          { backgroundColor: colors.primary, borderRadius: 14, height: 54, alignItems: 'center', justifyContent: 'center', marginTop: 24 },
+    disabled:     { opacity: 0.6 },
+    btnText:      { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
+  });
+}

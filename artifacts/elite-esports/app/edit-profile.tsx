@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, Alert, ActivityIndicator,
@@ -7,12 +7,13 @@ import { SkeletonBar } from '@/components/SkeletonBar';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { AvatarSVG, AVATAR_NAMES, AVATAR_COUNT } from '@/components/AvatarSVG';
 import { useProfileCtx } from '@/store/ProfileContext';
 import { AddGameModal } from '@/features/profile/components/AddGameModal';
+import type { AppColors } from '@/utils/colors';
 
 const AVATAR_SIZE = 68;
 const AVATAR_GAP = 10;
@@ -20,6 +21,8 @@ const AVATAR_GAP = 10;
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const { profile, loading, fetchError, save } = useProfileCtx();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
@@ -28,9 +31,6 @@ export default function EditProfileScreen() {
   const [saving, setSaving] = useState(false);
   const [showAddGame, setShowAddGame] = useState(false);
 
-  // Initialise form fields once — only after real profile data has loaded.
-  // We gate on profile.id so a transient loading=false with no userId
-  // (before AuthContext is ready) never locks in empty values.
   const initialized = useRef(false);
   useEffect(() => {
     if (loading || initialized.current || !profile.id) return;
@@ -163,7 +163,7 @@ export default function EditProfileScreen() {
             value={name}
             onChangeText={setName}
             placeholder="Your name"
-            placeholderTextColor={Colors.text.muted}
+            placeholderTextColor={colors.text.muted}
             returnKeyType="next"
             autoCapitalize="words"
           />
@@ -179,7 +179,7 @@ export default function EditProfileScreen() {
               value={username.replace(/^@/, '')}
               onChangeText={v => setUsername(v.toLowerCase().replace(/\s/g, ''))}
               placeholder="your_username"
-              placeholderTextColor={Colors.text.muted}
+              placeholderTextColor={colors.text.muted}
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="done"
@@ -196,7 +196,7 @@ export default function EditProfileScreen() {
             style={styles.addBtn}
             activeOpacity={0.8}
           >
-            <Ionicons name="add" size={15} color={Colors.primary} />
+            <Ionicons name="add" size={15} color={colors.primary} />
             <Text style={styles.addBtnText}>Add Game</Text>
           </TouchableOpacity>
         </View>
@@ -207,7 +207,7 @@ export default function EditProfileScreen() {
             onPress={() => setShowAddGame(true)}
             activeOpacity={0.8}
           >
-            <Ionicons name="game-controller-outline" size={28} color={Colors.text.muted} />
+            <Ionicons name="game-controller-outline" size={28} color={colors.text.muted} />
             <Text style={styles.emptyGamesText}>No games added yet</Text>
             <Text style={styles.emptyGamesHint}>Tap here to link your game accounts</Text>
           </TouchableOpacity>
@@ -216,7 +216,7 @@ export default function EditProfileScreen() {
             {games.map((g, i) => (
               <View key={`${g.game}-${i}`} style={styles.gameRow}>
                 <View style={styles.gameIconBox}>
-                  <Ionicons name="game-controller-outline" size={17} color={Colors.primary} />
+                  <Ionicons name="game-controller-outline" size={17} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.gameName}>{g.game}</Text>
@@ -227,7 +227,7 @@ export default function EditProfileScreen() {
                   )}
                 </View>
                 <TouchableOpacity onPress={() => handleRemoveGame(i)} style={styles.removeBtn} activeOpacity={0.7}>
-                  <Ionicons name="close-circle" size={22} color={Colors.status.error} />
+                  <Ionicons name="close-circle" size={22} color={colors.status.error} />
                 </TouchableOpacity>
               </View>
             ))}
@@ -236,7 +236,7 @@ export default function EditProfileScreen() {
               style={styles.addMoreBtn}
               activeOpacity={0.8}
             >
-              <Ionicons name="add-circle-outline" size={16} color={Colors.primary} />
+              <Ionicons name="add-circle-outline" size={16} color={colors.primary} />
               <Text style={styles.addMoreBtnText}>Add Another Game</Text>
             </TouchableOpacity>
           </>
@@ -270,119 +270,119 @@ export default function EditProfileScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background.dark },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  scroll: { padding: 20 },
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background.dark },
+    scroll: { padding: 20 },
 
-  sectionLabel: {
-    fontSize: 11, fontFamily: 'Inter_600SemiBold',
-    color: Colors.text.muted, textTransform: 'uppercase',
-    letterSpacing: 1, marginBottom: 10, marginTop: 24,
-  },
+    sectionLabel: {
+      fontSize: 11, fontFamily: 'Inter_600SemiBold',
+      color: colors.text.muted, textTransform: 'uppercase',
+      letterSpacing: 1, marginBottom: 10, marginTop: 24,
+    },
 
-  previewRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 16,
-    backgroundColor: Colors.background.card,
-    borderRadius: 16, padding: 14,
-    borderWidth: 1, borderColor: Colors.border.default, marginBottom: 14,
-  },
-  previewCircle: {
-    width: 80, height: 80, borderRadius: 40, overflow: 'hidden',
-    borderWidth: 2.5, borderColor: Colors.primary,
-    backgroundColor: Colors.background.elevated,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  previewInfo: { flex: 1 },
-  previewName: { fontSize: 18, fontFamily: 'Inter_700Bold', color: Colors.text.primary, marginBottom: 3 },
-  previewHint: { fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.text.muted },
+    previewRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 16,
+      backgroundColor: colors.background.card,
+      borderRadius: 16, padding: 14,
+      borderWidth: 1, borderColor: colors.border.default, marginBottom: 14,
+    },
+    previewCircle: {
+      width: 80, height: 80, borderRadius: 40, overflow: 'hidden',
+      borderWidth: 2.5, borderColor: colors.primary,
+      backgroundColor: colors.background.elevated,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    previewInfo: { flex: 1 },
+    previewName: { fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 3 },
+    previewHint: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted },
 
-  avatarScroll: { marginHorizontal: -20 },
-  avatarScrollContent: { paddingHorizontal: 20, paddingVertical: 4 },
-  avatarColumn: { flexDirection: 'column', gap: AVATAR_GAP },
-  avatarItem: {
-    width: AVATAR_SIZE + 8, height: AVATAR_SIZE + 8,
-    borderRadius: 18, overflow: 'hidden',
-    borderWidth: 2.5, borderColor: Colors.border.default,
-    backgroundColor: Colors.background.card,
-    alignItems: 'center', justifyContent: 'center', position: 'relative',
-  },
-  avatarItemSelected: {
-    borderColor: Colors.primary,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.6, shadowRadius: 8, elevation: 8,
-  },
-  checkBadge: {
-    position: 'absolute', bottom: 4, right: 4,
-    width: 18, height: 18, borderRadius: 9,
-    backgroundColor: Colors.primary,
-    alignItems: 'center', justifyContent: 'center',
-  },
+    avatarScroll: { marginHorizontal: -20 },
+    avatarScrollContent: { paddingHorizontal: 20, paddingVertical: 4 },
+    avatarColumn: { flexDirection: 'column', gap: AVATAR_GAP },
+    avatarItem: {
+      width: AVATAR_SIZE + 8, height: AVATAR_SIZE + 8,
+      borderRadius: 18, overflow: 'hidden',
+      borderWidth: 2.5, borderColor: colors.border.default,
+      backgroundColor: colors.background.card,
+      alignItems: 'center', justifyContent: 'center', position: 'relative',
+    },
+    avatarItemSelected: {
+      borderColor: colors.primary,
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.6, shadowRadius: 8, elevation: 8,
+    },
+    checkBadge: {
+      position: 'absolute', bottom: 4, right: 4,
+      width: 18, height: 18, borderRadius: 9,
+      backgroundColor: colors.primary,
+      alignItems: 'center', justifyContent: 'center',
+    },
 
-  inputWrapper: {
-    backgroundColor: Colors.background.card,
-    borderRadius: 12, borderWidth: 1,
-    borderColor: Colors.border.default,
-    paddingHorizontal: 14, height: 50, justifyContent: 'center',
-  },
-  inputRow: { flexDirection: 'row', alignItems: 'center' },
-  atSign: { fontSize: 15, fontFamily: 'Inter_400Regular', color: Colors.text.muted, marginRight: 2 },
-  input: { color: Colors.text.primary, fontSize: 15, fontFamily: 'Inter_400Regular' },
-  inputHint: {
-    fontSize: 11, fontFamily: 'Inter_400Regular', color: Colors.text.muted,
-    marginTop: 6, marginLeft: 4,
-  },
+    inputWrapper: {
+      backgroundColor: colors.background.card,
+      borderRadius: 12, borderWidth: 1,
+      borderColor: colors.border.default,
+      paddingHorizontal: 14, height: 50, justifyContent: 'center',
+    },
+    inputRow: { flexDirection: 'row', alignItems: 'center' },
+    atSign: { fontSize: 15, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginRight: 2 },
+    input: { color: colors.text.primary, fontSize: 15, fontFamily: 'Inter_400Regular' },
+    inputHint: {
+      fontSize: 11, fontFamily: 'Inter_400Regular', color: colors.text.muted,
+      marginTop: 6, marginLeft: 4,
+    },
 
-  gamesHeader: {
-    flexDirection: 'row', alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 24, marginBottom: 10,
-  },
-  addBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    backgroundColor: 'rgba(254,76,17,0.1)',
-    borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7,
-  },
-  addBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: Colors.primary },
+    gamesHeader: {
+      flexDirection: 'row', alignItems: 'center',
+      justifyContent: 'space-between',
+      marginTop: 24, marginBottom: 10,
+    },
+    addBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      backgroundColor: 'rgba(254,76,17,0.1)',
+      borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7,
+    },
+    addBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.primary },
 
-  emptyGames: {
-    alignItems: 'center', gap: 6, padding: 28,
-    backgroundColor: Colors.background.card,
-    borderRadius: 14, borderWidth: 1, borderColor: Colors.border.default,
-    borderStyle: 'dashed',
-  },
-  emptyGamesText: { fontSize: 14, fontFamily: 'Inter_500Medium', color: Colors.text.secondary },
-  emptyGamesHint: { fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.text.muted, textAlign: 'center' },
+    emptyGames: {
+      alignItems: 'center', gap: 6, padding: 28,
+      backgroundColor: colors.background.card,
+      borderRadius: 14, borderWidth: 1, borderColor: colors.border.default,
+      borderStyle: 'dashed',
+    },
+    emptyGamesText: { fontSize: 14, fontFamily: 'Inter_500Medium', color: colors.text.secondary },
+    emptyGamesHint: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, textAlign: 'center' },
 
-  gameRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    backgroundColor: Colors.background.card,
-    borderRadius: 12, padding: 14, marginBottom: 8,
-    borderWidth: 1, borderColor: Colors.border.default,
-  },
-  gameIconBox: {
-    width: 36, height: 36, borderRadius: 10,
-    backgroundColor: 'rgba(254,76,17,0.1)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  gameName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: Colors.text.primary },
-  gameUID: { fontSize: 12, fontFamily: 'Inter_400Regular', color: Colors.text.secondary, marginTop: 2 },
-  removeBtn: { padding: 2 },
-  addMoreBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, paddingVertical: 12,
-    borderWidth: 1, borderColor: 'rgba(254,76,17,0.2)',
-    borderStyle: 'dashed', borderRadius: 12,
-    marginTop: 2,
-  },
-  addMoreBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: Colors.primary },
+    gameRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      backgroundColor: colors.background.card,
+      borderRadius: 12, padding: 14, marginBottom: 8,
+      borderWidth: 1, borderColor: colors.border.default,
+    },
+    gameIconBox: {
+      width: 36, height: 36, borderRadius: 10,
+      backgroundColor: 'rgba(254,76,17,0.1)',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    gameName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary },
+    gameUID: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.secondary, marginTop: 2 },
+    removeBtn: { padding: 2 },
+    addMoreBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 6, paddingVertical: 12,
+      borderWidth: 1, borderColor: 'rgba(254,76,17,0.2)',
+      borderStyle: 'dashed', borderRadius: 12, marginTop: 2,
+    },
+    addMoreBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.primary },
 
-  saveBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: Colors.primary,
-    borderRadius: 14, height: 54, marginTop: 32,
-  },
-  disabled: { opacity: 0.6 },
-  saveBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
-});
+    saveBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 8, backgroundColor: colors.primary,
+      borderRadius: 14, height: 54, marginTop: 32,
+    },
+    disabled: { opacity: 0.6 },
+    saveBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
+  });
+}

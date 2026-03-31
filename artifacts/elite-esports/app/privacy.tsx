@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import type { AppColors } from '@/utils/colors';
 
 const SECTIONS = [
   {
@@ -54,6 +55,8 @@ const SECTIONS = [
 
 export default function PrivacyScreen() {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
     <View style={styles.container}>
@@ -74,26 +77,28 @@ export default function PrivacyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background.dark },
-  scroll: { padding: 20 },
-  lastUpdated: {
-    fontSize: 12,
-    fontFamily: 'Inter_400Regular',
-    color: Colors.text.muted,
-    marginBottom: 24,
-  },
-  section: { marginBottom: 24 },
-  heading: {
-    fontSize: 15,
-    fontFamily: 'Inter_700Bold',
-    color: Colors.text.primary,
-    marginBottom: 8,
-  },
-  body: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: Colors.text.secondary,
-    lineHeight: 22,
-  },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background.dark },
+    scroll: { padding: 20 },
+    lastUpdated: {
+      fontSize: 12,
+      fontFamily: 'Inter_400Regular',
+      color: colors.text.muted,
+      marginBottom: 24,
+    },
+    section: { marginBottom: 24 },
+    heading: {
+      fontSize: 15,
+      fontFamily: 'Inter_700Bold',
+      color: colors.text.primary,
+      marginBottom: 8,
+    },
+    body: {
+      fontSize: 14,
+      fontFamily: 'Inter_400Regular',
+      color: colors.text.secondary,
+      lineHeight: 22,
+    },
+  });
+}

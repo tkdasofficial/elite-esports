@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardTypeOptions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
+import type { AppColors } from '@/utils/colors';
 
 interface Props {
   label: string;
@@ -25,6 +26,8 @@ export function AuthInput({
 }: Props) {
   const [showText, setShowText] = useState(false);
   const [focused, setFocused] = useState(false);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const isPassword = secureTextEntry;
 
   return (
@@ -32,22 +35,20 @@ export function AuthInput({
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.wrapper, focused && styles.wrapperFocused]}>
 
-        {/* Left icon — absolutely pinned to the left */}
         <View style={styles.iconSlot}>
           <Ionicons
             name={iconName}
             size={18}
-            color={focused ? Colors.primary : '#606060'}
+            color={focused ? colors.primary : colors.text.muted}
           />
         </View>
 
-        {/* Text input — spans full width, padding keeps text clear of both icons */}
         <TextInput
           style={styles.input}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor="#484848"
+          placeholderTextColor={colors.text.muted}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           secureTextEntry={isPassword && !showText}
@@ -56,7 +57,6 @@ export function AuthInput({
           onBlur={() => setFocused(false)}
         />
 
-        {/* Right icon — absolutely pinned to the right */}
         {isPassword && (
           <TouchableOpacity
             onPress={() => setShowText(v => !v)}
@@ -67,7 +67,7 @@ export function AuthInput({
             <Ionicons
               name={showText ? 'eye-outline' : 'eye-off-outline'}
               size={18}
-              color="#606060"
+              color={colors.text.muted}
             />
           </TouchableOpacity>
         )}
@@ -77,64 +77,63 @@ export function AuthInput({
   );
 }
 
-const styles = StyleSheet.create({
-  group: {
-    flex: 1,
-  },
-  label: {
-    fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#888888',
-    marginBottom: 8,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
-  },
-  wrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#161616',
-    borderRadius: INPUT_HEIGHT / 2,
-    borderWidth: 1.5,
-    borderColor: '#2A2A2A',
-    height: INPUT_HEIGHT,
-    overflow: 'hidden',
-  },
-  wrapperFocused: {
-    borderColor: Colors.primary,
-    backgroundColor: '#1C0A04',
-  },
-  /* Left icon: absolute, pinned to left edge, same width as right slot */
-  iconSlot: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: ICON_SLOT,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-  /* TextInput: full width, padding reserves space for both icon slots */
-  input: {
-    flex: 1,
-    alignSelf: 'stretch',
-    color: Colors.text.primary,
-    fontSize: 15,
-    fontFamily: 'Inter_400Regular',
-    paddingVertical: 0,
-    paddingLeft: ICON_SLOT,
-    paddingRight: ICON_SLOT,
-    backgroundColor: 'transparent',
-  },
-  /* Right icon: absolute, pinned to right edge, mirrors iconSlot exactly */
-  eyeSlot: {
-    position: 'absolute',
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: ICON_SLOT,
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 1,
-  },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    group: {
+      flex: 1,
+    },
+    label: {
+      fontSize: 11,
+      fontFamily: 'Inter_600SemiBold',
+      color: colors.text.muted,
+      marginBottom: 8,
+      letterSpacing: 0.6,
+      textTransform: 'uppercase',
+    },
+    wrapper: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.background.elevated,
+      borderRadius: INPUT_HEIGHT / 2,
+      borderWidth: 1.5,
+      borderColor: colors.border.default,
+      height: INPUT_HEIGHT,
+      overflow: 'hidden',
+    },
+    wrapperFocused: {
+      borderColor: colors.primary,
+      backgroundColor: colors.background.card,
+    },
+    iconSlot: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: ICON_SLOT,
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1,
+    },
+    input: {
+      flex: 1,
+      alignSelf: 'stretch',
+      color: colors.text.primary,
+      fontSize: 15,
+      fontFamily: 'Inter_400Regular',
+      paddingVertical: 0,
+      paddingLeft: ICON_SLOT,
+      paddingRight: ICON_SLOT,
+      backgroundColor: 'transparent',
+    },
+    eyeSlot: {
+      position: 'absolute',
+      right: 0,
+      top: 0,
+      bottom: 0,
+      width: ICON_SLOT,
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1,
+    },
+  });
+}

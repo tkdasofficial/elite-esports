@@ -15,11 +15,11 @@ import {
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
+import type { AppColors } from '@/utils/colors';
 
 interface Props {
   visible: boolean;
-  /** Bypass / skip countdown in seconds (equals the ad's duration setting) */
   bypassAfter: number;
   onSkip: () => void;
   label?: string;
@@ -30,8 +30,8 @@ export function AdLoadingOverlay({ visible, bypassAfter, onSkip, label = 'Loadin
   const [canSkip, setCanSkip]     = useState(false);
   const dotScale                  = useRef(new Animated.Value(1)).current;
   const fadeAnim                  = useRef(new Animated.Value(0)).current;
+  const { colors, isDark }        = useTheme();
 
-  // Pulsing dot animation
   useEffect(() => {
     if (!visible) return;
     const loop = Animated.loop(
@@ -44,7 +44,6 @@ export function AdLoadingOverlay({ visible, bypassAfter, onSkip, label = 'Loadin
     return () => loop.stop();
   }, [visible]);
 
-  // Fade-in on show
   useEffect(() => {
     if (visible) {
       setRemaining(bypassAfter);
@@ -55,7 +54,6 @@ export function AdLoadingOverlay({ visible, bypassAfter, onSkip, label = 'Loadin
     }
   }, [visible, bypassAfter]);
 
-  // Countdown timer
   useEffect(() => {
     if (!visible) return;
     const tick = setInterval(() => {
@@ -73,23 +71,22 @@ export function AdLoadingOverlay({ visible, bypassAfter, onSkip, label = 'Loadin
 
   if (!visible) return null;
 
+  const styles = createStyles(colors);
   const Glass = Platform.OS === 'ios' ? BlurView : View;
   const glassProps = Platform.OS === 'ios'
-    ? { intensity: 60, tint: 'dark' as const }
+    ? { intensity: 60, tint: isDark ? 'dark' as const : 'light' as const }
     : {};
 
   return (
     <Modal transparent animationType="fade" visible={visible} statusBarTranslucent>
       <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
         <Glass {...glassProps} style={styles.card}>
-          {/* Icon pulse */}
           <Animated.View style={[styles.iconRing, { transform: [{ scale: dotScale }] }]}>
-            <Ionicons name="play-circle" size={44} color={Colors.primary} />
+            <Ionicons name="play-circle" size={44} color={colors.primary} />
           </Animated.View>
 
           <Text style={styles.label}>{label}</Text>
 
-          {/* Countdown ring */}
           <View style={styles.countdownBox}>
             <Text style={styles.countdownNum}>{remaining}</Text>
             <Text style={styles.countdownSub}>seconds</Text>
@@ -113,86 +110,88 @@ export function AdLoadingOverlay({ visible, bypassAfter, onSkip, label = 'Loadin
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  card: {
-    width: '82%',
-    borderRadius: 24,
-    padding: 32,
-    alignItems: 'center',
-    gap: 16,
-    backgroundColor: Platform.OS === 'ios' ? 'transparent' : 'rgba(18,18,18,0.97)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    overflow: 'hidden',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 20,
-  },
-  iconRing: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.primary + '22',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.primary + '55',
-  },
-  label: {
-    fontSize: 18,
-    fontFamily: 'Inter_700Bold',
-    color: Colors.text.primary,
-    letterSpacing: 0.4,
-  },
-  countdownBox: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.primary + '11',
-  },
-  countdownNum: {
-    fontSize: 30,
-    fontFamily: 'Inter_700Bold',
-    color: Colors.primary,
-    lineHeight: 34,
-  },
-  countdownSub: {
-    fontSize: 11,
-    fontFamily: 'Inter_400Regular',
-    color: Colors.text.secondary,
-  },
-  hint: {
-    fontSize: 13,
-    fontFamily: 'Inter_400Regular',
-    color: Colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 19,
-  },
-  skipBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: Colors.primary,
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 50,
-    marginTop: 4,
-  },
-  skipText: {
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#fff',
-  },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    backdrop: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.85)',
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    card: {
+      width: '82%',
+      borderRadius: 24,
+      padding: 32,
+      alignItems: 'center',
+      gap: 16,
+      backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.background.card,
+      borderWidth: 1,
+      borderColor: colors.border.default,
+      overflow: 'hidden',
+      shadowColor: colors.primary,
+      shadowOffset: { width: 0, height: 0 },
+      shadowOpacity: 0.25,
+      shadowRadius: 20,
+      elevation: 20,
+    },
+    iconRing: {
+      width: 80,
+      height: 80,
+      borderRadius: 40,
+      backgroundColor: colors.primary + '22',
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderWidth: 1.5,
+      borderColor: colors.primary + '55',
+    },
+    label: {
+      fontSize: 18,
+      fontFamily: 'Inter_700Bold',
+      color: colors.text.primary,
+      letterSpacing: 0.4,
+    },
+    countdownBox: {
+      width: 90,
+      height: 90,
+      borderRadius: 45,
+      borderWidth: 2,
+      borderColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.primary + '11',
+    },
+    countdownNum: {
+      fontSize: 30,
+      fontFamily: 'Inter_700Bold',
+      color: colors.primary,
+      lineHeight: 34,
+    },
+    countdownSub: {
+      fontSize: 11,
+      fontFamily: 'Inter_400Regular',
+      color: colors.text.secondary,
+    },
+    hint: {
+      fontSize: 13,
+      fontFamily: 'Inter_400Regular',
+      color: colors.text.secondary,
+      textAlign: 'center',
+      lineHeight: 19,
+    },
+    skipBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      backgroundColor: colors.primary,
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      borderRadius: 50,
+      marginTop: 4,
+    },
+    skipText: {
+      fontSize: 15,
+      fontFamily: 'Inter_600SemiBold',
+      color: '#fff',
+    },
+  });
+}
