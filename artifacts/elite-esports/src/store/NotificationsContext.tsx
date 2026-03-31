@@ -6,7 +6,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/store/AuthContext';
-import { saveFcmTokenForUser, removeFcmTokenForUser } from '@/services/NotificationService';
+import { saveFcmTokenForUser } from '@/services/NotificationService';
 
 export interface Notification {
   id: string;
@@ -57,11 +57,11 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || Platform.OS === 'web') return;
 
-    saveFcmTokenForUser(user.id).catch(() => {});
+    saveFcmTokenForUser(user).catch(() => {});
 
     const subscription = Notifications.addPushTokenListener((tokenData) => {
       if (tokenData?.data) {
-        saveFcmTokenForUser(user.id).catch(() => {});
+        saveFcmTokenForUser(user).catch(() => {});
       }
     });
 

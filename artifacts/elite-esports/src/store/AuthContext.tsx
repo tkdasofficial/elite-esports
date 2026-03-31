@@ -22,9 +22,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(newSession);
 
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        const userId = newSession?.user?.id;
-        if (userId) {
-          saveFcmTokenForUser(userId).catch(() => {});
+        const authUser = newSession?.user;
+        if (authUser) {
+          saveFcmTokenForUser(authUser).catch(() => {});
         }
       }
 
@@ -37,9 +37,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(initialSession);
       setLoading(false);
       // Register token for users who were already logged in when the app launched
-      const userId = initialSession?.user?.id;
-      if (userId) {
-        saveFcmTokenForUser(userId).catch(() => {});
+      const authUser = initialSession?.user;
+      if (authUser) {
+        saveFcmTokenForUser(authUser).catch(() => {});
       }
     });
 

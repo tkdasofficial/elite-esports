@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 import { Platform, Linking } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { User } from '@supabase/supabase-js';
 import { supabase } from '@/services/supabase';
 
 const PUSH_TOKEN_KEY = 'elite_esports_fcm_token';
@@ -125,6 +126,16 @@ export async function openSystemNotificationSettings(): Promise<void> {
   }
 }
 
+function resolveDisplayName(user: User): string {
+  return (
+    user.user_metadata?.full_name ||
+    user.user_metadata?.name ||
+    user.user_metadata?.display_name ||
+    user.email?.split('@')[0] ||
+    'Unknown'
+  );
+}
+
 async function getRawFcmToken(): Promise<string | null> {
   if (Platform.OS === 'web') return null;
   try {
@@ -135,7 +146,12 @@ async function getRawFcmToken(): Promise<string | null> {
   }
 }
 
-export async function saveFcmTokenForUser(userId: string): Promise<void> {
+/**
+ * Registers or refreshes the FCM token for a signed-in user.
+ * Saves user_id, email, display_name, platform, and token to Supabase.
+ * Safe to call multiple times — uses upsert on token uniqueness.
+ */
+export async function saveFcmTokenForUser(user: User): Promise<void> {
   if (Platform.OS === 'web') return;
   try {
     const { status } = await Notifications.getPermissionsAsync();
@@ -147,19 +163,24 @@ export async function saveFcmTokenForUser(userId: string): Promise<void> {
     const cached = await AsyncStorage.getItem(PUSH_TOKEN_KEY);
     if (cached === token) return;
 
+    const displayName = resolveDisplayName(user);
+    const now = new Date().toISOString();
+
     await supabase.from('fcm_tokens').upsert(
       {
-        user_id: userId,
+        user_id: user.id,
         token,
         platform: Platform.OS,
-        updated_at: new Date().toISOString(),
+        email: user.email ?? null,
+        display_name: displayName,
+        updated_at: now,
       },
       { onConflict: 'token' },
     );
 
     await AsyncStorage.setItem(PUSH_TOKEN_KEY, token);
   } catch {
-    // Fail silently — notifications are non-critical
+    // Fail silently — push notifications are non-critical
   }
 }
 
