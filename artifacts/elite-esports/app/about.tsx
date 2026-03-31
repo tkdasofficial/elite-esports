@@ -44,8 +44,12 @@ const LINKS = [
 
 export default function AboutScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const heroBannerGradient: [string, string] = isDark
+    ? ['#280800', '#1A0500']
+    : [colors.primary + 'CC', colors.primaryDark];
 
   return (
     <View style={styles.container}>
@@ -58,11 +62,11 @@ export default function AboutScreen() {
         {/* ── Hero banner ── */}
         <View style={styles.heroBanner}>
           <LinearGradient
-            colors={['#280800', '#1A0500']}
+            colors={heroBannerGradient}
             style={StyleSheet.absoluteFill}
           />
           <View style={styles.heroLogoCircle}>
-            <Ionicons name="flash" size={40} color={colors.primary} />
+            <Ionicons name="flash" size={40} color={isDark ? colors.primary : '#fff'} />
           </View>
           <Text style={styles.heroName}>
             Elite <Text style={styles.heroAccent}>eSports</Text>
@@ -118,7 +122,7 @@ export default function AboutScreen() {
                   styles.platformStatus,
                   p.status === 'Supported' && { color: colors.status.success },
                   p.status === 'Coming Soon' && { color: colors.text.muted },
-                  p.status === 'Preview' && { color: '#3B82F6' },
+                  p.status === 'Preview' && { color: colors.status.info },
                 ]}>
                   {p.status}
                 </Text>
@@ -168,33 +172,33 @@ function createStyles(colors: AppColors) {
       borderRadius: 20, overflow: 'hidden',
       alignItems: 'center', paddingVertical: 32,
       marginBottom: 24,
-      borderWidth: 1, borderColor: '#3A1200',
+      borderWidth: 1, borderColor: colors.primary + '44',
     },
     heroLogoCircle: {
       width: 80, height: 80, borderRadius: 24,
-      backgroundColor: '#1C0500',
-      borderWidth: 2, borderColor: '#4A1800',
+      backgroundColor: 'rgba(0,0,0,0.25)',
+      borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)',
       alignItems: 'center', justifyContent: 'center',
       marginBottom: 16,
     },
     heroName: {
       fontSize: 28, fontFamily: 'Inter_700Bold',
-      color: colors.text.primary, letterSpacing: -0.5,
+      color: '#fff', letterSpacing: -0.5,
       textAlign: 'center', marginBottom: 4,
     },
-    heroAccent: { color: colors.primary },
+    heroAccent: { color: '#fff' },
     heroTagline: {
       fontSize: 13, fontFamily: 'Inter_400Regular',
-      color: colors.text.muted, letterSpacing: 0.5,
+      color: 'rgba(255,255,255,0.75)', letterSpacing: 0.5,
       textAlign: 'center', marginBottom: 16,
     },
     versionBadge: {
-      backgroundColor: 'rgba(254,76,17,0.15)',
+      backgroundColor: 'rgba(255,255,255,0.15)',
       borderRadius: 20, paddingHorizontal: 14, paddingVertical: 5,
-      borderWidth: 1, borderColor: 'rgba(254,76,17,0.3)',
+      borderWidth: 1, borderColor: 'rgba(255,255,255,0.25)',
     },
     versionBadgeText: {
-      fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.primary,
+      fontSize: 12, fontFamily: 'Inter_600SemiBold', color: '#fff',
     },
 
     sectionLabel: {
@@ -226,7 +230,7 @@ function createStyles(colors: AppColors) {
     },
     featureIcon: {
       width: 36, height: 36, borderRadius: 10,
-      backgroundColor: 'rgba(254,76,17,0.1)',
+      backgroundColor: colors.primary + '1A',
       alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     },
     featureText: {

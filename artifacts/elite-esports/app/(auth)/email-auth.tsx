@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView,
@@ -9,7 +9,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
+import type { AppColors } from '@/utils/colors';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 
 type Step = 'email' | 'password';
@@ -21,6 +22,8 @@ function navigateAfterAuth() {
 
 export default function EmailAuthScreen() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [step, setStep] = useState<Step>('email');
   const [mode, setMode] = useState<Mode>('signin');
   const [email, setEmail] = useState('');
@@ -30,6 +33,10 @@ export default function EmailAuthScreen() {
 
   const topPad = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
   const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
+
+  const gradientColors: [string, string, string] = isDark
+    ? ['#150400', '#0A0A0A', '#0A0A0A']
+    : [colors.primary + '18', colors.background.dark, colors.background.dark];
 
   const handleEmailContinue = () => {
     const trimmed = email.trim();
@@ -127,7 +134,7 @@ export default function EmailAuthScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#150400', '#0A0A0A', '#0A0A0A']}
+        colors={gradientColors}
         locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -136,7 +143,7 @@ export default function EmailAuthScreen() {
         onPress={goBack}
         activeOpacity={0.7}
       >
-        <Ionicons name="chevron-back" size={20} color="#FFFFFF" />
+        <Ionicons name="chevron-back" size={20} color={colors.text.primary} />
       </TouchableOpacity>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
@@ -149,7 +156,7 @@ export default function EmailAuthScreen() {
             <Ionicons
               name={step === 'email' ? 'mail-outline' : isSignIn ? 'person-circle-outline' : 'shield-checkmark-outline'}
               size={30}
-              color={Colors.primary}
+              color={colors.primary}
             />
           </View>
 
@@ -170,7 +177,7 @@ export default function EmailAuthScreen() {
               onPress={() => { setStep('email'); setPassword(''); setError(''); setMode('signin'); }}
               activeOpacity={0.7}
             >
-              <Ionicons name="mail-outline" size={14} color="#666666" />
+              <Ionicons name="mail-outline" size={14} color={colors.text.muted} />
               <Text style={styles.emailPillText} numberOfLines={1}>{email}</Text>
               <Text style={styles.changeTxt}>Change</Text>
             </TouchableOpacity>
@@ -202,7 +209,7 @@ export default function EmailAuthScreen() {
 
           {!!error && (
             <View style={styles.errorWrap}>
-              <Ionicons name="alert-circle-outline" size={14} color="#EF4444" />
+              <Ionicons name="alert-circle-outline" size={14} color={colors.status.error} />
               <Text style={styles.errorText}>{error}</Text>
             </View>
           )}
@@ -242,40 +249,42 @@ export default function EmailAuthScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0A' },
-  backBtn: {
-    position: 'absolute', left: 16, zIndex: 10,
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: '#1A1A1A',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 25 },
-  iconWrap: {
-    alignSelf: 'center', width: 72, height: 72, borderRadius: 36,
-    backgroundColor: '#1C0A04', borderWidth: 1.5,
-    borderColor: Colors.primary + '35',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 22,
-  },
-  title: { fontSize: 22, fontFamily: 'Inter_700Bold', color: '#FFFFFF', textAlign: 'center', marginBottom: 6 },
-  subtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: '#606060', textAlign: 'center', marginBottom: 28, lineHeight: 20 },
-  emailPill: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#141414', borderRadius: 22,
-    borderWidth: 1, borderColor: '#252525',
-    paddingHorizontal: 16, paddingVertical: 11, marginBottom: 20, gap: 8,
-  },
-  emailPillText: { flex: 1, color: '#999999', fontSize: 13, fontFamily: 'Inter_400Regular' },
-  changeTxt: { color: Colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-  fieldWrap: { marginBottom: 8 },
-  errorWrap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12 },
-  errorText: { color: '#EF4444', fontSize: 13, fontFamily: 'Inter_400Regular', textAlign: 'center', flex: 1 },
-  btn: { backgroundColor: Colors.primary, borderRadius: 25, height: 50, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
-  btnDisabled: { opacity: 0.5 },
-  btnText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
-  switchMode: { alignItems: 'center', marginTop: 16, paddingVertical: 6 },
-  switchModeText: { color: '#555555', fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center' },
-  switchModeLink: { color: Colors.primary, fontFamily: 'Inter_600SemiBold' },
-  altLink: { alignItems: 'center', marginTop: 16, paddingVertical: 6 },
-  altLinkText: { color: '#404040', fontSize: 13, fontFamily: 'Inter_400Regular' },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background.dark },
+    backBtn: {
+      position: 'absolute', left: 16, zIndex: 10,
+      width: 38, height: 38, borderRadius: 19,
+      backgroundColor: colors.background.elevated,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 25 },
+    iconWrap: {
+      alignSelf: 'center', width: 72, height: 72, borderRadius: 36,
+      backgroundColor: colors.background.elevated, borderWidth: 1.5,
+      borderColor: colors.primary + '35',
+      alignItems: 'center', justifyContent: 'center', marginBottom: 22,
+    },
+    title: { fontSize: 22, fontFamily: 'Inter_700Bold', color: colors.text.primary, textAlign: 'center', marginBottom: 6 },
+    subtitle: { fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.secondary, textAlign: 'center', marginBottom: 28, lineHeight: 20 },
+    emailPill: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.background.card, borderRadius: 22,
+      borderWidth: 1, borderColor: colors.border.default,
+      paddingHorizontal: 16, paddingVertical: 11, marginBottom: 20, gap: 8,
+    },
+    emailPillText: { flex: 1, color: colors.text.secondary, fontSize: 13, fontFamily: 'Inter_400Regular' },
+    changeTxt: { color: colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+    fieldWrap: { marginBottom: 8 },
+    errorWrap: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginBottom: 12 },
+    errorText: { color: colors.status.error, fontSize: 13, fontFamily: 'Inter_400Regular', textAlign: 'center', flex: 1 },
+    btn: { backgroundColor: colors.primary, borderRadius: 25, height: 50, alignItems: 'center', justifyContent: 'center', marginTop: 8 },
+    btnDisabled: { opacity: 0.5 },
+    btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
+    switchMode: { alignItems: 'center', marginTop: 16, paddingVertical: 6 },
+    switchModeText: { color: colors.text.secondary, fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center' },
+    switchModeLink: { color: colors.primary, fontFamily: 'Inter_600SemiBold' },
+    altLink: { alignItems: 'center', marginTop: 16, paddingVertical: 6 },
+    altLinkText: { color: colors.text.muted, fontSize: 13, fontFamily: 'Inter_400Regular' },
+  });
+}

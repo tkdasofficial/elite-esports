@@ -34,10 +34,14 @@ export default function ProfileScreen() {
   const { profile, loading } = useProfileCtx();
   const tabBarHeight = useBottomTabBarHeight();
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const topInset = Platform.OS === 'web' ? Math.max(WEB_TOP_INSET, insets.top) : insets.top;
   const [selectedGame, setSelectedGame] = useState<LinkedGame | null>(null);
+
+  const coverGradient: [string, string, string] = isDark
+    ? ['#2A0900', '#1A0500', '#0A0A0A']
+    : [colors.primary + 'AA', colors.primary + '44', colors.background.dark];
 
   if (loading) {
     return (
@@ -87,7 +91,7 @@ export default function ProfileScreen() {
         {/* ── Cover + Avatar ── */}
         <View style={styles.coverSection}>
           <LinearGradient
-            colors={['#2A0900', '#1A0500', '#0A0A0A']}
+            colors={coverGradient}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[styles.cover, { paddingTop: topInset }]}
@@ -326,9 +330,9 @@ function createStyles(colors: AppColors) {
     username: { fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.secondary, marginBottom: 10 },
     badgePill: {
       flexDirection: 'row', alignItems: 'center', gap: 5,
-      backgroundColor: 'rgba(254,76,17,0.1)',
+      backgroundColor: colors.primary + '1A',
       borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
-      borderWidth: 1, borderColor: 'rgba(254,76,17,0.2)',
+      borderWidth: 1, borderColor: colors.primary + '33',
     },
     badgeText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.primary },
 
@@ -378,14 +382,14 @@ function createStyles(colors: AppColors) {
 
     gameList: { backgroundColor: colors.background.card, borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: colors.border.subtle },
     gameRow: { height: 52, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 },
-    gameRowIcon: { width: 30, height: 30, borderRadius: 8, backgroundColor: 'rgba(254,76,17,0.1)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+    gameRowIcon: { width: 30, height: 30, borderRadius: 8, backgroundColor: colors.primary + '1A', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
     gameRowName: { flex: 1, fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
     gameRowUID:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, flexShrink: 1, maxWidth: 110, includeFontPadding: false, textAlignVertical: 'center' },
     gameDivider: { height: 1, backgroundColor: colors.border.subtle, marginHorizontal: 16 },
 
     menuCard: { backgroundColor: colors.background.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border.subtle, overflow: 'hidden' },
     menuRow: { flexDirection: 'row', alignItems: 'center', gap: 14, paddingHorizontal: 16, height: 56 },
-    menuIconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: 'rgba(254,76,17,0.1)', alignItems: 'center', justifyContent: 'center' },
+    menuIconBox: { width: 36, height: 36, borderRadius: 10, backgroundColor: colors.primary + '1A', alignItems: 'center', justifyContent: 'center' },
     menuLabel: { flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
     menuDivider: { height: 1, backgroundColor: colors.border.subtle, marginLeft: 66 },
 
@@ -393,8 +397,8 @@ function createStyles(colors: AppColors) {
     signOutBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9,
       height: BTN_H, borderRadius: BTN_R,
-      backgroundColor: 'rgba(239,68,68,0.08)',
-      borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)',
+      backgroundColor: colors.status.error + '14',
+      borderWidth: 1, borderColor: colors.status.error + '33',
     },
     signOutText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: colors.status.error },
 
@@ -402,7 +406,7 @@ function createStyles(colors: AppColors) {
     popup: { backgroundColor: colors.background.card, borderRadius: 20, width: '100%', maxWidth: 360, borderWidth: 1, borderColor: colors.border.default, overflow: 'hidden' },
     popupInner: { padding: 20 },
     popupHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 20 },
-    popupHeaderIcon: { width: 42, height: 42, borderRadius: 12, backgroundColor: 'rgba(254,76,17,0.12)', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+    popupHeaderIcon: { width: 42, height: 42, borderRadius: 12, backgroundColor: colors.primary + '1F', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
     popupGameName: { flex: 1, fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.text.primary },
     popupClose: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.background.elevated, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
     popupField: { backgroundColor: colors.background.elevated, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 10 },

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView, ActivityIndicator, Alert,
@@ -7,19 +7,26 @@ import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '@/services/supabase';
-import { Colors } from '@/utils/colors';
+import { useTheme } from '@/store/ThemeContext';
+import type { AppColors } from '@/utils/colors';
 import { WEB_TOP_INSET, WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { AuthLogo } from '@/features/auth/components/AuthLogo';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const topPad = Platform.OS === 'web' ? Math.max(WEB_TOP_INSET, insets.top) : insets.top;
   const bottomPad = insets.bottom + (Platform.OS === 'web' ? WEB_BOTTOM_INSET : 0);
+
+  const gradientColors: [string, string, string] = isDark
+    ? ['#140400', '#0A0A0A', '#0A0A0A']
+    : [colors.primary + '18', colors.background.dark, colors.background.dark];
 
   const handleLogin = async () => {
     if (!email || !password) { Alert.alert('Error', 'Please fill in all fields'); return; }
@@ -43,7 +50,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#140400', '#0A0A0A', '#0A0A0A']}
+        colors={gradientColors}
         locations={[0, 0.45, 1]}
         style={StyleSheet.absoluteFill}
       />
@@ -105,60 +112,62 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#0A0A0A' },
-  flex: { flex: 1 },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 25,
-  },
-  title: {
-    fontSize: 22,
-    fontFamily: 'Inter_700Bold',
-    color: Colors.text.primary,
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: '#666666',
-    marginBottom: 24,
-    textAlign: 'center',
-  },
-  fields: {
-    gap: 16,
-    marginBottom: 20,
-  },
-  btn: {
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    height: 54,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  btnDisabled: { opacity: 0.5 },
-  btnText: {
-    color: '#fff',
-    fontSize: 16,
-    fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.2,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginTop: 28,
-  },
-  footerText: {
-    color: '#666666',
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-  },
-  footerLink: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontFamily: 'Inter_600SemiBold',
-  },
-});
+function createStyles(colors: AppColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background.dark },
+    flex: { flex: 1 },
+    scroll: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      paddingHorizontal: 25,
+    },
+    title: {
+      fontSize: 22,
+      fontFamily: 'Inter_700Bold',
+      color: colors.text.primary,
+      marginBottom: 4,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: 14,
+      fontFamily: 'Inter_400Regular',
+      color: colors.text.secondary,
+      marginBottom: 24,
+      textAlign: 'center',
+    },
+    fields: {
+      gap: 16,
+      marginBottom: 20,
+    },
+    btn: {
+      backgroundColor: colors.primary,
+      borderRadius: 14,
+      height: 54,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    btnDisabled: { opacity: 0.5 },
+    btnText: {
+      color: '#fff',
+      fontSize: 16,
+      fontFamily: 'Inter_700Bold',
+      letterSpacing: 0.2,
+    },
+    footer: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginTop: 28,
+    },
+    footerText: {
+      color: colors.text.secondary,
+      fontSize: 14,
+      fontFamily: 'Inter_400Regular',
+    },
+    footerLink: {
+      color: colors.primary,
+      fontSize: 14,
+      fontFamily: 'Inter_600SemiBold',
+    },
+  });
+}

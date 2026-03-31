@@ -11,10 +11,14 @@ import { useWallet } from '@/store/WalletContext';
 import { TransactionItem } from '@/features/wallet/components/TransactionItem';
 
 export default function WalletScreen() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const { balance, transactions, loading, refreshWallet } = useWallet();
   const tabBarHeight = useBottomTabBarHeight();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const cardGradient: [string, string] = isDark
+    ? ['#2D0A00', '#180400']
+    : [colors.primaryDark, colors.primary];
 
   return (
     <View style={styles.container}>
@@ -29,7 +33,7 @@ export default function WalletScreen() {
         ListHeaderComponent={
           <View>
             <LinearGradient
-              colors={['#2D0A00', '#180400']}
+              colors={cardGradient}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.balanceCard}
@@ -50,8 +54,8 @@ export default function WalletScreen() {
                   onPress={() => router.push('/withdraw')}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name="arrow-up-circle-outline" size={18} color={colors.primary} />
-                  <Text style={[styles.actionBtnText, { color: colors.primary }]}>Withdraw</Text>
+                  <Ionicons name="arrow-up-circle-outline" size={18} color="#fff" />
+                  <Text style={styles.actionBtnText}>Withdraw</Text>
                 </TouchableOpacity>
               </View>
             </LinearGradient>
@@ -110,11 +114,11 @@ function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColo
     list: { padding: 16 },
     balanceCard: {
       borderRadius: 20, padding: 24, marginBottom: 12,
-      borderWidth: 1, borderColor: colors.primary + '44',
+      borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
     },
     balanceLabel: {
       fontSize: 13, fontFamily: 'Inter_500Medium',
-      color: 'rgba(255,255,255,0.55)', marginBottom: 6, letterSpacing: 0.3,
+      color: 'rgba(255,255,255,0.7)', marginBottom: 6, letterSpacing: 0.3,
     },
     balanceAmount: {
       fontSize: 40, fontFamily: 'Inter_700Bold',
@@ -124,10 +128,10 @@ function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColo
     actionBtn: {
       flex: 1, flexDirection: 'row', alignItems: 'center',
       justifyContent: 'center', gap: 7,
-      backgroundColor: colors.primary, borderRadius: 12, height: 52,
+      backgroundColor: 'rgba(255,255,255,0.18)', borderRadius: 12, height: 52,
     },
     actionBtnOutline: {
-      backgroundColor: 'transparent', borderWidth: 1.5, borderColor: colors.primary,
+      backgroundColor: 'transparent', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.5)',
     },
     actionBtnText: { color: '#fff', fontSize: 14, fontFamily: 'Inter_700Bold' },
     historyBtn: {
