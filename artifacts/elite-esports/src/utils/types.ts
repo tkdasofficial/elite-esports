@@ -13,6 +13,7 @@ export interface Match {
   room_password?: string;
   room_visible: boolean;
   description?: string;
+  rules?: string;
   stream_url?: string;
 }
 

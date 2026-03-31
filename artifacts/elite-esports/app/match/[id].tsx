@@ -213,7 +213,20 @@ export default function MatchDetailScreen() {
         <View style={styles.content}>
           <Text style={styles.gameTag}>{match.game}</Text>
           <Text style={styles.title}>{match.title}</Text>
-          {match.description && <Text style={styles.desc}>{match.description}</Text>}
+
+          {match.description && (
+            <View style={styles.infoSection}>
+              <Text style={styles.infoSectionTitle}>Description</Text>
+              <Text style={styles.infoSectionBody}>{match.description}</Text>
+            </View>
+          )}
+
+          {match.rules && (
+            <View style={styles.infoSection}>
+              <Text style={styles.infoSectionTitle}>Rules</Text>
+              <Text style={styles.infoSectionBody}>{match.rules}</Text>
+            </View>
+          )}
 
           <View style={styles.statsGrid}>
             {[
@@ -360,8 +373,20 @@ function createStyles(colors: AppColors) {
       fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.primary,
       textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 6,
     },
-    title:  { fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 8, lineHeight: 30 },
-    desc:   { fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.secondary, lineHeight: 22, marginBottom: 20 },
+    title:  { fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 12, lineHeight: 30 },
+    infoSection: {
+      backgroundColor: colors.background.card,
+      borderRadius: 14, padding: 16, marginBottom: 16,
+      borderWidth: 1, borderColor: colors.border.default,
+    },
+    infoSectionTitle: {
+      fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.primary,
+      textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 8,
+    },
+    infoSectionBody: {
+      fontSize: 14, fontFamily: 'Inter_400Regular',
+      color: colors.text.secondary, lineHeight: 22,
+    },
     statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
     statCard: {
       flex: 1, minWidth: '45%', backgroundColor: colors.background.card,

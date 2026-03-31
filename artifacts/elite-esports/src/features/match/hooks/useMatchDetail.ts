@@ -4,7 +4,7 @@ import { Match } from '@/utils/types';
 import { adaptMatch } from '@/services/dbAdapters';
 
 const MATCH_SELECT =
-  'id, title, game_id, banner_url, entry_fee, prize_pool, joined_players, max_players, status, scheduled_at, room_id, room_password, room_visible, live_stream_url, created_at, games(name)';
+  'id, title, game_id, banner_url, entry_fee, prize_pool, joined_players, max_players, status, scheduled_at, room_id, room_password, room_visible, description, rules, live_stream_url, created_at, games(name)';
 
 export function useMatchDetail(id: string, userId?: string) {
   const [match, setMatch] = useState<Match | null>(null);
