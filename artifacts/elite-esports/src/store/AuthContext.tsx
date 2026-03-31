@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useMemo, ReactNo
 import { Session, User } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import { supabase } from '@/services/supabase';
-import { removeFcmTokenForUser } from '@/services/NotificationService';
+import { saveFcmTokenForUser, removeFcmTokenForUser } from '@/services/NotificationService';
 
 interface AuthContextValue {
   session: Session | null;
@@ -20,6 +20,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
+
+      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+        const userId = newSession?.user?.id;
+        if (userId) {
+          saveFcmTokenForUser(userId).catch(() => {});
+        }
+      }
+
       if (event === 'SIGNED_OUT') {
         router.replace('/(auth)/options');
       }
@@ -28,6 +36,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setLoading(false);
+      // Register token for users who were already logged in when the app launched
+      const userId = initialSession?.user?.id;
+      if (userId) {
+        saveFcmTokenForUser(userId).catch(() => {});
+      }
     });
 
     return () => subscription.unsubscribe();
