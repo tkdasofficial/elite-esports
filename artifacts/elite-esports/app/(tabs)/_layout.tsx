@@ -60,10 +60,6 @@ function TabIcon({ routeName, isFocused }: { routeName: TabName; isFocused: bool
       <Animated.View style={{ transform: [{ scale }] }}>
         <Feather name={(tab?.icon ?? 'home') as any} size={22} color={iconColor} />
       </Animated.View>
-      {/* Active dot indicator — clean single-pixel indicator */}
-      {isFocused && (
-        <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
-      )}
     </View>
   );
 }
@@ -172,22 +168,13 @@ const styles = StyleSheet.create({
   iconWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 48,
-    height: 40,
+    width: 44,
+    height: 44,
   },
   activePill: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    borderRadius: 12,
-  },
-  activeDot: {
-    position: 'absolute',
-    bottom: -2,
-    width: 4,
-    height: 4,
-    borderRadius: 2,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
   },
 });
