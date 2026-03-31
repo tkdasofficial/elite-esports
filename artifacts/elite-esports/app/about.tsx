@@ -13,7 +13,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import type { AppColors } from '@/utils/colors';
 
 const APP_VERSION = '1.0.0 Alpha';
-const SUPPORT_EMAIL = 'support@eliteesports.in';
+const SUPPORT_EMAIL = 'help.eliteesports@outlook.com';
 
 const FEATURES = [
   { icon: 'trophy-outline',          text: 'Competitive eSports tournaments' },
@@ -34,6 +34,11 @@ const LINKS = [
     icon: 'shield-checkmark-outline' as const,
     label: 'Privacy Policy',
     onPress: (push: (r: any) => void) => push('/privacy'),
+  },
+  {
+    icon: 'warning-outline' as const,
+    label: 'Disclaimer',
+    onPress: (push: (r: any) => void) => push('/disclaimer'),
   },
   {
     icon: 'mail-outline' as const,
@@ -78,15 +83,27 @@ export default function AboutScreen() {
         </View>
 
         {/* ── About ── */}
-        <Text style={styles.sectionLabel}>About the App</Text>
+        <Text style={styles.sectionLabel}>About Us</Text>
         <View style={styles.card}>
           <Text style={styles.description}>
-            Elite eSports is a professional competitive gaming platform designed for Indian eSports
-            players. Join tournaments, track live matches, climb leaderboards, and earn real prize
-            money directly to your wallet — all in one place.
+            Elite eSports is an Indian skill-based competitive gaming platform that empowers players
+            to compete in real-money tournaments and win rewards based entirely on their skill and
+            in-game performance.
           </Text>
-          <Text style={[styles.description, { marginTop: 12 }]}>
-            Built for mobile-first with a focus on speed, reliability, and a premium experience.
+          <Text style={[styles.description, { marginTop: 0 }]}>
+            We are dedicated to building a fair, transparent, and professional eSports ecosystem for
+            the Indian gaming community. Every match on our platform is governed by strict fair-play
+            rules, and every rupee won is a result of pure player skill.
+          </Text>
+        </View>
+
+        {/* ── Mission ── */}
+        <Text style={styles.sectionLabel}>Our Mission</Text>
+        <View style={styles.card}>
+          <Text style={styles.description}>
+            Our mission is to provide a world-class competitive gaming experience to Indian eSports
+            enthusiasts — from casual players to aspiring professionals. We believe talent deserves
+            recognition and reward, regardless of background.
           </Text>
         </View>
 

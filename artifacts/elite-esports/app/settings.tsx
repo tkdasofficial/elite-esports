@@ -297,6 +297,7 @@ export default function SettingsScreen() {
           {[
             { icon: 'document-text-outline', label: 'Terms & Conditions', route: '/terms' },
             { icon: 'shield-checkmark-outline', label: 'Privacy Policy', route: '/privacy' },
+            { icon: 'warning-outline', label: 'Disclaimer', route: '/disclaimer' },
             { icon: 'information-circle-outline', label: 'About Elite eSports', route: '/about' },
           ].map(item => (
             <TouchableOpacity
