@@ -25,37 +25,45 @@ function TabIcon({ routeName, isFocused }: { routeName: TabName; isFocused: bool
   const { colors } = useTheme();
   const tab = TABS.find(t => t.name === routeName);
   const scale = useRef(new Animated.Value(1)).current;
-  const glowOpacity = useRef(new Animated.Value(0)).current;
+  const bgOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.spring(scale, {
-        toValue: isFocused ? 1.14 : 1,
-        friction: 6,
-        tension: 100,
+        toValue: isFocused ? 1.12 : 1,
+        friction: 7,
+        tension: 120,
         useNativeDriver: true,
       }),
-      Animated.timing(glowOpacity, {
+      Animated.timing(bgOpacity, {
         toValue: isFocused ? 1 : 0,
-        duration: 200,
+        duration: 180,
         useNativeDriver: true,
       }),
     ]).start();
   }, [isFocused]);
 
-  const iconColor = isFocused ? colors.tab.active : colors.tab.inactive;
+  const iconColor = isFocused ? colors.primary : colors.tab.inactive;
 
   return (
     <View style={styles.iconWrap}>
+      {/* Active pill background — no absolute overlay, drawn cleanly under icon */}
       <Animated.View
         style={[
-          styles.glow,
-          { opacity: glowOpacity, backgroundColor: colors.primary + '22' },
+          styles.activePill,
+          {
+            opacity: bgOpacity,
+            backgroundColor: colors.primary + '20',
+          },
         ]}
       />
       <Animated.View style={{ transform: [{ scale }] }}>
-        <Feather name={(tab?.icon ?? 'home') as any} size={23} color={iconColor} />
+        <Feather name={(tab?.icon ?? 'home') as any} size={22} color={iconColor} />
       </Animated.View>
+      {/* Active dot indicator — clean single-pixel indicator */}
+      {isFocused && (
+        <View style={[styles.activeDot, { backgroundColor: colors.primary }]} />
+      )}
     </View>
   );
 }
@@ -148,7 +156,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopWidth: 1,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   iconRow: {
     height: TAB_HEIGHT,
@@ -164,13 +172,22 @@ const styles = StyleSheet.create({
   iconWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 40,
   },
-  glow: {
+  activePill: {
     position: 'absolute',
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: 12,
+  },
+  activeDot: {
+    position: 'absolute',
+    bottom: -2,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
   },
 });

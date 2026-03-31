@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert,
+  ScrollView, Alert, ActivityIndicator,
 } from 'react-native';
+import { SkeletonBar } from '@/components/SkeletonBar';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -93,8 +94,12 @@ export default function EditProfileScreen() {
     return (
       <View style={styles.container}>
         <ScreenHeader title="Edit Profile" />
-        <View style={styles.centered}>
-          <ActivityIndicator color={Colors.primary} size="large" />
+        <View style={{ padding: 16, gap: 14 }}>
+          <SkeletonBar width={80} height={80} radius={40} style={{ alignSelf: 'center' }} />
+          <SkeletonBar width="100%" height={52} radius={12} />
+          <SkeletonBar width="100%" height={52} radius={12} />
+          <SkeletonBar width="100%" height={52} radius={12} />
+          <SkeletonBar width="40%" height={44} radius={10} />
         </View>
       </View>
     );

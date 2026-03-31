@@ -51,11 +51,11 @@ function RootLayoutNav() {
 
 function ThemedRoot() {
   const { isDark } = useTheme();
-  const [fontsLoaded, fontError] = useFonts({
+
+  // Load fonts in the background — never block rendering
+  useFonts({
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
   });
-
-  const ready = fontsLoaded || !!fontError;
 
   useEffect(() => {
     initNotifications().catch(() => {});
@@ -66,7 +66,7 @@ function ThemedRoot() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <KeyboardProvider>
         <StatusBar style={isDark ? 'light' : 'dark'} />
-        {ready && <RootLayoutNav />}
+        <RootLayoutNav />
       </KeyboardProvider>
     </GestureHandlerRootView>
   );

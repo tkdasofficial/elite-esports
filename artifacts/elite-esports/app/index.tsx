@@ -1,5 +1,4 @@
 import { Redirect } from 'expo-router';
-import { View } from 'react-native';
 import { useAuth } from '@/store/AuthContext';
 import { useEffect, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -14,9 +13,8 @@ export default function Index() {
     });
   }, []);
 
-  if (loading || onboardingSeen === null) {
-    return <View style={{ flex: 1, backgroundColor: '#080808' }} />;
-  }
+  // Still resolving auth or onboarding status — render nothing (transparent)
+  if (loading || onboardingSeen === null) return null;
 
   if (!onboardingSeen) return <Redirect href="/onboarding/Play" />;
 

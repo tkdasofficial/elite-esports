@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, ActivityIndicator,
-  TouchableOpacity, Alert, Platform, BackHandler,
+  View, Text, ScrollView, StyleSheet,
+  TouchableOpacity, Alert, Platform, BackHandler, ActivityIndicator,
 } from 'react-native';
+import { SkeletonBar } from '@/components/SkeletonBar';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -143,8 +144,20 @@ export default function MatchDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator color={Colors.primary} size="large" />
+      <View style={styles.container}>
+        <SkeletonBar width="100%" height={220} radius={0} />
+        <View style={{ padding: 16, gap: 14 }}>
+          <SkeletonBar width="60%" height={14} radius={6} />
+          <SkeletonBar width="85%" height={22} radius={8} />
+          <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
+            <SkeletonBar width={90} height={36} radius={10} />
+            <SkeletonBar width={90} height={36} radius={10} />
+          </View>
+          <SkeletonBar width="100%" height={1} radius={0} />
+          <SkeletonBar width="100%" height={60} radius={12} />
+          <SkeletonBar width="100%" height={60} radius={12} />
+          <SkeletonBar width="100%" height={60} radius={12} />
+        </View>
       </View>
     );
   }

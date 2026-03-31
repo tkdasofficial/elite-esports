@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, TextInput, Modal, KeyboardAvoidingView, Platform, RefreshControl,
+  Alert, TextInput, Modal, KeyboardAvoidingView, Platform, RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
+import { SkeletonBar } from '@/components/SkeletonBar';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '@/utils/colors';
@@ -88,8 +90,12 @@ export default function MyTeamScreen() {
     return (
       <View style={styles.container}>
         <ScreenHeader title="My Team" />
-        <View style={styles.centered}>
-          <ActivityIndicator color={Colors.primary} size="large" />
+        <View style={{ padding: 16, gap: 14 }}>
+          <SkeletonBar width="50%" height={20} radius={8} />
+          <SkeletonBar width="100%" height={80} radius={16} />
+          <SkeletonBar width="100%" height={56} radius={14} />
+          <SkeletonBar width="100%" height={56} radius={14} />
+          <SkeletonBar width="100%" height={56} radius={14} />
         </View>
       </View>
     );
