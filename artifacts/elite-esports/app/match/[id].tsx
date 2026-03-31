@@ -4,6 +4,7 @@ import {
   TouchableOpacity, Alert, Platform, BackHandler, ActivityIndicator,
 } from 'react-native';
 import { SkeletonBar } from '@/components/SkeletonBar';
+import { ScreenHeader } from '@/components/ScreenHeader';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -128,6 +129,7 @@ export default function MatchDetailScreen() {
   if (loading) {
     return (
       <View style={styles.container}>
+        <ScreenHeader title="Match Details" />
         <SkeletonBar width="100%" height={220} radius={0} />
         <View style={{ padding: 16, gap: 14 }}>
           <SkeletonBar width="60%" height={14} radius={6} />
@@ -147,9 +149,12 @@ export default function MatchDetailScreen() {
 
   if (!match) {
     return (
-      <View style={[styles.container, styles.centered]}>
-        <Ionicons name="alert-circle-outline" size={48} color={colors.text.muted} />
-        <Text style={styles.emptyTitle}>Match Not Found</Text>
+      <View style={styles.container}>
+        <ScreenHeader title="Match Details" />
+        <View style={styles.centered}>
+          <Ionicons name="alert-circle-outline" size={48} color={colors.text.muted} />
+          <Text style={styles.emptyTitle}>Match Not Found</Text>
+        </View>
       </View>
     );
   }
@@ -173,6 +178,11 @@ export default function MatchDetailScreen() {
         label={overlay.label}
       />
 
+      <ScreenHeader
+        title={match.game}
+        onBack={showLeaveBtn ? handleLeave : undefined}
+      />
+
       <ScrollView
         contentContainerStyle={[styles.scroll, { paddingBottom: bottomPad + 120 }]}
         showsVerticalScrollIndicator={false}
@@ -187,14 +197,6 @@ export default function MatchDetailScreen() {
             </LinearGradient>
           )}
           <LinearGradient colors={['transparent', colors.background.dark]} style={styles.bannerOverlay} />
-
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={showLeaveBtn ? handleLeave : () => router.back()}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="arrow-back" size={22} color="#fff" />
-          </TouchableOpacity>
 
           <View style={[styles.statusBadge, { backgroundColor: cfg.color }]}>
             {match.status === 'ongoing' && <View style={styles.liveDot} />}
@@ -325,12 +327,6 @@ function createStyles(colors: AppColors) {
     bannerContainer: { position: 'relative' },
     banner:    { width: '100%', aspectRatio: 16 / 9, alignItems: 'center', justifyContent: 'center' },
     bannerOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 100 },
-    backBtn: {
-      position: 'absolute', top: 48, left: 16,
-      width: 38, height: 38, borderRadius: 19,
-      backgroundColor: 'rgba(0,0,0,0.55)',
-      alignItems: 'center', justifyContent: 'center',
-    },
     statusBadge: {
       position: 'absolute', top: 12, right: 12,
       flexDirection: 'row', alignItems: 'center', gap: 5,

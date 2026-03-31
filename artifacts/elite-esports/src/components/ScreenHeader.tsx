@@ -9,9 +9,10 @@ import { WEB_TOP_INSET } from '@/utils/webInsets';
 interface ScreenHeaderProps {
   title: string;
   rightElement?: React.ReactNode;
+  onBack?: () => void;
 }
 
-export function ScreenHeader({ title, rightElement }: ScreenHeaderProps) {
+export function ScreenHeader({ title, rightElement, onBack }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const topInset = Platform.OS === 'web' ? Math.max(WEB_TOP_INSET, insets.top) : insets.top;
@@ -20,7 +21,7 @@ export function ScreenHeader({ title, rightElement }: ScreenHeaderProps) {
   return (
     <View style={[styles.header, { paddingTop: topInset }]}>
       <View style={styles.content}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.7}>
+        <TouchableOpacity style={styles.backBtn} onPress={onBack ?? (() => router.back())} activeOpacity={0.7}>
           <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
