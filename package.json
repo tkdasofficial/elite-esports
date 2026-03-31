@@ -18,6 +18,7 @@
   "private": true,
   "devDependencies": {
     "prettier": "^3.8.1",
+    "sharp": "^0.34.5",
     "typescript": "~5.9.2"
   },
   "//": "PNPM IS STRICTLY FORBIDDEN. USE NPM ONLY. See .npmrc for full rules."

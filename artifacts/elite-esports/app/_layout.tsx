@@ -5,11 +5,13 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import { Ionicons } from '@expo/vector-icons';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/store/AuthContext';
@@ -56,23 +58,31 @@ export default function RootLayout() {
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
   });
 
+  const overlayOpacity = useRef(new Animated.Value(1)).current;
+  const ready = fontsLoaded || !!fontError;
+
   useEffect(() => {
-    if (fontsLoaded || fontError) {
-      const timer = setTimeout(() => {
-        SplashScreen.hideAsync();
-      }, 3000);
-      return () => clearTimeout(timer);
-    }
-  }, [fontsLoaded, fontError]);
+    if (!ready) return;
+
+    const hideSplash = async () => {
+      await SplashScreen.hideAsync();
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    };
+
+    const timer = setTimeout(hideSplash, 300);
+    return () => clearTimeout(timer);
+  }, [ready]);
 
   useEffect(() => {
     initNotifications().catch(() => {});
   }, []);
 
-  if (!fontsLoaded && !fontError) return null;
-
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={styles.root}>
       <StatusBar style="light" />
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
@@ -81,9 +91,15 @@ export default function RootLayout() {
               <ProfileProvider>
                 <NotificationsProvider>
                   <WalletProvider>
-                    <GestureHandlerRootView style={{ flex: 1 }}>
+                    <GestureHandlerRootView style={styles.root}>
                       <KeyboardProvider>
-                        <RootLayoutNav />
+                        {ready && <RootLayoutNav />}
+                        <Animated.View
+                          pointerEvents="none"
+                          style={[styles.overlay, { opacity: overlayOpacity }]}
+                        >
+                          <Ionicons name="flash" size={96} color="#FE4C11" />
+                        </Animated.View>
                       </KeyboardProvider>
                     </GestureHandlerRootView>
                   </WalletProvider>
@@ -96,3 +112,16 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
