@@ -11,6 +11,7 @@ export interface Match {
   starts_at: string;
   room_id?: string;
   room_password?: string;
+  room_visible: boolean;
   description?: string;
   stream_url?: string;
 }

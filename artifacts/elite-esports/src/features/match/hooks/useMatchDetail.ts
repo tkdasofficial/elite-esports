@@ -3,6 +3,9 @@ import { supabase } from '@/services/supabase';
 import { Match } from '@/utils/types';
 import { adaptMatch } from '@/services/dbAdapters';
 
+const MATCH_SELECT =
+  'id, title, game_id, banner_url, entry_fee, prize_pool, joined_players, max_players, status, scheduled_at, room_id, room_password, room_visible, description, live_stream_url, created_at, games(name)';
+
 export function useMatchDetail(id: string, userId?: string) {
   const [match, setMatch] = useState<Match | null>(null);
   const [loading, setLoading] = useState(true);
@@ -12,7 +15,7 @@ export function useMatchDetail(id: string, userId?: string) {
   const fetch = async () => {
     const { data } = await supabase
       .from('matches')
-      .select('id, title, game_id, banner_url, entry_fee, prize_pool, joined_players, max_players, status, starts_at, room_id, room_password, description, live_stream_url, created_at, games(name)')
+      .select(MATCH_SELECT)
       .eq('id', id)
       .maybeSingle();
     if (data) setMatch(adaptMatch(data));
@@ -31,27 +34,33 @@ export function useMatchDetail(id: string, userId?: string) {
   const joinMatch = async () => {
     if (!userId) return { error: new Error('Not authenticated') };
     setJoining(true);
-    const { error } = await supabase
-      .from('match_participants')
-      .insert({ match_id: id, user_id: userId });
+
+    const { data, error } = await supabase.rpc('join_match', { _match_id: id });
+
     setJoining(false);
-    if (!error) {
-      setHasJoined(true);
-      await supabase
-        .from('matches')
-        .update({ joined_players: (match?.players_joined ?? 0) + 1 })
-        .eq('id', id);
+
+    if (error) return { error };
+
+    if (data && data.success === false) {
+      return { error: new Error(data.error ?? 'Could not join match') };
     }
-    return { error };
+
+    setHasJoined(true);
+    await fetch();
+    return { error: null };
   };
 
   useEffect(() => {
     fetch();
     const channel = supabase
       .channel(`match-${id}`)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${id}` }, (payload) => {
-        if (payload.new) setMatch(adaptMatch(payload.new));
-      })
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${id}` },
+        (payload) => {
+          if (payload.new) setMatch(adaptMatch(payload.new));
+        },
+      )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [id, userId]);

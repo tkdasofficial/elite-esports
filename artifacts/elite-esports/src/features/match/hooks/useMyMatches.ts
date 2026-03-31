@@ -12,7 +12,7 @@ export function useMyMatches(userId?: string) {
     if (!userId) { setLoading(false); return; }
     const { data } = await supabase
       .from('match_participants')
-      .select('match_id, joined_at, matches(id, title, game_id, banner_url, entry_fee, prize_pool, joined_players, max_players, status, starts_at, room_id, room_password, description, live_stream_url, created_at, games(name))')
+      .select('match_id, joined_at, matches(id, title, game_id, banner_url, entry_fee, prize_pool, joined_players, max_players, status, scheduled_at, room_id, room_password, room_visible, description, live_stream_url, created_at, games(name))')
       .eq('user_id', userId)
       .order('joined_at', { ascending: false });
     if (data) {

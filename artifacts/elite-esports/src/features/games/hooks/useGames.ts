@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/services/supabase';
 import { Game } from '@/utils/types';
+import { getBannerUrl } from '@/services/dbAdapters';
 
 export function useGames() {
   const [games, setGames] = useState<Game[]>([]);
@@ -12,12 +13,18 @@ export function useGames() {
     setError(null);
     const { data, error: err } = await supabase
       .from('games')
-      .select('*')
+      .select('id, name, banner_url, status, created_at')
+      .eq('status', 'active')
       .order('name', { ascending: true });
     if (err) {
       setError(err.message);
     } else {
-      setGames(data ?? []);
+      setGames(
+        (data ?? []).map(g => ({
+          ...g,
+          banner_url: getBannerUrl(g.banner_url),
+        })),
+      );
     }
     setLoading(false);
   };

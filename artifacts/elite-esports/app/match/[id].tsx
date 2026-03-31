@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
-  TouchableOpacity, Alert, Platform, BackHandler, ActivityIndicator,
+  TouchableOpacity, Alert, Platform, BackHandler, ActivityIndicator, Linking,
 } from 'react-native';
 import { SkeletonBar } from '@/components/SkeletonBar';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -220,7 +220,7 @@ export default function MatchDetailScreen() {
               { label: 'Entry Fee',  value: `₹${match.entry_fee}`,  icon: 'ticket-outline',  highlight: false },
               { label: 'Prize Pool', value: `₹${match.prize_pool}`, icon: 'trophy-outline',  highlight: true  },
               { label: 'Players',    value: `${match.players_joined}/${match.max_players}`, icon: 'people-outline', highlight: false },
-              { label: 'Starts At',  value: new Date(match.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), icon: 'time-outline', highlight: false },
+              { label: 'Starts At',  value: match.starts_at ? new Date(match.starts_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) + ', ' + new Date(match.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'TBD', icon: 'time-outline', highlight: false },
             ].map(({ label, value, icon, highlight }) => (
               <View key={label} style={styles.statCard}>
                 <Ionicons name={icon as any} size={18} color={highlight ? colors.primary : colors.text.secondary} />
@@ -240,15 +240,28 @@ export default function MatchDetailScreen() {
             </View>
           </View>
 
-          {isLive && hasJoined && (
+          {hasJoined && match.room_visible ? (
             <RoomDetails roomId={match.room_id} roomPassword={match.room_password} />
-          )}
-
-          {isLive && !hasJoined && (
+          ) : (match.status === 'upcoming' || match.status === 'ongoing') ? (
             <View style={styles.infoBox}>
               <Ionicons name="information-circle-outline" size={18} color={colors.status.warning} />
-              <Text style={styles.infoText}>Join the match to see room credentials</Text>
+              <Text style={styles.infoText}>
+                {!hasJoined
+                  ? 'Join the match to see room credentials'
+                  : 'Room details will be shared before match starts'}
+              </Text>
             </View>
+          ) : null}
+
+          {match.stream_url && (
+            <TouchableOpacity
+              style={styles.watchLiveBtn}
+              onPress={() => Linking.openURL(match.stream_url!)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="logo-youtube" size={20} color="#fff" />
+              <Text style={styles.watchLiveBtnText}>Watch Live</Text>
+            </TouchableOpacity>
           )}
 
           {claimResult !== null && (
@@ -400,5 +413,10 @@ function createStyles(colors: AppColors) {
     },
     joinedText:  { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: colors.status.success },
     emptyTitle:  { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: colors.text.secondary },
+    watchLiveBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+      backgroundColor: '#FF0000', borderRadius: 14, height: 48, marginBottom: 12,
+    },
+    watchLiveBtnText: { color: '#fff', fontSize: 15, fontFamily: 'Inter_700Bold' },
   });
 }
