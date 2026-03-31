@@ -14,6 +14,8 @@ interface Props {
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   secureTextEntry?: boolean;
   autoComplete?: any;
+  onSubmitEditing?: () => void;
+  returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
 }
 
 const INPUT_HEIGHT = 54;
@@ -23,6 +25,7 @@ export function AuthInput({
   label, value, onChangeText, placeholder, iconName,
   keyboardType = 'default', autoCapitalize = 'none',
   secureTextEntry = false, autoComplete,
+  onSubmitEditing, returnKeyType,
 }: Props) {
   const [showText, setShowText] = useState(false);
   const [focused, setFocused] = useState(false);
@@ -55,6 +58,8 @@ export function AuthInput({
           autoComplete={autoComplete}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
+          onSubmitEditing={onSubmitEditing}
+          returnKeyType={returnKeyType}
         />
 
         {isPassword && (

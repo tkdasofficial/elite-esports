@@ -34,6 +34,8 @@ async function navigateAfterAuth(userId: string) {
   }
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export default function EmailAuthScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -43,6 +45,7 @@ export default function EmailAuthScreen() {
   const [mode, setMode] = useState<Mode>('unknown');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [checking, setChecking] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -74,23 +77,41 @@ export default function EmailAuthScreen() {
     setResendCooldown(60);
     cooldownRef.current = setInterval(() => {
       setResendCooldown(prev => {
-        if (prev <= 1) {
-          clearInterval(cooldownRef.current!);
-          return 0;
-        }
+        if (prev <= 1) { clearInterval(cooldownRef.current!); return 0; }
         return prev - 1;
       });
     }, 1000);
   };
 
-  const handleEmailContinue = () => {
-    const trimmed = email.trim();
-    if (!trimmed || !trimmed.includes('@') || !trimmed.includes('.')) {
+  const handleEmailContinue = async () => {
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !EMAIL_REGEX.test(trimmed)) {
       setError('Please enter a valid email address.');
       return;
     }
     setError('');
-    setStep('password');
+    setChecking(true);
+
+    try {
+      const { data } = await supabase.auth.signUp({
+        email: trimmed,
+        password: `__probe_${Math.random().toString(36).slice(2)}__`,
+      });
+
+      const identities = data?.user?.identities;
+
+      if (Array.isArray(identities) && identities.length === 0) {
+        setMode('signin');
+      } else {
+        setMode('signup');
+        startCooldown();
+      }
+    } catch {
+      setMode('unknown');
+    } finally {
+      setChecking(false);
+      setStep('password');
+    }
   };
 
   const handlePasswordContinue = async () => {
@@ -100,30 +121,36 @@ export default function EmailAuthScreen() {
     }
     setError('');
     setLoading(true);
+    const trimmedEmail = email.trim().toLowerCase();
 
     try {
-      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
-        password,
-      });
+      if (mode === 'signin' || mode === 'unknown') {
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: trimmedEmail,
+          password,
+        });
 
-      if (!signInError && signInData.user) {
-        setMode('signin');
-        await navigateAfterAuth(signInData.user.id);
-        return;
-      }
+        if (!signInError && signInData.user) {
+          await navigateAfterAuth(signInData.user.id);
+          return;
+        }
 
-      const msg = (signInError?.message ?? '').toLowerCase();
+        const msg = (signInError?.message ?? '').toLowerCase();
 
-      if (msg.includes('email not confirmed')) {
-        setMode('signup');
-        startCooldown();
-        setStep('verify');
-        return;
+        if (msg.includes('email not confirmed')) {
+          startCooldown();
+          setStep('verify');
+          return;
+        }
+
+        if (mode === 'signin') {
+          setError('Incorrect password. Please try again.');
+          return;
+        }
       }
 
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: email.trim().toLowerCase(),
+        email: trimmedEmail,
         password,
       });
 
@@ -134,11 +161,10 @@ export default function EmailAuthScreen() {
 
       if ((signUpData.user?.identities?.length ?? 0) === 0) {
         setMode('signin');
-        setError('Incorrect password. Please try again.');
+        setError('An account already exists for this email. Please enter your correct password.');
         return;
       }
 
-      setMode('signup');
       startCooldown();
       setStep('verify');
     } catch (e: any) {
@@ -162,33 +188,31 @@ export default function EmailAuthScreen() {
 
   const goBack = () => {
     setError('');
-    if (step === 'password') { setStep('email'); setPassword(''); }
+    if (step === 'password') { setStep('email'); setPassword(''); setMode('unknown'); }
     else if (step === 'verify') { setStep('password'); }
     else router.back();
   };
 
+  const stepIcon: Record<Step, keyof typeof Ionicons.glyphMap> = {
+    email: 'person-outline',
+    password: mode === 'signin' ? 'lock-closed-outline' : 'lock-open-outline',
+    verify: 'mail-open-outline',
+  };
+
   const stepTitle: Record<Step, string> = {
     email: 'Get Started',
-    password: mode === 'signin'
-      ? 'Welcome Back'
-      : mode === 'signup' ? 'Create Account' : 'Enter Password',
+    password: mode === 'signin' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Enter Password',
     verify: 'Verify Your Email',
   };
 
   const stepSub: Record<Step, string> = {
-    email: 'Enter your email to sign in or create an account',
+    email: 'Enter your email to continue',
     password: mode === 'signin'
-      ? 'Enter your password to continue'
+      ? 'Enter your password to sign in'
       : mode === 'signup'
-        ? 'Choose a strong password for your new account'
+        ? 'Choose a password for your new account'
         : 'Enter your password to continue',
     verify: 'We sent a verification link to your email. Click it and come back here.',
-  };
-
-  const stepIcon: Record<Step, keyof typeof Ionicons.glyphMap> = {
-    email: 'person-outline',
-    password: 'lock-closed-outline',
-    verify: 'mail-open-outline',
   };
 
   return (
@@ -224,27 +248,55 @@ export default function EmailAuthScreen() {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
+                  onSubmitEditing={handleEmailContinue}
+                  returnKeyType="go"
                 />
               </View>
+
               {!!error && <ErrorRow text={error} colors={colors} styles={styles} />}
+
               <TouchableOpacity
-                style={[styles.btn, (!email.trim() || loading) && styles.btnDisabled]}
+                style={[styles.btn, (!email.trim() || checking) && styles.btnDisabled]}
                 onPress={handleEmailContinue}
-                disabled={!email.trim() || loading}
+                disabled={!email.trim() || checking}
                 activeOpacity={0.85}
               >
-                <Text style={styles.btnText}>Continue</Text>
+                {checking ? (
+                  <View style={styles.checkingRow}>
+                    <ActivityIndicator color="#fff" size="small" />
+                    <Text style={styles.btnText}>Checking…</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.btnText}>Continue</Text>
+                )}
               </TouchableOpacity>
             </>
           )}
 
           {step === 'password' && (
             <>
-              <TouchableOpacity style={styles.emailPill} onPress={() => { setStep('email'); setMode('unknown'); }} activeOpacity={0.7}>
+              <TouchableOpacity
+                style={styles.emailPill}
+                onPress={() => { setStep('email'); setMode('unknown'); }}
+                activeOpacity={0.7}
+              >
                 <Ionicons name="mail-outline" size={15} color={colors.text.muted} />
                 <Text style={styles.emailPillText} numberOfLines={1}>{email}</Text>
                 <Text style={styles.changeText}>Change</Text>
               </TouchableOpacity>
+
+              {mode !== 'unknown' && (
+                <View style={[styles.modeBadge, { backgroundColor: mode === 'signin' ? 'rgba(34,197,94,0.12)' : 'rgba(254,76,17,0.12)' }]}>
+                  <Ionicons
+                    name={mode === 'signin' ? 'checkmark-circle-outline' : 'person-add-outline'}
+                    size={14}
+                    color={mode === 'signin' ? colors.status.success : colors.primary}
+                  />
+                  <Text style={[styles.modeBadgeText, { color: mode === 'signin' ? colors.status.success : colors.primary }]}>
+                    {mode === 'signin' ? 'Account found — sign in below' : 'New account — set your password'}
+                  </Text>
+                </View>
+              )}
 
               <View style={styles.fieldWrap}>
                 <AuthInput
@@ -254,10 +306,14 @@ export default function EmailAuthScreen() {
                   placeholder="Min. 6 characters"
                   iconName="lock-closed-outline"
                   secureTextEntry
-                  autoComplete="password"
+                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
+                  onSubmitEditing={handlePasswordContinue}
+                  returnKeyType="go"
                 />
               </View>
+
               {!!error && <ErrorRow text={error} colors={colors} styles={styles} />}
+
               <TouchableOpacity
                 style={[styles.btn, (!password || loading) && styles.btnDisabled]}
                 onPress={handlePasswordContinue}
@@ -266,7 +322,9 @@ export default function EmailAuthScreen() {
               >
                 {loading
                   ? <ActivityIndicator color="#fff" />
-                  : <Text style={styles.btnText}>Continue</Text>
+                  : <Text style={styles.btnText}>
+                      {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Continue'}
+                    </Text>
                 }
               </TouchableOpacity>
             </>
@@ -300,13 +358,21 @@ export default function EmailAuthScreen() {
                 }
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.altLink} onPress={() => { setStep('email'); setMode('unknown'); setPassword(''); }} activeOpacity={0.7}>
+              <TouchableOpacity
+                style={styles.altLink}
+                onPress={() => { setStep('email'); setMode('unknown'); setPassword(''); }}
+                activeOpacity={0.7}
+              >
                 <Text style={styles.altLinkText}>Use a different email</Text>
               </TouchableOpacity>
             </>
           )}
 
-          <TouchableOpacity style={[styles.altLink, { marginTop: 20 }]} onPress={() => router.replace('/(auth)/options')} activeOpacity={0.7}>
+          <TouchableOpacity
+            style={[styles.altLink, { marginTop: 20 }]}
+            onPress={() => router.replace('/(auth)/options')}
+            activeOpacity={0.7}
+          >
             <Text style={styles.altLinkText}>Other sign-in options</Text>
           </TouchableOpacity>
         </ScrollView>
@@ -356,13 +422,18 @@ function createStyles(colors: AppColors) {
       flexDirection: 'row', alignItems: 'center',
       backgroundColor: colors.background.card,
       borderRadius: 22, borderWidth: 1, borderColor: colors.border.default,
-      paddingHorizontal: 16, paddingVertical: 11, marginBottom: 20, gap: 8,
+      paddingHorizontal: 16, paddingVertical: 11, marginBottom: 14, gap: 8,
     },
     emailPillText: {
       flex: 1, color: colors.text.secondary,
       fontSize: 13, fontFamily: 'Inter_400Regular',
     },
     changeText: { color: colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+    modeBadge: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 14,
+    },
+    modeBadgeText: { fontSize: 13, fontFamily: 'Inter_500Medium', flex: 1 },
     fieldWrap: { marginBottom: 8 },
     errorWrap: {
       flexDirection: 'row', alignItems: 'flex-start',
@@ -378,6 +449,7 @@ function createStyles(colors: AppColors) {
     },
     btnDisabled: { opacity: 0.45 },
     btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
+    checkingRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     verifyBox: {
       backgroundColor: colors.background.elevated,
       borderRadius: 18, padding: 24, alignItems: 'center',
