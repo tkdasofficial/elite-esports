@@ -13,7 +13,7 @@ import { submitDeposit } from '@/services/walletApi';
 import type { AppColors } from '@/utils/colors';
 
 const QUICK_AMOUNTS = [100, 250, 500, 1000, 2000, 5000];
-type Step = 'amount' | 'payment' | 'confirm' | 'processing' | 'error';
+type Step = 'amount' | 'payment' | 'confirm' | 'processing' | 'success' | 'error';
 
 export default function AddMoneyScreen() {
   const insets = useSafeAreaInsets();
@@ -37,7 +37,7 @@ export default function AddMoneyScreen() {
     setStep('processing');
     try {
       await submitDeposit(parseFloat(amount), utr.trim());
-      router.replace('/(tabs)/wallet');
+      setStep('success');
     } catch (err: any) {
       setError(err?.message ?? 'Something went wrong. Please try again.');
       setStep('error');
@@ -74,6 +74,31 @@ export default function AddMoneyScreen() {
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={styles.processingTitle}>Processing…</Text>
           <Text style={styles.processingText}>Submitting your deposit request</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (step === 'success') {
+    return (
+      <View style={styles.container}>
+        <ScreenHeader title="Add Money" />
+        <View style={styles.centerState}>
+          <View style={styles.successIcon}>
+            <Ionicons name="checkmark-circle" size={72} color={colors.primary} />
+          </View>
+          <Text style={styles.processingTitle}>Request Submitted!</Text>
+          <Text style={styles.processingText}>
+            Your deposit of ₹{amount} has been submitted.{'\n'}
+            It will be credited after admin approval (within 30 min).
+          </Text>
+          <TouchableOpacity
+            style={[styles.btn, { marginTop: 32, paddingHorizontal: 32 }]}
+            onPress={() => router.replace('/(tabs)/wallet')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.btnText}>Go to Wallet</Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -202,9 +227,10 @@ function createStyles(colors: AppColors) {
   return StyleSheet.create({
     container:   { flex: 1, backgroundColor: colors.background.dark },
     scroll:      { padding: 20, paddingBottom: 40 },
-    centerState: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
-    processingTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', color: colors.text.primary },
-    processingText:  { fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.muted },
+    centerState:     { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 },
+    successIcon:     { width: 100, height: 100, borderRadius: 50, backgroundColor: colors.primary + '1A', alignItems: 'center', justifyContent: 'center' },
+    processingTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', color: colors.text.primary, textAlign: 'center' },
+    processingText:  { fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.muted, textAlign: 'center', lineHeight: 22 },
 
     steps:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
     stepItem:   { alignItems: 'center', gap: 6 },

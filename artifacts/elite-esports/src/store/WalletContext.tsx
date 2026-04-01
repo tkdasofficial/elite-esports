@@ -4,7 +4,7 @@ import React, {
 } from 'react';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/store/AuthContext';
-import { fetchWallet, type WalletTransaction } from '@/services/walletApi';
+import type { WalletTransaction } from '@/services/walletApi';
 
 export type { WalletTransaction as Transaction };
 
@@ -130,26 +130,6 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
   return result;
 }
 
-/** Merge Supabase + Replit API transactions, deduplicate by id, sort newest first. */
-function merge(
-  supabaseTxns: WalletTransaction[],
-  apiTxns:      WalletTransaction[],
-): WalletTransaction[] {
-  const seen = new Set<string>();
-  const all:  WalletTransaction[] = [];
-
-  for (const t of [...supabaseTxns, ...apiTxns]) {
-    if (!seen.has(t.id)) {
-      seen.add(t.id);
-      all.push(t);
-    }
-  }
-
-  return all.sort(
-    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
-}
-
 /* ─── provider ─────────────────────────────────────────────────────────── */
 
 export function WalletProvider({ children }: { children: ReactNode }) {
@@ -163,24 +143,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setLoading(true);
 
     try {
-      // Run all fetches in parallel; failures are isolated
-      const [sbBalance, sbTxns, apiData] = await Promise.allSettled([
+      const [balanceResult, txnsResult] = await Promise.allSettled([
         fetchSupabaseBalance(user.id),
         fetchSupabaseTransactions(user.id),
-        fetchWallet(),
       ]);
 
-      // Balance: prefer Supabase (source of truth for approved funds)
-      const resolvedBalance =
-        sbBalance.status === 'fulfilled' ? sbBalance.value :
-        apiData.status   === 'fulfilled' ? apiData.value.balance : 0;
-
-      setBalance(resolvedBalance);
-
-      // Transactions: merge both sources
-      const supabaseTxns = sbTxns.status   === 'fulfilled' ? sbTxns.value         : [];
-      const apiTxns      = apiData.status  === 'fulfilled' ? apiData.value.transactions : [];
-      setTransactions(merge(supabaseTxns, apiTxns));
+      setBalance(balanceResult.status === 'fulfilled' ? balanceResult.value : 0);
+      setTransactions(txnsResult.status === 'fulfilled' ? txnsResult.value : []);
     } finally {
       setLoading(false);
     }

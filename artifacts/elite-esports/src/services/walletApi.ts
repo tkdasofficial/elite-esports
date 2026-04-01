@@ -1,65 +1,61 @@
 import { supabase } from './supabase';
 
-const API_BASE = process.env.EXPO_PUBLIC_DOMAIN
-  ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api`
-  : 'http://localhost:8080/api';
-
-async function getAuthHeaders(): Promise<Record<string, string>> {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-  if (!token) throw new Error('Not authenticated');
-  return {
-    'Content-Type': 'application/json',
-    Authorization: `Bearer ${token}`,
-  };
-}
-
 export interface WalletTransaction {
-  id: string;
-  type: 'credit' | 'debit';
-  amount: number;
-  status: 'pending' | 'approved' | 'rejected';
+  id:          string;
+  type:        'credit' | 'debit';
+  amount:      number;
+  status:      'pending' | 'approved' | 'rejected';
   description: string;
-  created_at: string;
+  created_at:  string;
 }
 
 export interface WalletData {
-  balance: number;
+  balance:      number;
   transactions: WalletTransaction[];
 }
 
-export async function fetchWallet(): Promise<WalletData> {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/wallet`, { headers });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to load wallet');
-  }
-  return res.json();
+async function getCurrentUserId(): Promise<string> {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) throw new Error('Not authenticated');
+  return data.user.id;
 }
 
+/**
+ * Submit a deposit request.
+ * Inserts a row into the `payments` table with status 'pending'.
+ * An admin will review and approve/reject it.
+ */
 export async function submitDeposit(amount: number, utr: string): Promise<void> {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/wallet/deposit`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ amount, utr }),
+  const userId = await getCurrentUserId();
+
+  const { error } = await supabase.from('payments').insert({
+    user_id: userId,
+    amount,
+    utr:     utr.trim(),
+    status:  'pending',
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to submit deposit');
+
+  if (error) {
+    throw new Error(error.message ?? 'Failed to submit deposit request');
   }
 }
 
+/**
+ * Submit a withdrawal request.
+ * Inserts a row into the `withdrawals` table with status 'pending'.
+ * An admin will review and process it.
+ */
 export async function submitWithdrawal(amount: number, upi_id: string): Promise<void> {
-  const headers = await getAuthHeaders();
-  const res = await fetch(`${API_BASE}/wallet/withdraw`, {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ amount, upi_id }),
+  const userId = await getCurrentUserId();
+
+  const { error } = await supabase.from('withdrawals').insert({
+    user_id: userId,
+    amount,
+    upi_id:  upi_id.trim(),
+    status:  'pending',
   });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error ?? 'Failed to submit withdrawal');
+
+  if (error) {
+    throw new Error(error.message ?? 'Failed to submit withdrawal request');
   }
 }
