@@ -64,13 +64,6 @@
           "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
         }
-      ],
-      [
-        "react-native-google-mobile-ads",
-        {
-          "androidAppId": "ca-app-pub-2219438935030744~5831569923",
-          "iosAppId": "ca-app-pub-3940256099942544~1458002511"
-        }
       ]
     ],
     "extra": {
