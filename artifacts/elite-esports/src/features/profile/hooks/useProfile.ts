@@ -23,11 +23,11 @@ export function useProfile(userId?: string) {
         supabase.from('match_participants').select('id', { count: 'exact', head: true }).eq('user_id', userId),
         /* Wins — match_results where rank = 1 */
         supabase.from('match_results').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('rank', 1),
-        /* Earned — sum of prize/credit wallet credits */
+        /* Earned — lifetime total of all incoming wallet credits */
         supabase.from('wallet_transactions')
           .select('amount')
           .eq('user_id', userId)
-          .in('type', ['prize', 'credit'])
+          .in('type', ['deposit', 'prize', 'credit', 'refund'])
           .in('status', ['approved', 'completed']),
       ]);
 
