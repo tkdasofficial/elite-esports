@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, ScrollView,
   Modal, Pressable, Platform,
@@ -8,6 +8,7 @@ import { Feather, Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import * as Clipboard from 'expo-clipboard';
 import { useTheme } from '@/store/ThemeContext';
 import { GlobalHeader } from '@/components/GlobalHeader';
 import { AvatarSVG, AVATAR_NAMES } from '@/components/AvatarSVG';
@@ -40,6 +41,13 @@ export default function ProfileScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const topInset = Platform.OS === 'web' ? Math.max(WEB_TOP_INSET, insets.top) : insets.top;
   const [selectedGame, setSelectedGame] = useState<LinkedGame | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  const handleCopy = useCallback(async (value: string, field: string) => {
+    await Clipboard.setStringAsync(value);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  }, []);
 
   const coverGradient: [string, string, string] = isDark
     ? ['#2A0900', '#1A0500', '#0A0A0A']
@@ -207,8 +215,12 @@ export default function ProfileScreen() {
                     <View style={styles.gameRowIcon}>
                       <Ionicons name="game-controller-outline" size={14} color={colors.primary} />
                     </View>
-                    <Text style={styles.gameRowName} numberOfLines={1}>{g.game}</Text>
-                    <Text style={styles.gameRowUID} numberOfLines={1}>{g.inGameName ?? g.uid}</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.gameRowName} numberOfLines={1}>{g.game}</Text>
+                      <Text style={styles.gameRowUID} numberOfLines={1}>
+                        {g.inGameName ? g.inGameName : g.uid}
+                      </Text>
+                    </View>
                     <Feather name="chevron-right" size={15} color={colors.text.muted} />
                   </TouchableOpacity>
                   {i < linkedGames.length - 1 && <View style={styles.gameDivider} />}
@@ -289,7 +301,7 @@ export default function ProfileScreen() {
                   <Text style={styles.popupGameName} numberOfLines={1}>{selectedGame.game}</Text>
                   <TouchableOpacity
                     style={styles.popupClose}
-                    onPress={() => setSelectedGame(null)}
+                    onPress={() => { setSelectedGame(null); setCopiedField(null); }}
                     activeOpacity={0.7}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
@@ -297,20 +309,53 @@ export default function ProfileScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {selectedGame.inGameName && (
+                {selectedGame.inGameName ? (
                   <View style={styles.popupField}>
                     <Text style={styles.popupFieldLabel}>In-game Name</Text>
-                    <Text style={styles.popupFieldVal}>{selectedGame.inGameName}</Text>
+                    <View style={styles.popupFieldRow}>
+                      <Text style={styles.popupFieldVal} numberOfLines={1}>{selectedGame.inGameName}</Text>
+                      <TouchableOpacity
+                        style={[styles.copyBtn, copiedField === 'name' && styles.copyBtnCopied]}
+                        onPress={() => handleCopy(selectedGame.inGameName!, 'name')}
+                        activeOpacity={0.7}
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
+                        {copiedField === 'name'
+                          ? <Ionicons name="checkmark" size={14} color={colors.status.success} />
+                          : <Feather name="copy" size={13} color={colors.text.muted} />
+                        }
+                        <Text style={[styles.copyBtnText, copiedField === 'name' && { color: colors.status.success }]}>
+                          {copiedField === 'name' ? 'Copied!' : 'Copy'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                )}
+                ) : null}
+
                 <View style={styles.popupField}>
                   <Text style={styles.popupFieldLabel}>Player UID</Text>
-                  <Text style={styles.popupFieldVal}>{selectedGame.uid}</Text>
+                  <View style={styles.popupFieldRow}>
+                    <Text style={styles.popupFieldVal} numberOfLines={1}>{selectedGame.uid}</Text>
+                    <TouchableOpacity
+                      style={[styles.copyBtn, copiedField === 'uid' && styles.copyBtnCopied]}
+                      onPress={() => handleCopy(selectedGame.uid, 'uid')}
+                      activeOpacity={0.7}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    >
+                      {copiedField === 'uid'
+                        ? <Ionicons name="checkmark" size={14} color={colors.status.success} />
+                        : <Feather name="copy" size={13} color={colors.text.muted} />
+                      }
+                      <Text style={[styles.copyBtnText, copiedField === 'uid' && { color: colors.status.success }]}>
+                        {copiedField === 'uid' ? 'Copied!' : 'Copy'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
 
                 <TouchableOpacity
                   style={styles.popupEditBtn}
-                  onPress={() => { setSelectedGame(null); router.push('/edit-profile'); }}
+                  onPress={() => { setSelectedGame(null); setCopiedField(null); router.push('/edit-profile'); }}
                   activeOpacity={0.85}
                 >
                   <Feather name="edit-2" size={14} color="#fff" />
@@ -405,10 +450,10 @@ function createStyles(colors: AppColors) {
     emptyGamesHint: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted },
 
     gameList: { backgroundColor: colors.background.card, borderRadius: 14, overflow: 'hidden', borderWidth: 1, borderColor: colors.border.subtle },
-    gameRow: { height: 52, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, gap: 12 },
-    gameRowIcon: { width: 30, height: 30, borderRadius: 8, backgroundColor: colors.primary + '1A', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-    gameRowName: { flex: 1, fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary, includeFontPadding: false, textAlignVertical: 'center' },
-    gameRowUID:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, flexShrink: 1, maxWidth: 110, includeFontPadding: false, textAlignVertical: 'center' },
+    gameRow: { minHeight: 56, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 12 },
+    gameRowIcon: { width: 32, height: 32, borderRadius: 9, backgroundColor: colors.primary + '1A', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+    gameRowName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary, includeFontPadding: false },
+    gameRowUID:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginTop: 2, includeFontPadding: false },
     gameDivider: { height: 1, backgroundColor: colors.border.subtle, marginHorizontal: 16 },
 
     menuCard: { backgroundColor: colors.background.card, borderRadius: 16, borderWidth: 1, borderColor: colors.border.subtle, overflow: 'hidden' },
@@ -434,8 +479,17 @@ function createStyles(colors: AppColors) {
     popupGameName: { flex: 1, fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.text.primary },
     popupClose: { width: 30, height: 30, borderRadius: 15, backgroundColor: colors.background.elevated, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
     popupField: { backgroundColor: colors.background.elevated, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 10 },
-    popupFieldLabel: { fontSize: 11, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
-    popupFieldVal: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: colors.text.primary },
+    popupFieldLabel: { fontSize: 11, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 },
+    popupFieldRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    popupFieldVal: { flex: 1, fontSize: 15, fontFamily: 'Inter_600SemiBold', color: colors.text.primary },
+    copyBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      paddingHorizontal: 10, paddingVertical: 6,
+      borderRadius: 8, backgroundColor: colors.background.card,
+      borderWidth: 1, borderColor: colors.border.default,
+    },
+    copyBtnCopied: { borderColor: colors.status.success + '55', backgroundColor: colors.status.success + '12' },
+    copyBtnText: { fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.text.muted },
     popupEditBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, height: BTN_H, borderRadius: BTN_R, marginTop: 6 },
     popupEditBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: '#fff' },
   });

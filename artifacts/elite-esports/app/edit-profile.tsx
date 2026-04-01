@@ -221,9 +221,12 @@ export default function EditProfileScreen() {
                 <View style={{ flex: 1 }}>
                   <Text style={styles.gameName}>{g.game}</Text>
                   {g.inGameName ? (
-                    <Text style={styles.gameUID}>Name: {g.inGameName}  ·  UID: {g.uid}</Text>
+                    <>
+                      <Text style={styles.gameUID} numberOfLines={1}>IGN: {g.inGameName}</Text>
+                      <Text style={styles.gameUID} numberOfLines={1}>UID: {g.uid}</Text>
+                    </>
                   ) : (
-                    <Text style={styles.gameUID}>UID: {g.uid}</Text>
+                    <Text style={styles.gameUID} numberOfLines={1}>UID: {g.uid}</Text>
                   )}
                 </View>
                 <TouchableOpacity onPress={() => handleRemoveGame(i)} style={styles.removeBtn} activeOpacity={0.7}>
