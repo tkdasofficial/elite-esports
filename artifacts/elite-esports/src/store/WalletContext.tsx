@@ -37,12 +37,20 @@ async function fetchSupabaseBalance(userId: string): Promise<number> {
   return Number(profileRow?.balance ?? 0);
 }
 
+/** ISO timestamp exactly 7 days ago — used in every transaction query */
+function sevenDaysAgo(): string {
+  return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+}
+
 async function fetchSupabaseTransactions(userId: string): Promise<WalletTransaction[]> {
+  const cutoff = sevenDaysAgo();
+
   const [paymentsRes, withdrawalsRes, txnsRes, walletTxnsRes] = await Promise.allSettled([
     supabase
       .from('payments')
       .select('id, amount, utr, status, created_at')
       .eq('user_id', userId)
+      .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
 
     // Select without upi_id — that column may not exist yet (migration 005 pending)
@@ -50,18 +58,21 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
       .from('withdrawals')
       .select('id, amount, status, created_at')
       .eq('user_id', userId)
+      .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
 
     supabase
       .from('transactions')
       .select('id, type, amount, utr, status, created_at')
       .eq('user_id', userId)
+      .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
 
     supabase
       .from('wallet_transactions')
       .select('id, type, amount, description, status, created_at')
       .eq('user_id', userId)
+      .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
   ]);
 
