@@ -395,25 +395,8 @@ export default function MatchDetailScreen() {
             </View>
           ) : null}
 
-          {/* ── Watch Live ── */}
-          {match.stream_url && (
-            <TouchableOpacity
-              style={styles.watchLiveBtn}
-              onPress={() => Linking.openURL(match.stream_url!)}
-              activeOpacity={0.85}
-            >
-              <View style={styles.watchLiveLeft}>
-                <View style={styles.watchLiveIcon}>
-                  <Ionicons name="play" size={20} color="#fff" />
-                </View>
-                <View>
-                  <Text style={styles.watchLiveTitle}>Watch Live Stream</Text>
-                  <Text style={styles.watchLiveSub}>Tap to open stream</Text>
-                </View>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color="#555" />
-            </TouchableOpacity>
-          )}
+          {/* ── Watch Live — Platform Buttons ── */}
+          <StreamButtons match={match} />
 
           {/* ── Winner Card ── */}
           {claimResult !== null && (
@@ -522,6 +505,96 @@ export default function MatchDetailScreen() {
     </View>
   );
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Stream Platform Buttons
+───────────────────────────────────────────────────────────── */
+
+const PLATFORMS = [
+  {
+    key: 'youtube_url' as const,
+    label: 'YouTube',
+    icon: 'logo-youtube' as const,
+    bg: '#FF0000',
+    iconColor: '#fff',
+  },
+  {
+    key: 'twitch_url' as const,
+    label: 'Twitch',
+    icon: 'logo-twitch' as const,
+    bg: '#9146FF',
+    iconColor: '#fff',
+  },
+  {
+    key: 'facebook_url' as const,
+    label: 'Facebook',
+    icon: 'logo-facebook' as const,
+    bg: '#1877F2',
+    iconColor: '#fff',
+  },
+  {
+    key: 'tiktok_url' as const,
+    label: 'TikTok',
+    icon: 'logo-tiktok' as const,
+    bg: '#010101',
+    iconColor: '#fff',
+  },
+] as const;
+
+function StreamButtons({ match }: { match: NonNullable<ReturnType<typeof useMatchDetail>['match']> }) {
+  const active = PLATFORMS.filter(p => !!match[p.key]);
+  if (active.length === 0) return null;
+
+  return (
+    <View style={streamStyles.wrapper}>
+      <View style={streamStyles.labelRow}>
+        <Ionicons name="radio-outline" size={14} color={PRIMARY} />
+        <Text style={streamStyles.label}>WATCH LIVE</Text>
+      </View>
+      <View style={streamStyles.row}>
+        {active.map(p => (
+          <TouchableOpacity
+            key={p.key}
+            style={[streamStyles.btn, { flex: 1, backgroundColor: p.bg }]}
+            onPress={() => Linking.openURL(match[p.key]!)}
+            activeOpacity={0.82}
+          >
+            <Ionicons name={p.icon} size={22} color={p.iconColor} />
+            <Text style={streamStyles.btnLabel}>{p.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const streamStyles = StyleSheet.create({
+  wrapper: {
+    marginBottom: 12,
+  },
+  labelRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    marginBottom: 10,
+  },
+  label: {
+    fontSize: 11, fontFamily: 'Inter_700Bold',
+    color: PRIMARY, letterSpacing: 1.5,
+  },
+  row: {
+    flexDirection: 'row', gap: 10,
+  },
+  btn: {
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center', justifyContent: 'center',
+    gap: 6,
+    minWidth: 0,
+  },
+  btnLabel: {
+    fontSize: 11, fontFamily: 'Inter_700Bold',
+    color: '#fff', letterSpacing: 0.3,
+  },
+});
 
 function createStyles(colors: AppColors) {
   return StyleSheet.create({
@@ -702,22 +775,6 @@ function createStyles(colors: AppColors) {
       fontSize: 12, fontFamily: 'Inter_400Regular',
       color: '#666', lineHeight: 18,
     },
-
-    /* Watch Live */
-    watchLiveBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      backgroundColor: '#111', borderRadius: 14,
-      paddingHorizontal: 16, paddingVertical: 14,
-      marginBottom: 12, borderWidth: 1, borderColor: '#1E1E1E',
-    },
-    watchLiveLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    watchLiveIcon: {
-      width: 38, height: 38, borderRadius: 10,
-      backgroundColor: '#EE3D2D',
-      alignItems: 'center', justifyContent: 'center',
-    },
-    watchLiveTitle: { fontSize: 14, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
-    watchLiveSub:   { fontSize: 11, fontFamily: 'Inter_400Regular', color: '#555', marginTop: 2 },
 
     /* Winner card */
     winnerCard: {

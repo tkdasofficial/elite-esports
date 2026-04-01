@@ -15,6 +15,10 @@ export interface Match {
   description?: string;
   rules?: string;
   stream_url?: string;
+  youtube_url?: string;
+  twitch_url?: string;
+  facebook_url?: string;
+  tiktok_url?: string;
 }
 
 export interface LeaderEntry {

@@ -27,6 +27,10 @@ export function adaptMatch(row: any): Match {
     description: row.description ?? undefined,
     rules: row.rules ?? undefined,
     stream_url: row.live_stream_url ?? row.stream_url ?? undefined,
+    youtube_url:  row.youtube_url  ?? undefined,
+    twitch_url:   row.twitch_url   ?? undefined,
+    facebook_url: row.facebook_url ?? undefined,
+    tiktok_url:   row.tiktok_url   ?? undefined,
   };
 }
 
