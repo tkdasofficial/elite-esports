@@ -51,6 +51,37 @@ export function useMyTeam(userId?: string) {
 
   useEffect(() => { fetchTeam(); }, [fetchTeam]);
 
+  /* ─── create team ───────────────────────────────────────────────── */
+  const createTeam = useCallback(async (opts: {
+    name: string; slogan: string; avatar: string; game: string;
+  }): Promise<void> => {
+    if (!userId) throw new Error('Not authenticated');
+
+    const tag = opts.name.slice(0, 4).toUpperCase();
+
+    const { data: newTeam, error: teamErr } = await supabase
+      .from('teams')
+      .insert({
+        name:       opts.name.trim(),
+        tag,
+        slogan:     opts.slogan.trim(),
+        avatar:     opts.avatar,
+        game:       opts.game,
+        created_by: userId,
+      })
+      .select()
+      .single();
+
+    if (teamErr) throw new Error(teamErr.message);
+
+    const { error: memberErr } = await supabase
+      .from('team_members')
+      .insert({ team_id: newTeam.id, user_id: userId, role: 'captain' });
+
+    if (memberErr) throw new Error(memberErr.message);
+    await fetchTeam();
+  }, [userId, fetchTeam]);
+
   /* ─── join by code ─────────────────────────────────────────────── */
   const joinTeam = useCallback(async (code: string): Promise<void> => {
     if (!userId) throw new Error('Not authenticated');
@@ -64,7 +95,6 @@ export function useMyTeam(userId?: string) {
     if (findErr) throw new Error(findErr.message);
     if (!found)  throw new Error('No team found with that code. Check and try again.');
 
-    // Prevent joining if already in a team
     const { data: existing } = await supabase
       .from('team_members')
       .select('id')
@@ -72,6 +102,14 @@ export function useMyTeam(userId?: string) {
       .maybeSingle();
 
     if (existing) throw new Error('You are already in a team. Leave your current team first.');
+
+    // Check team member count
+    const { count } = await supabase
+      .from('team_members')
+      .select('id', { count: 'exact', head: true })
+      .eq('team_id', found.id);
+
+    if ((count ?? 0) >= 5) throw new Error('This team is full (max 5 members).');
 
     const { error: joinErr } = await supabase
       .from('team_members')
@@ -105,5 +143,5 @@ export function useMyTeam(userId?: string) {
     await fetchTeam();
   }, [userId, team, fetchTeam]);
 
-  return { team, loading, refreshing, refresh, joinTeam, revokeMember, leaveTeam };
+  return { team, loading, refreshing, refresh, createTeam, joinTeam, revokeMember, leaveTeam };
 }
