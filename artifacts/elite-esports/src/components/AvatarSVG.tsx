@@ -98,18 +98,18 @@ const Mage = ({ size = 60 }: AvatarProps) => (
     <Path d="M30 6 L18 32 L42 32 Z" fill="#6A20CC" />
     <Rect x="14" y="32" width="32" height="5" rx="2" fill="#8A40EE" />
     {/* Star on hat */}
-    <Path d="M30 12 L31.5 17 L37 17 L32.5 20 L34 25 L30 22 L26 25 L27.5 20 L23 17 L28.5 17 Z" fill="#FFD700" />
+    <Path d="M30 12 L31.5 17 L37 17 L32.5 20 L34 25 L30 22 L26 25 L27.5 20 L23 17 L28.5 17 Z" fill="#FFA200" />
     {/* Face */}
     <Ellipse cx="30" cy="40" rx="10" ry="8" fill="#5A18B8" />
     {/* Eyes */}
-    <Circle cx="26" cy="39" r="3" fill="#FFD700" />
-    <Circle cx="34" cy="39" r="3" fill="#FFD700" />
+    <Circle cx="26" cy="39" r="3" fill="#FFA200" />
+    <Circle cx="34" cy="39" r="3" fill="#FFA200" />
     <Circle cx="26" cy="39" r="1.5" fill="#000" />
     <Circle cx="34" cy="39" r="1.5" fill="#000" />
     {/* Sparkles */}
-    <Circle cx="12" cy="20" r="1.5" fill="#FFD700" />
+    <Circle cx="12" cy="20" r="1.5" fill="#FFA200" />
     <Circle cx="48" cy="24" r="1" fill="#CC88FF" />
-    <Circle cx="10" cy="38" r="1" fill="#FFD700" />
+    <Circle cx="10" cy="38" r="1" fill="#FFA200" />
   </Svg>
 );
 
@@ -186,11 +186,11 @@ const Knight = ({ size = 60 }: AvatarProps) => (
     <Path d="M30 10 L46 16 L46 34 Q46 46 30 52 Q14 46 14 34 L14 16 Z" fill="#3A3A3A" />
     <Path d="M30 13 L43 18 L43 34 Q43 44 30 49 Q17 44 17 34 L17 18 Z" fill="#C0C0C0" />
     {/* Cross on shield */}
-    <Rect x="27.5" y="18" width="5" height="24" rx="1" fill="#B8860B" />
-    <Rect x="20" y="28" width="20" height="5" rx="1" fill="#B8860B" />
+    <Rect x="27.5" y="18" width="5" height="24" rx="1" fill="#FFA200" />
+    <Rect x="20" y="28" width="20" height="5" rx="1" fill="#FFA200" />
     {/* Shield border */}
     <Path d="M30 13 L43 18 L43 34 Q43 44 30 49 Q17 44 17 34 L17 18 Z"
-      stroke="#B8860B" strokeWidth="1" fill="none" />
+      stroke="#FFA200" strokeWidth="1" fill="none" />
   </Svg>
 );
 
@@ -300,7 +300,7 @@ const Assassin = ({ size = 60 }: AvatarProps) => (
     {/* Blade edge */}
     <Path d="M30 8 L34 36 L30 34 Z" fill="#E8E8E8" />
     {/* Cross guard */}
-    <Rect x="22" y="36" width="16" height="4" rx="2" fill="#B8860B" />
+    <Rect x="22" y="36" width="16" height="4" rx="2" fill="#FFA200" />
     {/* Handle */}
     <Rect x="27" y="40" width="6" height="12" rx="2" fill="#4A2A00" />
     {/* Handle wrap */}
@@ -308,7 +308,7 @@ const Assassin = ({ size = 60 }: AvatarProps) => (
     <Line x1="27" y1="46" x2="33" y2="46" stroke="#8A5A00" strokeWidth="1.5" />
     <Line x1="27" y1="49" x2="33" y2="49" stroke="#8A5A00" strokeWidth="1.5" />
     {/* Pommel */}
-    <Ellipse cx="30" cy="52" rx="4" ry="2" fill="#B8860B" />
+    <Ellipse cx="30" cy="52" rx="4" ry="2" fill="#FFA200" />
     {/* Red accent */}
     <Circle cx="30" cy="36" r="2" fill="#CC0000" />
   </Svg>
@@ -333,8 +333,8 @@ const Dragon = ({ size = 60 }: AvatarProps) => (
     {/* Snout */}
     <Path d="M22 40 Q30 48 38 40 L36 44 Q30 52 24 44 Z" fill="#AA1A00" />
     {/* Eyes */}
-    <Ellipse cx="24" cy="32" rx="4" ry="3.5" fill="#FFD700" />
-    <Ellipse cx="36" cy="32" rx="4" ry="3.5" fill="#FFD700" />
+    <Ellipse cx="24" cy="32" rx="4" ry="3.5" fill="#FFA200" />
+    <Ellipse cx="36" cy="32" rx="4" ry="3.5" fill="#FFA200" />
     <Ellipse cx="24" cy="32" rx="1.5" ry="2.5" fill="#000" />
     <Ellipse cx="36" cy="32" rx="1.5" ry="2.5" fill="#000" />
     {/* Horns */}
@@ -342,7 +342,7 @@ const Dragon = ({ size = 60 }: AvatarProps) => (
     <Path d="M38 24 Q44 12 40 8 Q38 16 36 22 Z" fill="#CC2200" />
     {/* Fire breath */}
     <Path d="M26 44 Q30 52 34 44 Q32 50 30 54 Q28 50 26 44 Z" fill="#FF6600" opacity="0.8" />
-    <Path d="M28 46 Q30 52 32 46" stroke="#FFD700" strokeWidth="1.5" fill="none" opacity="0.6" />
+    <Path d="M28 46 Q30 52 32 46" stroke="#FFA200" strokeWidth="1.5" fill="none" opacity="0.6" />
   </Svg>
 );
 
@@ -394,7 +394,7 @@ const Samurai = ({ size = 60 }: AvatarProps) => (
     <Path d="M20 10 L32 46 L34 46 L22 10 Z" fill="#D0D0D8" />
     <Path d="M20 10 L22 10 L34 46 L32 46 Z" fill="#E8E8F0" />
     {/* Guard (tsuba) */}
-    <Ellipse cx="27" cy="46" rx="8" ry="4" fill="#B8860B" />
+    <Ellipse cx="27" cy="46" rx="8" ry="4" fill="#FFA200" />
     <Ellipse cx="27" cy="46" rx="6" ry="2.5" fill="#1A1200" />
     {/* Handle (tsuka) */}
     <Path d="M24 46 L22 56 L32 56 L30 46 Z" fill="#4A2A00" />
@@ -437,10 +437,10 @@ const Phoenix = ({ size = 60 }: AvatarProps) => (
     <Path d="M35 16 Q33 10 30 14 Q33 14 35 16 Z" fill="#FF6600" />
     {/* Eye */}
     <Circle cx="30" cy="20" r="2.5" fill="#1A0800" />
-    <Circle cx="30" cy="20" r="1" fill="#FFD700" />
+    <Circle cx="30" cy="20" r="1" fill="#FFA200" />
     {/* Tail flame */}
     <Path d="M26 44 Q28 54 30 58 Q32 54 34 44 Q30 50 26 44 Z" fill="#FF4400" />
-    <Path d="M28 46 Q30 54 32 46 Q30 52 28 46 Z" fill="#FFD700" opacity="0.8" />
+    <Path d="M28 46 Q30 54 32 46 Q30 52 28 46 Z" fill="#FFA200" opacity="0.8" />
   </Svg>
 );
 
@@ -492,12 +492,12 @@ const Champion = ({ size = 60 }: AvatarProps) => (
     {/* Trophy cup */}
     <Path d="M20 42 L22 26 L38 26 L40 42 Z" fill="#D4A800" />
     {/* Cup bowl */}
-    <Path d="M20 26 Q18 14 30 12 Q42 14 40 26 Z" fill="#FFD700" />
+    <Path d="M20 26 Q18 14 30 12 Q42 14 40 26 Z" fill="#FFA200" />
     {/* Handles */}
     <Path d="M20 20 Q12 20 12 26 Q12 32 20 30" stroke="#D4A800" strokeWidth="3" fill="none" strokeLinecap="round" />
     <Path d="M40 20 Q48 20 48 26 Q48 32 40 30" stroke="#D4A800" strokeWidth="3" fill="none" strokeLinecap="round" />
     {/* Base stem */}
-    <Rect x="26" y="42" width="8" height="6" rx="1" fill="#B8860B" />
+    <Rect x="26" y="42" width="8" height="6" rx="1" fill="#FFA200" />
     {/* Base plate */}
     <Rect x="20" y="48" width="20" height="4" rx="2" fill="#D4A800" />
     {/* Star in cup */}
@@ -550,20 +550,20 @@ const Thunder = ({ size = 60 }: AvatarProps) => (
     </Defs>
     <Circle cx="30" cy="30" r="30" fill="url(#w18)" />
     {/* Outer glow circle */}
-    <Circle cx="30" cy="30" r="20" fill="none" stroke="#FFD700" strokeWidth="1" opacity="0.3" />
+    <Circle cx="30" cy="30" r="20" fill="none" stroke="#FFA200" strokeWidth="1" opacity="0.3" />
     {/* Main lightning bolt */}
-    <Path d="M36 8 L22 30 L28 30 L24 52 L38 28 L32 28 Z" fill="#FFD700" />
+    <Path d="M36 8 L22 30 L28 30 L24 52 L38 28 L32 28 Z" fill="#FFA200" />
     {/* Inner bolt (lighter) */}
     <Path d="M35 12 L24 30 L29 30 L26 48 L37 30 L32 30 Z" fill="#FFEE44" opacity="0.6" />
     {/* Electric sparks */}
-    <Line x1="12" y1="20" x2="18" y2="24" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
-    <Line x1="10" y1="30" x2="16" y2="30" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-    <Line x1="42" y1="16" x2="48" y2="12" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
-    <Line x1="44" y1="30" x2="50" y2="28" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
-    <Line x1="14" y1="42" x2="20" y2="38" stroke="#FFD700" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+    <Line x1="12" y1="20" x2="18" y2="24" stroke="#FFA200" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+    <Line x1="10" y1="30" x2="16" y2="30" stroke="#FFA200" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+    <Line x1="42" y1="16" x2="48" y2="12" stroke="#FFA200" strokeWidth="2" strokeLinecap="round" opacity="0.7" />
+    <Line x1="44" y1="30" x2="50" y2="28" stroke="#FFA200" strokeWidth="2" strokeLinecap="round" opacity="0.5" />
+    <Line x1="14" y1="42" x2="20" y2="38" stroke="#FFA200" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
     {/* Small sparks */}
-    <Circle cx="14" cy="18" r="1.5" fill="#FFD700" opacity="0.8" />
-    <Circle cx="46" cy="40" r="1.5" fill="#FFD700" opacity="0.8" />
+    <Circle cx="14" cy="18" r="1.5" fill="#FFA200" opacity="0.8" />
+    <Circle cx="46" cy="40" r="1.5" fill="#FFA200" opacity="0.8" />
     <Circle cx="48" cy="20" r="1" fill="#FFEE44" opacity="0.6" />
   </Svg>
 );

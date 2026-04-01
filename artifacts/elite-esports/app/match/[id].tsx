@@ -22,7 +22,7 @@ import { useWallet } from '@/store/WalletContext';
 import type { AppColors } from '@/utils/colors';
 
 const BANNER_HEIGHT = 240;
-const GOLD = '#FFD700';
+const GOLD = '#FFA200';
 
 function formatDate(iso: string) {
   const d = new Date(iso);

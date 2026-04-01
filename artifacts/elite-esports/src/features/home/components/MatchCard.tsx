@@ -16,8 +16,8 @@ interface Props {
   onPress: () => void;
 }
 
-const GOLD_DARK  = '#FFD700';
-const GOLD_LIGHT = '#9A6F00';
+const GOLD_DARK  = '#FFA200';
+const GOLD_LIGHT = '#FFA200';
 
 export function MatchCard({ match, onPress }: Props) {
   const { colors, isDark } = useTheme();
