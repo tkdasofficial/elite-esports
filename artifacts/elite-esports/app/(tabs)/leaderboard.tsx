@@ -29,7 +29,7 @@ const skStyles = StyleSheet.create({
 });
 
 export default function LeaderboardScreen() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
   const { data, loading, refreshing, refresh } = useLeaderboard();
   const tabBarHeight = useBottomTabBarHeight();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -42,7 +42,7 @@ export default function LeaderboardScreen() {
       <View style={{ width: 42, marginRight: 12 }} />
       <Text style={[styles.colLabel, { flex: 1 }]}>Player</Text>
       <View style={styles.trophyHeader}>
-        <Ionicons name="trophy" size={11} color={isDark ? '#FFD700' : '#9A6F00'} />
+        <Ionicons name="trophy" size={11} color="#FFA200" />
         <Text style={styles.colLabel}>Wins</Text>
       </View>
     </View>
@@ -51,14 +51,6 @@ export default function LeaderboardScreen() {
   return (
     <View style={styles.container}>
       <GlobalHeader />
-
-      <View style={styles.headingStrip}>
-        <Ionicons name="trophy" size={18} color={isDark ? '#FFD700' : '#9A6F00'} />
-        <Text style={styles.heading}>Trophy Leaderboard</Text>
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>Top 100</Text>
-        </View>
-      </View>
 
       {showSkeleton ? (
         <FlatList
@@ -99,19 +91,7 @@ function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColo
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background.dark },
 
-    headingStrip: {
-      flexDirection: 'row', alignItems: 'center', gap: 8,
-      paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6,
-    },
-    heading: { fontSize: 17, fontFamily: 'Inter_700Bold', color: colors.text.primary, flex: 1 },
-    badge: {
-      backgroundColor: colors.primary + '22', borderRadius: 8,
-      paddingHorizontal: 9, paddingVertical: 4,
-      borderWidth: 1, borderColor: colors.primary + '44',
-    },
-    badgeText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.primary },
-
-    list: { paddingHorizontal: 16, paddingTop: 4, gap: 6 },
+    list: { paddingHorizontal: 16, paddingTop: 12, gap: 6 },
     listHeader: {
       flexDirection: 'row', alignItems: 'center',
       paddingVertical: 6, paddingHorizontal: 12, marginBottom: 4,

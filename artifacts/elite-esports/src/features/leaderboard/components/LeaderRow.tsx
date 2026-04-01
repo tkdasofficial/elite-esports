@@ -5,31 +5,28 @@ import { useTheme } from '@/store/ThemeContext';
 import { LeaderEntry } from '@/utils/types';
 import { AvatarSVG } from '@/components/AvatarSVG';
 
-const RANK_COLORS_DARK  = ['#FFD700', '#C0C0C0', '#CD7F32'];
-const RANK_COLORS_LIGHT = ['#9A6F00', '#707070', '#8B4513'];
-const RANK_ICONS: Array<'trophy' | 'medal' | 'ribbon'> = ['trophy', 'medal', 'ribbon'];
+const RANK_COLORS: Record<number, string> = {
+  1: '#FFA200',
+  2: '#C0C0C0',
+  3: '#CD7F32',
+};
 
 interface Props { item: LeaderEntry; }
 
 export function LeaderRow({ item }: Props) {
-  const { colors, isDark } = useTheme();
-  const rankColors = isDark ? RANK_COLORS_DARK : RANK_COLORS_LIGHT;
-  const styles     = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
+  const { colors } = useTheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const isTop3     = item.rank <= 3;
-  const rankColor  = isTop3 ? rankColors[item.rank - 1] : colors.text.muted;
-  const avatarIdx  = isNaN(Number(item.avatar_url)) ? 0 : Number(item.avatar_url);
+  const isTop3    = item.rank <= 3;
+  const rankColor = isTop3 ? RANK_COLORS[item.rank] : colors.text.muted;
+  const avatarIdx = isNaN(Number(item.avatar_url)) ? 0 : Number(item.avatar_url);
 
   return (
     <View style={[styles.row, isTop3 && { borderColor: rankColor + '55' }]}>
 
-      {/* Rank */}
+      {/* Rank — always a number */}
       <View style={styles.rankCol}>
-        {isTop3 ? (
-          <Ionicons name={RANK_ICONS[item.rank - 1]} size={22} color={rankColor} />
-        ) : (
-          <Text style={[styles.rankText, { color: rankColor }]}>{item.rank}</Text>
-        )}
+        <Text style={[styles.rankText, { color: rankColor }]}>{item.rank}</Text>
       </View>
 
       {/* Avatar */}
@@ -40,18 +37,11 @@ export function LeaderRow({ item }: Props) {
       {/* Name */}
       <Text style={styles.username} numberOfLines={1}>{item.username}</Text>
 
-      {/* Trophy count */}
+      {/* Trophy + win count */}
       <View style={[styles.trophyChip, { borderColor: rankColor + '55' }]}>
-        <Ionicons
-          name="trophy"
-          size={13}
-          color={isTop3 ? rankColor : (isDark ? '#FFD700' : '#9A6F00')}
-        />
-        <Text style={[styles.trophyCount, isTop3 && { color: rankColor }]}>
+        <Ionicons name="trophy" size={13} color="#FFA200" />
+        <Text style={[styles.trophyCount, { color: rankColor }]}>
           {item.wins}
-        </Text>
-        <Text style={styles.trophyLabel}>
-          {item.wins === 1 ? 'win' : 'wins'}
         </Text>
       </View>
 
@@ -59,10 +49,7 @@ export function LeaderRow({ item }: Props) {
   );
 }
 
-function createStyles(
-  colors: ReturnType<typeof import('@/utils/colors').getColors>,
-  isDark: boolean,
-) {
+function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColors>) {
   return StyleSheet.create({
     row: {
       flexDirection: 'row',
@@ -102,8 +89,8 @@ function createStyles(
     trophyChip: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 4,
-      backgroundColor: isDark ? 'rgba(255,215,0,0.08)' : 'rgba(154,111,0,0.08)',
+      gap: 5,
+      backgroundColor: 'rgba(255,162,0,0.10)',
       borderRadius: 8,
       paddingHorizontal: 10,
       paddingVertical: 6,
@@ -112,12 +99,6 @@ function createStyles(
     trophyCount: {
       fontSize: 15,
       fontFamily: 'Inter_700Bold',
-      color: isDark ? '#FFD700' : '#9A6F00',
-    },
-    trophyLabel: {
-      fontSize: 11,
-      fontFamily: 'Inter_400Regular',
-      color: colors.text.muted,
     },
   });
 }
