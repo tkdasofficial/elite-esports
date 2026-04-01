@@ -190,7 +190,7 @@ export default function ProfileScreen() {
               activeOpacity={0.8}
             >
               <View style={styles.emptyGamesIcon}>
-                <Feather name="monitor" size={22} color={colors.text.muted} />
+                <Ionicons name="game-controller-outline" size={22} color={colors.text.muted} />
               </View>
               <Text style={styles.emptyGamesText}>No games linked yet</Text>
               <Text style={styles.emptyGamesHint}>Tap to add your games</Text>
@@ -205,7 +205,7 @@ export default function ProfileScreen() {
                     activeOpacity={0.75}
                   >
                     <View style={styles.gameRowIcon}>
-                      <Feather name="monitor" size={14} color={colors.primary} />
+                      <Ionicons name="game-controller-outline" size={14} color={colors.primary} />
                     </View>
                     <Text style={styles.gameRowName} numberOfLines={1}>{g.game}</Text>
                     <Text style={styles.gameRowUID} numberOfLines={1}>{g.inGameName ?? g.uid}</Text>
@@ -284,7 +284,7 @@ export default function ProfileScreen() {
               <View style={styles.popupInner}>
                 <View style={styles.popupHeader}>
                   <View style={styles.popupHeaderIcon}>
-                    <Feather name="monitor" size={20} color={colors.primary} />
+                    <Ionicons name="game-controller-outline" size={20} color={colors.primary} />
                   </View>
                   <Text style={styles.popupGameName} numberOfLines={1}>{selectedGame.game}</Text>
                   <TouchableOpacity
