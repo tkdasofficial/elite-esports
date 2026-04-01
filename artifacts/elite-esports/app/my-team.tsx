@@ -4,6 +4,7 @@ import {
   Alert, TextInput, Modal, KeyboardAvoidingView, Platform,
   RefreshControl, ActivityIndicator, Clipboard,
 } from 'react-native';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { SkeletonBar } from '@/components/SkeletonBar';
 import { AvatarSVG, AVATAR_NAMES } from '@/components/AvatarSVG';
 import { Ionicons } from '@expo/vector-icons';
@@ -25,6 +26,34 @@ const MAX_MEMBERS = 5;
 function avatarIndex(avatar?: string | null): number {
   const n = parseInt(avatar ?? '0', 10);
   return Number.isFinite(n) && n >= 0 && n < TEAM_AVATAR_COUNT ? n : 0;
+}
+
+/** Professional team / members icon — 3 person silhouettes */
+function TeamIcon({ size = 64 }: { size?: number }) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 64 64">
+      {/* Centre person (larger) */}
+      <Circle cx="32" cy="20" r="9" fill="#EE3D2D" />
+      <Path
+        d="M16 52 Q16 36 32 36 Q48 36 48 52"
+        fill="#EE3D2D"
+      />
+      {/* Left person */}
+      <Circle cx="13" cy="24" r="7" fill="#EE3D2D" opacity="0.55" />
+      <Path
+        d="M0 52 Q0 38 13 38 Q20 38 23 43"
+        fill="#EE3D2D"
+        opacity="0.55"
+      />
+      {/* Right person */}
+      <Circle cx="51" cy="24" r="7" fill="#EE3D2D" opacity="0.55" />
+      <Path
+        d="M64 52 Q64 38 51 38 Q44 38 41 43"
+        fill="#EE3D2D"
+        opacity="0.55"
+      />
+    </Svg>
+  );
 }
 
 export default function MyTeamScreen() {
@@ -373,7 +402,7 @@ export default function MyTeamScreen() {
       >
         <View style={styles.emptyState}>
           <View style={styles.emptyAvatarRing}>
-            <AvatarSVG index={16} size={64} />
+            <TeamIcon size={60} />
           </View>
           <Text style={styles.emptyTitle}>No Team Yet</Text>
           <Text style={styles.emptyText}>
