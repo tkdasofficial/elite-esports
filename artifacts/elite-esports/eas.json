@@ -13,6 +13,10 @@
         "gradleCommand": ":app:assembleDebug",
         "resourceClass": "medium"
       },
+      "ios": {
+        "buildConfiguration": "Debug",
+        "resourceClass": "medium"
+      },
       "env": {
         "NPM_CONFIG_FROZEN_LOCKFILE": "false",
         "EXPO_PUBLIC_AD_TESTING": "true",
@@ -27,6 +31,11 @@
       "android": {
         "image": "ubuntu-24.04-jdk-17-ndk-r27b",
         "buildType": "apk",
+        "resourceClass": "medium"
+      },
+      "ios": {
+        "buildConfiguration": "Release",
+        "simulator": false,
         "resourceClass": "medium"
       },
       "env": {
