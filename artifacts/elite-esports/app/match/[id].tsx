@@ -404,7 +404,7 @@ export default function MatchDetailScreen() {
             >
               <View style={styles.watchLiveLeft}>
                 <View style={styles.watchLiveIcon}>
-                  <Ionicons name="logo-youtube" size={20} color="#fff" />
+                  <Ionicons name="play" size={20} color="#fff" />
                 </View>
                 <View>
                   <Text style={styles.watchLiveTitle}>Watch Live Stream</Text>
@@ -577,6 +577,7 @@ function createStyles(colors: AppColors) {
     },
     prizeSection: {
       flex: 1, paddingVertical: 18, paddingHorizontal: 16,
+      alignItems: 'center',
     },
     prizeLabelRow: {
       flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 7,
@@ -587,7 +588,7 @@ function createStyles(colors: AppColors) {
     },
     prizeAmount: {
       fontSize: 26, fontFamily: 'Inter_700Bold',
-      color: GOLD, letterSpacing: -0.5,
+      color: GOLD, letterSpacing: -0.5, textAlign: 'center',
     },
     prizeCardDivider: {
       width: 1, backgroundColor: '#242424',
@@ -712,7 +713,7 @@ function createStyles(colors: AppColors) {
     watchLiveLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
     watchLiveIcon: {
       width: 38, height: 38, borderRadius: 10,
-      backgroundColor: '#CC0000',
+      backgroundColor: '#EE3D2D',
       alignItems: 'center', justifyContent: 'center',
     },
     watchLiveTitle: { fontSize: 14, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
