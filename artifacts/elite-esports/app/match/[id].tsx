@@ -21,7 +21,11 @@ import { supabase } from '@/services/supabase';
 import { useWallet } from '@/store/WalletContext';
 import type { AppColors } from '@/utils/colors';
 
-const BANNER_HEIGHT = 260;
+const BANNER_HEIGHT = 240;
+const PRIMARY = '#EE3D2D';
+const GREEN   = '#22C55E';
+const RED     = '#EF4444';
+const GOLD    = '#FFD700';
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -30,11 +34,11 @@ function formatDate(iso: string) {
     + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 }
 
-function SectionLabel({ icon, title, colors }: { icon: keyof typeof Ionicons.glyphMap; title: string; colors: AppColors }) {
+function SectionLabel({ icon, title }: { icon: keyof typeof Ionicons.glyphMap; title: string }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-      <Ionicons name={icon} size={16} color={colors.primary} />
-      <Text style={{ fontSize: 12, fontFamily: 'Inter_700Bold', color: colors.primary, textTransform: 'uppercase', letterSpacing: 1.4 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 13 }}>
+      <Ionicons name={icon} size={14} color={PRIMARY} />
+      <Text style={{ fontSize: 11, fontFamily: 'Inter_700Bold', color: PRIMARY, textTransform: 'uppercase', letterSpacing: 1.5 }}>
         {title}
       </Text>
     </View>
@@ -111,7 +115,18 @@ export default function MatchDetailScreen() {
   }, [adConfig.join, gateAction, joinMatch]);
 
   const handleLeave = useCallback(() => {
-    gateAction(adConfig.leave, () => router.back(), 'Loading Ad...');
+    Alert.alert(
+      'Leave Match',
+      'Are you sure you want to leave this match?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Leave',
+          style: 'destructive',
+          onPress: () => gateAction(adConfig.leave, () => router.back(), 'Loading Ad...'),
+        },
+      ]
+    );
   }, [adConfig.leave, gateAction]);
 
   const handleClaim = useCallback(() => {
@@ -143,9 +158,8 @@ export default function MatchDetailScreen() {
         <View style={{ padding: 20, gap: 14 }}>
           <SkeletonBar width="40%" height={11} radius={6} />
           <SkeletonBar width="80%" height={26} radius={8} />
+          <SkeletonBar width="100%" height={100} radius={14} />
           <SkeletonBar width="100%" height={80} radius={14} />
-          <SkeletonBar width="100%" height={56} radius={14} />
-          <SkeletonBar width="100%" height={56} radius={14} />
           <SkeletonBar width="100%" height={56} radius={14} />
         </View>
       </View>
@@ -155,7 +169,7 @@ export default function MatchDetailScreen() {
   if (!match) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <Ionicons name="alert-circle-outline" size={52} color={colors.text.muted} />
+        <Ionicons name="alert-circle-outline" size={52} color="#444" />
         <Text style={styles.emptyTitle}>Match Not Found</Text>
         <TouchableOpacity onPress={() => router.back()} style={styles.backLink} activeOpacity={0.7}>
           <Text style={styles.backLinkText}>Go Back</Text>
@@ -164,13 +178,14 @@ export default function MatchDetailScreen() {
     );
   }
 
-  const cfg      = STATUS_CONFIG[match.status];
-  const isFull   = match.players_joined >= match.max_players;
-  const canJoin  = match.status === 'upcoming' && !isFull && !hasJoined;
-  const showLeaveBtn = isLive && hasJoined;
-  const showClaimBtn = match.status === 'completed' && hasJoined && claimResult !== null && claimResult.prize > 0 && !alreadyClaimed;
-  const filledPct    = Math.min((match.players_joined / match.max_players) * 100, 100);
-  const rules        = match.rules ? match.rules.split('\n').filter(l => l.trim()) : [];
+  const cfg           = STATUS_CONFIG[match.status];
+  const isFree        = match.entry_fee === 0;
+  const isFull        = match.players_joined >= match.max_players;
+  const canJoin       = match.status === 'upcoming' && !isFull && !hasJoined;
+  const showLeaveBtn  = isLive && hasJoined;
+  const showClaimBtn  = match.status === 'completed' && hasJoined && claimResult !== null && claimResult.prize > 0 && !alreadyClaimed;
+  const filledPct     = Math.min((match.players_joined / match.max_players) * 100, 100);
+  const rules         = match.rules ? match.rules.split('\n').filter(l => l.trim()) : [];
 
   return (
     <View style={styles.container}>
@@ -182,7 +197,7 @@ export default function MatchDetailScreen() {
       />
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: bottomPad + 120 }}
+        contentContainerStyle={{ paddingBottom: bottomPad + 110 }}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Hero Banner ── */}
@@ -196,11 +211,12 @@ export default function MatchDetailScreen() {
             />
           ) : (
             <View style={[StyleSheet.absoluteFill, styles.bannerPlaceholder]}>
-              <Ionicons name="game-controller-outline" size={52} color="#333" />
+              <Ionicons name="game-controller-outline" size={52} color="#2A2A2A" />
             </View>
           )}
+
           <LinearGradient
-            colors={['rgba(0,0,0,0.45)', 'transparent', colors.background.dark]}
+            colors={['rgba(0,0,0,0.55)', 'transparent', 'rgba(0,0,0,0.80)']}
             locations={[0, 0.4, 1]}
             style={StyleSheet.absoluteFill}
           />
@@ -208,7 +224,7 @@ export default function MatchDetailScreen() {
           {/* Back button */}
           <TouchableOpacity
             style={[styles.backBtn, { top: insets.top + 10 }]}
-            onPress={showLeaveBtn ? handleLeave : () => router.back()}
+            onPress={() => router.back()}
             activeOpacity={0.8}
           >
             <Ionicons name="arrow-back" size={20} color="#fff" />
@@ -220,51 +236,94 @@ export default function MatchDetailScreen() {
             <Text style={styles.statusText}>{cfg.label}</Text>
           </View>
 
-          {/* Prize pool hero strip at bottom of banner */}
-          <View style={styles.prizeHero}>
-            <Text style={styles.prizeHeroLabel}>Prize Pool</Text>
-            <Text style={styles.prizeHeroValue}>₹{match.prize_pool.toLocaleString('en-IN')}</Text>
+          {/* Game + Title on banner */}
+          <View style={styles.bannerFooter}>
+            {match.game ? (
+              <Text style={styles.bannerGame}>{match.game.toUpperCase()}</Text>
+            ) : null}
+            <Text style={styles.bannerTitle} numberOfLines={2}>{match.title}</Text>
           </View>
         </View>
 
         {/* ── Body ── */}
         <View style={styles.body}>
 
-          {/* Game tag + Title */}
-          <Text style={styles.gameTag}>{match.game}</Text>
-          <Text style={styles.matchTitle}>{match.title}</Text>
+          {/* ── Prize Pool + Entry Fee Hero Card ── */}
+          <View style={styles.prizeCard}>
+            {/* Prize Pool */}
+            <View style={styles.prizeSection}>
+              <View style={styles.prizeLabelRow}>
+                <Ionicons name="trophy" size={13} color={GOLD} />
+                <Text style={styles.prizeSectionLabel}>Prize Pool</Text>
+              </View>
+              <Text style={styles.prizeAmount}>₹{match.prize_pool.toLocaleString('en-IN')}</Text>
+            </View>
 
-          {/* ── Key Stats Row ── */}
+            {/* Divider */}
+            <View style={styles.prizeCardDivider} />
+
+            {/* Entry Fee */}
+            <View style={styles.prizeSection}>
+              <View style={styles.prizeLabelRow}>
+                <Ionicons name="ticket-outline" size={13} color={isFree ? GREEN : PRIMARY} />
+                <Text style={styles.prizeSectionLabel}>Entry Fee</Text>
+              </View>
+              {isFree ? (
+                <Text style={[styles.prizeAmount, { color: GREEN }]}>FREE</Text>
+              ) : (
+                <Text style={[styles.prizeAmount, { color: '#FFFFFF' }]}>
+                  ₹{match.entry_fee.toLocaleString('en-IN')}
+                </Text>
+              )}
+            </View>
+          </View>
+
+          {/* ── Stats Row (Players + Time) ── */}
           <View style={styles.statsRow}>
-            <StatPill icon="ticket-outline" label="Entry" value={match.entry_fee === 0 ? 'Free' : `₹${match.entry_fee}`} colors={colors} accent={false} />
+            <View style={styles.statCell}>
+              <Ionicons name="people-outline" size={16} color="#666" />
+              <Text style={styles.statValue}>{match.players_joined}/{match.max_players}</Text>
+              <Text style={styles.statLabel}>Players</Text>
+            </View>
             <View style={styles.statDivider} />
-            <StatPill icon="people-outline" label="Players" value={`${match.players_joined}/${match.max_players}`} colors={colors} accent={false} />
+            <View style={styles.statCell}>
+              <Ionicons name="time-outline" size={16} color="#666" />
+              <Text style={styles.statValue}>
+                {match.starts_at
+                  ? new Date(match.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })
+                  : 'TBD'}
+              </Text>
+              <Text style={styles.statLabel}>Start Time</Text>
+            </View>
             <View style={styles.statDivider} />
-            <StatPill icon="time-outline" label="Starts" value={match.starts_at ? new Date(match.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'TBD'} colors={colors} accent={false} />
+            <View style={styles.statCell}>
+              <Ionicons name="calendar-outline" size={16} color="#666" />
+              <Text style={styles.statValue}>
+                {match.starts_at
+                  ? new Date(match.starts_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })
+                  : 'TBD'}
+              </Text>
+              <Text style={styles.statLabel}>Date</Text>
+            </View>
           </View>
-
-          {/* ── Full date row ── */}
-          <View style={styles.dateRow}>
-            <Ionicons name="calendar-outline" size={14} color={colors.text.muted} />
-            <Text style={styles.dateText}>
-              {match.starts_at ? formatDate(match.starts_at) : 'Schedule TBD'}
-            </Text>
-          </View>
-
-          <View style={styles.divider} />
 
           {/* ── Slot Meter ── */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
-              <SectionLabel icon="people-circle-outline" title="Player Slots" colors={colors} />
+              <SectionLabel icon="people-circle-outline" title="Player Slots" />
               <View style={[styles.slotBadge, isFull && styles.slotBadgeFull]}>
-                <Text style={[styles.slotBadgeText, isFull && styles.slotBadgeTextFull]}>
-                  {isFull ? 'Full' : `${match.max_players - match.players_joined} left`}
+                <Text style={[styles.slotBadgeText, isFull && { color: RED }]}>
+                  {isFull ? 'Full' : `${match.max_players - match.players_joined} slots left`}
                 </Text>
               </View>
             </View>
             <View style={styles.progressTrack}>
-              <View style={[styles.progressFill, { width: `${filledPct}%` as any }, isFull && { backgroundColor: colors.status.error }]} />
+              <View style={[
+                styles.progressFill,
+                { width: `${filledPct}%` as any },
+                isFull && { backgroundColor: RED },
+                filledPct >= 80 && !isFull && { backgroundColor: '#F59E0B' },
+              ]} />
             </View>
             <View style={styles.progressLabels}>
               <Text style={styles.progressLabelText}>{match.players_joined} joined</Text>
@@ -275,7 +334,7 @@ export default function MatchDetailScreen() {
           {/* ── Description ── */}
           {match.description && (
             <View style={styles.card}>
-              <SectionLabel icon="document-text-outline" title="About This Match" colors={colors} />
+              <SectionLabel icon="document-text-outline" title="About This Match" />
               <Text style={styles.bodyText}>{match.description}</Text>
             </View>
           )}
@@ -283,7 +342,7 @@ export default function MatchDetailScreen() {
           {/* ── Rules ── */}
           {rules.length > 0 && (
             <View style={styles.card}>
-              <SectionLabel icon="shield-checkmark-outline" title="Match Rules" colors={colors} />
+              <SectionLabel icon="shield-checkmark-outline" title="Match Rules" />
               {rules.map((line, i) => (
                 <View key={i} style={styles.ruleRow}>
                   <View style={styles.ruleIndex}>
@@ -295,25 +354,25 @@ export default function MatchDetailScreen() {
             </View>
           )}
 
-          {/* ── Room / Credentials ── */}
+          {/* ── Room Credentials ── */}
           {hasJoined && match.room_visible ? (
             <View style={[styles.card, styles.roomCard]}>
-              <SectionLabel icon="key-outline" title="Room Credentials" colors={colors} />
+              <SectionLabel icon="key-outline" title="Room Credentials" />
               {match.room_id && (
                 <View style={styles.credentialRow}>
                   <Text style={styles.credentialLabel}>Room ID</Text>
                   <View style={styles.credentialValueWrap}>
-                    <Ionicons name="copy-outline" size={13} color={colors.text.muted} />
+                    <Ionicons name="copy-outline" size={13} color="#555" />
                     <Text style={styles.credentialValue}>{match.room_id}</Text>
                   </View>
                 </View>
               )}
               {match.room_password && (
-                <View style={[styles.credentialRow, { borderTopWidth: 1, borderTopColor: colors.border.subtle, marginTop: 10, paddingTop: 10 }]}>
+                <View style={[styles.credentialRow, styles.credentialRowBorder]}>
                   <Text style={styles.credentialLabel}>Password</Text>
                   <View style={styles.credentialValueWrap}>
-                    <Ionicons name="lock-closed-outline" size={13} color={colors.primary} />
-                    <Text style={[styles.credentialValue, { color: colors.primary }]}>{match.room_password}</Text>
+                    <Ionicons name="lock-closed-outline" size={13} color={PRIMARY} />
+                    <Text style={[styles.credentialValue, { color: PRIMARY }]}>{match.room_password}</Text>
                   </View>
                 </View>
               )}
@@ -321,7 +380,7 @@ export default function MatchDetailScreen() {
           ) : (match.status === 'upcoming' || match.status === 'ongoing') ? (
             <View style={styles.infoBox}>
               <View style={styles.infoBoxIcon}>
-                <Ionicons name={hasJoined ? 'hourglass-outline' : 'lock-closed-outline'} size={20} color={colors.status.warning} />
+                <Ionicons name={hasJoined ? 'hourglass-outline' : 'lock-closed-outline'} size={20} color="#F59E0B" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.infoBoxTitle}>
@@ -344,13 +403,15 @@ export default function MatchDetailScreen() {
               activeOpacity={0.85}
             >
               <View style={styles.watchLiveLeft}>
-                <Ionicons name="logo-youtube" size={22} color="#fff" />
+                <View style={styles.watchLiveIcon}>
+                  <Ionicons name="logo-youtube" size={20} color="#fff" />
+                </View>
                 <View>
                   <Text style={styles.watchLiveTitle}>Watch Live Stream</Text>
                   <Text style={styles.watchLiveSub}>Tap to open stream</Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="rgba(255,255,255,0.6)" />
+              <Ionicons name="chevron-forward" size={18} color="#555" />
             </TouchableOpacity>
           )}
 
@@ -358,11 +419,11 @@ export default function MatchDetailScreen() {
           {claimResult !== null && (
             <View style={styles.winnerCard}>
               <LinearGradient
-                colors={['rgba(255,215,0,0.15)', 'rgba(255,215,0,0.05)']}
+                colors={['rgba(255,215,0,0.12)', 'rgba(255,215,0,0.04)']}
                 style={StyleSheet.absoluteFill}
               />
               <View style={styles.winnerLeft}>
-                <Ionicons name="trophy" size={32} color="#FFD700" />
+                <Ionicons name="trophy" size={30} color={GOLD} />
                 <View>
                   <Text style={styles.winnerRank}>Rank #{claimResult.rank}</Text>
                   <Text style={styles.winnerPoints}>{claimResult.points} pts earned</Text>
@@ -373,10 +434,13 @@ export default function MatchDetailScreen() {
               )}
             </View>
           )}
+
         </View>
       </ScrollView>
 
-      {/* ── Floating CTA ── */}
+      {/* ── Floating CTAs ── */}
+
+      {/* Join Match */}
       {canJoin && (
         <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
           <TouchableOpacity
@@ -387,9 +451,9 @@ export default function MatchDetailScreen() {
           >
             {joining ? <ActivityIndicator color="#fff" /> : (
               <>
-                <Ionicons name="flash-outline" size={20} color="#fff" />
+                <Ionicons name="flash" size={20} color="#fff" />
                 <Text style={styles.joinBtnText}>
-                  {match.entry_fee === 0 ? 'Join for Free' : `Join for ₹${match.entry_fee}`}
+                  {isFree ? 'Join for Free' : `Join · ₹${match.entry_fee}`}
                 </Text>
               </>
             )}
@@ -397,15 +461,37 @@ export default function MatchDetailScreen() {
         </View>
       )}
 
-      {hasJoined && !showClaimBtn && match.status !== 'completed' && (
+      {/* Leave Match (live + joined) */}
+      {showLeaveBtn && (
+        <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
+          <View style={styles.leaveCtaRow}>
+            <View style={styles.joinedSmallBadge}>
+              <Ionicons name="checkmark-circle" size={16} color={GREEN} />
+              <Text style={styles.joinedSmallText}>You're In</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.leaveBtn}
+              onPress={handleLeave}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="exit-outline" size={18} color="#fff" />
+              <Text style={styles.leaveBtnText}>Leave Match</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {/* Registered but not live */}
+      {hasJoined && !showLeaveBtn && !showClaimBtn && match.status !== 'completed' && (
         <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
           <View style={styles.joinedBadge}>
-            <Ionicons name="checkmark-circle" size={20} color={colors.status.success} />
+            <Ionicons name="checkmark-circle" size={20} color={GREEN} />
             <Text style={styles.joinedText}>You're registered for this match</Text>
           </View>
         </View>
       )}
 
+      {/* Claim prize */}
       {showClaimBtn && (
         <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
           <TouchableOpacity
@@ -424,11 +510,12 @@ export default function MatchDetailScreen() {
         </View>
       )}
 
+      {/* Already claimed */}
       {match.status === 'completed' && hasJoined && alreadyClaimed && (
         <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
           <View style={[styles.joinedBadge, { borderColor: 'rgba(255,215,0,0.3)', backgroundColor: 'rgba(255,215,0,0.07)' }]}>
-            <Ionicons name="checkmark-circle" size={20} color="#FFD700" />
-            <Text style={[styles.joinedText, { color: '#FFD700' }]}>Prize Claimed</Text>
+            <Ionicons name="checkmark-circle" size={20} color={GOLD} />
+            <Text style={[styles.joinedText, { color: GOLD }]}>Prize Claimed</Text>
           </View>
         </View>
       )}
@@ -436,213 +523,269 @@ export default function MatchDetailScreen() {
   );
 }
 
-function StatPill({ icon, label, value, colors, accent }: {
-  icon: keyof typeof Ionicons.glyphMap;
-  label: string;
-  value: string;
-  colors: AppColors;
-  accent: boolean;
-}) {
-  return (
-    <View style={{ flex: 1, alignItems: 'center', gap: 4 }}>
-      <Ionicons name={icon} size={16} color={accent ? colors.primary : colors.text.muted} />
-      <Text style={{ fontSize: 15, fontFamily: 'Inter_700Bold', color: accent ? colors.primary : colors.text.primary }}>{value}</Text>
-      <Text style={{ fontSize: 10, fontFamily: 'Inter_400Regular', color: colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.8 }}>{label}</Text>
-    </View>
-  );
-}
-
 function createStyles(colors: AppColors) {
   return StyleSheet.create({
-    container:   { flex: 1, backgroundColor: colors.background.dark },
-    centered:    { alignItems: 'center', justifyContent: 'center', gap: 12 },
+    container:   { flex: 1, backgroundColor: '#0A0A0A' },
+    centered:    { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: '#0A0A0A' },
     bannerPlaceholder: {
-      backgroundColor: '#111', alignItems: 'center', justifyContent: 'center',
+      backgroundColor: '#0F0F0F', alignItems: 'center', justifyContent: 'center',
     },
 
-    /* Back button (overlaid on banner) */
+    /* Back button */
     backBtn: {
-      position: 'absolute', left: 16, zIndex: 10,
-      width: 38, height: 38, borderRadius: 19,
-      backgroundColor: 'rgba(0,0,0,0.45)',
+      position: 'absolute', left: 14, zIndex: 10,
+      width: 36, height: 36, borderRadius: 18,
+      backgroundColor: 'rgba(0,0,0,0.55)',
       alignItems: 'center', justifyContent: 'center',
     },
 
     /* Status badge */
     statusBadge: {
-      position: 'absolute', right: 16, zIndex: 10,
+      position: 'absolute', right: 14, zIndex: 10,
       flexDirection: 'row', alignItems: 'center', gap: 5,
-      borderRadius: 20, paddingHorizontal: 12, paddingVertical: 5,
+      borderRadius: 20, paddingHorizontal: 11, paddingVertical: 5,
     },
-    livePulse: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff', opacity: 0.9 },
+    livePulse: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff' },
     statusText: { color: '#fff', fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
 
-    /* Prize hero strip at bottom of banner */
-    prizeHero: {
+    /* Banner footer (game + title) */
+    bannerFooter: {
       position: 'absolute', bottom: 0, left: 0, right: 0,
-      paddingHorizontal: 20, paddingBottom: 16, paddingTop: 8,
-      flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between',
+      paddingHorizontal: 16, paddingBottom: 14, paddingTop: 24,
     },
-    prizeHeroLabel: {
-      fontSize: 11, fontFamily: 'Inter_600SemiBold',
-      color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 1,
+    bannerGame: {
+      fontSize: 10, fontFamily: 'Inter_700Bold',
+      color: PRIMARY, letterSpacing: 2, marginBottom: 4,
     },
-    prizeHeroValue: {
-      fontSize: 28, fontFamily: 'Inter_700Bold',
-      color: '#FFD700', letterSpacing: -0.5,
+    bannerTitle: {
+      fontSize: 20, fontFamily: 'Inter_700Bold',
+      color: '#FFFFFF', lineHeight: 26,
     },
 
     /* Body */
-    body: { paddingHorizontal: 18, paddingTop: 18 },
-    gameTag: {
-      fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.primary,
-      textTransform: 'uppercase', letterSpacing: 1.8, marginBottom: 6,
+    body: { paddingHorizontal: 16, paddingTop: 16 },
+
+    /* ── Prize + Fee Hero Card ── */
+    prizeCard: {
+      flexDirection: 'row',
+      backgroundColor: '#141414',
+      borderRadius: 16,
+      borderWidth: 1,
+      borderColor: '#242424',
+      marginBottom: 14,
+      overflow: 'hidden',
     },
-    matchTitle: {
-      fontSize: 22, fontFamily: 'Inter_700Bold', color: colors.text.primary,
-      lineHeight: 28, marginBottom: 18,
+    prizeSection: {
+      flex: 1, paddingVertical: 18, paddingHorizontal: 16,
+    },
+    prizeLabelRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 7,
+    },
+    prizeSectionLabel: {
+      fontSize: 11, fontFamily: 'Inter_600SemiBold',
+      color: '#666', textTransform: 'uppercase', letterSpacing: 0.8,
+    },
+    prizeAmount: {
+      fontSize: 26, fontFamily: 'Inter_700Bold',
+      color: GOLD, letterSpacing: -0.5,
+    },
+    prizeCardDivider: {
+      width: 1, backgroundColor: '#242424',
+      marginVertical: 14,
     },
 
     /* Stats row */
     statsRow: {
       flexDirection: 'row', alignItems: 'center',
-      backgroundColor: colors.background.elevated,
-      borderRadius: 16, paddingVertical: 16,
-      borderWidth: 1, borderColor: colors.border.default,
-      marginBottom: 12,
+      backgroundColor: '#111',
+      borderRadius: 14, paddingVertical: 14,
+      borderWidth: 1, borderColor: '#1E1E1E',
+      marginBottom: 14,
     },
-    statDivider: { width: 1, height: 36, backgroundColor: colors.border.default },
-
-    /* Date row */
-    dateRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 20,
+    statCell: {
+      flex: 1, alignItems: 'center', gap: 4,
     },
-    dateText: {
-      fontSize: 13, fontFamily: 'Inter_500Medium', color: colors.text.muted,
+    statDivider: { width: 1, height: 34, backgroundColor: '#1E1E1E' },
+    statValue: {
+      fontSize: 14, fontFamily: 'Inter_700Bold', color: '#FFFFFF',
     },
-
-    divider: { height: 1, backgroundColor: colors.border.subtle, marginBottom: 18 },
+    statLabel: {
+      fontSize: 10, fontFamily: 'Inter_400Regular',
+      color: '#555', textTransform: 'uppercase', letterSpacing: 0.6,
+    },
 
     /* Generic card */
     card: {
-      backgroundColor: colors.background.card,
-      borderRadius: 16, padding: 16, marginBottom: 14,
-      borderWidth: 1, borderColor: colors.border.default,
+      backgroundColor: '#111',
+      borderRadius: 16, padding: 16, marginBottom: 12,
+      borderWidth: 1, borderColor: '#1E1E1E',
     },
     cardHeader: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12,
+      flexDirection: 'row', alignItems: 'center',
+      justifyContent: 'space-between', marginBottom: 4,
     },
 
     /* Slot meter */
     slotBadge: {
-      backgroundColor: colors.primary + '22',
+      backgroundColor: 'rgba(238,61,45,0.12)',
       borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4,
     },
-    slotBadgeFull: { backgroundColor: colors.status.error + '22' },
-    slotBadgeText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.primary },
-    slotBadgeTextFull: { color: colors.status.error },
-    progressTrack: { height: 8, backgroundColor: colors.background.elevated, borderRadius: 4, overflow: 'hidden' },
-    progressFill:  { height: 8, backgroundColor: colors.primary, borderRadius: 4 },
-    progressLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 },
-    progressLabelText: { fontSize: 11, fontFamily: 'Inter_400Regular', color: colors.text.muted },
+    slotBadgeFull: { backgroundColor: 'rgba(239,68,68,0.15)' },
+    slotBadgeText: {
+      fontSize: 11, fontFamily: 'Inter_700Bold', color: PRIMARY,
+    },
+    progressTrack: {
+      height: 7, backgroundColor: '#1E1E1E', borderRadius: 4, overflow: 'hidden',
+    },
+    progressFill: { height: 7, backgroundColor: PRIMARY, borderRadius: 4 },
+    progressLabels: {
+      flexDirection: 'row', justifyContent: 'space-between', marginTop: 7,
+    },
+    progressLabelText: {
+      fontSize: 11, fontFamily: 'Inter_400Regular', color: '#555',
+    },
 
-    /* Text content */
+    /* Text */
     bodyText: {
       fontSize: 14, fontFamily: 'Inter_400Regular',
-      color: colors.text.secondary, lineHeight: 22,
+      color: '#999', lineHeight: 22,
     },
 
     /* Rules */
-    ruleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 10 },
+    ruleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 11, marginBottom: 10 },
     ruleIndex: {
-      width: 24, height: 24, borderRadius: 12,
-      backgroundColor: colors.primary + '22',
-      alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1,
+      width: 22, height: 22, borderRadius: 11,
+      backgroundColor: 'rgba(238,61,45,0.15)',
+      alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2,
     },
-    ruleIndexText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.primary },
+    ruleIndexText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: PRIMARY },
     ruleText: {
       flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular',
-      color: colors.text.secondary, lineHeight: 22,
+      color: '#999', lineHeight: 21,
     },
 
     /* Room credentials */
-    roomCard: { borderColor: colors.primary + '40' },
-    credentialRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    credentialLabel: { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted },
+    roomCard: { borderColor: 'rgba(238,61,45,0.25)' },
+    credentialRow: {
+      flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    },
+    credentialRowBorder: {
+      borderTopWidth: 1, borderTopColor: '#1E1E1E', marginTop: 10, paddingTop: 10,
+    },
+    credentialLabel: {
+      fontSize: 12, fontFamily: 'Inter_400Regular', color: '#555',
+    },
     credentialValueWrap: { flexDirection: 'row', alignItems: 'center', gap: 7 },
     credentialValue: {
       fontSize: 15, fontFamily: 'Inter_700Bold',
-      color: colors.text.primary, letterSpacing: 1.2,
+      color: '#FFFFFF', letterSpacing: 1.2,
     },
 
     /* Info box */
     infoBox: {
-      flexDirection: 'row', alignItems: 'flex-start', gap: 14,
-      backgroundColor: 'rgba(245,158,11,0.08)',
-      borderRadius: 14, padding: 16, marginBottom: 14,
-      borderWidth: 1, borderColor: 'rgba(245,158,11,0.2)',
+      flexDirection: 'row', alignItems: 'flex-start', gap: 12,
+      backgroundColor: 'rgba(245,158,11,0.07)',
+      borderRadius: 14, padding: 14, marginBottom: 12,
+      borderWidth: 1, borderColor: 'rgba(245,158,11,0.18)',
     },
     infoBoxIcon: {
-      width: 38, height: 38, borderRadius: 10,
-      backgroundColor: 'rgba(245,158,11,0.15)',
+      width: 36, height: 36, borderRadius: 10,
+      backgroundColor: 'rgba(245,158,11,0.12)',
       alignItems: 'center', justifyContent: 'center', flexShrink: 0,
     },
     infoBoxTitle: {
-      fontSize: 14, fontFamily: 'Inter_600SemiBold',
-      color: colors.status.warning, marginBottom: 3,
+      fontSize: 13, fontFamily: 'Inter_600SemiBold',
+      color: '#F59E0B', marginBottom: 3,
     },
     infoBoxSub: {
       fontSize: 12, fontFamily: 'Inter_400Regular',
-      color: colors.text.muted, lineHeight: 18,
+      color: '#666', lineHeight: 18,
     },
 
     /* Watch Live */
     watchLiveBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      backgroundColor: '#CC0000', borderRadius: 14, paddingHorizontal: 18, paddingVertical: 14,
-      marginBottom: 14,
+      backgroundColor: '#111', borderRadius: 14,
+      paddingHorizontal: 16, paddingVertical: 14,
+      marginBottom: 12, borderWidth: 1, borderColor: '#1E1E1E',
     },
-    watchLiveLeft: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-    watchLiveTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', color: '#fff' },
-    watchLiveSub:   { fontSize: 11, fontFamily: 'Inter_400Regular', color: 'rgba(255,255,255,0.6)', marginTop: 1 },
+    watchLiveLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    watchLiveIcon: {
+      width: 38, height: 38, borderRadius: 10,
+      backgroundColor: '#CC0000',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    watchLiveTitle: { fontSize: 14, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+    watchLiveSub:   { fontSize: 11, fontFamily: 'Inter_400Regular', color: '#555', marginTop: 2 },
 
     /* Winner card */
     winnerCard: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-      borderRadius: 14, padding: 18, marginBottom: 14, overflow: 'hidden',
-      borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)',
+      borderRadius: 14, padding: 18, marginBottom: 12, overflow: 'hidden',
+      borderWidth: 1, borderColor: 'rgba(255,215,0,0.25)',
+      backgroundColor: '#111',
     },
     winnerLeft:   { flexDirection: 'row', alignItems: 'center', gap: 14 },
-    winnerRank:   { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#FFD700' },
-    winnerPoints: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginTop: 2 },
-    winnerPrize:  { fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.status.success },
+    winnerRank:   { fontSize: 17, fontFamily: 'Inter_700Bold', color: GOLD },
+    winnerPoints: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#555', marginTop: 2 },
+    winnerPrize:  { fontSize: 24, fontFamily: 'Inter_700Bold', color: GREEN },
 
-    /* CTA */
+    /* CTA bar */
     cta: {
       position: 'absolute', bottom: 0, left: 0, right: 0,
-      paddingHorizontal: 18, paddingTop: 12,
-      backgroundColor: colors.background.dark + 'F5',
-      borderTopWidth: 1, borderTopColor: colors.border.default,
+      paddingHorizontal: 16, paddingTop: 10,
+      backgroundColor: '#0A0A0AF5',
+      borderTopWidth: 1, borderTopColor: '#1A1A1A',
     },
+
+    /* Join button — GREEN */
     joinBtn: {
-      backgroundColor: colors.primary, borderRadius: 14, height: 54,
+      backgroundColor: GREEN, borderRadius: 14, height: 52,
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
     },
-    disabled:    { opacity: 0.6 },
     joinBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
+
+    /* Leave row */
+    leaveCtaRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+    },
+    joinedSmallBadge: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      flex: 1, backgroundColor: 'rgba(34,197,94,0.08)',
+      borderRadius: 12, paddingHorizontal: 12, height: 52,
+      borderWidth: 1, borderColor: 'rgba(34,197,94,0.2)',
+    },
+    joinedSmallText: {
+      fontSize: 14, fontFamily: 'Inter_600SemiBold', color: GREEN,
+    },
+
+    /* Leave button — RED */
+    leaveBtn: {
+      backgroundColor: RED, borderRadius: 12, height: 52,
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 8, paddingHorizontal: 22,
+    },
+    leaveBtnText: { color: '#fff', fontSize: 15, fontFamily: 'Inter_700Bold' },
+
+    /* Joined badge */
+    joinedBadge: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+      backgroundColor: 'rgba(34,197,94,0.08)', borderRadius: 14, height: 52,
+      borderWidth: 1, borderColor: 'rgba(34,197,94,0.22)',
+    },
+    joinedText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: GREEN },
+
+    /* Claim button */
     claimBtn: {
-      backgroundColor: '#FFD700', borderRadius: 14, height: 54,
+      backgroundColor: GOLD, borderRadius: 14, height: 52,
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
     },
     claimBtnText: { color: '#000', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
-    joinedBadge: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-      backgroundColor: 'rgba(34,197,94,0.08)', borderRadius: 14, height: 54,
-      borderWidth: 1, borderColor: 'rgba(34,197,94,0.25)',
-    },
-    joinedText:  { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: colors.status.success },
-    emptyTitle:  { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: colors.text.secondary },
+
+    disabled: { opacity: 0.55 },
+
+    emptyTitle:  { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: '#555' },
     backLink:    { paddingHorizontal: 24, paddingVertical: 10 },
-    backLinkText: { color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+    backLinkText: { color: PRIMARY, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
   });
 }
