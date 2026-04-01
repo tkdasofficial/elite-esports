@@ -15,15 +15,28 @@ export function useProfile(userId?: string) {
     setLoading(true);
     setFetchError(null);
     try {
-      const [userRes, walletRes, gamesRes] = await Promise.all([
+      const [userRes, walletRes, gamesRes, playedRes, winsRes, earnedRes] = await Promise.all([
         supabase.from('users').select('id, name, username, avatar_url').eq('id', userId).maybeSingle(),
         supabase.from('wallets').select('balance').eq('user_id', userId).maybeSingle(),
         supabase.from('user_games').select('game_id, uid, games(name)').eq('user_id', userId),
+        /* Played — total matches entered */
+        supabase.from('match_participants').select('id', { count: 'exact', head: true }).eq('user_id', userId),
+        /* Wins — match_results where rank = 1 */
+        supabase.from('match_results').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('rank', 1),
+        /* Earned — sum of prize/credit wallet credits */
+        supabase.from('wallet_transactions')
+          .select('amount')
+          .eq('user_id', userId)
+          .in('type', ['prize', 'credit'])
+          .in('status', ['approved', 'completed']),
       ]);
 
-      const user = userRes.data;
-      const wallet = walletRes.data;
-      const rawGames = gamesRes.data ?? [];
+      const user      = userRes.data;
+      const wallet    = walletRes.data;
+      const rawGames  = gamesRes.data ?? [];
+      const played    = playedRes.count ?? 0;
+      const wins      = winsRes.count ?? 0;
+      const earned    = (earnedRes.data ?? []).reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
       const games = rawGames.map((g: any) => ({
         game_id: g.game_id ?? '',
@@ -41,6 +54,9 @@ export function useProfile(userId?: string) {
           avatar_index: avatarIndex,
           games,
           balance: wallet?.balance ?? 0,
+          played,
+          wins,
+          earned,
         });
       } else if (userRes.error && userRes.error.code !== 'PGRST116') {
         setFetchError(userRes.error.message);

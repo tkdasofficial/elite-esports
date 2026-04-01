@@ -37,6 +37,9 @@ export interface ProfileData {
   games?: { game_id?: string; game: string; uid: string }[] | null;
   balance?: number;
   updated_at?: string;
+  played?: number;
+  wins?: number;
+  earned?: number;
 }
 
 export interface Game {

@@ -152,17 +152,19 @@ export default function ProfileScreen() {
         {/* ── Stats Strip ── */}
         <View style={styles.statsStrip}>
           <View style={styles.statItem}>
-            <Text style={styles.statVal}>—</Text>
+            <Text style={styles.statVal}>{profile.played ?? 0}</Text>
             <Text style={styles.statLbl}>Played</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={styles.statVal}>—</Text>
+            <Text style={styles.statVal}>{profile.wins ?? 0}</Text>
             <Text style={styles.statLbl}>Wins</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
-            <Text style={[styles.statVal, { color: colors.primary }]}>₹0</Text>
+            <Text style={[styles.statVal, { color: colors.primary }]}>
+              ₹{(profile.earned ?? 0).toLocaleString('en-IN')}
+            </Text>
             <Text style={styles.statLbl}>Earned</Text>
           </View>
         </View>
