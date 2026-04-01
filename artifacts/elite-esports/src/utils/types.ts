@@ -24,8 +24,7 @@ export interface Match {
 export interface LeaderEntry {
   id: string;
   username: string;
-  kills: number;
-  points: number;
+  wins: number;
   rank: number;
   avatar_url?: string;
 }
@@ -56,7 +55,6 @@ export interface SupportTicket {
 }
 
 export type MatchStatus = 'upcoming' | 'ongoing' | 'completed' | 'cancelled';
-export type LeaderboardTab = 'Solo' | 'Squad';
 export type TransactionType = 'credit' | 'debit';
 export type TransactionStatus = 'pending' | 'approved' | 'rejected';
 

@@ -1,61 +1,63 @@
-import React, { useState, useMemo } from 'react';
-import { Dimensions, View, FlatList, Text, StyleSheet, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, FlatList, Text, StyleSheet, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@/store/ThemeContext';
-import { LeaderboardTab } from '@/utils/types';
 import { GlobalHeader } from '@/components/GlobalHeader';
 import { LeaderRow } from '@/features/leaderboard/components/LeaderRow';
 import { useLeaderboard } from '@/features/leaderboard/hooks/useLeaderboard';
 import { SkeletonBar } from '@/components/SkeletonBar';
 
-const TABS: LeaderboardTab[] = ['Solo', 'Squad'];
-const SKELETON_COUNT = 8;
+const SKELETON_COUNT = 10;
 
 function SkeletonLeaderRow() {
+  const { colors } = useTheme();
   return (
-    <View style={skStyles.row}>
+    <View style={[skStyles.row, { backgroundColor: colors.background.card, borderColor: colors.border.subtle }]}>
       <SkeletonBar width={28} height={14} radius={5} style={{ marginRight: 8 }} />
-      <SkeletonBar width={36} height={36} radius={18} style={{ marginRight: 10 }} />
-      <View style={{ flex: 1, gap: 5 }}>
-        <SkeletonBar width="55%" height={13} radius={5} />
-        <SkeletonBar width="35%" height={10} radius={4} />
+      <SkeletonBar width={42} height={42} radius={21} style={{ marginRight: 12 }} />
+      <View style={{ flex: 1 }}>
+        <SkeletonBar width="50%" height={13} radius={5} />
       </View>
-      <SkeletonBar width={56} height={13} radius={5} />
+      <SkeletonBar width={72} height={32} radius={8} />
     </View>
   );
 }
 
 const skStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row', alignItems: 'center',
-    paddingHorizontal: 12, paddingVertical: 8,
-  },
+  row: { flexDirection: 'row', alignItems: 'center', borderRadius: 14, padding: 12, borderWidth: 1, marginBottom: 6 },
 });
 
 export default function LeaderboardScreen() {
-  const { colors } = useTheme();
-  const [activeTab, setActiveTab] = useState<LeaderboardTab>('Solo');
-  const { data, loading, refreshing, refresh } = useLeaderboard(activeTab);
+  const { colors, isDark } = useTheme();
+  const { data, loading, refreshing, refresh } = useLeaderboard();
   const tabBarHeight = useBottomTabBarHeight();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const showSkeleton = (loading && data.length === 0) || refreshing;
+  const showSkeleton = loading && data.length === 0;
+
+  const ListHeader = (
+    <View style={styles.listHeader}>
+      <View style={styles.colRank}><Text style={styles.colLabel}>#</Text></View>
+      <View style={{ width: 42, marginRight: 12 }} />
+      <Text style={[styles.colLabel, { flex: 1 }]}>Player</Text>
+      <View style={styles.trophyHeader}>
+        <Ionicons name="trophy" size={11} color={isDark ? '#FFD700' : '#9A6F00'} />
+        <Text style={styles.colLabel}>Wins</Text>
+      </View>
+    </View>
+  );
 
   return (
     <View style={styles.container}>
       <GlobalHeader />
-      <View style={styles.tabBar}>
-        {TABS.map(tab => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-            onPress={() => setActiveTab(tab)}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
-          </TouchableOpacity>
-        ))}
+
+      <View style={styles.headingStrip}>
+        <Ionicons name="trophy" size={18} color={isDark ? '#FFD700' : '#9A6F00'} />
+        <Text style={styles.heading}>Trophy Leaderboard</Text>
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>Top 100</Text>
+        </View>
       </View>
 
       {showSkeleton ? (
@@ -64,15 +66,8 @@ export default function LeaderboardScreen() {
           keyExtractor={i => `skel-lb-${i}`}
           renderItem={() => <SkeletonLeaderRow />}
           contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
+          ListHeaderComponent={ListHeader}
           showsVerticalScrollIndicator={false}
-          ListHeaderComponent={
-            <View style={styles.listHeader}>
-              <SkeletonBar width={12} height={10} radius={4} style={{ marginRight: 36 }} />
-              <SkeletonBar width={60} height={10} radius={4} />
-              <View style={{ flex: 1 }} />
-              <SkeletonBar width={80} height={10} radius={4} />
-            </View>
-          }
         />
       ) : (
         <FlatList
@@ -82,24 +77,16 @@ export default function LeaderboardScreen() {
           contentContainerStyle={[styles.list, { paddingBottom: tabBarHeight + 16 }]}
           showsVerticalScrollIndicator={false}
           refreshControl={
-            <RefreshControl refreshing={false} onRefresh={refresh} tintColor={colors.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />
           }
-          ListHeaderComponent={
-            <View style={styles.listHeader}>
-              <View style={styles.colRankWrapper}>
-                <Text style={styles.colLabel}>#</Text>
-              </View>
-              <View style={styles.colPlayerWrapper}>
-                <Text style={styles.colLabel}>Player</Text>
-              </View>
-              <Text style={styles.colLabel}>Kills / Points</Text>
-            </View>
-          }
+          ListHeaderComponent={ListHeader}
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="trophy-outline" size={56} color={colors.text.muted} />
-              <Text style={styles.emptyTitle}>No Data Yet</Text>
-              <Text style={styles.emptyText}>Leaderboard populates after matches</Text>
+              <Text style={styles.emptyTitle}>No Winners Yet</Text>
+              <Text style={styles.emptyText}>
+                Players appear here once they win a match
+              </Text>
             </View>
           }
         />
@@ -111,27 +98,33 @@ export default function LeaderboardScreen() {
 function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColors>) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background.dark },
-    tabBar: {
-      flexDirection: 'row', margin: 16, marginBottom: 8,
-      backgroundColor: colors.background.elevated, borderRadius: 12, padding: 4,
+
+    headingStrip: {
+      flexDirection: 'row', alignItems: 'center', gap: 8,
+      paddingHorizontal: 16, paddingTop: 14, paddingBottom: 6,
     },
-    tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 10 },
-    tabActive: { backgroundColor: colors.primary },
-    tabText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.muted },
-    tabTextActive: { color: '#fff' },
+    heading: { fontSize: 17, fontFamily: 'Inter_700Bold', color: colors.text.primary, flex: 1 },
+    badge: {
+      backgroundColor: colors.primary + '22', borderRadius: 8,
+      paddingHorizontal: 9, paddingVertical: 4,
+      borderWidth: 1, borderColor: colors.primary + '44',
+    },
+    badgeText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.primary },
+
     list: { paddingHorizontal: 16, paddingTop: 4, gap: 6 },
     listHeader: {
       flexDirection: 'row', alignItems: 'center',
-      paddingVertical: 8, paddingHorizontal: 12, marginBottom: 4,
+      paddingVertical: 6, paddingHorizontal: 12, marginBottom: 4,
     },
-    colRankWrapper: { width: 36, alignItems: 'center' },
-    colPlayerWrapper: { flex: 1, marginLeft: 46 },
+    colRank: { width: 36, alignItems: 'center' },
     colLabel: { fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.text.muted },
+    trophyHeader: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+
     empty: { alignItems: 'center', paddingTop: 60, gap: 12 },
     emptyTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.text.secondary },
     emptyText: {
       fontSize: 14, fontFamily: 'Inter_400Regular',
-      color: colors.text.muted, textAlign: 'center',
+      color: colors.text.muted, textAlign: 'center', paddingHorizontal: 32,
     },
   });
 }
