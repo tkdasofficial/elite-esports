@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View, Text, Switch, TouchableOpacity, StyleSheet, ScrollView,
-  Platform, Alert, Modal, TextInput, KeyboardAvoidingView, Pressable, AppState,
+  Platform, Alert, AppState, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -56,13 +56,11 @@ const THEME_OPTIONS: { label: string; value: ThemeMode; icon: string }[] = [
 
 export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const { colors, themeMode, setThemeMode } = useTheme();
   const [prefs, setPrefs] = useState<NotifPrefs>(DEFAULT_PREFS);
   const [permStatus, setPermStatus] = useState<PermissionStatus>('undetermined');
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [newPassword, setNewPassword] = useState('');
-  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const [vibrationOn, setVibrationOn] = useState(true);
 
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -119,15 +117,32 @@ export default function SettingsScreen() {
     setHapticEnabled(val);
   };
 
-  const handleChangePassword = () => { setNewPassword(''); setShowPasswordModal(true); };
-
-  const confirmPasswordChange = async () => {
-    if (newPassword.length < 6) { Alert.alert('Error', 'Password must be at least 6 characters'); return; }
-    setPasswordLoading(true);
-    const { error } = await supabase.auth.updateUser({ password: newPassword });
-    setPasswordLoading(false);
-    setShowPasswordModal(false);
-    Alert.alert(error ? 'Error' : 'Success', error ? error.message : 'Password updated successfully!');
+  const handleResetPassword = () => {
+    const email = user?.email;
+    if (!email) {
+      Alert.alert('Error', 'No email address found for your account.');
+      return;
+    }
+    Alert.alert(
+      'Reset Password',
+      `A password reset link will be sent to:\n\n${email}\n\nOpen the link in the email to set a new password.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send Reset Link',
+          onPress: async () => {
+            setResetLoading(true);
+            const { error } = await supabase.auth.resetPasswordForEmail(email);
+            setResetLoading(false);
+            if (error) {
+              Alert.alert('Error', error.message);
+            } else {
+              Alert.alert('Email Sent', `Check your inbox at ${email} and follow the link to reset your password.`);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const masterOff = !prefs.all;
@@ -280,14 +295,18 @@ export default function SettingsScreen() {
         {/* ── Account ── */}
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.card}>
-          <TouchableOpacity style={styles.row} onPress={handleChangePassword} activeOpacity={0.75}>
+          <TouchableOpacity style={styles.row} onPress={handleResetPassword} disabled={resetLoading} activeOpacity={0.75}>
             <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
-              <Ionicons name="lock-closed-outline" size={18} color={colors.primary} />
+              <Ionicons name="mail-outline" size={18} color={colors.primary} />
             </View>
             <View style={styles.rowText}>
-              <Text style={styles.rowLabel}>Change Password</Text>
+              <Text style={styles.rowLabel}>Reset Password</Text>
+              <Text style={styles.rowSublabel}>Send a reset link to your email</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+            {resetLoading
+              ? <ActivityIndicator size="small" color={colors.primary} />
+              : <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+            }
           </TouchableOpacity>
         </View>
 
@@ -345,48 +364,6 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
 
-      {/* ── Change Password Modal ── */}
-      <Modal
-        visible={showPasswordModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowPasswordModal(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setShowPasswordModal(false)}>
-          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
-              <Text style={styles.modalTitle}>Change Password</Text>
-              <Text style={styles.modalSubtitle}>Enter your new password (min. 6 characters)</Text>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="New password"
-                placeholderTextColor={colors.text.muted}
-                secureTextEntry
-                value={newPassword}
-                onChangeText={setNewPassword}
-                autoFocus
-                returnKeyType="done"
-                onSubmitEditing={confirmPasswordChange}
-              />
-              <View style={styles.modalActions}>
-                <TouchableOpacity
-                  style={[styles.modalBtn, styles.modalBtnCancel]}
-                  onPress={() => setShowPasswordModal(false)}
-                >
-                  <Text style={styles.modalBtnCancelText}>Cancel</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.modalBtn, styles.modalBtnConfirm, passwordLoading && styles.modalBtnDisabled]}
-                  onPress={confirmPasswordChange}
-                  disabled={passwordLoading}
-                >
-                  <Text style={styles.modalBtnConfirmText}>{passwordLoading ? 'Saving…' : 'Update'}</Text>
-                </TouchableOpacity>
-              </View>
-            </Pressable>
-          </KeyboardAvoidingView>
-        </Pressable>
-      </Modal>
     </View>
   );
 }
@@ -484,34 +461,5 @@ function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColo
     appInfoRow: { alignItems: 'center', marginTop: 24, marginBottom: 8, gap: 4 },
     version: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted },
     packageName: { fontSize: 10, fontFamily: 'Inter_400Regular', color: colors.text.muted + 'AA' },
-
-    modalOverlay: {
-      flex: 1, backgroundColor: 'rgba(0,0,0,0.75)',
-      justifyContent: 'center', alignItems: 'center', padding: 24,
-    },
-    modalCard: {
-      backgroundColor: colors.background.card,
-      borderRadius: 20, padding: 24,
-      width: '100%', maxWidth: 400,
-      borderWidth: 1, borderColor: colors.border.default,
-    },
-    modalTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 6 },
-    modalSubtitle: { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginBottom: 20 },
-    modalInput: {
-      backgroundColor: colors.background.surface,
-      borderRadius: 12, borderWidth: 1, borderColor: colors.border.default,
-      color: colors.text.primary, fontFamily: 'Inter_400Regular',
-      fontSize: 15, paddingHorizontal: 16, paddingVertical: 14, marginBottom: 20,
-    },
-    modalActions: { flexDirection: 'row', gap: 12 },
-    modalBtn: { flex: 1, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-    modalBtnCancel: {
-      backgroundColor: colors.background.surface,
-      borderWidth: 1, borderColor: colors.border.default,
-    },
-    modalBtnCancelText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: colors.text.secondary },
-    modalBtnConfirm: { backgroundColor: colors.primary },
-    modalBtnConfirmText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#fff' },
-    modalBtnDisabled: { opacity: 0.6 },
   });
 }

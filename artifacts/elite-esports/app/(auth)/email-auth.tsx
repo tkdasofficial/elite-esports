@@ -13,7 +13,7 @@ import { useTheme } from '@/store/ThemeContext';
 import type { AppColors } from '@/utils/colors';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 
-type Step = 'email' | 'password' | 'verify';
+type Step = 'email' | 'password' | 'verify' | 'reset-sent';
 type Mode = 'signin' | 'signup' | 'unknown';
 
 async function isProfileComplete(userId: string): Promise<boolean> {
@@ -174,6 +174,18 @@ export default function EmailAuthScreen() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
+    } catch {
+    } finally {
+      setLoading(false);
+      setStep('reset-sent');
+    }
+  };
+
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     setLoading(true);
@@ -190,6 +202,7 @@ export default function EmailAuthScreen() {
     setError('');
     if (step === 'password') { setStep('email'); setPassword(''); setMode('unknown'); }
     else if (step === 'verify') { setStep('password'); }
+    else if (step === 'reset-sent') { setStep('password'); }
     else router.back();
   };
 
@@ -197,22 +210,25 @@ export default function EmailAuthScreen() {
     email: 'person-outline',
     password: mode === 'signin' ? 'lock-closed-outline' : 'lock-open-outline',
     verify: 'mail-open-outline',
+    'reset-sent': 'mail-outline',
   };
 
   const stepTitle: Record<Step, string> = {
     email: 'Get Started',
     password: mode === 'signin' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Enter Password',
     verify: 'Verify Your Email',
+    'reset-sent': 'Check Your Inbox',
   };
 
   const stepSub: Record<Step, string> = {
     email: 'Enter your email to continue',
     password: mode === 'signin'
-      ? 'Enter your password to sign in'
+      ? 'Enter your password to log in'
       : mode === 'signup'
         ? 'Choose a password for your new account'
         : 'Enter your password to continue',
     verify: 'We sent a verification link to your email. Click it and come back here.',
+    'reset-sent': `A password reset link has been sent to\n${email}`,
   };
 
   return (
@@ -285,19 +301,6 @@ export default function EmailAuthScreen() {
                 <Text style={styles.changeText}>Change</Text>
               </TouchableOpacity>
 
-              {mode !== 'unknown' && (
-                <View style={[styles.modeBadge, { backgroundColor: mode === 'signin' ? 'rgba(34,197,94,0.12)' : 'rgba(254,76,17,0.12)' }]}>
-                  <Ionicons
-                    name={mode === 'signin' ? 'checkmark-circle-outline' : 'person-add-outline'}
-                    size={14}
-                    color={mode === 'signin' ? colors.status.success : colors.primary}
-                  />
-                  <Text style={[styles.modeBadgeText, { color: mode === 'signin' ? colors.status.success : colors.primary }]}>
-                    {mode === 'signin' ? 'Account found — sign in below' : 'New account — set your password'}
-                  </Text>
-                </View>
-              )}
-
               <View style={styles.fieldWrap}>
                 <AuthInput
                   label="Password"
@@ -323,9 +326,18 @@ export default function EmailAuthScreen() {
                 {loading
                   ? <ActivityIndicator color="#fff" />
                   : <Text style={styles.btnText}>
-                      {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Continue'}
+                      {mode === 'signin' ? 'Log In' : mode === 'signup' ? 'Sign Up' : 'Continue'}
                     </Text>
                 }
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.forgotBtn}
+                onPress={handleForgotPassword}
+                disabled={loading}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.forgotText}>Forgot Password?</Text>
               </TouchableOpacity>
             </>
           )}
@@ -364,6 +376,30 @@ export default function EmailAuthScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.altLinkText}>Use a different email</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {step === 'reset-sent' && (
+            <>
+              <View style={styles.verifyBox}>
+                <Ionicons name="mail-outline" size={52} color={colors.primary} style={{ marginBottom: 14 }} />
+                <Text style={styles.verifyTitle}>Reset link sent</Text>
+                <Text style={styles.verifyBody}>
+                  Check your inbox at{'\n'}
+                  <Text style={styles.verifyEmail}>{email}</Text>
+                </Text>
+                <Text style={styles.verifyHint}>
+                  Follow the link in the email to set a new password. You can then come back and log in.
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.btn}
+                onPress={() => { setStep('email'); setMode('unknown'); setPassword(''); }}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.btnText}>Back to Sign In</Text>
               </TouchableOpacity>
             </>
           )}
@@ -429,11 +465,6 @@ function createStyles(colors: AppColors) {
       fontSize: 13, fontFamily: 'Inter_400Regular',
     },
     changeText: { color: colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-    modeBadge: {
-      flexDirection: 'row', alignItems: 'center', gap: 6,
-      borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginBottom: 14,
-    },
-    modeBadgeText: { fontSize: 13, fontFamily: 'Inter_500Medium', flex: 1 },
     fieldWrap: { marginBottom: 8 },
     errorWrap: {
       flexDirection: 'row', alignItems: 'flex-start',
@@ -450,6 +481,12 @@ function createStyles(colors: AppColors) {
     btnDisabled: { opacity: 0.45 },
     btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
     checkingRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    forgotBtn: {
+      alignItems: 'center', paddingVertical: 14, marginTop: 4,
+    },
+    forgotText: {
+      color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold',
+    },
     verifyBox: {
       backgroundColor: colors.background.elevated,
       borderRadius: 18, padding: 24, alignItems: 'center',
