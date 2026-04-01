@@ -46,6 +46,8 @@
                         </dict>
                 </dict>
         </dict>
+        <key>UnityAdsGameId</key>
+        <string>6080041</string>
         <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
         <string>Elite eSports uses your location to find nearby tournaments and match you with local competitors.</string>
         <key>NSLocationWhenInUseUsageDescription</key>
