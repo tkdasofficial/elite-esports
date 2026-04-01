@@ -14,16 +14,13 @@ export interface Team {
   name:       string;
   tag:        string;
   slogan:     string;
-  avatar:     string;   // stored as numeric index string e.g. "0"–"9"
+  avatar:     string;
   code:       string;
   game:       string;
   created_by: string;
   created_at: string;
   team_members?: TeamMember[];
 }
-
-const MEMBER_SELECT = 'id, user_id, role, joined_at, users:profiles(username, name, avatar_url)';
-const TEAM_SELECT   = `id, name, tag, slogan, avatar, code, game, created_by, created_at, team_members(${MEMBER_SELECT})`;
 
 /** Generate a random 8-char uppercase alphanumeric code */
 function genCode(): string {
@@ -41,14 +38,68 @@ export function useMyTeam(userId?: string) {
   const fetchTeam = useCallback(async () => {
     if (!userId) { setLoading(false); return; }
     try {
-      const { data: membership } = await supabase
+      /* Step 1 — find which team this user belongs to */
+      const { data: membership, error: memErr } = await supabase
         .from('team_members')
-        .select(`team_id, role, joined_at, teams(${TEAM_SELECT})`)
+        .select('team_id, role, joined_at')
         .eq('user_id', userId)
         .maybeSingle();
 
-      setTeam(membership ? ((membership as any).teams ?? null) : null);
-    } catch {
+      if (memErr || !membership) {
+        setTeam(null);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+
+      /* Step 2 — fetch the team row */
+      const { data: teamRow, error: teamErr } = await supabase
+        .from('teams')
+        .select('id, name, tag, slogan, avatar, code, game, created_by, created_at')
+        .eq('id', membership.team_id)
+        .maybeSingle();
+
+      if (teamErr || !teamRow) {
+        setTeam(null);
+        setLoading(false);
+        setRefreshing(false);
+        return;
+      }
+
+      /* Step 3 — fetch all members of that team */
+      const { data: membersRaw } = await supabase
+        .from('team_members')
+        .select('id, user_id, role, joined_at')
+        .eq('team_id', teamRow.id);
+
+      const members = membersRaw ?? [];
+
+      /* Step 4 — fetch profiles for all members */
+      const userIds = members.map(m => m.user_id);
+      let profileMap: Record<string, { username: string | null; name: string | null; avatar_url?: string | null }> = {};
+
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, username, name, avatar_url')
+          .in('id', userIds);
+
+        (profiles ?? []).forEach(p => {
+          profileMap[p.id] = { username: p.username ?? null, name: p.name ?? null, avatar_url: p.avatar_url ?? null };
+        });
+      }
+
+      const teamMembers: TeamMember[] = members.map(m => ({
+        id:        m.id,
+        user_id:   m.user_id,
+        role:      m.role as 'captain' | 'member',
+        joined_at: m.joined_at,
+        users:     profileMap[m.user_id] ?? { username: null, name: null },
+      }));
+
+      setTeam({ ...(teamRow as Team), team_members: teamMembers });
+    } catch (err) {
+      console.error('fetchTeam error:', err);
       setTeam(null);
     }
     setLoading(false);
