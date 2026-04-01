@@ -102,7 +102,7 @@ export function useMyTeam(userId?: string) {
 
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
-          .from('profiles')
+          .from('users')
           .select('id, username, name, avatar_url')
           .in('id', userIds);
 
