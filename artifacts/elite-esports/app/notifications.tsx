@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
@@ -45,13 +46,18 @@ export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  function handleNotifPress(item: Notification) {
+    if (!item.is_read) markAsRead(item.id);
+    router.push({ pathname: '/notification/[id]', params: { id: item.id } });
+  }
+
   return (
     <View style={styles.container}>
       <ScreenHeader title="Notifications" />
       <FlatList
         data={notifications}
         keyExtractor={item => item.id}
-        renderItem={({ item }) => <NotifCard notif={item} onPress={() => markAsRead(item.id)} colors={colors} />}
+        renderItem={({ item }) => <NotifCard notif={item} onPress={() => handleNotifPress(item)} colors={colors} />}
         contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         ListHeaderComponent={

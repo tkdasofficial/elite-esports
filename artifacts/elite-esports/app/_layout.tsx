@@ -42,6 +42,7 @@ function RootLayoutNav() {
       <Stack.Screen name="support" />
       <Stack.Screen name="my-matches" />
       <Stack.Screen name="my-team" />
+      <Stack.Screen name="notification/[id]" />
       <Stack.Screen name="terms" />
       <Stack.Screen name="privacy" />
       <Stack.Screen name="about" />
