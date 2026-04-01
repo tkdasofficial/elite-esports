@@ -51,7 +51,7 @@ export default function MatchDetailScreen() {
   const { match, loading, hasJoined, joining, joinMatch } = useMatchDetail(id, user?.id);
   const { adConfig, setInLiveMatch } = useAds();
   const { gateAction, overlay, dismiss } = useAdGate();
-  const { colors }               = useTheme();
+  const { colors, isDark }        = useTheme();
   const styles                   = useMemo(() => createStyles(colors), [colors]);
 
   const [claimLoading,   setClaimLoading]   = useState(false);
@@ -210,8 +210,10 @@ export default function MatchDetailScreen() {
           )}
 
           <LinearGradient
-            colors={['rgba(0,0,0,0.55)', 'transparent', 'rgba(0,0,0,0.80)']}
-            locations={[0, 0.4, 1]}
+            colors={isDark
+              ? ['rgba(0,0,0,0.30)', 'transparent', 'rgba(0,0,0,0.20)']
+              : ['rgba(0,0,0,0.18)', 'transparent', 'rgba(0,0,0,0.12)']}
+            locations={[0, 0.5, 1]}
             style={StyleSheet.absoluteFill}
           />
 
@@ -229,18 +231,21 @@ export default function MatchDetailScreen() {
             {match.status === 'ongoing' && <View style={styles.livePulse} />}
             <Text style={styles.statusText}>{cfg.label}</Text>
           </View>
-
-          {/* Game + Title on banner */}
-          <View style={styles.bannerFooter}>
-            {match.game ? (
-              <Text style={styles.bannerGame}>{match.game.toUpperCase()}</Text>
-            ) : null}
-            <Text style={styles.bannerTitle} numberOfLines={2}>{match.title}</Text>
-          </View>
         </View>
 
         {/* ── Body ── */}
         <View style={styles.body}>
+
+          {/* ── Game Tag + Title ── */}
+          <View style={styles.titleSection}>
+            {match.game ? (
+              <View style={styles.gameTagBadge}>
+                <Ionicons name="game-controller-outline" size={11} color={colors.primary} />
+                <Text style={styles.gameTagText}>{match.game.toUpperCase()}</Text>
+              </View>
+            ) : null}
+            <Text style={styles.matchTitle}>{match.title}</Text>
+          </View>
 
           {/* ── Prize Pool + Entry Fee Hero Card ── */}
           <View style={styles.prizeCard}>
@@ -619,22 +624,29 @@ function createStyles(colors: AppColors) {
     livePulse: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff' },
     statusText: { color: '#fff', fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
 
-    /* Banner footer (game + title) — always over dark gradient */
-    bannerFooter: {
-      position: 'absolute', bottom: 0, left: 0, right: 0,
-      paddingHorizontal: 16, paddingBottom: 14, paddingTop: 24,
-    },
-    bannerGame: {
-      fontSize: 10, fontFamily: 'Inter_700Bold',
-      color: colors.primary, letterSpacing: 2, marginBottom: 4,
-    },
-    bannerTitle: {
-      fontSize: 20, fontFamily: 'Inter_700Bold',
-      color: '#FFFFFF', lineHeight: 26,
-    },
-
     /* Body */
     body: { paddingHorizontal: 16, paddingTop: 16 },
+
+    /* ── Title Section ── */
+    titleSection: {
+      marginBottom: 16, gap: 8,
+    },
+    gameTagBadge: {
+      flexDirection: 'row', alignItems: 'center', gap: 5,
+      alignSelf: 'flex-start',
+      backgroundColor: colors.background.card,
+      borderWidth: 1, borderColor: colors.primary + '55',
+      borderRadius: 20,
+      paddingHorizontal: 10, paddingVertical: 5,
+    },
+    gameTagText: {
+      fontSize: 10, fontFamily: 'Inter_700Bold',
+      color: colors.primary, letterSpacing: 1.5,
+    },
+    matchTitle: {
+      fontSize: 22, fontFamily: 'Inter_700Bold',
+      color: colors.text.primary, lineHeight: 30,
+    },
 
     /* ── Prize + Fee Hero Card ── */
     prizeCard: {

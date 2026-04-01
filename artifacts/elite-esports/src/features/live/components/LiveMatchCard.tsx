@@ -9,7 +9,7 @@ import { Match } from '@/utils/types';
 interface Props { match: Match; }
 
 export function LiveMatchCard({ match }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (
@@ -28,7 +28,10 @@ export function LiveMatchCard({ match }: Props) {
             <Text style={styles.placeholderText}>No banner available</Text>
           </View>
         )}
-        <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.bannerGradient}>
+        <LinearGradient
+          colors={isDark ? ['transparent', 'rgba(0,0,0,0.50)'] : ['transparent', 'rgba(0,0,0,0.32)']}
+          style={styles.bannerGradient}
+        >
           <View style={styles.liveBadge}>
             <View style={styles.liveDot} />
             <Text style={styles.liveBadgeText}>LIVE</Text>

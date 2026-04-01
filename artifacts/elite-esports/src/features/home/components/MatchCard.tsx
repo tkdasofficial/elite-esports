@@ -17,7 +17,7 @@ interface Props {
 }
 
 export function MatchCard({ match, onPress }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
   const cfg       = STATUS_CONFIG[match.status] ?? STATUS_CONFIG.upcoming;
   const isOngoing = match.status === 'ongoing';
@@ -45,13 +45,15 @@ export function MatchCard({ match, onPress }: Props) {
           />
         ) : (
           <View style={[StyleSheet.absoluteFill, styles.placeholder]}>
-            <Ionicons name="game-controller-outline" size={36} color="#333" />
+            <Ionicons name="game-controller-outline" size={36} color={colors.border.default} />
           </View>
         )}
 
         <LinearGradient
-          colors={['transparent', 'rgba(0,0,0,0.65)']}
-          locations={[0.35, 1]}
+          colors={isDark
+            ? ['transparent', 'rgba(0,0,0,0.42)']
+            : ['transparent', 'rgba(0,0,0,0.28)']}
+          locations={[0.4, 1]}
           style={StyleSheet.absoluteFill}
         />
 
@@ -74,7 +76,7 @@ export function MatchCard({ match, onPress }: Props) {
         <View style={styles.titleRow}>
           <Text style={styles.title} numberOfLines={1}>{match.title}</Text>
           <View style={styles.playersWrap}>
-            <Ionicons name="people-outline" size={12} color="#888" />
+            <Ionicons name="people-outline" size={12} color={colors.text.secondary} />
             <Text style={styles.playersText}>
               {match.players_joined}/{match.max_players}
             </Text>
@@ -119,14 +121,14 @@ export function MatchCard({ match, onPress }: Props) {
 function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColors>) {
   return StyleSheet.create({
     card: {
-      backgroundColor: '#111',
+      backgroundColor: colors.background.card,
       borderRadius: 16, overflow: 'hidden',
-      borderWidth: 1, borderColor: '#222',
+      borderWidth: 1, borderColor: colors.border.default,
     },
     cardPressed: { opacity: 0.88, transform: [{ scale: 0.985 }] },
 
-    bannerWrap: { width: '100%', overflow: 'hidden', backgroundColor: '#0D0D0D' },
-    placeholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: '#151515' },
+    bannerWrap: { width: '100%', overflow: 'hidden', backgroundColor: colors.background.dark },
+    placeholder: { alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background.dark },
 
     statusBadge: {
       position: 'absolute', top: 10, right: 10,
@@ -139,12 +141,12 @@ function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColo
     gameTag: {
       position: 'absolute', top: 10, left: 12,
       fontSize: 10, fontFamily: 'Inter_700Bold',
-      color: 'rgba(255,255,255,0.6)', textTransform: 'uppercase', letterSpacing: 1.2,
+      color: 'rgba(255,255,255,0.75)', textTransform: 'uppercase', letterSpacing: 1.2,
     },
 
     infoStrip: {
       paddingHorizontal: 14, paddingTop: 11, paddingBottom: 13,
-      gap: 9, backgroundColor: '#111',
+      gap: 9, backgroundColor: colors.background.card,
     },
 
     /* Row 1: title + players */
@@ -152,12 +154,12 @@ function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColo
       flexDirection: 'row', alignItems: 'center',
     },
     title: {
-      flex: 1, fontSize: 15, fontFamily: 'Inter_700Bold', color: '#FFFFFF',
+      flex: 1, fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.text.primary,
     },
     playersWrap: {
       flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0,
     },
-    playersText: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#888' },
+    playersText: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.secondary },
 
     /* Row 2: fee + prize + details */
     bottomRow: {
