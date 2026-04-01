@@ -29,10 +29,11 @@ export async function submitDeposit(amount: number, utr: string): Promise<void> 
   const userId = await getCurrentUserId();
 
   const { error } = await supabase.from('payments').insert({
-    user_id: userId,
+    user_id:        userId,
     amount,
-    utr:     utr.trim(),
-    status:  'pending',
+    utr:            utr.trim(),
+    screenshot_url: '',
+    status:         'pending',
   });
 
   if (error) {
