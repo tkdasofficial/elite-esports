@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, Alert, ActivityIndicator,
+  ScrollView, Alert, ActivityIndicator, Modal, Pressable,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { SkeletonBar } from '@/components/SkeletonBar';
 import { router } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
@@ -18,6 +19,8 @@ import type { AppColors } from '@/utils/colors';
 const AVATAR_SIZE = 68;
 const AVATAR_GAP = 10;
 
+type LinkedGame = { game_id?: string; game: string; uid: string; inGameName?: string };
+
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const { profile, loading, fetchError, save } = useProfileCtx();
@@ -27,9 +30,15 @@ export default function EditProfileScreen() {
   const [name, setName] = useState('');
   const [username, setUsername] = useState('');
   const [avatarIndex, setAvatarIndex] = useState(0);
-  const [games, setGames] = useState<{ game_id?: string; game: string; uid: string; inGameName?: string }[]>([]);
+  const [games, setGames] = useState<LinkedGame[]>([]);
   const [saving, setSaving] = useState(false);
   const [showAddGame, setShowAddGame] = useState(false);
+
+  // Edit game modal state
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editIGN, setEditIGN] = useState('');
+  const [editUID, setEditUID] = useState('');
+  const editUIDRef = useRef<TextInput>(null);
 
   const initialized = useRef(false);
   useEffect(() => {
@@ -79,12 +88,35 @@ export default function EditProfileScreen() {
     setGames(prev => [...prev, { game_id, game, uid, inGameName }]);
   };
 
-  const handleRemoveGame = (index: number) => {
-    Alert.alert('Remove Game', 'Remove this game from your profile?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => setGames(prev => prev.filter((_, i) => i !== index)) },
-    ]);
+  // Open the edit modal for a game
+  const openEditGame = (index: number) => {
+    const g = games[index];
+    setEditingIndex(index);
+    setEditIGN(g.inGameName ?? '');
+    setEditUID(g.uid);
   };
+
+  // Save edits from the modal
+  const handleSaveEdit = () => {
+    if (editingIndex === null) return;
+    const trimIGN = editIGN.trim();
+    const trimUID = editUID.trim();
+    if (!trimUID) return;
+    setGames(prev => prev.map((g, i) =>
+      i === editingIndex ? { ...g, inGameName: trimIGN || undefined, uid: trimUID } : g
+    ));
+    setEditingIndex(null);
+  };
+
+  // Remove from the edit modal — no Alert needed
+  const handleRemoveGame = () => {
+    if (editingIndex === null) return;
+    setGames(prev => prev.filter((_, i) => i !== editingIndex));
+    setEditingIndex(null);
+  };
+
+  const editingGame = editingIndex !== null ? games[editingIndex] : null;
+  const editCanSave = editUID.trim().length > 0;
 
   const columns = Array.from({ length: Math.ceil(AVATAR_COUNT / 2) }, (_, col) =>
     [col * 2, col * 2 + 1].filter(i => i < AVATAR_COUNT)
@@ -214,7 +246,12 @@ export default function EditProfileScreen() {
         ) : (
           <>
             {games.map((g, i) => (
-              <View key={`${g.game}-${i}`} style={styles.gameRow}>
+              <TouchableOpacity
+                key={`${g.game}-${i}`}
+                style={styles.gameRow}
+                onPress={() => openEditGame(i)}
+                activeOpacity={0.75}
+              >
                 <View style={styles.gameIconBox}>
                   <Ionicons name="game-controller-outline" size={17} color={colors.primary} />
                 </View>
@@ -229,10 +266,11 @@ export default function EditProfileScreen() {
                     <Text style={styles.gameUID} numberOfLines={1}>UID: {g.uid}</Text>
                   )}
                 </View>
-                <TouchableOpacity onPress={() => handleRemoveGame(i)} style={styles.removeBtn} activeOpacity={0.7}>
-                  <Ionicons name="close-circle" size={22} color={colors.status.error} />
-                </TouchableOpacity>
-              </View>
+                <View style={styles.editChip}>
+                  <Feather name="edit-2" size={12} color={colors.primary} />
+                  <Text style={styles.editChipText}>Edit</Text>
+                </View>
+              </TouchableOpacity>
             ))}
             <TouchableOpacity
               onPress={() => setShowAddGame(true)}
@@ -263,12 +301,105 @@ export default function EditProfileScreen() {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* ── Add Game Modal ── */}
       <AddGameModal
         visible={showAddGame}
         existingGames={games}
         onClose={() => setShowAddGame(false)}
         onAdd={handleAddGame}
       />
+
+      {/* ── Edit Game Modal ── */}
+      <Modal
+        visible={editingIndex !== null}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setEditingIndex(null)}
+      >
+        <Pressable style={styles.overlay} onPress={() => setEditingIndex(null)}>
+          <Pressable style={styles.editSheet} onPress={() => {}}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            >
+              {/* Handle bar */}
+              <View style={styles.sheetHandle} />
+
+              {/* Header */}
+              <View style={styles.sheetHeader}>
+                <View style={styles.sheetHeaderIcon}>
+                  <Ionicons name="game-controller-outline" size={18} color={colors.primary} />
+                </View>
+                <Text style={styles.sheetTitle} numberOfLines={1}>
+                  {editingGame?.game ?? ''}
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setEditingIndex(null)}
+                  style={styles.sheetClose}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                >
+                  <Feather name="x" size={17} color={colors.text.primary} />
+                </TouchableOpacity>
+              </View>
+
+              {/* In-game Name */}
+              <Text style={styles.fieldLabel}>In-game Name</Text>
+              <View style={styles.fieldInput}>
+                <Ionicons name="person-outline" size={16} color={colors.text.muted} style={{ marginRight: 10 }} />
+                <TextInput
+                  style={styles.fieldInputText}
+                  value={editIGN}
+                  onChangeText={setEditIGN}
+                  placeholder="Your in-game username / gamertag"
+                  placeholderTextColor={colors.text.muted}
+                  autoFocus
+                  autoCapitalize="none"
+                  returnKeyType="next"
+                  onSubmitEditing={() => editUIDRef.current?.focus()}
+                />
+              </View>
+
+              {/* Player UID */}
+              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Player UID</Text>
+              <View style={styles.fieldInput}>
+                <Ionicons name="key-outline" size={16} color={colors.text.muted} style={{ marginRight: 10 }} />
+                <TextInput
+                  ref={editUIDRef}
+                  style={styles.fieldInputText}
+                  value={editUID}
+                  onChangeText={setEditUID}
+                  placeholder="Your unique player ID"
+                  placeholderTextColor={colors.text.muted}
+                  autoCapitalize="none"
+                  returnKeyType="done"
+                  onSubmitEditing={handleSaveEdit}
+                />
+              </View>
+
+              {/* Save button */}
+              <TouchableOpacity
+                style={[styles.saveEditBtn, !editCanSave && styles.disabled]}
+                onPress={handleSaveEdit}
+                disabled={!editCanSave}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
+                <Text style={styles.saveEditBtnText}>Save Changes</Text>
+              </TouchableOpacity>
+
+              {/* Remove button */}
+              <TouchableOpacity
+                style={styles.removeGameBtn}
+                onPress={handleRemoveGame}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="trash-outline" size={16} color={colors.status.error} />
+                <Text style={styles.removeGameBtnText}>Remove Game</Text>
+              </TouchableOpacity>
+            </KeyboardAvoidingView>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -371,7 +502,14 @@ function createStyles(colors: AppColors) {
     },
     gameName: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary },
     gameUID: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.secondary, marginTop: 2 },
-    removeBtn: { padding: 2 },
+    editChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+      backgroundColor: colors.primary + '15',
+      borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6,
+      borderWidth: 1, borderColor: colors.primary + '30',
+    },
+    editChipText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.primary },
+
     addMoreBtn: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
       gap: 6, paddingVertical: 12,
@@ -385,7 +523,72 @@ function createStyles(colors: AppColors) {
       gap: 8, backgroundColor: colors.primary,
       borderRadius: 14, height: 54, marginTop: 32,
     },
-    disabled: { opacity: 0.6 },
+    disabled: { opacity: 0.45 },
     saveBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
+
+    // Edit game modal
+    overlay: {
+      flex: 1, backgroundColor: 'rgba(0,0,0,0.65)',
+      justifyContent: 'flex-end',
+    },
+    editSheet: {
+      backgroundColor: colors.background.card,
+      borderTopLeftRadius: 24, borderTopRightRadius: 24,
+      paddingHorizontal: 20, paddingBottom: 32, paddingTop: 8,
+      borderWidth: 1, borderBottomWidth: 0, borderColor: colors.border.default,
+    },
+    sheetHandle: {
+      width: 40, height: 4, borderRadius: 2,
+      backgroundColor: colors.border.default,
+      alignSelf: 'center', marginBottom: 16,
+    },
+    sheetHeader: {
+      flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 22,
+    },
+    sheetHeaderIcon: {
+      width: 38, height: 38, borderRadius: 11,
+      backgroundColor: colors.primary + '1F',
+      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    },
+    sheetTitle: {
+      flex: 1, fontSize: 17, fontFamily: 'Inter_700Bold', color: colors.text.primary,
+    },
+    sheetClose: {
+      width: 30, height: 30, borderRadius: 15,
+      backgroundColor: colors.background.elevated,
+      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    },
+
+    fieldLabel: {
+      fontSize: 11, fontFamily: 'Inter_600SemiBold',
+      color: colors.text.muted, textTransform: 'uppercase',
+      letterSpacing: 1, marginBottom: 8,
+    },
+    fieldInput: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.background.elevated,
+      borderRadius: 12, borderWidth: 1, borderColor: colors.border.default,
+      paddingHorizontal: 14, height: 52,
+    },
+    fieldInputText: {
+      flex: 1, color: colors.text.primary,
+      fontSize: 15, fontFamily: 'Inter_400Regular',
+    },
+
+    saveEditBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 8, backgroundColor: colors.primary,
+      borderRadius: 14, height: 52, marginTop: 24,
+    },
+    saveEditBtnText: { color: '#fff', fontSize: 15, fontFamily: 'Inter_700Bold' },
+
+    removeGameBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 8, height: 48, marginTop: 10,
+      borderRadius: 14, borderWidth: 1,
+      borderColor: colors.status.error + '40',
+      backgroundColor: colors.status.error + '10',
+    },
+    removeGameBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.status.error },
   });
 }
