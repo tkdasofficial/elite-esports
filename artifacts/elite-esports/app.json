@@ -3,7 +3,7 @@
     "name": "Elite eSports",
     "slug": "elite-esports",
     "version": "1.0.0",
-    "owner": "avzio",
+    "owner": "avzio-global",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "elite-esports",
@@ -68,7 +68,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "6a10f6c8-fa7b-46be-bb86-98328356c220"
+        "projectId": "a86b7485-3bf3-4ece-b0eb-c28c9fc4f26d"
       }
     },
     "experiments": {
