@@ -1,87 +1,82 @@
-# Elite eSports — Replit Project
+<!--
+████████████████████████████████████████████████████████████████████████████████
+██                                                                            ██
+██   PACKAGE MANAGER: npm ONLY — pnpm IS PERMANENTLY AND COMPLETELY BANNED   ██
+██                                                                            ██
+██   NEVER run:  pnpm install / pnpm add / pnpm run / pnpm <anything>        ██
+██   NEVER use:  pnpm-lock.yaml / pnpm-workspace.yaml                        ██
+██   ALWAYS use: npm install / npm run / npm add / npm ci                    ██
+██                                                                            ██
+██   This is NON-NEGOTIABLE. It overrides every framework default,           ██
+██   every skill, every template, and every AI suggestion.                   ██
+██                                                                            ██
+████████████████████████████████████████████████████████████████████████████████
+-->
+
+# CRITICAL — READ BEFORE ANYTHING ELSE
+
+## RULE #1: npm ONLY — pnpm IS BANNED FOREVER
+
+**THIS IS THE MOST IMPORTANT RULE IN THIS PROJECT.**
+
+| What you want to do | Correct command |
+|---|---|
+| Install all dependencies | `npm install --legacy-peer-deps` |
+| Install in `artifacts/elite-esports/` | `cd artifacts/elite-esports && npm install --legacy-peer-deps` |
+| Add a new package | `npm add <package>` |
+| Run a script | `npm run <script>` |
+| Clean install (CI) | `npm ci` |
+
+**NEVER do any of these — ever:**
+- `pnpm install` — BANNED
+- `pnpm add` — BANNED
+- `pnpm run` — BANNED
+- `pnpm exec` — BANNED
+- any `pnpm` command — BANNED
+- create `pnpm-lock.yaml` — BANNED
+- create `pnpm-workspace.yaml` — BANNED
+
+> This rule is enforced in `AGENTS.md` Rule 5 and `.npmrc`. See both files.
 
 ---
 
-> **ALL AI AGENTS: Read `AGENTS.md` at the project root before touching anything.**
-> It contains mandatory rules that override all other guidance.
+## RULE #2: SUPABASE IS THE SOLE, PERMANENT BACKEND — NON-NEGOTIABLE
 
----
-
-## ══ SUPER COMMAND #1 — PACKAGE MANAGER: NPM ONLY, PNPM BANNED ══
-
-**PNPM IS PERMANENTLY AND IRREVOCABLY BANNED FROM THIS PROJECT.**
-
-- **NEVER** run `pnpm install`, `pnpm add`, `pnpm run`, or any pnpm command
-- **NEVER** create `pnpm-lock.yaml` or `pnpm-workspace.yaml`
-- **ALWAYS** use `npm install`, `npm run`, `npm add`, `npm ci`
-- Install packages inside `artifacts/elite-esports/` using `npm install`
-- This rule applies to all AI agents, developers, bots, and CI scripts without exception
-
-> See `AGENTS.md` Rule 5 and `.npmrc` for full enforcement details.
-
----
-
-## ══ SUPER COMMAND #2 — INVIOLABLE RULE FOR ALL AI TOOLS ══
-
-### SUPABASE IS THE SOLE, PERMANENT, AND AUTHORITATIVE BACKEND. THIS IS NON-NEGOTIABLE.
-
-**NEVER DO ANY OF THE FOLLOWING — EVER, UNDER ANY CIRCUMSTANCES:**
-- Create, suggest, or scaffold any local or remote database schema
+**NEVER DO:**
+- Create any local/remote database schema outside Supabase
 - Use `lib/db/`, Drizzle, Prisma, or any ORM for mobile app features
 - Use Replit PostgreSQL, Neon, or any other database for app data
-- Replace or wrap Supabase Auth with any other authentication system
-- Create Express routes, API routes, or any backend server to proxy Supabase
+- Replace or wrap Supabase Auth with any other auth system
+- Create Express routes or API routes to proxy Supabase
 - Move Supabase queries from the mobile app into a server layer
-- Run `drizzle-kit push` or any DDL targeting anything except the Supabase SQL Editor
+- Run `drizzle-kit push` or any DDL outside the Supabase SQL Editor
 
-**ALWAYS DO THE FOLLOWING:**
-- Query data via the `supabase` client from `@/services/supabase`
-- Add new tables via SQL in **Supabase Dashboard → SQL Editor** only
+**ALWAYS DO:**
+- Query via the `supabase` client from `@/services/supabase`
+- Add tables via SQL in **Supabase Dashboard → SQL Editor** only
 - Use `supabase.auth.*` for all authentication
-- Use `supabase.from('table_name')` for all database reads and writes
+- Use `supabase.from('table_name')` for all reads/writes
 - Use `supabase.storage` for all file uploads
 - Use `supabase.channel()` for all real-time subscriptions
-- Reference `supabase/migrations/` for the canonical live schema
-
-**Why this rule exists:** This is a React Native / Expo mobile app. The Supabase project (`azxhcalksgudjemwjekd`) holds all production data, live user accounts, RLS policies, real-time channels, and file storage. Creating any alternative backend would destroy live data and break every feature in the app.
 
 ---
 
-## Overview
+# Elite eSports — Replit Project
+
 A professional React Native Expo mobile app (Android-first, web-previewed) for competitive eSports tournaments. Package: `com.elite.esports.android`, version 1.0.0 Alpha. Built with Expo Router v6, Supabase as the sole backend, and a fully modular feature-based architecture. All currencies in Indian Rupees (₹).
-
-## Latest Fixes (EAS Build Prep)
-
-### TypeScript / Build Errors Fixed
-- **FlashList v2 breaking change** — `estimatedItemSize` prop was removed in `@shopify/flash-list@2.0.2`; removed from both FlashList usages in `app/(tabs)/index.tsx` (was the sole TypeScript error blocking `tsc --noEmit`)
-- **Dead code removed** — deleted root-level `components/` and `constants/` folders which were duplicates of `src/components/` and `src/utils/` (path alias `@/*` maps to `src/*`; these were never imported)
-- **Unused packages removed** — `expo-image-picker` and `react-native-worklets` were in `package.json` but never imported anywhere in the codebase; both removed
-- **`react-native-keyboard-controller` plugin added** to `app.json` plugins array for proper native module autolinking during EAS Build
-- **`EXPO_PUBLIC_AD_TESTING`** env var now set in all `eas.json` build profiles: `"true"` for development/preview (test ads), `"false"` for production/production-apk (live AdMob ads)
-
-### Previous Phase 2 Upgrades
-- **Color tokens** updated: background `#080808`, card `#121212`, accent `#EE3D2D`
-- **GlobalHeader** — iOS BlurView, Pressable, haptic feedback on search/bell, red notification badge
-- **MatchCard** — 16:9 banner, bottom gradient overlay, prize tag with gold ₹, Pressable with press scale, haptics on tap
-- **Tab bar** — Reanimated spring scale + glow shadow on active icon, Pressable, no labels, active dot indicator
-- **FlashList** (`@shopify/flash-list@2.0.2`) replaces `FlatList` in Home screen
-- **SkeletonCard** shimmer component: Reanimated animated LinearGradient sweep, 4 placeholder slots while data loads
-- **`useMatches` offline-first**: AsyncStorage cache on mount (stale-while-revalidate), fresh Supabase fetch in background, real-time subscription active
 
 ## Replit Environment Setup
 
 The project runs on Replit with the Expo dev server via the `artifacts/elite-esports: expo` workflow. Package management uses **npm**. A `package-lock.json` is committed at the workspace root for EAS builds.
 
 ### Environment Variables
-Stored in Replit shared userenv and available at runtime. The app falls back to defaults in `supabase.config.ts` if these are not set:
+Stored in Replit shared userenv and available at runtime:
 
 | Variable | Description |
 |---|---|
 | `EXPO_PUBLIC_SUPABASE_URL` | Full Supabase project URL |
 | `EXPO_PUBLIC_SUPABASE_ANON_KEY` | Public anonymous/client API key |
 | `EXPO_PUBLIC_SUPABASE_PROJECT_ID` | Supabase project ID |
-
-> No service role key or secret key is stored in the app. Only the three public keys above are used.
 
 ## EAS Build Setup
 
@@ -91,67 +86,51 @@ Stored in Replit shared userenv and available at runtime. The app falls back to 
 
 **Notes:** The `artifacts/api-server` package is excluded from npm workspaces (esbuild version incompatibility). `.npmrc` uses `legacy-peer-deps=true`.
 
-**Android Gradle SDK versions** are explicitly set in `app.json` (`compileSdkVersion: 35`, `targetSdkVersion: 35`, `minSdkVersion: 24`) to prevent the "A problem occurred evaluating project ':app'" Gradle error on EAS build servers.
-
-**`expo-glass-effect` removed** from `package.json` — it was not used anywhere in the codebase, is iOS-only (`"platforms": ["apple"]`), and had an empty `"android": {}` in its `expo-module.config.json` that could trigger broken Android autolinking.
+**Android Gradle SDK versions** are explicitly set in `app.json` (`compileSdkVersion: 35`, `targetSdkVersion: 35`, `minSdkVersion: 24`).
 
 ## Android Native Project (Bare Workflow)
 
 The `android/` directory is **committed to the repo** (bare workflow). EAS detects this and skips `expo prebuild`, using the native files directly.
 
 Key files:
-- `android/build.gradle` — Root Gradle build file. Has an explicit `buildscript.ext` block with all SDK versions and `kotlinVersion = "2.0.21"`. This fixes `react-native-keyboard-controller`'s `build.gradle` which reads `rootProject.ext.kotlinVersion` during Gradle configuration. Without this, `kotlin_version` is `null` and Gradle fails with "A problem occurred evaluating project ':app'".
-- `android/gradle.properties` — Has `KeyboardController_*` fallback properties (used if `rootProject.ext.*` isn't set) and `newArchEnabled=true`.
-- `android/app/build.gradle` — App module Gradle file with namespace `com.elite.esports.android`, uses `rootProject.ext.*` for SDK versions.
-- `android/settings.gradle` — Auto-linking setup via Expo + React Native Gradle Plugin.
-- `android/app/src/main/java/com/elite/esports/android/` — `MainActivity.kt` and `MainApplication.kt`.
-
-**Important:** If `app.json` plugins are updated (e.g., adding native modules), run `expo prebuild --platform android` to regenerate the `android/` directory, then commit the changes.
-
+- `android/build.gradle` — Root Gradle build file with `kotlinVersion = "2.0.21"`
+- `android/gradle.properties` — `KeyboardController_*` fallback properties, `newArchEnabled=true`
+- `android/app/build.gradle` — namespace `com.elite.esports.android`
+- `android/settings.gradle` — Auto-linking via Expo + React Native Gradle Plugin
 
 ## Supabase Backend
 
-**Project ID:** `azxhcalksgudjemwjekd`  
+**Project ID:** `azxhcalksgudjemwjekd`
 **URL:** `https://azxhcalksgudjemwjekd.supabase.co`
-
-Supabase is the sole and permanent backend for all app data. The Replit PostgreSQL database is NOT used by the mobile app.
 
 ### Existing Tables (live in Supabase)
 | Table | Purpose |
 |---|---|
-| `users` | User profiles — columns: `id, name, username, avatar_url, created_at, updated_at` |
-| `admin_users` | Admin access list — columns: `user_id` |
-| `matches` | Tournament matches — columns: `id, game_id, title, entry_fee, prize_pool, max_players, joined_players, status, room_id, room_password, live_stream_url, created_at` |
-| `match_participants` | Who joined a match — columns: `id, match_id, user_id, joined_at` |
-| `match_results` | Result per match — columns: `id, match_id, user_id, rank, kills, points` |
-| `games` | Game titles — columns: `id, name, banner_url, status, created_at` |
-| `wallets` | User wallet — columns: `user_id, balance, updated_at` |
-| `wallet_transactions` | Ledger — columns: `id, user_id, type, amount, status, reference_id, created_at` |
-| `payments` | Deposit proofs — columns: `id, user_id, amount, utr, screenshot_url, status, ai_status, created_at` |
-| `withdrawals` | Withdrawal requests — columns: `id, user_id, amount, status, created_at` |
-| `notifications` | In-app notifications — columns: `id, user_id, title, message, is_read, created_at` |
-| `leaderboard` | Aggregate rankings — columns: `user_id, username, avatar_url, total_points, total_kills, matches_played` |
-| `user_games` | User's game UIDs — columns: `id, user_id, game_id, uid` |
-| `support_tickets` | Help tickets — columns: `id, user_id, message, status, created_at` |
-| `reports` | User reports — columns: `id, user_id, description, related_match_id, created_at` |
-| `ad_units` | Ad unit config — columns: `id, name, type, ad_unit_id, status` |
-| `ad_triggers` | Ad event config — columns: `id, trigger, ad_unit_id, enabled, cooldown_seconds` |
-| `ad_settings` | Global ad toggle — columns: `id, ads_enabled, default_cooldown` |
-| `user_roles` | Role assignments — columns: `id, user_id, role` |
+| `users` | User profiles — `id, name, username, avatar_url, created_at, updated_at` |
+| `admin_users` | Admin access list — `user_id` |
+| `matches` | Tournament matches — `id, game_id, title, entry_fee, prize_pool, max_players, joined_players, status, room_id, room_password, live_stream_url, created_at` |
+| `match_participants` | Who joined a match — `id, match_id, user_id, joined_at` |
+| `match_results` | Result per match — `id, match_id, user_id, rank, kills, points` |
+| `games` | Game titles — `id, name, banner_url, status, created_at` |
+| `wallets` | User wallet — `user_id, balance, updated_at` |
+| `wallet_transactions` | Ledger — `id, user_id, type, amount, status, reference_id, created_at` |
+| `payments` | Deposit proofs — `id, user_id, amount, utr, screenshot_url, status, ai_status, created_at` |
+| `withdrawals` | Withdrawal requests — `id, user_id, amount, status, created_at` |
+| `notifications` | In-app notifications — `id, user_id, title, message, is_read, created_at` |
+| `leaderboard` | Aggregate rankings — `user_id, username, avatar_url, total_points, total_kills, matches_played` |
+| `user_games` | User's game UIDs — `id, user_id, game_id, uid` |
+| `support_tickets` | Help tickets — `id, user_id, message, status, created_at` |
+| `reports` | User reports — `id, user_id, description, related_match_id, created_at` |
+| `ad_units` | Ad unit config — `id, name, type, ad_unit_id, status` |
+| `ad_triggers` | Ad event config — `id, trigger, ad_unit_id, enabled, cooldown_seconds` |
+| `ad_settings` | Global ad toggle — `id, ads_enabled, default_cooldown` |
+| `user_roles` | Role assignments — `id, user_id, role` |
 | `points_settings` | Kill/rank points values |
 | `app_settings` | Min/max deposit & withdraw amounts |
+| `teams` | Teams — `id, name, tag, game, created_by, created_at` |
+| `team_members` | Team membership — `id, team_id, user_id, role, joined_at` |
 
-### Tables Requiring Migration (run `supabase/migrations/002_missing_tables.sql` in Supabase SQL Editor)
-| Table | Used By |
-|---|---|
-| `teams` | My Team screen — create/view team |
-| `team_members` | My Team screen — member list with `users` join |
-| `broadcasts` | Admin Broadcast screen (inserts into `notifications`) |
-
-**IMPORTANT:** Run `supabase/migrations/002_missing_tables.sql` in Supabase Dashboard → SQL Editor before using the Teams or Admin Broadcast features.
-
-### DB Column Mapping (key adaptations in `dbAdapters.ts`)
-The app type `Match` uses friendly names; `adaptMatch()` maps DB columns:
+### DB Column Mapping (`dbAdapters.ts`)
 - `matches.joined_players` → `match.players_joined`
 - `matches.live_stream_url` → `match.stream_url`
 - `matches.game_id` + `games.name` → `match.game`
@@ -162,8 +141,8 @@ The app type `Match` uses friendly names; `adaptMatch()` maps DB columns:
 ```
 artifacts/
   elite-esports/       # Mobile app — @workspace/elite-esports
-  api-server/          # Express API server — @workspace/api-server (not used by mobile app)
-  mockup-sandbox/      # Vite canvas preview server — @workspace/mockup-sandbox
+  api-server/          # Express API server (NOT used by mobile app)
+  mockup-sandbox/      # Vite canvas preview server
 lib/
   db/                  # Drizzle ORM + Replit PostgreSQL (NOT used by mobile app)
 supabase/
@@ -172,64 +151,38 @@ supabase/
     002_missing_tables.sql  # Run this in Supabase SQL Editor!
 ```
 
-## Elite eSports Architecture
+## Elite eSports App Architecture
 
 ### Directory Layout
 ```
 artifacts/elite-esports/
-├── app/                          # Expo Router routes (routing only)
+├── app/                          # Expo Router routes
 │   ├── _layout.tsx               # Root layout — providers, fonts, navigation
-│   ├── index.tsx                 # Auth redirect (session check)
-│   ├── (auth)/                   # Unauthenticated screens
-│   │   ├── options.tsx           # Login / Sign Up choice
-│   │   ├── login.tsx
-│   │   └── signup.tsx
-│   ├── (tabs)/                   # 5-tab navigation
-│   │   ├── _layout.tsx           # Tab bar
-│   │   ├── index.tsx             # Home — tournament list
-│   │   ├── live.tsx              # Live matches
-│   │   ├── leaderboard.tsx       # Rankings
-│   │   ├── wallet.tsx            # Wallet & balance
-│   │   └── profile.tsx           # User profile
+│   ├── index.tsx                 # Auth redirect
+│   ├── (auth)/                   # Login / Sign Up screens
+│   ├── (tabs)/                   # 5-tab navigation (Home, Live, Leaderboard, Wallet, Profile)
 │   ├── admin/                    # Admin-only screens
-│   │   ├── _layout.tsx
-│   │   ├── index.tsx             # Admin dashboard
-│   │   ├── matches.tsx           # Create/manage matches
-│   │   ├── users.tsx             # User management
-│   │   ├── payments.tsx          # Payment approvals
-│   │   ├── withdrawals.tsx       # Withdrawal approvals
-│   │   ├── games.tsx             # Game management
-│   │   ├── reports.tsx           # View reports
-│   │   ├── support.tsx           # View support tickets
-│   │   ├── monetization.tsx      # Ad settings
-│   │   └── broadcast.tsx         # Send push notifications
 │   ├── match/[id].tsx            # Match detail + join
+│   ├── notification/[id].tsx     # Notification detail (full message view)
 │   ├── notifications.tsx
 │   ├── settings.tsx
 │   ├── edit-profile.tsx
 │   ├── add-money.tsx
 │   ├── withdraw.tsx
 │   ├── transaction-history.tsx
-│   ├── my-team.tsx               # Team management
+│   ├── my-team.tsx
 │   └── support.tsx
 │
 └── src/                          # All source modules
     ├── components/               # Shared UI components
-    ├── features/                 # Domain-specific modules
-    │   ├── home/hooks/useMatches.ts
-    │   ├── live/hooks/useLiveMatches.ts
-    │   ├── leaderboard/hooks/useLeaderboard.ts
-    │   ├── match/hooks/useMatchDetail.ts
-    │   ├── match/hooks/useMyMatches.ts   # uses match_participants
-    │   ├── profile/hooks/useProfile.ts   # users table (no updated_at issue)
-    │   └── team/hooks/useMyTeam.ts       # uses teams + team_members + users
+    ├── features/                 # Domain hooks per feature
     ├── services/
     │   ├── supabase.ts           # Supabase client (SecureStore adapter)
     │   ├── dbAdapters.ts         # adaptMatch(), matchToDbPayload()
-    │   └── NotificationService.ts  # Push permission, Android channels, token registration
+    │   └── NotificationService.ts
     ├── store/
-    │   ├── AuthContext.tsx        # Session, user, isAdmin (via admin_users)
-    │   ├── WalletContext.tsx      # Balance, realtime subscription
+    │   ├── AuthContext.tsx        # Session, user, isAdmin
+    │   ├── WalletContext.tsx      # Balance, realtime
     │   └── NotificationsContext.tsx
     └── utils/
         ├── colors.ts             # Design tokens
@@ -242,15 +195,15 @@ artifacts/elite-esports/
 ## Design System
 - **Primary color**: `#FE4C11` (orange-red)
 - **Background**: `#0A0A0A` (near-black)
-- **Font**: Inter (400, 500, 600, 700 weights via @expo-google-fonts/inter)
+- **Font**: Inter (400, 500, 600, 700 via @expo-google-fonts/inter)
 - **Theme**: Forced dark mode
 
-## EAS Build Profiles (`eas.json`)
+## EAS Build Profiles
 | Profile | Type | Output | Use |
 |---|---|---|---|
 | `development` | internal | debug APK | Dev/testing with dev client |
 | `preview` | internal | APK | Internal QA testing |
-| `production` | store | **AAB** | Play Store submission (standard) |
+| `production` | store | AAB | Play Store submission |
 | `production-apk` | internal | APK | Direct APK distribution |
 
 ## Key Tech Decisions
@@ -258,21 +211,13 @@ artifacts/elite-esports/
 - `expo-secure-store` → session persistence on native; localStorage adapter on web
 - React Compiler enabled
 - `adaptMatch()` / `matchToDbPayload()` bridge DB column names ↔ app type names
-- `support_tickets` — category + subject are encoded into the `message` field as `[Category] Subject\n\nMessage`
 - Admin check: `admin_users` table lookup on every auth state change
 
 ## Notification System
-- **expo-notifications ~0.32.16** installed and configured
-- **5 notification channels** on Android: Default, Match Alerts, Rewards, Tournaments, Account & Security — all HIGH importance
-- **Permission requested at app startup** (`initNotifications()` in `_layout.tsx`)
-- **Settings screen** shows real system permission status with "Open System Settings" link when blocked
-- **Notification preference toggles** (All, Match, Reward, Tournament, Account) stored in AsyncStorage — disabled when system permission denied
-- Push tokens registered via Expo push token system, stored in AsyncStorage
-
-## Location Permission
-- **expo-location ~19.0.8** installed with proper iOS `infoPlist` entries and Android permissions in `app.json`
-- iOS: `NSLocationWhenInUseUsageDescription` and `NSLocationAlwaysAndWhenInUseUsageDescription`
-- Android: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`
+- `expo-notifications ~0.32.16` installed and configured
+- 5 Android channels: Default, Match Alerts, Rewards, Tournaments, Account & Security — all HIGH importance
+- Permission requested at app startup (`initNotifications()` in `_layout.tsx`)
+- Notification detail screen at `app/notification/[id].tsx` — shows full title, message, timestamp, type
 
 ## Package Identity
 - **Android package**: `com.elite.esports.android`
@@ -281,4 +226,4 @@ artifacts/elite-esports/
 - **Version**: 1.0.0 (versionCode 1)
 
 ## Workflows
-- `artifacts/elite-esports: expo` — Expo dev server (`@workspace/elite-esports`, port `$PORT`, default 8080)
+- `artifacts/elite-esports: expo` — Expo dev server (port `$PORT`, default 8080)

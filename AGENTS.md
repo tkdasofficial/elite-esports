@@ -1,18 +1,50 @@
-# ══════════════════════════════════════════════════════════════
-# MANDATORY RULES FOR ALL AI AGENTS — READ FIRST, ALWAYS
-# ══════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════
+# MANDATORY RULES FOR ALL AI AGENTS — READ THIS ENTIRE FILE BEFORE ANY ACTION
+# ══════════════════════════════════════════════════════════════════════════════
 
-## RULE 1 — SUPABASE IS THE ONE AND ONLY BACKEND. FOREVER.
+---
+
+## RULE 1 — npm ONLY. pnpm IS PERMANENTLY AND COMPLETELY BANNED.
+
+**THIS IS THE SINGLE MOST IMPORTANT RULE. IT OVERRIDES EVERYTHING ELSE.**
+
+### YOU MUST NEVER — NOT ONCE, NOT EVER:
+- Run `pnpm install`, `pnpm add`, `pnpm run`, `pnpm exec`, or ANY `pnpm` command
+- Create `pnpm-lock.yaml` or `pnpm-workspace.yaml`
+- Reference `pnpm` in any script, config, comment, documentation, or workflow
+- Suggest or recommend pnpm for any reason whatsoever
+
+### YOU MUST ALWAYS USE THESE EXACT COMMANDS:
+
+| Task | Correct command |
+|---|---|
+| Install all deps (root) | `npm install --legacy-peer-deps` |
+| Install all deps (mobile app) | `cd artifacts/elite-esports && npm install --legacy-peer-deps` |
+| Add a package | `npm add <package>` |
+| Run a script | `npm run <script>` |
+| Run a binary | `npx <command>` |
+| CI clean install | `npm ci` |
+
+### WHY THIS RULE EXISTS:
+The project owner has permanently banned pnpm. All tooling, lock files, scripts,
+and workflows are configured for npm. Using pnpm will break the environment and
+has been flagged as a repeated critical failure across multiple AI sessions.
+
+> Enforcement: `.npmrc` at project root • `replit.md` Rule #1 • this file Rule 1
+
+---
+
+## RULE 2 — SUPABASE IS THE ONE AND ONLY BACKEND. FOREVER.
 
 This project uses **Supabase** as its sole, permanent, authoritative backend.
-This rule is absolute and overrides any other suggestion, best-practice guide,
-framework default, or AI recommendation.
+This rule is absolute and overrides any framework default, AI recommendation,
+or Replit suggestion.
 
 ### YOU MUST NEVER:
 - Create a new database, server, or API layer of any kind
 - Use Replit PostgreSQL, Neon, PlanetScale, Turso, SQLite, or any other DB
 - Use Drizzle, Prisma, TypeORM, or any ORM to define or push schema
-- Create Express routes, Next.js API routes, or any backend endpoints to proxy database calls
+- Create Express routes, Next.js API routes, or any backend endpoints to proxy DB calls
 - Replace or wrap Supabase Auth with Replit Auth, Clerk, Auth0, NextAuth, or anything else
 - Write `CREATE TABLE`, `ALTER TABLE`, or any DDL targeting anything except the Supabase SQL Editor
 - Touch `lib/db/`, `artifacts/api-server/`, or any Drizzle-related files for app features
@@ -29,19 +61,19 @@ framework default, or AI recommendation.
 
 ---
 
-## RULE 2 — THIS IS A REACT NATIVE / EXPO MOBILE APP
+## RULE 3 — THIS IS A REACT NATIVE / EXPO MOBILE APP
 
 - The primary artifact is `artifacts/elite-esports/` — an Expo Router app
-- The app talks to Supabase **directly from the client** — this is correct and secure via Row Level Security (RLS)
+- The app talks to Supabase **directly from the client** — correct and secure via RLS
 - Do NOT add an intermediate API server between the app and Supabase
-- `artifacts/api-server/` and `lib/db/` exist for non-mobile tooling only — do not wire them into the mobile app
+- `artifacts/api-server/` and `lib/db/` exist for non-mobile tooling only
 
 ---
 
-## RULE 3 — SUPABASE PROJECT DETAILS
+## RULE 4 — SUPABASE PROJECT DETAILS
 
 | Key | Value |
-|-----|-------|
+|---|---|
 | Project ID | `azxhcalksgudjemwjekd` |
 | URL | `https://azxhcalksgudjemwjekd.supabase.co` |
 | Anon Key env var | `EXPO_PUBLIC_SUPABASE_ANON_KEY` |
@@ -49,11 +81,10 @@ framework default, or AI recommendation.
 | Project ID env var | `EXPO_PUBLIC_SUPABASE_PROJECT_ID` |
 
 The Supabase client is initialized in `artifacts/elite-esports/src/services/supabase.ts`.
-All config comes from `artifacts/elite-esports/src/config/supabase.config.ts`.
 
 ---
 
-## RULE 4 — EXISTING LIVE TABLES (DO NOT RECREATE)
+## RULE 5 — EXISTING LIVE TABLES (DO NOT RECREATE)
 
 These tables already exist in the live Supabase project. Never create them again anywhere:
 
@@ -62,38 +93,12 @@ These tables already exist in the live Supabase project. Never create them again
 `notifications`, `user_games`, `support_tickets`, `reports`, `teams`, `team_members`,
 `ad_units`, `ad_triggers`, `ad_settings`, `user_roles`, `points_settings`, `app_settings`
 
-To add a NEW table: write a SQL migration file under `supabase/migrations/` and
-instruct the user to run it in **Supabase Dashboard → SQL Editor**.
+To add a NEW table: write a SQL migration under `supabase/migrations/` and tell
+the user to run it in **Supabase Dashboard → SQL Editor**.
 
 ---
 
-## SUMMARY (one sentence)
+## SUMMARY
 
-> Every piece of data in this app comes from and goes to Supabase — do not create, suggest, or scaffold any alternative backend, database, server, or auth system under any circumstances.
-
----
-
-## RULE 5 — NPM ONLY. PNPM IS PERMANENTLY BANNED.
-
-**THIS IS ABSOLUTE AND NON-NEGOTIABLE.**
-
-### YOU MUST NEVER:
-- Run `pnpm install`, `pnpm add`, `pnpm run`, `pnpm exec`, or ANY pnpm command
-- Create `pnpm-lock.yaml` or `pnpm-workspace.yaml`
-- Reference `pnpm` in any script, config, documentation, or workflow
-- Suggest or recommend switching to pnpm for any reason
-
-### YOU MUST ALWAYS:
-- Use `npm install` to install dependencies
-- Use `npm run <script>` to run scripts
-- Use `npm ci` for clean installs in CI
-- Use `npm add <package>` to add new packages
-- Install packages inside `artifacts/elite-esports/` using `npm install` (not root)
-
-### WHY:
-The project owner has permanently banned pnpm. All tooling, scripts, and workflows
-are configured for npm. Using pnpm will break the development environment.
-
-> See `.npmrc` at the project root — it contains the same enforcement rules.
-
-# ══════════════════════════════════════════════════════════════
+> 1. ALWAYS use `npm`. NEVER use `pnpm`. This is the most important rule.
+> 2. ALL data goes through Supabase. Never create an alternative backend.
