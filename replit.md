@@ -1,23 +1,85 @@
 <!--
 ████████████████████████████████████████████████████████████████████████████████
 ██                                                                            ██
-██   PACKAGE MANAGER: npm ONLY — pnpm IS PERMANENTLY AND COMPLETELY BANNED   ██
+██         TERMS OF USE — READ BEFORE ANY ACTION IN THIS REPOSITORY          ██
+██         Applies to ALL AI agents, developers, bots, and CI scripts        ██
 ██                                                                            ██
-██   NEVER run:  pnpm install / pnpm add / pnpm run / pnpm <anything>        ██
-██   NEVER use:  pnpm-lock.yaml / pnpm-workspace.yaml                        ██
-██   ALWAYS use: npm install / npm run / npm add / npm ci                    ██
+██  ┌─────────────────────────────────────────────────────────────────────┐  ██
+██  │ RULE 1 · BACKEND: SUPABASE ONLY                                     │  ██
+██  │   - No other backend, database service, or data layer is permitted  │  ██
+██  │   - Use supabase client from @/services/supabase for ALL data       │  ██
+██  │   - Schema changes go to Supabase Dashboard → SQL Editor ONLY       │  ██
+██  ├─────────────────────────────────────────────────────────────────────┤  ██
+██  │ RULE 2 · NO LOCAL DATABASE — ALL LOCAL/ALTERNATIVE DBs BANNED       │  ██
+██  │   BANNED: Replit PostgreSQL, Replit Database (key-value),           │  ██
+██  │           AI-created databases, Replit Agent databases,             │  ██
+██  │           SQLite, Neon, PlanetScale, Turso, Drizzle ORM,            │  ██
+██  │           Prisma, Firebase, or ANY non-Supabase database            │  ██
+██  │   If Replit offers to create a DB → DECLINE. Do not use it.        │  ██
+██  ├─────────────────────────────────────────────────────────────────────┤  ██
+██  │ RULE 3 · NPM ONLY — pnpm IS PERMANENTLY AND COMPLETELY BANNED       │  ██
+██  │   NEVER:  pnpm install / pnpm add / pnpm run / pnpm <anything>      │  ██
+██  │   NEVER:  pnpm-lock.yaml / pnpm-workspace.yaml                      │  ██
+██  │   ALWAYS: npm install --legacy-peer-deps / npm run / npm add        │  ██
+██  ├─────────────────────────────────────────────────────────────────────┤  ██
+██  │ RULE 4 · pnpm IS RESTRICTED                                         │  ██
+██  │   pnpm is banned forever. Using it breaks the environment.          │  ██
+██  │   All tooling, lock files, and scripts are configured for npm.      │  ██
+██  └─────────────────────────────────────────────────────────────────────┘  ██
 ██                                                                            ██
-██   This is NON-NEGOTIABLE. It overrides every framework default,           ██
+██   These rules are NON-NEGOTIABLE. They override every framework default,  ██
 ██   every skill, every template, and every AI suggestion.                   ██
+██   Full details in AGENTS.md — read it before doing anything.              ██
 ██                                                                            ██
 ████████████████████████████████████████████████████████████████████████████████
 -->
 
 # CRITICAL — READ BEFORE ANYTHING ELSE
 
-## RULE #1: npm ONLY — pnpm IS BANNED FOREVER
+## RULE #1 — BACKEND: SUPABASE ONLY
 
-**THIS IS THE MOST IMPORTANT RULE IN THIS PROJECT.**
+**Supabase is the sole, permanent, authoritative backend. No other backend is permitted — ever.**
+
+**❌ NEVER DO:**
+- Create any local/remote database schema outside Supabase
+- Use `lib/db/`, Drizzle, Prisma, or any ORM for mobile app features
+- Use Replit PostgreSQL, Neon, or any other database for app data
+- Replace or wrap Supabase Auth with any other auth system
+- Create Express routes or API routes to proxy Supabase
+- Move Supabase queries from the mobile app into a server layer
+- Run `drizzle-kit push` or any DDL outside the Supabase SQL Editor
+
+**✅ ALWAYS DO:**
+- Query via the `supabase` client from `@/services/supabase`
+- Add tables via SQL in **Supabase Dashboard → SQL Editor** only
+- Use `supabase.auth.*` for all authentication
+- Use `supabase.from('table_name')` for all reads/writes
+- Use `supabase.storage` for all file uploads
+- Use `supabase.channel()` for all real-time subscriptions
+
+> Enforced in `AGENTS.md` Rule 1. See that file for full details.
+
+---
+
+## RULE #2 — NO LOCAL DATABASE — ALL BANNED
+
+**All local and alternative databases are permanently restricted.**
+
+**❌ BANNED — NEVER USE:**
+- **Replit Databases** — Replit PostgreSQL, Replit Database (key-value), any DB auto-created by Replit or Replit Agent
+- **AI Databases** — any database suggested or created by an AI agent
+- **Local Databases** — SQLite, LowDB, NeDB, better-sqlite3, PouchDB
+- **Alternative Cloud DBs** — Neon, PlanetScale, Turso, CockroachDB, Firebase Firestore
+- **ORMs / Schema Tools** — Drizzle ORM, Prisma, TypeORM, Sequelize, Knex (for any DB other than Supabase)
+
+> If the Replit environment offers to create a database → **decline it. Do not use it.**
+> Full details in `AGENTS.md` Rule 2.
+
+---
+
+## RULE #3 — npm ONLY — pnpm IS BANNED FOREVER
+
+**npm is the only permitted package manager. pnpm is permanently banned.**
 
 | What you want to do | Correct command |
 |---|---|
@@ -27,7 +89,7 @@
 | Run a script | `npm run <script>` |
 | Clean install (CI) | `npm ci` |
 
-**NEVER do any of these — ever:**
+**❌ NEVER do any of these — ever:**
 - `pnpm install` — BANNED
 - `pnpm add` — BANNED
 - `pnpm run` — BANNED
@@ -36,28 +98,14 @@
 - create `pnpm-lock.yaml` — BANNED
 - create `pnpm-workspace.yaml` — BANNED
 
-> This rule is enforced in `AGENTS.md` Rule 5 and `.npmrc`. See both files.
-
 ---
 
-## RULE #2: SUPABASE IS THE SOLE, PERMANENT BACKEND — NON-NEGOTIABLE
+## RULE #4 — pnpm IS RESTRICTED
 
-**NEVER DO:**
-- Create any local/remote database schema outside Supabase
-- Use `lib/db/`, Drizzle, Prisma, or any ORM for mobile app features
-- Use Replit PostgreSQL, Neon, or any other database for app data
-- Replace or wrap Supabase Auth with any other auth system
-- Create Express routes or API routes to proxy Supabase
-- Move Supabase queries from the mobile app into a server layer
-- Run `drizzle-kit push` or any DDL outside the Supabase SQL Editor
+pnpm is banned forever. Using it breaks the environment and has been flagged as a
+repeated critical failure. All tooling, lock files, and scripts are configured for npm.
 
-**ALWAYS DO:**
-- Query via the `supabase` client from `@/services/supabase`
-- Add tables via SQL in **Supabase Dashboard → SQL Editor** only
-- Use `supabase.auth.*` for all authentication
-- Use `supabase.from('table_name')` for all reads/writes
-- Use `supabase.storage` for all file uploads
-- Use `supabase.channel()` for all real-time subscriptions
+> Enforcement: `.npmrc` at project root • `AGENTS.md` Rule 3 • this file Rule #3 & #4
 
 ---
 
