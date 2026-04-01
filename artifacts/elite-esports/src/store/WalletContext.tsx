@@ -19,9 +19,7 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 
 /* ─── helpers ──────────────────────────────────────────────────────────── */
 
-/** Try to read the balance from `wallets` table, then fall back to `profiles`. */
 async function fetchSupabaseBalance(userId: string): Promise<number> {
-  // Primary: dedicated wallets table (backend_setup.sql schema)
   const { data: walletRow } = await supabase
     .from('wallets')
     .select('balance')
@@ -30,7 +28,6 @@ async function fetchSupabaseBalance(userId: string): Promise<number> {
 
   if (walletRow?.balance != null) return Number(walletRow.balance);
 
-  // Fallback: balance stored on profiles row (001_games.sql schema)
   const { data: profileRow } = await supabase
     .from('profiles')
     .select('balance')
@@ -40,7 +37,6 @@ async function fetchSupabaseBalance(userId: string): Promise<number> {
   return Number(profileRow?.balance ?? 0);
 }
 
-/** Fetch all transactions from every Supabase table that may hold them. */
 async function fetchSupabaseTransactions(userId: string): Promise<WalletTransaction[]> {
   const [paymentsRes, withdrawalsRes, txnsRes, walletTxnsRes] = await Promise.allSettled([
     supabase
@@ -49,13 +45,13 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
 
+    // Select without upi_id — that column may not exist yet (migration 005 pending)
     supabase
       .from('withdrawals')
-      .select('id, amount, upi_id, status, created_at')
+      .select('id, amount, status, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
 
-    // Legacy table name used in 001_games.sql
     supabase
       .from('transactions')
       .select('id, type, amount, utr, status, created_at')
@@ -64,68 +60,81 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
 
     supabase
       .from('wallet_transactions')
-      .select('id, type, amount, status, created_at')
+      .select('id, type, amount, description, status, created_at')
       .eq('user_id', userId)
       .order('created_at', { ascending: false }),
   ]);
 
+  const seen = new Set<string>();
   const result: WalletTransaction[] = [];
 
-  // payments table
+  const push = (tx: WalletTransaction) => {
+    if (!seen.has(tx.id)) {
+      seen.add(tx.id);
+      result.push(tx);
+    }
+  };
+
   if (paymentsRes.status === 'fulfilled' && paymentsRes.value.data) {
     for (const p of paymentsRes.value.data) {
-      result.push({
+      push({
         id:          p.id,
         type:        'credit',
         amount:      Number(p.amount),
         status:      (p.status ?? 'pending') as WalletTransaction['status'],
-        description: p.utr ? `Deposit — UTR: ${p.utr}` : 'Deposit via UPI',
+        description: p.utr ? `UTR: ${p.utr}` : 'Deposit via UPI',
+        label:       'Deposit',
         created_at:  p.created_at,
       });
     }
   }
 
-  // withdrawals table
   if (withdrawalsRes.status === 'fulfilled' && withdrawalsRes.value.data) {
     for (const w of withdrawalsRes.value.data) {
-      result.push({
+      push({
         id:          w.id,
         type:        'debit',
         amount:      Number(w.amount),
         status:      (w.status ?? 'pending') as WalletTransaction['status'],
-        description: w.upi_id ? `Withdrawal to ${w.upi_id}` : 'Withdrawal',
+        description: 'Withdrawal request',
+        label:       'Withdrawal',
         created_at:  w.created_at,
       });
     }
   }
 
-  // legacy transactions table
   if (txnsRes.status === 'fulfilled' && txnsRes.value.data) {
     for (const t of txnsRes.value.data) {
-      result.push({
+      push({
         id:          t.id,
         type:        t.type === 'credit' ? 'credit' : 'debit',
         amount:      Number(t.amount),
         status:      (t.status ?? 'pending') as WalletTransaction['status'],
-        description: t.utr ? `Deposit — UTR: ${t.utr}` : (t.type === 'credit' ? 'Deposit' : 'Debit'),
+        description: t.utr ? `UTR: ${t.utr}` : (t.type === 'credit' ? 'Deposit' : 'Withdrawal'),
+        label:       t.type === 'credit' ? 'Deposit' : 'Withdrawal',
         created_at:  t.created_at,
       });
     }
   }
 
-  // wallet_transactions table (prize credits / entry fee debits)
   if (walletTxnsRes.status === 'fulfilled' && walletTxnsRes.value.data) {
     for (const t of walletTxnsRes.value.data) {
-      result.push({
+      push({
         id:          t.id,
         type:        t.type === 'credit' ? 'credit' : 'debit',
         amount:      Number(t.amount),
-        status:      (t.status ?? 'approved') as WalletTransaction['status'],
-        description: t.type === 'credit' ? 'Match prize' : 'Match entry fee',
+        status:      'approved' as WalletTransaction['status'],
+        description: t.description ?? (t.type === 'credit' ? 'Prize credit' : 'Entry fee'),
+        label:       t.type === 'credit' ? 'Prize Won' : 'Entry Fee',
         created_at:  t.created_at,
       });
     }
   }
+
+  // Always sort newest first after merging all sources
+  result.sort(
+    (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+  );
 
   return result;
 }
@@ -164,7 +173,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     loadWallet();
   }, [user, loadWallet]);
 
-  // Realtime: re-fetch on any wallet/payment/withdrawal change in Supabase
+  // Realtime: re-fetch whenever admin approves/rejects in Supabase
   useEffect(() => {
     if (!user) return;
     const channel = supabase

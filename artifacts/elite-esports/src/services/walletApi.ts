@@ -5,7 +5,8 @@ export interface WalletTransaction {
   type:        'credit' | 'debit';
   amount:      number;
   status:      'pending' | 'approved' | 'rejected';
-  description: string;
+  label:       string;   // e.g. "Deposit", "Withdrawal", "Prize Won", "Entry Fee"
+  description: string;   // sub-text e.g. "UTR: 123456"
   created_at:  string;
 }
 
