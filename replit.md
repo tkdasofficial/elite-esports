@@ -227,7 +227,8 @@ artifacts/elite-esports/
     ├── services/
     │   ├── supabase.ts           # Supabase client (SecureStore adapter)
     │   ├── dbAdapters.ts         # adaptMatch(), matchToDbPayload()
-    │   └── NotificationService.ts
+    │   ├── NotificationService.ts
+    │   └── PermissionService.ts  # requestAppPermissions() — Notifications + Location on launch
     ├── store/
     │   ├── AuthContext.tsx        # Session, user, isAdmin
     │   ├── WalletContext.tsx      # Balance, realtime

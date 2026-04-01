@@ -16,7 +16,8 @@ import { ProfileProvider } from '@/store/ProfileContext';
 import { ThemeProvider, useTheme } from '@/store/ThemeContext';
 import { NotificationsProvider } from '@/store/NotificationsContext';
 import { WalletProvider } from '@/store/WalletContext';
-import { initNotifications } from '@/services/NotificationService';
+import { setupAndroidChannels } from '@/services/NotificationService';
+import { requestAppPermissions } from '@/services/PermissionService';
 import { loadHapticPreference } from '@/utils/haptics';
 
 const queryClient = new QueryClient({
@@ -59,7 +60,8 @@ function ThemedRoot() {
   });
 
   useEffect(() => {
-    initNotifications().catch(() => {});
+    setupAndroidChannels().catch(() => {});
+    requestAppPermissions().catch(() => {});
     loadHapticPreference().catch(() => {});
   }, []);
 

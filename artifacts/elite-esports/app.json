@@ -14,6 +14,8 @@
       "bundleIdentifier": "com.elite.esports.ios",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Elite eSports uses your location to find nearby tournaments and match you with local competitors.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Elite eSports uses your location to find nearby tournaments and match you with local competitors.",
         "NSUserNotificationUsageDescription": "Elite eSports sends match alerts, tournament updates, reward notifications, and account security alerts to keep you in the game."
       }
     },
@@ -32,7 +34,9 @@
         "android.permission.RECEIVE_BOOT_COMPLETED",
         "android.permission.VIBRATE",
         "android.permission.WAKE_LOCK",
-        "android.permission.POST_NOTIFICATIONS"
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
       ]
     },
     "web": {
@@ -50,6 +54,15 @@
           "color": "#FE4C11",
           "defaultChannel": "elite-esports-default",
           "enableBackgroundRemoteNotifications": true
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Elite eSports uses your location to find nearby tournaments and match you with local competitors.",
+          "locationAlwaysAndWhenInUsePermission": "Elite eSports uses your location to find nearby tournaments and match you with local competitors.",
+          "isIosBackgroundLocationEnabled": false,
+          "isAndroidBackgroundLocationEnabled": false
         }
       ]
     ],
