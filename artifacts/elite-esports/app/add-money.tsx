@@ -6,15 +6,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { supabase } from '@/services/supabase';
-import { useAuth } from '@/store/AuthContext';
+import { submitDeposit } from '@/services/walletApi';
 import type { AppColors } from '@/utils/colors';
 
 const QUICK_AMOUNTS = [100, 250, 500, 1000, 2000, 5000];
 type Step = 'amount' | 'payment' | 'confirm';
 
 export default function AddMoneyScreen() {
-  const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -32,13 +30,16 @@ export default function AddMoneyScreen() {
   const handleSubmit = async () => {
     if (!utr.trim()) { Alert.alert('Required', 'Please enter transaction ID'); return; }
     setLoading(true);
-    const { error } = await supabase.from('payments').insert({
-      user_id: user?.id, amount: parseFloat(amount),
-      utr: utr.trim(), status: 'pending',
-    });
-    setLoading(false);
-    if (error) Alert.alert('Error', error.message);
-    else Alert.alert('Submitted!', 'Deposit request is pending review.', [{ text: 'OK', onPress: () => router.back() }]);
+    try {
+      await submitDeposit(parseFloat(amount), utr.trim());
+      Alert.alert('Submitted!', 'Deposit request is pending review. It will be credited within 30 minutes.', [
+        { text: 'OK', onPress: () => router.back() },
+      ]);
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const STEPS: Step[] = ['amount', 'payment', 'confirm'];

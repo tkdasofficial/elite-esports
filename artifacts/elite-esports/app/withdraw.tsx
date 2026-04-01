@@ -9,8 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
-import { supabase } from '@/services/supabase';
-import { useAuth } from '@/store/AuthContext';
+import { submitWithdrawal } from '@/services/walletApi';
 import { useWallet } from '@/store/WalletContext';
 import { AdLoadingOverlay } from '@/components/AdLoadingOverlay';
 import { useAdGate } from '@/hooks/useAdGate';
@@ -18,13 +17,12 @@ import { useAds } from '@/store/AdContext';
 import type { AppColors } from '@/utils/colors';
 
 export default function WithdrawScreen() {
-  const { user }              = useAuth();
-  const { balance }           = useWallet();
-  const insets                = useSafeAreaInsets();
-  const { adConfig }          = useAds();
+  const { balance, refreshWallet } = useWallet();
+  const insets                     = useSafeAreaInsets();
+  const { adConfig }               = useAds();
   const { gateAction, overlay, dismiss } = useAdGate();
-  const { colors }            = useTheme();
-  const styles                = useMemo(() => createStyles(colors), [colors]);
+  const { colors }                 = useTheme();
+  const styles                     = useMemo(() => createStyles(colors), [colors]);
 
   const [amount,  setAmount]  = useState('');
   const [upiId,   setUpiId]   = useState('');
@@ -32,32 +30,28 @@ export default function WithdrawScreen() {
 
   const doSubmit = useCallback(async () => {
     setLoading(true);
-    const val = parseFloat(amount);
-    const { error } = await supabase.from('withdrawals').insert({
-      user_id: user?.id,
-      amount:  val,
-      status:  'pending',
-    });
-    setLoading(false);
-    if (error) Alert.alert('Error', error.message);
-    else Alert.alert(
-      'Requested!',
-      'Your withdrawal is being processed.',
-      [{ text: 'OK', onPress: () => router.back() }],
-    );
-  }, [amount, user]);
+    try {
+      await submitWithdrawal(parseFloat(amount), upiId.trim());
+      await refreshWallet();
+      Alert.alert(
+        'Requested!',
+        'Your withdrawal is being processed. Funds will be sent to your UPI ID within 24–48 hours.',
+        [{ text: 'OK', onPress: () => router.back() }],
+      );
+    } catch (err: any) {
+      Alert.alert('Error', err?.message ?? 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [amount, upiId, refreshWallet]);
 
   const handleSubmit = useCallback(() => {
     const val = parseFloat(amount);
-    if (!val || val < 50)       { Alert.alert('Invalid', 'Minimum withdrawal is ₹50'); return; }
-    if (val > balance)           { Alert.alert('Insufficient', 'Not enough balance'); return; }
-    if (!upiId.trim())           { Alert.alert('Required', 'Please enter your UPI ID'); return; }
+    if (!val || val < 50)  { Alert.alert('Invalid', 'Minimum withdrawal is ₹50'); return; }
+    if (val > balance)      { Alert.alert('Insufficient', 'Not enough balance'); return; }
+    if (!upiId.trim())      { Alert.alert('Required', 'Please enter your UPI ID'); return; }
 
-    gateAction(
-      adConfig.withdraw,
-      doSubmit,
-      'Loading Reward Ad...',
-    );
+    gateAction(adConfig.withdraw, doSubmit, 'Loading Reward Ad...');
   }, [amount, balance, upiId, adConfig.withdraw, gateAction, doSubmit]);
 
   return (
@@ -104,6 +98,7 @@ export default function WithdrawScreen() {
             placeholder="yourname@bank"
             placeholderTextColor={colors.text.muted}
             autoCapitalize="none"
+            keyboardType="email-address"
           />
         </View>
 
