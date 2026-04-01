@@ -1,0 +1,84 @@
+name: Build & Release APK (Production)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+# 🔥 REQUIRED for release upload (fix 403)
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: artifacts/elite-esports/android
+
+    steps:
+      # 1. Checkout
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 2. Setup Java
+      - name: Setup JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # 3. Setup Node
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      # 4. Install dependencies
+      - name: Install Dependencies
+        run: npm install
+        working-directory: artifacts/elite-esports
+
+      # 5. Cache Gradle (faster builds)
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+
+      # 6. Grant permission
+      - name: Grant Execute Permission
+        run: chmod +x gradlew
+
+      # 🔥 7. Build RELEASE APK (auto bundles JS)
+      - name: Build Release APK
+        run: ./gradlew assembleRelease
+
+      # 8. Locate APK
+      - name: Locate APK
+        id: apk
+        run: |
+          APK_PATH=$(find app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+
+      # 9. Upload artifact (backup)
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: elite-esports-release-apk
+          path: artifacts/elite-esports/android/${{ steps.apk.outputs.apk_path }}
+
+      # 🔥 10. Create Release + Upload APK
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: release-${{ github.run_number }}
+          name: Elite eSports Release ${{ github.run_number }}
+          body: Production APK 🚀
+          files: artifacts/elite-esports/android/${{ steps.apk.outputs.apk_path }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
