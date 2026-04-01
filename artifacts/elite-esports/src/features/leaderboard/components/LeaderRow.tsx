@@ -4,16 +4,18 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '@/store/ThemeContext';
 import { LeaderEntry } from '@/utils/types';
 
-const RANK_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
+const RANK_COLORS_DARK  = ['#FFD700', '#C0C0C0', '#CD7F32'];
+const RANK_COLORS_LIGHT = ['#9A6F00', '#707070', '#8B4513'];
 const RANK_ICONS: Array<'trophy' | 'medal' | 'ribbon'> = ['trophy', 'medal', 'ribbon'];
 
 interface Props { item: LeaderEntry; }
 
 export function LeaderRow({ item }: Props) {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
+  const rankColors = isDark ? RANK_COLORS_DARK : RANK_COLORS_LIGHT;
   const styles = useMemo(() => createStyles(colors), [colors]);
   const isTop3 = item.rank <= 3;
-  const rankColor = isTop3 ? RANK_COLORS[item.rank - 1] : colors.text.muted;
+  const rankColor = isTop3 ? rankColors[item.rank - 1] : colors.text.muted;
 
   return (
     <View style={[styles.row, isTop3 && styles.topRow]}>

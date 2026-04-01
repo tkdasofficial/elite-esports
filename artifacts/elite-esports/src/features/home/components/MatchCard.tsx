@@ -16,9 +16,13 @@ interface Props {
   onPress: () => void;
 }
 
+const GOLD_DARK  = '#FFD700';
+const GOLD_LIGHT = '#9A6F00';
+
 export function MatchCard({ match, onPress }: Props) {
   const { colors, isDark } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const gold   = isDark ? GOLD_DARK : GOLD_LIGHT;
+  const styles = useMemo(() => createStyles(colors, isDark), [colors, isDark]);
   const cfg       = STATUS_CONFIG[match.status] ?? STATUS_CONFIG.upcoming;
   const isOngoing = match.status === 'ongoing';
   const isFree    = match.entry_fee === 0;
@@ -99,7 +103,7 @@ export function MatchCard({ match, onPress }: Props) {
 
           {/* Prize Pool */}
           <View style={styles.prizeBadge}>
-            <Ionicons name="trophy" size={11} color="#FFD700" />
+            <Ionicons name="trophy" size={11} color={gold} />
             <Text style={styles.prizeText}>₹{match.prize_pool.toLocaleString('en-IN')}</Text>
           </View>
 
@@ -118,7 +122,8 @@ export function MatchCard({ match, onPress }: Props) {
   );
 }
 
-function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColors>) {
+function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColors>, isDark: boolean) {
+  const gold = isDark ? GOLD_DARK : GOLD_LIGHT;
   return StyleSheet.create({
     card: {
       backgroundColor: colors.background.card,
@@ -186,10 +191,10 @@ function createStyles(colors: ReturnType<typeof import('@/utils/colors').getColo
     prizeBadge: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
       borderRadius: 6, paddingHorizontal: 8, paddingVertical: 5,
-      backgroundColor: 'rgba(255,215,0,0.08)',
-      borderWidth: 1, borderColor: 'rgba(255,215,0,0.22)',
+      backgroundColor: isDark ? 'rgba(255,215,0,0.08)' : 'rgba(154,111,0,0.08)',
+      borderWidth: 1, borderColor: isDark ? 'rgba(255,215,0,0.22)' : 'rgba(154,111,0,0.30)',
     },
-    prizeText: { fontSize: 12, fontFamily: 'Inter_700Bold', color: '#FFD700' },
+    prizeText: { fontSize: 12, fontFamily: 'Inter_700Bold', color: gold },
 
     detailsBtn: {
       flexDirection: 'row', alignItems: 'center', gap: 4,
