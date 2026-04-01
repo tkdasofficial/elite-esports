@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Linking, Platform,
+  ScrollView, Linking, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -10,51 +10,56 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/store/ThemeContext';
 import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { useAppConfig } from '@/hooks/useAppConfig';
 import type { AppColors } from '@/utils/colors';
 
 const APP_VERSION = '1.0.0 Alpha';
-const SUPPORT_EMAIL = 'help.eliteesports@outlook.com';
 
 const FEATURES = [
-  { icon: 'trophy-outline',          text: 'Competitive eSports tournaments' },
-  { icon: 'pulse-outline',           text: 'Live match tracking & leaderboards' },
-  { icon: 'wallet-outline',          text: 'Wallet & prize payouts in ₹ INR' },
-  { icon: 'people-outline',          text: 'Team management & player profiles' },
-  { icon: 'notifications-outline',   text: 'Real-time match & reward alerts' },
-  { icon: 'shield-checkmark-outline',text: 'Secure accounts via Supabase Auth' },
+  { icon: 'trophy-outline',           text: 'Competitive eSports tournaments' },
+  { icon: 'pulse-outline',            text: 'Live match tracking & leaderboards' },
+  { icon: 'wallet-outline',           text: 'Wallet & prize payouts in ₹ INR' },
+  { icon: 'people-outline',           text: 'Team management & player profiles' },
+  { icon: 'notifications-outline',    text: 'Real-time match & reward alerts' },
+  { icon: 'shield-checkmark-outline', text: 'Secure accounts via Supabase Auth' },
 ];
 
-const LINKS = [
-  {
-    icon: 'document-text-outline' as const,
-    label: 'Terms & Conditions',
-    onPress: (push: (r: any) => void) => push('/terms'),
-  },
-  {
-    icon: 'shield-checkmark-outline' as const,
-    label: 'Privacy Policy',
-    onPress: (push: (r: any) => void) => push('/privacy'),
-  },
-  {
-    icon: 'warning-outline' as const,
-    label: 'Disclaimer',
-    onPress: (push: (r: any) => void) => push('/disclaimer'),
-  },
-  {
-    icon: 'mail-outline' as const,
-    label: 'Contact Support',
-    onPress: () => Linking.openURL(`mailto:${SUPPORT_EMAIL}`),
-  },
+const LEGAL_LINKS = [
+  { icon: 'document-text-outline' as const, label: 'Terms & Conditions', route: '/terms' },
+  { icon: 'shield-checkmark-outline' as const, label: 'Privacy Policy',   route: '/privacy' },
+  { icon: 'warning-outline' as const,          label: 'Disclaimer',        route: '/disclaimer' },
 ];
+
+/* ── Social platform config ── */
+const SOCIAL_PLATFORMS = [
+  { key: 'youtube_url',   icon: 'logo-youtube',   label: 'YouTube',   bg: '#FF0000', fg: '#fff' },
+  { key: 'facebook_url',  icon: 'logo-facebook',  label: 'Facebook',  bg: '#1877F2', fg: '#fff' },
+  { key: 'instagram_url', icon: 'logo-instagram', label: 'Instagram', bg: '#E1306C', fg: '#fff' },
+  { key: 'twitch_url',    icon: 'logo-twitch',    label: 'Twitch',    bg: '#9146FF', fg: '#fff' },
+  { key: 'twitter_url',   icon: 'logo-twitter',   label: 'X',         bg: '#000000', fg: '#fff' },
+  { key: 'snapchat_url',  icon: 'logo-snapchat',  label: 'Snapchat',  bg: '#FFFC00', fg: '#000' },
+  { key: 'linkedin_url',  icon: 'logo-linkedin',  label: 'LinkedIn',  bg: '#0A66C2', fg: '#fff' },
+] as const;
+
+/* ── Contact email config ── */
+const EMAIL_TYPES = [
+  { key: 'support_email',  icon: 'headset-outline' as const,  label: 'Support',  sub: 'Technical help & account issues' },
+  { key: 'queries_email',  icon: 'chatbox-outline' as const,  label: 'Queries',  sub: 'General questions & feedback' },
+  { key: 'legal_email',    icon: 'briefcase-outline' as const, label: 'Legal',   sub: 'Legal, compliance & GDPR' },
+] as const;
 
 export default function AboutScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
+  const { config, loading } = useAppConfig();
 
   const heroBannerGradient: [string, string] = isDark
     ? ['#280800', '#1A0500']
     : [colors.primary + 'CC', colors.primaryDark];
+
+  const activeSocials = SOCIAL_PLATFORMS.filter(p => !!(config as any)[p.key]);
+  const activeEmails  = EMAIL_TYPES.filter(e => !!(config as any)[e.key]);
 
   return (
     <View style={styles.container}>
@@ -66,10 +71,7 @@ export default function AboutScreen() {
 
         {/* ── Hero banner ── */}
         <View style={styles.heroBanner}>
-          <LinearGradient
-            colors={heroBannerGradient}
-            style={StyleSheet.absoluteFill}
-          />
+          <LinearGradient colors={heroBannerGradient} style={StyleSheet.absoluteFill} />
           <View style={styles.heroLogoCircle}>
             <Ionicons name="flash" size={40} color={isDark ? colors.primary : '#fff'} />
           </View>
@@ -92,8 +94,8 @@ export default function AboutScreen() {
           </Text>
           <Text style={[styles.description, { marginTop: 0 }]}>
             We are dedicated to building a fair, transparent, and professional eSports ecosystem for
-            the Indian gaming community. Every match on our platform is governed by strict fair-play
-            rules, and every rupee won is a result of pure player skill.
+            the Indian gaming community. Every match is governed by strict fair-play rules, and every
+            rupee won is a result of pure player skill.
           </Text>
         </View>
 
@@ -107,12 +109,12 @@ export default function AboutScreen() {
           </Text>
         </View>
 
-        {/* ── Key Features ── */}
+        {/* ── What's Inside ── */}
         <Text style={styles.sectionLabel}>What's Inside</Text>
         <View style={styles.card}>
           {FEATURES.map((f, i) => (
             <React.Fragment key={f.icon}>
-              {i > 0 && <View style={styles.featureDivider} />}
+              {i > 0 && <View style={styles.rowDivider} />}
               <View style={styles.featureRow}>
                 <View style={styles.featureIcon}>
                   <Ionicons name={f.icon as any} size={17} color={colors.primary} />
@@ -123,50 +125,102 @@ export default function AboutScreen() {
           ))}
         </View>
 
-        {/* ── Platform ── */}
-        <Text style={styles.sectionLabel}>Platform</Text>
-        <View style={styles.card}>
-          <View style={styles.platformGrid}>
-            {[
-              { icon: 'logo-android', label: 'Android', status: 'Supported' },
-              { icon: 'logo-apple',   label: 'iOS',     status: 'Coming Soon' },
-              { icon: 'globe-outline',label: 'Web',     status: 'Preview' },
-            ].map(p => (
-              <View key={p.label} style={styles.platformItem}>
-                <Ionicons name={p.icon as any} size={22} color={colors.text.secondary} />
-                <Text style={styles.platformLabel}>{p.label}</Text>
-                <Text style={[
-                  styles.platformStatus,
-                  p.status === 'Supported' && { color: colors.status.success },
-                  p.status === 'Coming Soon' && { color: colors.text.muted },
-                  p.status === 'Preview' && { color: colors.status.info },
-                ]}>
-                  {p.status}
-                </Text>
-              </View>
-            ))}
+        {/* ── Contact Us ── */}
+        {loading ? (
+          <View style={{ alignItems: 'center', paddingVertical: 16 }}>
+            <ActivityIndicator color={colors.primary} />
           </View>
-        </View>
+        ) : activeEmails.length > 0 ? (
+          <>
+            <Text style={styles.sectionLabel}>Contact Us</Text>
+            <View style={styles.card}>
+              {activeEmails.map((e, i) => {
+                const email = (config as any)[e.key] as string;
+                return (
+                  <React.Fragment key={e.key}>
+                    {i > 0 && <View style={styles.rowDivider} />}
+                    <TouchableOpacity
+                      style={styles.emailRow}
+                      onPress={() => Linking.openURL(`mailto:${email}`)}
+                      activeOpacity={0.75}
+                    >
+                      <View style={styles.emailIcon}>
+                        <Ionicons name={e.icon} size={17} color={colors.primary} />
+                      </View>
+                      <View style={styles.emailTextWrap}>
+                        <Text style={styles.emailLabel}>{e.label}</Text>
+                        <Text style={styles.emailSub}>{e.sub}</Text>
+                        <Text style={styles.emailAddress}>{email}</Text>
+                      </View>
+                      <Ionicons name="open-outline" size={15} color={colors.text.muted} />
+                    </TouchableOpacity>
+                  </React.Fragment>
+                );
+              })}
+            </View>
+          </>
+        ) : null}
 
-        {/* ── Links ── */}
+        {/* ── Follow Us (Social) ── */}
+        {!loading && activeSocials.length > 0 && (
+          <>
+            <Text style={styles.sectionLabel}>Follow Us</Text>
+            <View style={styles.socialGrid}>
+              {activeSocials.map(p => {
+                const url = (config as any)[p.key] as string;
+                return (
+                  <TouchableOpacity
+                    key={p.key}
+                    style={[styles.socialBtn, { backgroundColor: p.bg }]}
+                    onPress={() => Linking.openURL(url)}
+                    activeOpacity={0.8}
+                  >
+                    <Ionicons name={p.icon as any} size={24} color={p.fg} />
+                    <Text style={[styles.socialLabel, { color: p.fg }]}>{p.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
+
+        {/* ── Legal & Support ── */}
         <Text style={styles.sectionLabel}>Legal & Support</Text>
         <View style={styles.card}>
-          {LINKS.map((l, i) => (
+          {LEGAL_LINKS.map((l, i) => (
             <React.Fragment key={l.label}>
-              {i > 0 && <View style={styles.featureDivider} />}
+              {i > 0 && <View style={styles.rowDivider} />}
               <TouchableOpacity
-                style={styles.linkRow}
-                onPress={() => l.onPress(router.push)}
+                style={styles.featureRow}
+                onPress={() => router.push(l.route as any)}
                 activeOpacity={0.75}
               >
                 <View style={styles.featureIcon}>
                   <Ionicons name={l.icon} size={17} color={colors.primary} />
                 </View>
-                <Text style={styles.linkLabel}>{l.label}</Text>
+                <Text style={[styles.featureText, { fontFamily: 'Inter_500Medium' }]}>{l.label}</Text>
                 <Ionicons name="chevron-forward" size={15} color={colors.text.muted} />
               </TouchableOpacity>
             </React.Fragment>
           ))}
+        </View>
+
+        {/* ── Platform ── */}
+        <Text style={styles.sectionLabel}>Platform</Text>
+        <View style={styles.card}>
+          <View style={styles.platformGrid}>
+            {[
+              { icon: 'logo-android', label: 'Android', status: 'Supported',   statusColor: '#22C55E' },
+              { icon: 'logo-apple',   label: 'iOS',     status: 'Coming Soon', statusColor: '#666' },
+              { icon: 'globe-outline',label: 'Web',     status: 'Preview',     statusColor: '#3B82F6' },
+            ].map(p => (
+              <View key={p.label} style={styles.platformItem}>
+                <Ionicons name={p.icon as any} size={22} color={colors.text.secondary} />
+                <Text style={styles.platformLabel}>{p.label}</Text>
+                <Text style={[styles.platformStatus, { color: p.statusColor }]}>{p.status}</Text>
+              </View>
+            ))}
+          </View>
         </View>
 
         {/* ── Footer ── */}
@@ -237,13 +291,13 @@ function createStyles(colors: AppColors) {
       padding: 16,
     },
 
+    rowDivider: {
+      height: 1, backgroundColor: colors.border.subtle,
+      marginLeft: 62,
+    },
     featureRow: {
       flexDirection: 'row', alignItems: 'center',
-      gap: 12, paddingHorizontal: 14, paddingVertical: 12,
-    },
-    featureDivider: {
-      height: 1, backgroundColor: colors.border.subtle,
-      marginLeft: 14 + 36 + 12,
+      gap: 12, paddingHorizontal: 14, paddingVertical: 13,
     },
     featureIcon: {
       width: 36, height: 36, borderRadius: 10,
@@ -254,6 +308,44 @@ function createStyles(colors: AppColors) {
       flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.primary,
     },
 
+    /* Email rows */
+    emailRow: {
+      flexDirection: 'row', alignItems: 'center',
+      gap: 12, paddingHorizontal: 14, paddingVertical: 14,
+    },
+    emailIcon: {
+      width: 40, height: 40, borderRadius: 12,
+      backgroundColor: colors.primary + '18',
+      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    },
+    emailTextWrap: { flex: 1 },
+    emailLabel: {
+      fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary, marginBottom: 1,
+    },
+    emailSub: {
+      fontSize: 11, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginBottom: 3,
+    },
+    emailAddress: {
+      fontSize: 12, fontFamily: 'Inter_500Medium', color: colors.primary,
+    },
+
+    /* Social grid */
+    socialGrid: {
+      flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 20,
+    },
+    socialBtn: {
+      borderRadius: 14,
+      paddingVertical: 16,
+      alignItems: 'center', justifyContent: 'center',
+      gap: 7,
+      minWidth: '20%',
+      flex: 1,
+    },
+    socialLabel: {
+      fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 0.2,
+    },
+
+    /* Platform */
     platformGrid: {
       flexDirection: 'row', padding: 16, gap: 8,
     },
@@ -269,14 +361,7 @@ function createStyles(colors: AppColors) {
       fontSize: 11, fontFamily: 'Inter_500Medium',
     },
 
-    linkRow: {
-      flexDirection: 'row', alignItems: 'center',
-      gap: 12, paddingHorizontal: 14, paddingVertical: 14,
-    },
-    linkLabel: {
-      flex: 1, fontSize: 15, fontFamily: 'Inter_500Medium', color: colors.text.primary,
-    },
-
+    /* Footer */
     footer: {
       alignItems: 'center', gap: 4, marginTop: 8,
     },

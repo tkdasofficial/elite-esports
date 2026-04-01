@@ -20,6 +20,8 @@ import type { AppColors } from '@/utils/colors';
 const BTN_H = 42;
 const BTN_R = BTN_H / 2;
 
+const ADMIN_ID = '6771dad2-8719-48c0-8907-3bb6da336835';
+
 const MENU_ITEMS = [
   { icon: 'users',      label: 'My Team',    route: '/my-team' },
   { icon: 'grid',       label: 'My Matches', route: '/my-matches' },
@@ -236,6 +238,26 @@ export default function ProfileScreen() {
             ))}
           </View>
         </View>
+
+        {/* ── Admin Panel (admin only) ── */}
+        {user?.id === ADMIN_ID && (
+          <View style={[styles.section, { marginTop: 4 }]}>
+            <Text style={[styles.sectionTitle, { marginBottom: 12 }]}>Admin</Text>
+            <View style={styles.menuCard}>
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => router.push('/admin-config')}
+                activeOpacity={0.75}
+              >
+                <View style={[styles.menuIconBox, { backgroundColor: 'rgba(238,61,45,0.15)' }]}>
+                  <Ionicons name="settings-outline" size={18} color={colors.primary} />
+                </View>
+                <Text style={styles.menuLabel}>App Config</Text>
+                <Feather name="chevron-right" size={17} color={colors.text.muted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* ── Sign Out ── */}
         <View style={styles.signOutWrap}>
