@@ -11,6 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AdProvider } from '@/store/AdContext';
 import { AuthProvider } from '@/store/AuthContext';
 import { ProfileProvider } from '@/store/ProfileContext';
 import { ThemeProvider, useTheme } from '@/store/ThemeContext';
@@ -85,7 +86,9 @@ export default function RootLayout() {
               <ProfileProvider>
                 <NotificationsProvider>
                   <WalletProvider>
-                    <ThemedRoot />
+                    <AdProvider>
+                      <ThemedRoot />
+                    </AdProvider>
                   </WalletProvider>
                 </NotificationsProvider>
               </ProfileProvider>
