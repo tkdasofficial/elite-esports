@@ -57,8 +57,9 @@ export function useMatchDetail(id: string, userId?: string) {
       .on(
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${id}` },
-        (payload) => {
-          if (payload.new) setMatch(adaptMatch(payload.new));
+        () => {
+          // Re-fetch the full row (with games join) so prize_pool and all fields stay accurate
+          fetch();
         },
       )
       .subscribe();

@@ -22,10 +22,7 @@ import { useWallet } from '@/store/WalletContext';
 import type { AppColors } from '@/utils/colors';
 
 const BANNER_HEIGHT = 240;
-const PRIMARY = '#EE3D2D';
-const GREEN   = '#22C55E';
-const RED     = '#EF4444';
-const GOLD    = '#FFD700';
+const GOLD = '#FFD700';
 
 function formatDate(iso: string) {
   const d = new Date(iso);
@@ -35,10 +32,11 @@ function formatDate(iso: string) {
 }
 
 function SectionLabel({ icon, title }: { icon: keyof typeof Ionicons.glyphMap; title: string }) {
+  const { colors } = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7, marginBottom: 13 }}>
-      <Ionicons name={icon} size={14} color={PRIMARY} />
-      <Text style={{ fontSize: 11, fontFamily: 'Inter_700Bold', color: PRIMARY, textTransform: 'uppercase', letterSpacing: 1.5 }}>
+      <Ionicons name={icon} size={14} color={colors.primary} />
+      <Text style={{ fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.primary, textTransform: 'uppercase', letterSpacing: 1.5 }}>
         {title}
       </Text>
     </View>
@@ -133,19 +131,15 @@ export default function MatchDetailScreen() {
     if (!claimResult || claimResult.prize <= 0 || !user) return;
     gateAction(adConfig.reward, async () => {
       setClaimLoading(true);
-      const { error } = await supabase.from('wallet_transactions').insert({
-        user_id:      user.id,
-        type:         'credit',
-        amount:       claimResult.prize,
-        status:       'approved',
-        reference_id: `result:${id}`,
-      });
-      if (!error) {
+      const { data, error } = await supabase.rpc('claim_match_prize', { _match_id: id });
+      if (error) {
+        Alert.alert('Error', error.message);
+      } else if (data?.success === false) {
+        Alert.alert('Could not claim', data.error ?? 'Please try again.');
+      } else {
         await refreshWallet();
         setAlreadyClaimed(true);
-        Alert.alert('🏆 Prize Claimed!', `₹${claimResult.prize.toFixed(2)} has been added to your wallet.`);
-      } else {
-        Alert.alert('Error', error.message);
+        Alert.alert('🏆 Prize Claimed!', `₹${Math.round(data?.prize ?? claimResult.prize)} has been added to your wallet.`);
       }
       setClaimLoading(false);
     }, 'Loading Reward Ad...');
@@ -211,7 +205,7 @@ export default function MatchDetailScreen() {
             />
           ) : (
             <View style={[StyleSheet.absoluteFill, styles.bannerPlaceholder]}>
-              <Ionicons name="game-controller-outline" size={52} color="#2A2A2A" />
+              <Ionicons name="game-controller-outline" size={52} color={colors.border.default} />
             </View>
           )}
 
@@ -265,13 +259,13 @@ export default function MatchDetailScreen() {
             {/* Entry Fee */}
             <View style={styles.prizeSection}>
               <View style={styles.prizeLabelRow}>
-                <Ionicons name="ticket-outline" size={13} color={isFree ? GREEN : PRIMARY} />
+                <Ionicons name="ticket-outline" size={13} color={isFree ? colors.status.success : colors.primary} />
                 <Text style={styles.prizeSectionLabel}>Entry Fee</Text>
               </View>
               {isFree ? (
-                <Text style={[styles.prizeAmount, { color: GREEN }]}>FREE</Text>
+                <Text style={[styles.prizeAmount, { color: colors.status.success }]}>FREE</Text>
               ) : (
-                <Text style={[styles.prizeAmount, { color: '#FFFFFF' }]}>
+                <Text style={[styles.prizeAmount, { color: colors.text.primary }]}>
                   ₹{match.entry_fee.toLocaleString('en-IN')}
                 </Text>
               )}
@@ -312,7 +306,7 @@ export default function MatchDetailScreen() {
             <View style={styles.cardHeader}>
               <SectionLabel icon="people-circle-outline" title="Player Slots" />
               <View style={[styles.slotBadge, isFull && styles.slotBadgeFull]}>
-                <Text style={[styles.slotBadgeText, isFull && { color: RED }]}>
+                <Text style={[styles.slotBadgeText, isFull && { color: colors.status.error }]}>
                   {isFull ? 'Full' : `${match.max_players - match.players_joined} slots left`}
                 </Text>
               </View>
@@ -321,8 +315,8 @@ export default function MatchDetailScreen() {
               <View style={[
                 styles.progressFill,
                 { width: `${filledPct}%` as any },
-                isFull && { backgroundColor: RED },
-                filledPct >= 80 && !isFull && { backgroundColor: '#F59E0B' },
+                isFull && { backgroundColor: colors.status.error },
+                filledPct >= 80 && !isFull && { backgroundColor: colors.status.warning },
               ]} />
             </View>
             <View style={styles.progressLabels}>
@@ -371,8 +365,8 @@ export default function MatchDetailScreen() {
                 <View style={[styles.credentialRow, styles.credentialRowBorder]}>
                   <Text style={styles.credentialLabel}>Password</Text>
                   <View style={styles.credentialValueWrap}>
-                    <Ionicons name="lock-closed-outline" size={13} color={PRIMARY} />
-                    <Text style={[styles.credentialValue, { color: PRIMARY }]}>{match.room_password}</Text>
+                    <Ionicons name="lock-closed-outline" size={13} color={colors.primary} />
+                    <Text style={[styles.credentialValue, { color: colors.primary }]}>{match.room_password}</Text>
                   </View>
                 </View>
               )}
@@ -449,7 +443,7 @@ export default function MatchDetailScreen() {
         <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
           <View style={styles.leaveCtaRow}>
             <View style={styles.joinedSmallBadge}>
-              <Ionicons name="checkmark-circle" size={16} color={GREEN} />
+              <Ionicons name="checkmark-circle" size={16} color={colors.status.success} />
               <Text style={styles.joinedSmallText}>You're In</Text>
             </View>
             <TouchableOpacity
@@ -468,7 +462,7 @@ export default function MatchDetailScreen() {
       {hasJoined && !showLeaveBtn && !showClaimBtn && match.status !== 'completed' && (
         <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
           <View style={styles.joinedBadge}>
-            <Ionicons name="checkmark-circle" size={20} color={GREEN} />
+            <Ionicons name="checkmark-circle" size={20} color={colors.status.success} />
             <Text style={styles.joinedText}>You're registered for this match</Text>
           </View>
         </View>
@@ -542,14 +536,15 @@ const PLATFORMS = [
 ] as const;
 
 function StreamButtons({ match }: { match: NonNullable<ReturnType<typeof useMatchDetail>['match']> }) {
+  const { colors: sc } = useTheme();
   const active = PLATFORMS.filter(p => !!match[p.key]);
   if (active.length === 0) return null;
 
   return (
     <View style={streamStyles.wrapper}>
       <View style={streamStyles.labelRow}>
-        <Ionicons name="radio-outline" size={14} color={PRIMARY} />
-        <Text style={streamStyles.label}>WATCH LIVE</Text>
+        <Ionicons name="radio-outline" size={14} color={sc.primary} />
+        <Text style={[streamStyles.label, { color: sc.primary }]}>WATCH LIVE</Text>
       </View>
       <View style={streamStyles.row}>
         {active.map(p => (
@@ -578,7 +573,7 @@ const streamStyles = StyleSheet.create({
   },
   label: {
     fontSize: 11, fontFamily: 'Inter_700Bold',
-    color: PRIMARY, letterSpacing: 1.5,
+    letterSpacing: 1.5,
   },
   row: {
     flexDirection: 'row', gap: 10,
@@ -597,14 +592,17 @@ const streamStyles = StyleSheet.create({
 });
 
 function createStyles(colors: AppColors) {
+  const SUCCESS = colors.status.success;
+  const ERROR   = colors.status.error;
+
   return StyleSheet.create({
-    container:   { flex: 1, backgroundColor: '#0A0A0A' },
-    centered:    { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: '#0A0A0A' },
+    container:   { flex: 1, backgroundColor: colors.background.dark },
+    centered:    { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, backgroundColor: colors.background.dark },
     bannerPlaceholder: {
-      backgroundColor: '#0F0F0F', alignItems: 'center', justifyContent: 'center',
+      backgroundColor: colors.background.dark, alignItems: 'center', justifyContent: 'center',
     },
 
-    /* Back button */
+    /* Back button — always dark since it's over a banner */
     backBtn: {
       position: 'absolute', left: 14, zIndex: 10,
       width: 36, height: 36, borderRadius: 18,
@@ -621,14 +619,14 @@ function createStyles(colors: AppColors) {
     livePulse: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#fff' },
     statusText: { color: '#fff', fontSize: 11, fontFamily: 'Inter_700Bold', letterSpacing: 0.5 },
 
-    /* Banner footer (game + title) */
+    /* Banner footer (game + title) — always over dark gradient */
     bannerFooter: {
       position: 'absolute', bottom: 0, left: 0, right: 0,
       paddingHorizontal: 16, paddingBottom: 14, paddingTop: 24,
     },
     bannerGame: {
       fontSize: 10, fontFamily: 'Inter_700Bold',
-      color: PRIMARY, letterSpacing: 2, marginBottom: 4,
+      color: colors.primary, letterSpacing: 2, marginBottom: 4,
     },
     bannerTitle: {
       fontSize: 20, fontFamily: 'Inter_700Bold',
@@ -641,10 +639,10 @@ function createStyles(colors: AppColors) {
     /* ── Prize + Fee Hero Card ── */
     prizeCard: {
       flexDirection: 'row',
-      backgroundColor: '#141414',
+      backgroundColor: colors.background.card,
       borderRadius: 16,
       borderWidth: 1,
-      borderColor: '#242424',
+      borderColor: colors.border.default,
       marginBottom: 14,
       overflow: 'hidden',
     },
@@ -657,42 +655,42 @@ function createStyles(colors: AppColors) {
     },
     prizeSectionLabel: {
       fontSize: 11, fontFamily: 'Inter_600SemiBold',
-      color: '#666', textTransform: 'uppercase', letterSpacing: 0.8,
+      color: colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.8,
     },
     prizeAmount: {
       fontSize: 26, fontFamily: 'Inter_700Bold',
       color: GOLD, letterSpacing: -0.5, textAlign: 'center',
     },
     prizeCardDivider: {
-      width: 1, backgroundColor: '#242424',
+      width: 1, backgroundColor: colors.border.default,
       marginVertical: 14,
     },
 
     /* Stats row */
     statsRow: {
       flexDirection: 'row', alignItems: 'center',
-      backgroundColor: '#111',
+      backgroundColor: colors.background.card,
       borderRadius: 14, paddingVertical: 14,
-      borderWidth: 1, borderColor: '#1E1E1E',
+      borderWidth: 1, borderColor: colors.border.default,
       marginBottom: 14,
     },
     statCell: {
       flex: 1, alignItems: 'center', gap: 4,
     },
-    statDivider: { width: 1, height: 34, backgroundColor: '#1E1E1E' },
+    statDivider: { width: 1, height: 34, backgroundColor: colors.border.default },
     statValue: {
-      fontSize: 14, fontFamily: 'Inter_700Bold', color: '#FFFFFF',
+      fontSize: 14, fontFamily: 'Inter_700Bold', color: colors.text.primary,
     },
     statLabel: {
       fontSize: 10, fontFamily: 'Inter_400Regular',
-      color: '#555', textTransform: 'uppercase', letterSpacing: 0.6,
+      color: colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.6,
     },
 
     /* Generic card */
     card: {
-      backgroundColor: '#111',
+      backgroundColor: colors.background.card,
       borderRadius: 16, padding: 16, marginBottom: 12,
-      borderWidth: 1, borderColor: '#1E1E1E',
+      borderWidth: 1, borderColor: colors.border.default,
     },
     cardHeader: {
       flexDirection: 'row', alignItems: 'center',
@@ -701,58 +699,58 @@ function createStyles(colors: AppColors) {
 
     /* Slot meter */
     slotBadge: {
-      backgroundColor: 'rgba(238,61,45,0.12)',
+      backgroundColor: colors.primary + '1F',
       borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4,
     },
-    slotBadgeFull: { backgroundColor: 'rgba(239,68,68,0.15)' },
+    slotBadgeFull: { backgroundColor: ERROR + '26' },
     slotBadgeText: {
-      fontSize: 11, fontFamily: 'Inter_700Bold', color: PRIMARY,
+      fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.primary,
     },
     progressTrack: {
-      height: 7, backgroundColor: '#1E1E1E', borderRadius: 4, overflow: 'hidden',
+      height: 7, backgroundColor: colors.border.default, borderRadius: 4, overflow: 'hidden',
     },
-    progressFill: { height: 7, backgroundColor: PRIMARY, borderRadius: 4 },
+    progressFill: { height: 7, backgroundColor: colors.primary, borderRadius: 4 },
     progressLabels: {
       flexDirection: 'row', justifyContent: 'space-between', marginTop: 7,
     },
     progressLabelText: {
-      fontSize: 11, fontFamily: 'Inter_400Regular', color: '#555',
+      fontSize: 11, fontFamily: 'Inter_400Regular', color: colors.text.muted,
     },
 
     /* Text */
     bodyText: {
       fontSize: 14, fontFamily: 'Inter_400Regular',
-      color: '#999', lineHeight: 22,
+      color: colors.text.secondary, lineHeight: 22,
     },
 
     /* Rules */
     ruleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 11, marginBottom: 10 },
     ruleIndex: {
       width: 22, height: 22, borderRadius: 11,
-      backgroundColor: 'rgba(238,61,45,0.15)',
+      backgroundColor: colors.primary + '26',
       alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2,
     },
-    ruleIndexText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: PRIMARY },
+    ruleIndexText: { fontSize: 11, fontFamily: 'Inter_700Bold', color: colors.primary },
     ruleText: {
       flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular',
-      color: '#999', lineHeight: 21,
+      color: colors.text.secondary, lineHeight: 21,
     },
 
     /* Room credentials */
-    roomCard: { borderColor: 'rgba(238,61,45,0.25)' },
+    roomCard: { borderColor: colors.primary + '40' },
     credentialRow: {
       flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     },
     credentialRowBorder: {
-      borderTopWidth: 1, borderTopColor: '#1E1E1E', marginTop: 10, paddingTop: 10,
+      borderTopWidth: 1, borderTopColor: colors.border.default, marginTop: 10, paddingTop: 10,
     },
     credentialLabel: {
-      fontSize: 12, fontFamily: 'Inter_400Regular', color: '#555',
+      fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted,
     },
     credentialValueWrap: { flexDirection: 'row', alignItems: 'center', gap: 7 },
     credentialValue: {
       fontSize: 15, fontFamily: 'Inter_700Bold',
-      color: '#FFFFFF', letterSpacing: 1.2,
+      color: colors.text.primary, letterSpacing: 1.2,
     },
 
     /* Info box */
@@ -773,7 +771,7 @@ function createStyles(colors: AppColors) {
     },
     infoBoxSub: {
       fontSize: 12, fontFamily: 'Inter_400Regular',
-      color: '#666', lineHeight: 18,
+      color: colors.text.muted, lineHeight: 18,
     },
 
     /* Winner card */
@@ -781,24 +779,24 @@ function createStyles(colors: AppColors) {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
       borderRadius: 14, padding: 18, marginBottom: 12, overflow: 'hidden',
       borderWidth: 1, borderColor: 'rgba(255,215,0,0.25)',
-      backgroundColor: '#111',
+      backgroundColor: colors.background.card,
     },
     winnerLeft:   { flexDirection: 'row', alignItems: 'center', gap: 14 },
     winnerRank:   { fontSize: 17, fontFamily: 'Inter_700Bold', color: GOLD },
-    winnerPoints: { fontSize: 12, fontFamily: 'Inter_400Regular', color: '#555', marginTop: 2 },
-    winnerPrize:  { fontSize: 24, fontFamily: 'Inter_700Bold', color: GREEN },
+    winnerPoints: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginTop: 2 },
+    winnerPrize:  { fontSize: 24, fontFamily: 'Inter_700Bold', color: SUCCESS },
 
     /* CTA bar */
     cta: {
       position: 'absolute', bottom: 0, left: 0, right: 0,
       paddingHorizontal: 16, paddingTop: 10,
-      backgroundColor: '#0A0A0AF5',
-      borderTopWidth: 1, borderTopColor: '#1A1A1A',
+      backgroundColor: colors.background.dark + 'F5',
+      borderTopWidth: 1, borderTopColor: colors.border.subtle,
     },
 
-    /* Join button — GREEN */
+    /* Join button */
     joinBtn: {
-      backgroundColor: GREEN, borderRadius: 14, height: 52,
+      backgroundColor: SUCCESS, borderRadius: 14, height: 52,
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
     },
     joinBtnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
@@ -809,17 +807,17 @@ function createStyles(colors: AppColors) {
     },
     joinedSmallBadge: {
       flexDirection: 'row', alignItems: 'center', gap: 6,
-      flex: 1, backgroundColor: 'rgba(34,197,94,0.08)',
+      flex: 1, backgroundColor: SUCCESS + '14',
       borderRadius: 12, paddingHorizontal: 12, height: 52,
-      borderWidth: 1, borderColor: 'rgba(34,197,94,0.2)',
+      borderWidth: 1, borderColor: SUCCESS + '33',
     },
     joinedSmallText: {
-      fontSize: 14, fontFamily: 'Inter_600SemiBold', color: GREEN,
+      fontSize: 14, fontFamily: 'Inter_600SemiBold', color: SUCCESS,
     },
 
-    /* Leave button — RED */
+    /* Leave button */
     leaveBtn: {
-      backgroundColor: RED, borderRadius: 12, height: 52,
+      backgroundColor: ERROR, borderRadius: 12, height: 52,
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
       gap: 8, paddingHorizontal: 22,
     },
@@ -828,10 +826,10 @@ function createStyles(colors: AppColors) {
     /* Joined badge */
     joinedBadge: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-      backgroundColor: 'rgba(34,197,94,0.08)', borderRadius: 14, height: 52,
-      borderWidth: 1, borderColor: 'rgba(34,197,94,0.22)',
+      backgroundColor: SUCCESS + '14', borderRadius: 14, height: 52,
+      borderWidth: 1, borderColor: SUCCESS + '38',
     },
-    joinedText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: GREEN },
+    joinedText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: SUCCESS },
 
     /* Claim button */
     claimBtn: {
@@ -842,8 +840,8 @@ function createStyles(colors: AppColors) {
 
     disabled: { opacity: 0.55 },
 
-    emptyTitle:  { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: '#555' },
+    emptyTitle:  { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: colors.text.muted },
     backLink:    { paddingHorizontal: 24, paddingVertical: 10 },
-    backLinkText: { color: PRIMARY, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+    backLinkText: { color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
   });
 }
