@@ -24,8 +24,22 @@ export default function ProfileSetupScreen() {
   const { user } = useAuth();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
+  const oauthName: string =
+    user?.user_metadata?.full_name ||
+    user?.user_metadata?.name ||
+    '';
+
+  const oauthUsername: string = (() => {
+    const raw: string =
+      user?.user_metadata?.user_name ||
+      user?.user_metadata?.preferred_username ||
+      user?.user_metadata?.login ||
+      '';
+    return raw.toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+  })();
+
+  const [fullName, setFullName] = useState(oauthName);
+  const [username, setUsername] = useState(oauthUsername);
   const [avatarIndex, setAvatarIndex] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');

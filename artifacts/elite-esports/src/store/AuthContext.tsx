@@ -1,8 +1,10 @@
 import React, { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { supabase } from '@/services/supabase';
 import { saveFcmTokenForUser, removeFcmTokenForUser } from '@/services/NotificationService';
+import { navigateAfterAuth } from '@/utils/authHelpers';
 
 interface AuthContextValue {
   session: Session | null;
@@ -12,6 +14,37 @@ interface AuthContextValue {
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+async function handleAuthUrl(url: string) {
+  try {
+    const parsed = Linking.parse(url);
+    const params = parsed.queryParams ?? {};
+
+    if (params.code) {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+      if (!error && data.session?.user) {
+        await navigateAfterAuth(data.session.user.id);
+      }
+      return;
+    }
+
+    if (params.type === 'recovery') {
+      router.replace('/(auth)/login');
+      return;
+    }
+
+    if (params.access_token && params.refresh_token) {
+      const { data, error } = await supabase.auth.setSession({
+        access_token: params.access_token as string,
+        refresh_token: params.refresh_token as string,
+      });
+      if (!error && data.session?.user) {
+        await navigateAfterAuth(data.session.user.id);
+      }
+    }
+  } catch {
+  }
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -36,14 +69,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setLoading(false);
-      // Register token for users who were already logged in when the app launched
       const authUser = initialSession?.user;
       if (authUser) {
         saveFcmTokenForUser(authUser).catch(() => {});
       }
     });
 
-    return () => subscription.unsubscribe();
+    Linking.getInitialURL().then((url) => {
+      if (url) handleAuthUrl(url);
+    });
+
+    const deepLinkSub = Linking.addEventListener('url', (event) => {
+      handleAuthUrl(event.url);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      deepLinkSub.remove();
+    };
   }, []);
 
   const signOut = async () => {

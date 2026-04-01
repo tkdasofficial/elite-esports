@@ -12,6 +12,7 @@ import * as Linking from 'expo-linking';
 import { supabase } from '@/services/supabase';
 import { useTheme } from '@/store/ThemeContext';
 import type { AppColors } from '@/utils/colors';
+import { navigateAfterAuth } from '@/utils/authHelpers';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -69,9 +70,12 @@ export default function AuthOptionsScreen() {
       if (data?.url) {
         const result = await WebBrowser.openAuthSessionAsync(data.url, redirectUrl);
         if (result.type === 'success' && result.url) {
-          const { error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url);
+          const { data: sessionData, error: sessionError } = await supabase.auth.exchangeCodeForSession(result.url);
           if (sessionError) throw sessionError;
-          router.replace('/(tabs)');
+          const userId = sessionData?.session?.user?.id;
+          if (userId) {
+            await navigateAfterAuth(userId);
+          }
         }
       }
     } catch (err: any) {

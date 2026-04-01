@@ -12,27 +12,10 @@ import { supabase } from '@/services/supabase';
 import { useTheme } from '@/store/ThemeContext';
 import type { AppColors } from '@/utils/colors';
 import { AuthInput } from '@/features/auth/components/AuthInput';
+import { navigateAfterAuth } from '@/utils/authHelpers';
 
 type Step = 'email' | 'password' | 'verify' | 'reset-sent';
 type Mode = 'signin' | 'signup' | 'unknown';
-
-async function isProfileComplete(userId: string): Promise<boolean> {
-  const { data } = await supabase
-    .from('users')
-    .select('name, username')
-    .eq('id', userId)
-    .maybeSingle();
-  return !!(data?.name && data?.username);
-}
-
-async function navigateAfterAuth(userId: string) {
-  const complete = await isProfileComplete(userId);
-  if (complete) {
-    router.replace('/(tabs)');
-  } else {
-    router.replace('/(auth)/profile-setup');
-  }
-}
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
