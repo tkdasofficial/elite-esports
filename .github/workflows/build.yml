@@ -8,15 +8,14 @@ on:
 
 jobs:
   build:
-    name: Build APK
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: artifacts/elite-esports
+        working-directory: artifacts/elite-esports/android
 
     steps:
-      # 1. Checkout repo
+      # 1. Checkout
       - name: Checkout Repository
         uses: actions/checkout@v4
 
@@ -24,8 +23,8 @@ jobs:
       - name: Setup JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: 17
 
       # 3. Cache Gradle
       - name: Cache Gradle
@@ -36,7 +35,7 @@ jobs:
             ~/.gradle/wrapper
           key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
 
-      # 4. Permission
+      # 4. Fix permission
       - name: Grant Execute Permission
         run: chmod +x gradlew
 
@@ -44,26 +43,26 @@ jobs:
       - name: Build APK
         run: ./gradlew assembleDebug
 
-      # 6. Find APK
+      # 6. Locate APK
       - name: Locate APK
         id: apk
         run: |
-          APK_PATH=$(find build/outputs/apk -name "*.apk" | head -n 1)
+          APK_PATH=$(find app/build/outputs/apk -name "*.apk" | head -n 1)
           echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
 
-      # 7. Upload Artifact (backup)
-      - name: Upload APK Artifact
+      # 7. Upload Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: app-apk
-          path: artifacts/elite-esports/${{ steps.apk.outputs.apk_path }}
+          name: elite-esports-apk
+          path: artifacts/elite-esports/android/${{ steps.apk.outputs.apk_path }}
 
       # 8. Create Release
-      - name: Create GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: release-${{ github.run_number }}
           name: Elite eSports Release ${{ github.run_number }}
-          files: artifacts/elite-esports/${{ steps.apk.outputs.apk_path }}
+          files: artifacts/elite-esports/android/${{ steps.apk.outputs.apk_path }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
