@@ -16,7 +16,6 @@ import { useAuth } from '@/store/AuthContext';
 import { useMatchDetail } from '@/features/match/hooks/useMatchDetail';
 import { AdLoadingOverlay } from '@/components/AdLoadingOverlay';
 import { useAdGate } from '@/hooks/useAdGate';
-import { useAds } from '@/store/AdContext';
 import { supabase } from '@/services/supabase';
 import { useWallet } from '@/store/WalletContext';
 import type { AppColors } from '@/utils/colors';
@@ -66,8 +65,7 @@ export default function MatchDetailScreen() {
   const { refreshWallet, creditBalance } = useWallet();
   const insets                   = useSafeAreaInsets();
   const { match, loading, hasJoined, joining, joinMatch } = useMatchDetail(id, user?.id);
-  const { adConfig, setInLiveMatch } = useAds();
-  const { gateAction, overlay, dismiss } = useAdGate();
+  const { gateWithInterstitial, gateWithRewarded, overlay, dismiss } = useAdGate();
   const { colors, isDark }        = useTheme();
   const styles                   = useMemo(() => createStyles(colors), [colors]);
 
@@ -77,13 +75,6 @@ export default function MatchDetailScreen() {
 
   const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
   const isLive    = match?.status === 'ongoing';
-
-  useEffect(() => {
-    if (isLive && hasJoined) {
-      setInLiveMatch(true);
-      return () => setInLiveMatch(false);
-    }
-  }, [isLive, hasJoined, setInLiveMatch]);
 
   useEffect(() => {
     if (!user || match?.status !== 'completed') return;
@@ -116,19 +107,19 @@ export default function MatchDetailScreen() {
   useEffect(() => {
     if (!isLive || !hasJoined) return;
     const handler = BackHandler.addEventListener('hardwareBackPress', () => {
-      gateAction(adConfig.leave, () => router.back(), 'Loading Ad...');
+      gateWithInterstitial(() => router.back());
       return true;
     });
     return () => handler.remove();
-  }, [isLive, hasJoined, adConfig.leave, gateAction]);
+  }, [isLive, hasJoined, gateWithInterstitial]);
 
   const handleJoin = useCallback(() => {
-    gateAction(adConfig.join, async () => {
+    gateWithInterstitial(async () => {
       const { error } = await joinMatch();
       if (error) Alert.alert('Error', error.message);
       else Alert.alert('Joined!', 'You have successfully joined this match.');
-    }, 'Loading Ad...');
-  }, [adConfig.join, gateAction, joinMatch]);
+    });
+  }, [gateWithInterstitial, joinMatch]);
 
   const handleLeave = useCallback(() => {
     Alert.alert(
@@ -139,42 +130,43 @@ export default function MatchDetailScreen() {
         {
           text: 'Leave',
           style: 'destructive',
-          onPress: () => gateAction(adConfig.leave, () => router.back(), 'Loading Ad...'),
+          onPress: () => gateWithInterstitial(() => router.back()),
         },
       ]
     );
-  }, [adConfig.leave, gateAction]);
+  }, [gateWithInterstitial]);
 
   const handleClaim = useCallback(() => {
     if (!claimResult || claimResult.prize <= 0 || !user) return;
-    gateAction(adConfig.reward, async () => {
-      setClaimLoading(true);
-      try {
-        const { data, error } = await supabase.rpc('claim_match_prize', { _match_id: id });
-        if (error) {
-          Alert.alert('Error', error.message);
-        } else if (data?.success === false) {
-          // Backend already has the prize — show "already claimed" state
-          setAlreadyClaimed(true);
-          Alert.alert('Already Claimed', data.error ?? 'You have already claimed this prize.');
-        } else {
-          // Use the server-returned prize amount; fall back to client calculation
-          const actualPrize = Number(data?.prize ?? claimResult.prize);
-          // Immediately reflect the new balance in the UI
-          creditBalance(actualPrize);
-          setAlreadyClaimed(true);
-          Alert.alert(
-            '🏆 Prize Claimed!',
-            `₹${formatPrize(actualPrize)} has been added to your wallet.`,
-          );
-          // Background refresh to sync the true server balance
-          refreshWallet().catch(() => {/* silent — local update already applied */});
+    gateWithRewarded(
+      () => {
+        supabase.rpc('credit_ad_bonus').catch(() => {});
+      },
+      async () => {
+        setClaimLoading(true);
+        try {
+          const { data, error } = await supabase.rpc('claim_match_prize', { _match_id: id });
+          if (error) {
+            Alert.alert('Error', error.message);
+          } else if (data?.success === false) {
+            setAlreadyClaimed(true);
+            Alert.alert('Already Claimed', data.error ?? 'You have already claimed this prize.');
+          } else {
+            const actualPrize = Number(data?.prize ?? claimResult.prize);
+            creditBalance(actualPrize);
+            setAlreadyClaimed(true);
+            Alert.alert(
+              '🏆 Prize Claimed!',
+              `₹${formatPrize(actualPrize)} has been added to your wallet.`,
+            );
+            refreshWallet().catch(() => {});
+          }
+        } finally {
+          setClaimLoading(false);
         }
-      } finally {
-        setClaimLoading(false);
-      }
-    }, 'Loading Reward Ad...');
-  }, [claimResult, user, adConfig.reward, gateAction, id, creditBalance, refreshWallet]);
+      },
+    );
+  }, [claimResult, user, gateWithRewarded, id, creditBalance, refreshWallet]);
 
   if (loading) {
     return (

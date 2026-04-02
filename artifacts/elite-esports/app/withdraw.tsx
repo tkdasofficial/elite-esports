@@ -11,6 +11,8 @@ import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { submitWithdrawal } from '@/services/walletApi';
 import { useWallet } from '@/store/WalletContext';
+import { AdLoadingOverlay } from '@/components/AdLoadingOverlay';
+import { useAdGate } from '@/hooks/useAdGate';
 import type { AppColors } from '@/utils/colors';
 
 type Step = 'form' | 'processing' | 'error';
@@ -21,27 +23,34 @@ export default function WithdrawScreen() {
   const { colors }                 = useTheme();
   const styles                     = useMemo(() => createStyles(colors), [colors]);
 
+  const { gateWithInterstitial, overlay, dismiss } = useAdGate();
+
   const [amount, setAmount] = useState('');
   const [upiId,  setUpiId]  = useState('');
   const [step,   setStep]   = useState<Step>('form');
   const [error,  setError]  = useState('');
 
-  const handleSubmit = async () => {
-    const val = parseFloat(amount);
-    if (!val || val < 50)  { setError('Minimum withdrawal is ₹50');         setStep('error'); return; }
-    if (val > balance)      { setError('You don\'t have enough balance');      setStep('error'); return; }
-    if (!upiId.trim())      { setError('Please enter your UPI ID');           setStep('error'); return; }
-    if (!upiId.includes('@')) { setError('Enter a valid UPI ID (e.g. name@bank)'); setStep('error'); return; }
-
+  const doSubmit = async (val: number, upi: string) => {
     setStep('processing');
     try {
-      await submitWithdrawal(val, upiId.trim());
+      await submitWithdrawal(val, upi);
       await refreshWallet();
       router.replace('/(tabs)/wallet');
     } catch (err: any) {
       setError(err?.message ?? 'Something went wrong. Please try again.');
       setStep('error');
     }
+  };
+
+  const handleSubmit = () => {
+    const val = parseFloat(amount);
+    if (!val || val < 50)     { setError('Minimum withdrawal is ₹50');              setStep('error'); return; }
+    if (val > balance)         { setError('You don\'t have enough balance');          setStep('error'); return; }
+    if (!upiId.trim())         { setError('Please enter your UPI ID');               setStep('error'); return; }
+    if (!upiId.includes('@'))  { setError('Enter a valid UPI ID (e.g. name@bank)'); setStep('error'); return; }
+
+    const upi = upiId.trim();
+    gateWithInterstitial(() => doSubmit(val, upi));
   };
 
   if (step === 'processing') {
@@ -126,6 +135,13 @@ export default function WithdrawScreen() {
           <Text style={styles.btnText}>Request Withdrawal</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      <AdLoadingOverlay
+        visible={overlay.visible}
+        bypassAfter={overlay.duration}
+        onSkip={dismiss}
+        label={overlay.label}
+      />
     </View>
   );
 }

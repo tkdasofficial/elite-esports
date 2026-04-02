@@ -9,6 +9,7 @@ import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.appopen.AppOpenAd
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
@@ -26,6 +27,7 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
 
     private var interstitialAd: InterstitialAd? = null
     private var rewardedAd: RewardedAd?         = null
+    private var appOpenAd: AppOpenAd?           = null
     private var currentType: String             = "interstitial"
 
     override fun getName(): String = "EliteAdMob"
@@ -35,32 +37,49 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
         currentType = type
         val request = AdRequest.Builder().build()
 
-        if (type == "rewarded") {
-            RewardedAd.load(
-                reactContext, unitId, request,
-                object : RewardedAdLoadCallback() {
-                    override fun onAdLoaded(ad: RewardedAd) {
-                        rewardedAd = ad
-                        emit(EVENT_LOADED, null)
+        when (type) {
+            "rewarded" -> {
+                RewardedAd.load(
+                    reactContext, unitId, request,
+                    object : RewardedAdLoadCallback() {
+                        override fun onAdLoaded(ad: RewardedAd) {
+                            rewardedAd = ad
+                            emit(EVENT_LOADED, null)
+                        }
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            emit(EVENT_FAILED, error.message)
+                        }
                     }
-                    override fun onAdFailedToLoad(error: LoadAdError) {
-                        emit(EVENT_FAILED, error.message)
+                )
+            }
+            "app_open" -> {
+                AppOpenAd.load(
+                    reactContext, unitId, request,
+                    object : AppOpenAd.AppOpenAdLoadCallback() {
+                        override fun onAdLoaded(ad: AppOpenAd) {
+                            appOpenAd = ad
+                            emit(EVENT_LOADED, null)
+                        }
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            emit(EVENT_FAILED, error.message)
+                        }
                     }
-                }
-            )
-        } else {
-            InterstitialAd.load(
-                reactContext, unitId, request,
-                object : InterstitialAdLoadCallback() {
-                    override fun onAdLoaded(ad: InterstitialAd) {
-                        interstitialAd = ad
-                        emit(EVENT_LOADED, null)
+                )
+            }
+            else -> {
+                InterstitialAd.load(
+                    reactContext, unitId, request,
+                    object : InterstitialAdLoadCallback() {
+                        override fun onAdLoaded(ad: InterstitialAd) {
+                            interstitialAd = ad
+                            emit(EVENT_LOADED, null)
+                        }
+                        override fun onAdFailedToLoad(error: LoadAdError) {
+                            emit(EVENT_FAILED, error.message)
+                        }
                     }
-                    override fun onAdFailedToLoad(error: LoadAdError) {
-                        emit(EVENT_FAILED, error.message)
-                    }
-                }
-            )
+                )
+            }
         }
     }
 
@@ -71,37 +90,54 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
             return
         }
 
-        if (currentType == "rewarded") {
-            val ad = rewardedAd ?: run { emit(EVENT_FAILED, "Rewarded ad not loaded"); return }
-            activity.runOnUiThread {
-                ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                    override fun onAdDismissedFullScreenContent() {
-                        rewardedAd = null
-                        emit(EVENT_CLOSED, null)
+        when (currentType) {
+            "rewarded" -> {
+                val ad = rewardedAd ?: run { emit(EVENT_FAILED, "Rewarded ad not loaded"); return }
+                activity.runOnUiThread {
+                    ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                        override fun onAdDismissedFullScreenContent() {
+                            rewardedAd = null
+                            emit(EVENT_CLOSED, null)
+                        }
+                        override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                            rewardedAd = null
+                            emit(EVENT_FAILED, error.message)
+                        }
                     }
-                    override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                        rewardedAd = null
-                        emit(EVENT_FAILED, error.message)
-                    }
-                }
-                ad.show(activity) {
-                    emit(EVENT_REWARDED, null)
+                    ad.show(activity) { emit(EVENT_REWARDED, null) }
                 }
             }
-        } else {
-            val ad = interstitialAd ?: run { emit(EVENT_FAILED, "Interstitial ad not loaded"); return }
-            activity.runOnUiThread {
-                ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                    override fun onAdDismissedFullScreenContent() {
-                        interstitialAd = null
-                        emit(EVENT_CLOSED, null)
+            "app_open" -> {
+                val ad = appOpenAd ?: run { emit(EVENT_FAILED, "App open ad not loaded"); return }
+                activity.runOnUiThread {
+                    ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                        override fun onAdDismissedFullScreenContent() {
+                            appOpenAd = null
+                            emit(EVENT_CLOSED, null)
+                        }
+                        override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                            appOpenAd = null
+                            emit(EVENT_FAILED, error.message)
+                        }
                     }
-                    override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                        interstitialAd = null
-                        emit(EVENT_FAILED, error.message)
-                    }
+                    ad.show(activity)
                 }
-                ad.show(activity)
+            }
+            else -> {
+                val ad = interstitialAd ?: run { emit(EVENT_FAILED, "Interstitial ad not loaded"); return }
+                activity.runOnUiThread {
+                    ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                        override fun onAdDismissedFullScreenContent() {
+                            interstitialAd = null
+                            emit(EVENT_CLOSED, null)
+                        }
+                        override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                            interstitialAd = null
+                            emit(EVENT_FAILED, error.message)
+                        }
+                    }
+                    ad.show(activity)
+                }
             }
         }
     }

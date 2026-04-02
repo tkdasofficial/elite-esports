@@ -6,6 +6,7 @@
 #import <RNCPushNotificationIOS.h>
 #import <GoogleService-Info.h>
 #import <Firebase.h>
+#import <GoogleMobileAds/GoogleMobileAds.h>
 
 @implementation AppDelegate
 
@@ -16,6 +17,9 @@
 
   // Configure Firebase
   [FIRApp configure];
+
+  // Initialize Google Mobile Ads SDK
+  [[GADMobileAds sharedInstance] startWithCompletionHandler:nil];
 
   // Register for remote notifications
   UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];

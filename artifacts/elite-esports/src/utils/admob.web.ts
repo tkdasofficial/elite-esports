@@ -1,34 +1,21 @@
-/* Web stub — AdMob is a native-only SDK and does not run in a browser. */
-
-export const mobileAds = () => ({
-  initialize: async () => [],
-});
-
-export const AdEventType = {
-  LOADED:   'loaded',
-  ERROR:    'error',
-  OPENED:   'opened',
-  CLICKED:  'clicked',
-  CLOSED:   'closed',
-} as const;
-
-export const RewardedAdEventType = {
-  LOADED:        'rewarded_loaded',
-  EARNED_REWARD: 'rewarded_earned_reward',
-} as const;
-
-const noopUnsubscribe = () => {};
-
-const makeNoopAd = () => ({
-  addAdEventListener: (_event: string, _cb: () => void) => noopUnsubscribe,
-  load:  () => {},
-  show:  async () => {},
-});
-
-export const InterstitialAd = {
-  createForAdRequest: (_unitId: string, _opts?: object) => makeNoopAd(),
+export const EliteAdMobNative = {
+  loadAd: (_unitId: string, _type: string) => {},
+  showAd: () => {},
 };
 
-export const RewardedAd = {
-  createForAdRequest: (_unitId: string, _opts?: object) => makeNoopAd(),
+export const admobEmitter = {
+  addListener: (_event: string, _cb: () => void) => ({ remove: () => {} }),
 };
+
+export const AD_EVENTS = {
+  LOADED:   'EliteAdMob:loaded',
+  CLOSED:   'EliteAdMob:closed',
+  REWARDED: 'EliteAdMob:rewarded',
+  FAILED:   'EliteAdMob:failed',
+} as const;
+
+export const AD_UNITS = {
+  APP_OPEN:    'ca-app-pub-2219438935030744/4030020209',
+  INTERSTITIAL:'ca-app-pub-2219438935030744/6236112228',
+  REWARDED:    'ca-app-pub-2219438935030744/4867190230',
+} as const;
