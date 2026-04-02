@@ -16,6 +16,7 @@ import { ProfileProvider } from '@/store/ProfileContext';
 import { ThemeProvider, useTheme } from '@/store/ThemeContext';
 import { NotificationsProvider } from '@/store/NotificationsContext';
 import { WalletProvider } from '@/store/WalletContext';
+import { AdProvider } from '@/store/AdContext';
 import { setupAndroidChannels } from '@/services/NotificationService';
 import { requestAppPermissions } from '@/services/PermissionService';
 import { loadHapticPreference } from '@/utils/haptics';
@@ -85,7 +86,9 @@ export default function RootLayout() {
               <ProfileProvider>
                 <NotificationsProvider>
                   <WalletProvider>
-                    <ThemedRoot />
+                    <AdProvider>
+                      <ThemedRoot />
+                    </AdProvider>
                   </WalletProvider>
                 </NotificationsProvider>
               </ProfileProvider>
