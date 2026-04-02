@@ -1,7 +1,7 @@
 #import "EliteAdMobModule.h"
 #import <GoogleMobileAds/GoogleMobileAds.h>
 
-@interface EliteAdMobModule ()
+@interface EliteAdMobModule () <GADFullScreenContentDelegate>
 @property (nonatomic, strong) GADInterstitialAd  *interstitialAd;
 @property (nonatomic, strong) GADRewardedAd      *rewardedAd;
 @property (nonatomic, strong) GADAppOpenAd       *appOpenAd;
@@ -41,6 +41,25 @@ RCT_EXPORT_MODULE(EliteAdMob)
   }
 }
 
+// MARK: - GADFullScreenContentDelegate
+
+- (void)adDidDismissFullScreenContent:(id<GADFullScreenPresentingAd>)ad {
+  self.interstitialAd = nil;
+  self.rewardedAd     = nil;
+  self.appOpenAd      = nil;
+  [self emitEvent:@"EliteAdMob:closed" data:nil];
+}
+
+- (void)ad:(id<GADFullScreenPresentingAd>)ad
+    didFailToPresentFullScreenContentWithError:(NSError *)error {
+  self.interstitialAd = nil;
+  self.rewardedAd     = nil;
+  self.appOpenAd      = nil;
+  [self emitEvent:@"EliteAdMob:failed" data:error.localizedDescription];
+}
+
+// MARK: - Load
+
 RCT_EXPORT_METHOD(loadAd:(NSString *)unitId type:(NSString *)type) {
   self.currentType = type;
   GADRequest *request = [GADRequest request];
@@ -55,6 +74,7 @@ RCT_EXPORT_METHOD(loadAd:(NSString *)unitId type:(NSString *)type) {
          return;
        }
        self.rewardedAd = ad;
+       self.rewardedAd.fullScreenContentDelegate = self;
        [self emitEvent:@"EliteAdMob:loaded" data:nil];
      }];
 
@@ -68,6 +88,7 @@ RCT_EXPORT_METHOD(loadAd:(NSString *)unitId type:(NSString *)type) {
          return;
        }
        self.appOpenAd = ad;
+       self.appOpenAd.fullScreenContentDelegate = self;
        [self emitEvent:@"EliteAdMob:loaded" data:nil];
      }];
 
@@ -81,10 +102,13 @@ RCT_EXPORT_METHOD(loadAd:(NSString *)unitId type:(NSString *)type) {
          return;
        }
        self.interstitialAd = ad;
+       self.interstitialAd.fullScreenContentDelegate = self;
        [self emitEvent:@"EliteAdMob:loaded" data:nil];
      }];
   }
 }
+
+// MARK: - Show
 
 RCT_EXPORT_METHOD(showAd) {
   dispatch_async(dispatch_get_main_queue(), ^{
@@ -97,14 +121,12 @@ RCT_EXPORT_METHOD(showAd) {
         return;
       }
       __weak typeof(self) weakSelf = self;
-      self.rewardedAd.fullScreenContentDelegate = nil;
       [self.rewardedAd
         presentFromRootViewController:root
         userDidEarnRewardHandler:^{
           [weakSelf emitEvent:@"EliteAdMob:rewarded" data:nil];
         }];
-      self.rewardedAd = nil;
-      [self emitEvent:@"EliteAdMob:closed" data:nil];
+      // EVENT_CLOSED fires from adDidDismissFullScreenContent delegate
 
     } else if ([self.currentType isEqualToString:@"app_open"]) {
       if (!self.appOpenAd) {
@@ -112,8 +134,7 @@ RCT_EXPORT_METHOD(showAd) {
         return;
       }
       [self.appOpenAd presentFromRootViewController:root];
-      self.appOpenAd = nil;
-      [self emitEvent:@"EliteAdMob:closed" data:nil];
+      // EVENT_CLOSED fires from adDidDismissFullScreenContent delegate
 
     } else {
       if (!self.interstitialAd) {
@@ -121,8 +142,7 @@ RCT_EXPORT_METHOD(showAd) {
         return;
       }
       [self.interstitialAd presentFromRootViewController:root];
-      self.interstitialAd = nil;
-      [self emitEvent:@"EliteAdMob:closed" data:nil];
+      // EVENT_CLOSED fires from adDidDismissFullScreenContent delegate
     }
   });
 }
