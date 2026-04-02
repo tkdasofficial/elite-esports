@@ -7,7 +7,6 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { submitWithdrawal } from '@/services/walletApi';
 import { useWallet } from '@/store/WalletContext';
@@ -70,7 +69,7 @@ export default function WithdrawScreen() {
     <View style={styles.container}>
       <ScreenHeader title="Withdraw" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Balance Card */}

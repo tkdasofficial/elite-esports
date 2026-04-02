@@ -10,7 +10,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
 import { triggerHaptic } from '@/utils/haptics';
 import { useNotifications } from '@/store/NotificationsContext';
-import { WEB_TOP_INSET } from '@/utils/webInsets';
 
 interface Props {
   onSearch?: (query: string) => void;
@@ -20,7 +19,7 @@ export function GlobalHeader({ onSearch }: Props) {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { unreadCount } = useNotifications();
-  const topInset = Platform.OS === 'web' ? Math.max(WEB_TOP_INSET, insets.top) : insets.top;
+  const topInset = insets.top;
 
   const [searching, setSearching] = useState(false);
   const [query, setQuery] = useState('');

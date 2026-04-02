@@ -12,7 +12,6 @@ import { useAppConfig, AppConfig } from '@/hooks/useAppConfig';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/store/AuthContext';
 import { router } from 'expo-router';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import type { AppColors } from '@/utils/colors';
 
 const ADMIN_ID = '6771dad2-8719-48c0-8907-3bb6da336835';
@@ -88,7 +87,7 @@ export default function AdminConfigScreen() {
     >
       <ScreenHeader title="Admin — App Config" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET + 100 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 100 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

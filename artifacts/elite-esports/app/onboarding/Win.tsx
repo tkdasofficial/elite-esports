@@ -34,8 +34,8 @@ export default function WinScreen() {
   const nextStyle = useAnimatedStyle(() => ({ transform: [{ scale: scaleNext.value }] }));
   const backStyle = useAnimatedStyle(() => ({ transform: [{ scale: scaleBack.value }] }));
 
-  const topPad = Platform.OS === 'web' ? Math.max(52, insets.top) : insets.top;
-  const botPad = Platform.OS === 'web' ? Math.max(28, insets.bottom) : insets.bottom + 8;
+  const topPad = insets.top;
+  const botPad = insets.bottom + 8;
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

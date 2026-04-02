@@ -4,7 +4,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useNotifications, Notification } from '@/store/NotificationsContext';
 import type { AppColors } from '@/utils/colors';
@@ -58,7 +57,7 @@ export default function NotificationsScreen() {
         data={notifications}
         keyExtractor={item => item.id}
         renderItem={({ item }) => <NotifCard notif={item} onPress={() => handleNotifPress(item)} colors={colors} />}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
+        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom }]}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
         ListHeaderComponent={
           notifications.some(n => !n.is_read) ? (

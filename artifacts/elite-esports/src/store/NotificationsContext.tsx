@@ -3,7 +3,7 @@ import React, {
   useMemo, useCallback, useRef, ReactNode,
 } from 'react';
 import * as Notifications from 'expo-notifications';
-import { Platform, AppState, AppStateStatus } from 'react-native';
+import { AppState, AppStateStatus } from 'react-native';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/store/AuthContext';
 import { saveFcmTokenForUser, verifyAndSyncFcmToken } from '@/services/NotificationService';
@@ -61,7 +61,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   // ── FCM token registration on login ─────────────────────────────────────
   useEffect(() => {
-    if (!user || Platform.OS === 'web') return;
+    if (!user) return;
 
     saveFcmTokenForUser(user).catch(() => {});
 
@@ -76,7 +76,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   // ── Backup auto-sync: foreground + periodic 24 h check ──────────────────
   useEffect(() => {
-    if (!user || Platform.OS === 'web') return;
+    if (!user) return;
 
     async function runSync() {
       const now = Date.now();

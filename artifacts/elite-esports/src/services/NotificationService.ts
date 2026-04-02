@@ -91,14 +91,11 @@ export async function setupAndroidChannels(): Promise<void> {
 export async function getNotificationPermissionStatus(): Promise<
   'granted' | 'denied' | 'undetermined'
 > {
-  if (Platform.OS === 'web') return 'undetermined';
   const { status } = await Notifications.getPermissionsAsync();
   return status as 'granted' | 'denied' | 'undetermined';
 }
 
 export async function requestNotificationPermissions(): Promise<boolean> {
-  if (Platform.OS === 'web') return false;
-
   const { status: current } = await Notifications.getPermissionsAsync();
   if (current === 'granted') return true;
 
@@ -137,7 +134,6 @@ function resolveDisplayName(user: User): string {
 }
 
 async function getRawFcmToken(): Promise<string | null> {
-  if (Platform.OS === 'web') return null;
   try {
     const tokenData = await Notifications.getDevicePushTokenAsync();
     return tokenData.data as string;
@@ -169,7 +165,6 @@ async function upsertTokenRecord(user: User, token: string): Promise<void> {
  * Safe to call multiple times.
  */
 export async function saveFcmTokenForUser(user: User): Promise<void> {
-  if (Platform.OS === 'web') return;
   try {
     const { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') return;
@@ -192,7 +187,6 @@ export async function saveFcmTokenForUser(user: User): Promise<void> {
  * it force-saves it. Returns true if a sync was performed.
  */
 export async function verifyAndSyncFcmToken(user: User): Promise<boolean> {
-  if (Platform.OS === 'web') return false;
   try {
     const { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') return false;
@@ -219,7 +213,6 @@ export async function verifyAndSyncFcmToken(user: User): Promise<boolean> {
 }
 
 export async function removeFcmTokenForUser(userId: string): Promise<void> {
-  if (Platform.OS === 'web') return;
   try {
     const token = await AsyncStorage.getItem(PUSH_TOKEN_KEY);
     if (!token) return;
@@ -246,8 +239,6 @@ export async function scheduleLocalNotification(
   channelId: string = NOTIFICATION_CHANNELS.DEFAULT,
   prefKey?: string,
 ): Promise<void> {
-  if (Platform.OS === 'web') return;
-
   if (prefKey) {
     const pref = await AsyncStorage.getItem(prefKey);
     if (pref === 'false') return;

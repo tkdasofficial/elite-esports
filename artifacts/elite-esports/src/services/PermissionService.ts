@@ -1,4 +1,3 @@
-import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Location from 'expo-location';
 
@@ -10,7 +9,6 @@ export interface AppPermissions {
 }
 
 async function requestNotifications(): Promise<PermissionStatus> {
-  if (Platform.OS === 'web') return 'undetermined';
   try {
     const { status: current } = await Notifications.getPermissionsAsync();
     if (current === 'granted') return 'granted';
@@ -24,7 +22,6 @@ async function requestNotifications(): Promise<PermissionStatus> {
 }
 
 async function requestLocation(): Promise<PermissionStatus> {
-  if (Platform.OS === 'web') return 'undetermined';
   try {
     const { status: current } = await Location.getForegroundPermissionsAsync();
     if (current === 'granted') return 'granted';

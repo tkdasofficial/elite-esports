@@ -41,8 +41,8 @@ export default function WithdrawScreen() {
   const startStyle = useAnimatedStyle(() => ({ transform: [{ scale: scaleStart.value }] }));
   const backStyle  = useAnimatedStyle(() => ({ transform: [{ scale: scaleBack.value }] }));
 
-  const topPad = Platform.OS === 'web' ? Math.max(52, insets.top) : insets.top;
-  const botPad = Platform.OS === 'web' ? Math.max(28, insets.bottom) : insets.bottom + 8;
+  const topPad = insets.top;
+  const botPad = insets.bottom + 8;
 
   const handleStart = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

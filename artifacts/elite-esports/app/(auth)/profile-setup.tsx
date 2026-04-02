@@ -44,7 +44,7 @@ export default function ProfileSetupScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const topPad = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
+  const topPad = insets.top;
 
   const gradientColors: [string, string, string] = isDark
     ? ['#150400', '#0A0A0A', '#0A0A0A']

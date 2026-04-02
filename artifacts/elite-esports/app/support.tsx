@@ -6,7 +6,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { supabase } from '@/services/supabase';
 import { useAuth } from '@/store/AuthContext';
@@ -75,7 +74,7 @@ export default function SupportScreen() {
       <ScreenHeader title="Support" />
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET + 16 }]}
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 16 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >

@@ -7,7 +7,6 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { submitDeposit } from '@/services/walletApi';
 import type { AppColors } from '@/utils/colors';
@@ -108,7 +107,7 @@ export default function AddMoneyScreen() {
     <View style={styles.container}>
       <ScreenHeader title="Add Money" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
         {StepIndicator}

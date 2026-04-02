@@ -73,7 +73,7 @@ export default function MatchDetailScreen() {
   const [claimResult,    setClaimResult]    = useState<{ rank: number; points: number; prize: number } | null>(null);
   const [alreadyClaimed, setAlreadyClaimed] = useState(false);
 
-  const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
+  const bottomPad = insets.bottom;
   const isLive    = match?.status === 'ongoing';
 
   useEffect(() => {

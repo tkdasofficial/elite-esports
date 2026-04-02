@@ -7,7 +7,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@/store/ThemeContext';
 import { triggerHaptic } from '@/utils/haptics';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 
 const TAB_HEIGHT = 62;
 
@@ -67,7 +66,7 @@ function TabIcon({ routeName, isFocused }: { routeName: TabName; isFocused: bool
 function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const { isDark, colors } = useTheme();
-  const bottomPad = Platform.OS === 'web' ? WEB_BOTTOM_INSET : insets.bottom;
+  const bottomPad = insets.bottom;
 
   const BarContent = (
     <View style={styles.iconRow}>

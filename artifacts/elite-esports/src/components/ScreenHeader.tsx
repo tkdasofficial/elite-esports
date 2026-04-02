@@ -1,10 +1,9 @@
 import React, { useMemo } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
-import { WEB_TOP_INSET } from '@/utils/webInsets';
 
 interface ScreenHeaderProps {
   title: string;
@@ -15,7 +14,7 @@ interface ScreenHeaderProps {
 export function ScreenHeader({ title, rightElement, onBack }: ScreenHeaderProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useTheme();
-  const topInset = Platform.OS === 'web' ? Math.max(WEB_TOP_INSET, insets.top) : insets.top;
+  const topInset = insets.top;
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   return (

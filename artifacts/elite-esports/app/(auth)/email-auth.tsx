@@ -34,7 +34,7 @@ export default function EmailAuthScreen() {
   const [resendCooldown, setResendCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const topPad = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
+  const topPad = insets.top;
 
   const gradientColors: [string, string, string] = isDark
     ? ['#150400', '#0A0A0A', '#0A0A0A']

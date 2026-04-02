@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  Platform, ActivityIndicator, Alert,
+  ActivityIndicator, Alert,
 } from 'react-native';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -51,8 +51,8 @@ export default function AuthOptionsScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
   const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
 
-  const topPad = Platform.OS === 'web' ? Math.max(67, insets.top) : insets.top;
-  const bottomPad = insets.bottom + (Platform.OS === 'web' ? 34 : 0);
+  const topPad = insets.top;
+  const bottomPad = insets.bottom;
 
   const gradientColors: [string, string, string] = isDark
     ? ['#150400', '#0A0A0A', '#0A0A0A']

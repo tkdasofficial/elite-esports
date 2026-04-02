@@ -15,7 +15,6 @@ import { AvatarSVG, AVATAR_NAMES } from '@/components/AvatarSVG';
 import { SkeletonBar } from '@/components/SkeletonBar';
 import { useAuth } from '@/store/AuthContext';
 import { useProfileCtx } from '@/store/ProfileContext';
-import { WEB_TOP_INSET } from '@/utils/webInsets';
 import type { AppColors } from '@/utils/colors';
 
 const BTN_H = 42;
@@ -39,7 +38,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const topInset = Platform.OS === 'web' ? Math.max(WEB_TOP_INSET, insets.top) : insets.top;
+  const topInset = insets.top;
   const [selectedGame, setSelectedGame] = useState<LinkedGame | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 

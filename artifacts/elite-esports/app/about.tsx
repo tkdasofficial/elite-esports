@@ -8,7 +8,6 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/store/ThemeContext';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useAppConfig } from '@/hooks/useAppConfig';
 import type { AppColors } from '@/utils/colors';
@@ -65,7 +64,7 @@ export default function AboutScreen() {
     <View style={styles.container}>
       <ScreenHeader title="About" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET + 32 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
 

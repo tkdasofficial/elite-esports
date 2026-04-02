@@ -6,3 +6,9 @@ id = "rcx4IadF13zL2Y8JLzHmq"
 uri = "file://SYSTEM_MAP.md"
 type = "text"
 title = "SYSTEM_MAP.md — Elite eSports System Architecture"
+
+[[outputs]]
+id = "58dAKKLwz9adzqLW_Nzep"
+uri = "file://artifacts/elite-esports/env.txt"
+type = "text"
+title = "Elite eSports — env.txt (all environment variables)"

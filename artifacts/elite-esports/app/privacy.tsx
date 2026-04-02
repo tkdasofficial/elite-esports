@@ -2,7 +2,6 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import type { AppColors } from '@/utils/colors';
 
@@ -70,7 +69,7 @@ export default function PrivacyScreen() {
     <View style={styles.container}>
       <ScreenHeader title="Privacy Policy" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.lastUpdated}>Last updated: March 2026</Text>

@@ -9,7 +9,6 @@ import { router } from 'expo-router';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { AvatarSVG, AVATAR_NAMES, AVATAR_COUNT } from '@/components/AvatarSVG';
 import { useProfileCtx } from '@/store/ProfileContext';
@@ -141,7 +140,7 @@ export default function EditProfileScreen() {
     <View style={styles.container}>
       <ScreenHeader title="Edit Profile" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET + 32 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >

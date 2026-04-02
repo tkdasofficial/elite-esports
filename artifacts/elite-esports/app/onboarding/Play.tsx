@@ -5,7 +5,6 @@ import {
   StyleSheet,
   Pressable,
   Dimensions,
-  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,8 +35,8 @@ export default function PlayScreen() {
   const scale = useSharedValue(1);
   const btnStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
 
-  const topPad = Platform.OS === 'web' ? Math.max(52, insets.top) : insets.top;
-  const botPad = Platform.OS === 'web' ? Math.max(28, insets.bottom) : insets.bottom + 8;
+  const topPad = insets.top;
+  const botPad = insets.bottom + 8;
 
   const handleNext = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

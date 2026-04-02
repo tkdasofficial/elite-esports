@@ -4,7 +4,6 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { MatchCard } from '@/features/home/components/MatchCard';
 import { SkeletonCard } from '@/features/home/components/SkeletonCard';
@@ -31,7 +30,7 @@ export default function MyMatchesScreen() {
           data={Array.from({ length: SKELETON_COUNT }, (_, i) => i)}
           keyExtractor={i => `skel-${i}`}
           renderItem={() => <SkeletonCard />}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
+          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom }]}
           ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
           showsVerticalScrollIndicator={false}
         />
@@ -45,7 +44,7 @@ export default function MyMatchesScreen() {
               onPress={() => router.push({ pathname: '/match/[id]', params: { id: item.id } })}
             />
           )}
-          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
+          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom }]}
           ItemSeparatorComponent={() => <View style={{ height: 16 }} />}
           ListEmptyComponent={
             <View style={styles.empty}>

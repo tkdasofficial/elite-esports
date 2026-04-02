@@ -7,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useAuth } from '@/store/AuthContext';
 import { useTheme, ThemeMode } from '@/store/ThemeContext';
@@ -78,7 +77,6 @@ export default function SettingsScreen() {
   }, []);
 
   useEffect(() => {
-    if (Platform.OS === 'web') return;
     refreshPermStatus();
     const sub = AppState.addEventListener('change', state => {
       if (state === 'active') refreshPermStatus();
@@ -146,13 +144,13 @@ export default function SettingsScreen() {
   };
 
   const masterOff = !prefs.all;
-  const notifDisabled = Platform.OS !== 'web' && permStatus !== 'granted';
+  const notifDisabled = permStatus !== 'granted';
 
   return (
     <View style={styles.container}>
       <ScreenHeader title="Settings" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET + 24 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* ── Preferences ── */}
@@ -218,7 +216,7 @@ export default function SettingsScreen() {
         {/* ── Notifications ── */}
         <Text style={styles.sectionTitle}>Notifications</Text>
 
-        {Platform.OS !== 'web' && permStatus !== 'granted' && (
+        {permStatus !== 'granted' && (
           <TouchableOpacity style={styles.permBanner} onPress={handleEnableNotifications} activeOpacity={0.8}>
             <Ionicons name="warning-outline" size={18} color={colors.status.warning} />
             <View style={styles.permBannerText}>
@@ -230,7 +228,7 @@ export default function SettingsScreen() {
         )}
 
         <View style={styles.card}>
-          {Platform.OS !== 'web' && (
+          {(
             <>
               <View style={styles.row}>
                 <View style={[styles.iconBox, {

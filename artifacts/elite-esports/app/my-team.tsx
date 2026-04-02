@@ -10,7 +10,6 @@ import { AvatarSVG, AVATAR_NAMES } from '@/components/AvatarSVG';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
-import { WEB_BOTTOM_INSET } from '@/utils/webInsets';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { useMyTeam } from '@/features/team/hooks/useMyTeam';
 import { useAuth } from '@/store/AuthContext';
@@ -201,7 +200,7 @@ export default function MyTeamScreen() {
       <View style={styles.container}>
         <ScreenHeader title="My Team" />
         <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom }]}
           showsVerticalScrollIndicator={false}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} colors={[colors.primary]} />}
         >
@@ -397,7 +396,7 @@ export default function MyTeamScreen() {
     <View style={styles.container}>
       <ScreenHeader title="My Team" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + WEB_BOTTOM_INSET }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.emptyState}>
