@@ -266,19 +266,7 @@ export function AdProvider({ children }: Props) {
 
         const { data: triggers } = await supabase
           .from('ad_triggers')
-          .select(`
-            trigger_type,
-            trigger,
-            enabled,
-            cooldown_seconds,
-            ad_units (
-              type,
-              unit_id,
-              ad_unit_id,
-              enabled,
-              status
-            )
-          `)
+          .select('*, ad_units(*)')
           .eq('enabled', true);
 
         if (!active) return;
