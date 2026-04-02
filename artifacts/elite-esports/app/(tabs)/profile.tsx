@@ -309,11 +309,13 @@ export default function ProfileScreen() {
                   </TouchableOpacity>
                 </View>
 
-                {selectedGame.inGameName ? (
-                  <View style={styles.popupField}>
-                    <Text style={styles.popupFieldLabel}>In-game Name</Text>
-                    <View style={styles.popupFieldRow}>
-                      <Text style={styles.popupFieldVal} numberOfLines={1}>{selectedGame.inGameName}</Text>
+                <View style={styles.popupField}>
+                  <Text style={styles.popupFieldLabel}>In-game Name</Text>
+                  <View style={styles.popupFieldRow}>
+                    <Text style={[styles.popupFieldVal, !selectedGame.inGameName && { color: colors.text.muted }]} numberOfLines={1}>
+                      {selectedGame.inGameName || '—'}
+                    </Text>
+                    {!!selectedGame.inGameName && (
                       <TouchableOpacity
                         style={[styles.copyBtn, copiedField === 'name' && styles.copyBtnCopied]}
                         onPress={() => handleCopy(selectedGame.inGameName!, 'name')}
@@ -328,9 +330,9 @@ export default function ProfileScreen() {
                           {copiedField === 'name' ? 'Copied!' : 'Copy'}
                         </Text>
                       </TouchableOpacity>
-                    </View>
+                    )}
                   </View>
-                ) : null}
+                </View>
 
                 <View style={styles.popupField}>
                   <Text style={styles.popupFieldLabel}>Player UID</Text>
