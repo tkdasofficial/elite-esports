@@ -12,3 +12,20 @@
 -keep class com.facebook.react.turbomodule.** { *; }
 
 # Add any project specific keep options here:
+
+# ─── Google AdMob / Mobile Ads SDK ───────────────────────────────────────────
+-keep class com.google.android.gms.ads.** { *; }
+-keep class com.google.ads.** { *; }
+-keep class com.google.android.gms.ads.mediation.** { *; }
+-keep class com.google.android.gms.common.** { *; }
+-keepclassmembers class * {
+    @com.google.android.gms.ads.* <methods>;
+}
+-keepattributes *Annotation*
+-keepattributes SourceFile,LineNumberTable
+-keepattributes Signature
+-keepattributes Exceptions
+-keepclassmembers class * {
+    @android.webkit.JavascriptInterface <methods>;
+}
+# ─────────────────────────────────────────────────────────────────────────────
