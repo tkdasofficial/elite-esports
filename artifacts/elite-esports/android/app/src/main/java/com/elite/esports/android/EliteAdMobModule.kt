@@ -66,7 +66,7 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
 
     @ReactMethod
     fun showAd() {
-        val activity = currentActivity ?: run {
+        val activity = reactContext.currentActivity ?: run {
             emit(EVENT_FAILED, "No activity available")
             return
         }
