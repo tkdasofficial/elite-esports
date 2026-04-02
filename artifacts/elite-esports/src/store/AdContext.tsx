@@ -1,6 +1,8 @@
 import React, {
-  createContext, useContext, useEffect, useRef, useState, ReactNode,
+  createContext, useCallback, useContext, useEffect,
+  useRef, useState, ReactNode,
 } from 'react';
+import { AppState, AppStateStatus, DeviceEventEmitter, NativeModules, Platform } from 'react-native';
 import { supabase } from '@/services/supabase';
 
 export interface AdGateConfig {
@@ -31,21 +33,25 @@ const DEFAULT_CONFIG: AdConfig = {
 };
 
 interface AdContextValue {
-  adConfig:       AdConfig;
-  adsEnabled:     boolean;
-  configLoaded:   boolean;
-  isInLiveMatch:  boolean;
-  setInLiveMatch: (v: boolean) => void;
-  triggerTimerAd: () => void;
+  adConfig:           AdConfig;
+  adsEnabled:         boolean;
+  configLoaded:       boolean;
+  isInLiveMatch:      boolean;
+  actionAdInProgress: boolean;
+  setInLiveMatch:     (v: boolean) => void;
+  setActionAdActive:  (v: boolean) => void;
+  triggerTimerAd:     () => void;
 }
 
 const AdCtx = createContext<AdContextValue>({
-  adConfig:       DEFAULT_CONFIG,
-  adsEnabled:     false,
-  configLoaded:   false,
-  isInLiveMatch:  false,
-  setInLiveMatch: () => {},
-  triggerTimerAd: () => {},
+  adConfig:           DEFAULT_CONFIG,
+  adsEnabled:         false,
+  configLoaded:       false,
+  isInLiveMatch:      false,
+  actionAdInProgress: false,
+  setInLiveMatch:     () => {},
+  setActionAdActive:  () => {},
+  triggerTimerAd:     () => {},
 });
 
 export function useAds() {
@@ -97,55 +103,185 @@ function buildConfig(triggers: RawTrigger[], defaultCooldown: number): AdConfig 
     const unitId = resolveUnitId(raw);
     if (!unitId) continue;
 
-    const adType = raw.type === 'rewarded' ? 'rewarded' : 'interstitial';
+    const adType   = raw.type === 'rewarded' ? 'rewarded' : 'interstitial';
     const duration = trigger.cooldown_seconds > 0
       ? trigger.cooldown_seconds
       : defaultCooldown;
 
-    const gate: AdGateConfig = {
-      unitId,
-      duration,
-      enabled: true,
-      type: adType,
-    };
+    const gate: AdGateConfig = { unitId, duration, enabled: true, type: adType };
 
     switch (resolveTriggerType(trigger)) {
-      case 'join_match':
-        config.join = gate;
-        break;
-      case 'leave_match':
-        config.leave = gate;
-        break;
-      case 'reward_claim':
-        config.reward = gate;
-        break;
-      case 'withdraw':
-        config.withdraw = gate;
-        break;
+      case 'join_match':   config.join     = gate; break;
+      case 'leave_match':  config.leave    = gate; break;
+      case 'reward_claim': config.reward   = gate; break;
+      case 'withdraw':     config.withdraw = gate; break;
       case 'timer':
-      case 'app_open':
-        config.timer = {
-          ...gate,
-          intervalSeconds: trigger.cooldown_seconds > 0
-            ? trigger.cooldown_seconds
-            : 120,
-        };
+      case 'app_open': {
+        const intervalSeconds = trigger.cooldown_seconds > 0
+          ? trigger.cooldown_seconds
+          : 120;
+        config.timer = { ...gate, intervalSeconds };
         break;
+      }
     }
   }
 
   return config;
 }
 
+const EliteAdMob: {
+  loadAd: (unitId: string, type: string) => void;
+  showAd: () => void;
+} | null = Platform.OS === 'android' ? (NativeModules.EliteAdMob ?? null) : null;
+
 interface Props { children: ReactNode }
 
 export function AdProvider({ children }: Props) {
-  const [adConfig,      setAdConfig]      = useState<AdConfig>(DEFAULT_CONFIG);
-  const [adsEnabled,    setAdsEnabled]    = useState(false);
-  const [configLoaded,  setConfigLoaded]  = useState(false);
-  const [isInLiveMatch, setIsInLiveMatch] = useState(false);
-  const timerAdRef = useRef<(() => void) | null>(null);
+  const [adConfig,           setAdConfig]           = useState<AdConfig>(DEFAULT_CONFIG);
+  const [adsEnabled,         setAdsEnabled]         = useState(false);
+  const [configLoaded,       setConfigLoaded]       = useState(false);
+  const [isInLiveMatch,      setIsInLiveMatch]      = useState(false);
+  const [actionAdInProgress, setActionAdInProgress] = useState(false);
 
+  // Refs so callbacks always see fresh values without re-subscribing
+  const adConfigRef         = useRef<AdConfig>(DEFAULT_CONFIG);
+  const adsEnabledRef       = useRef(false);
+  const isInMatchRef        = useRef(false);
+  const actionAdActiveRef   = useRef(false);
+  const timerAdFiringRef    = useRef(false);   // true only while a TIMER ad is loading/showing
+  const timerRef            = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const appStateRef         = useRef<AppStateStatus>(AppState.currentState);
+  const foregroundElapsed   = useRef(0);
+  const lastTickRef         = useRef<number>(Date.now());
+
+  useEffect(() => { adConfigRef.current     = adConfig;    }, [adConfig]);
+  useEffect(() => { adsEnabledRef.current   = adsEnabled;  }, [adsEnabled]);
+  useEffect(() => { isInMatchRef.current    = isInLiveMatch; }, [isInLiveMatch]);
+  useEffect(() => { actionAdActiveRef.current = actionAdInProgress; }, [actionAdInProgress]);
+
+  // ── Expose setter for useAdGate so it can block timer ads ──────────────────
+  const setActionAdActive = useCallback((v: boolean) => {
+    actionAdActiveRef.current = v;
+    setActionAdInProgress(v);
+  }, []);
+
+  // ── Timer loop helpers ──────────────────────────────────────────────────────
+  const stopTimerLoop = useCallback(() => {
+    if (timerRef.current !== null) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  const scheduleNextTimerAd = useCallback((afterMs?: number) => {
+    stopTimerLoop();
+    const cfg = adConfigRef.current.timer;
+    if (!cfg.enabled || !cfg.unitId || !adsEnabledRef.current || !EliteAdMob) return;
+
+    const delay = afterMs !== undefined
+      ? afterMs
+      : (cfg.intervalSeconds > 0 ? cfg.intervalSeconds : 120) * 1000;
+
+    foregroundElapsed.current = 0;
+    lastTickRef.current = Date.now();
+
+    timerRef.current = setTimeout(() => {
+      fireTimerAd();
+    }, delay);
+  }, [stopTimerLoop]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const fireTimerAd = useCallback(() => {
+    if (!EliteAdMob) return;
+    if (timerAdFiringRef.current) return;    // already firing
+    if (actionAdActiveRef.current) return;   // action ad in progress
+    if (isInMatchRef.current) return;        // inside a live match
+    if (!adsEnabledRef.current) return;
+
+    const cfg = adConfigRef.current.timer;
+    if (!cfg.enabled || !cfg.unitId) return;
+
+    timerAdFiringRef.current = true;
+    try {
+      EliteAdMob.loadAd(cfg.unitId, cfg.type);
+    } catch (_) {
+      timerAdFiringRef.current = false;
+      scheduleNextTimerAd();
+    }
+  }, [scheduleNextTimerAd]);
+
+  // ── Listen to native ad events for TIMER ads only ─────────────────────────
+  useEffect(() => {
+    const onLoaded = DeviceEventEmitter.addListener('EliteAdMob:loaded', () => {
+      if (!timerAdFiringRef.current) return; // this was an action ad — ignore
+      try {
+        EliteAdMob?.showAd();
+      } catch (_) {
+        timerAdFiringRef.current = false;
+        scheduleNextTimerAd();
+      }
+    });
+
+    const onClosed = DeviceEventEmitter.addListener('EliteAdMob:closed', () => {
+      if (!timerAdFiringRef.current) return;
+      timerAdFiringRef.current = false;
+      scheduleNextTimerAd();
+    });
+
+    const onFailed = DeviceEventEmitter.addListener('EliteAdMob:failed', () => {
+      if (!timerAdFiringRef.current) return;
+      timerAdFiringRef.current = false;
+      scheduleNextTimerAd();
+    });
+
+    const onRewarded = DeviceEventEmitter.addListener('EliteAdMob:rewarded', () => {
+      // rewarded timer ads: onClosed fires after this — handled there
+    });
+
+    return () => {
+      onLoaded.remove();
+      onClosed.remove();
+      onFailed.remove();
+      onRewarded.remove();
+    };
+  }, [scheduleNextTimerAd]);
+
+  // Restart timer whenever config/enabled changes
+  useEffect(() => {
+    if (configLoaded) {
+      scheduleNextTimerAd();
+    }
+    return () => stopTimerLoop();
+  }, [adConfig, adsEnabled, configLoaded, scheduleNextTimerAd, stopTimerLoop]);
+
+  // Pause timer when app goes to background; resume with remaining time
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState: AppStateStatus) => {
+      const prev = appStateRef.current;
+      appStateRef.current = nextState;
+
+      if (prev === 'active' && nextState !== 'active') {
+        foregroundElapsed.current += Date.now() - lastTickRef.current;
+        stopTimerLoop();
+      } else if (prev !== 'active' && nextState === 'active') {
+        lastTickRef.current = Date.now();
+        const cfg       = adConfigRef.current.timer;
+        const totalMs   = (cfg.intervalSeconds > 0 ? cfg.intervalSeconds : 120) * 1000;
+        const remaining = totalMs - foregroundElapsed.current;
+
+        if (remaining <= 0) {
+          fireTimerAd();
+        } else {
+          scheduleNextTimerAd(remaining);
+        }
+      }
+    });
+    return () => subscription.remove();
+  }, [stopTimerLoop, fireTimerAd, scheduleNextTimerAd]);
+
+  // ── Manual trigger (for external callers) ──────────────────────────────────
+  const triggerTimerAd = useCallback(() => { fireTimerAd(); }, [fireTimerAd]);
+
+  // ── Supabase data fetch + realtime ─────────────────────────────────────────
   useEffect(() => {
     let active = true;
 
@@ -204,29 +340,20 @@ export function AdProvider({ children }: Props) {
 
     const settingsChannel = supabase
       .channel('ad_settings_realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'ad_settings' },
-        () => { load(); },
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ad_settings' },
+        () => { load(); })
       .subscribe();
 
     const triggersChannel = supabase
       .channel('ad_triggers_realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'ad_triggers' },
-        () => { load(); },
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ad_triggers' },
+        () => { load(); })
       .subscribe();
 
     const unitsChannel = supabase
       .channel('ad_units_realtime')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'ad_units' },
-        () => { load(); },
-      )
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ad_units' },
+        () => { load(); })
       .subscribe();
 
     return () => {
@@ -237,11 +364,7 @@ export function AdProvider({ children }: Props) {
     };
   }, []);
 
-  const setInLiveMatch = (v: boolean) => setIsInLiveMatch(v);
-
-  const triggerTimerAd = () => {
-    if (timerAdRef.current) timerAdRef.current();
-  };
+  const setInLiveMatch = useCallback((v: boolean) => setIsInLiveMatch(v), []);
 
   return (
     <AdCtx.Provider value={{
@@ -249,7 +372,9 @@ export function AdProvider({ children }: Props) {
       adsEnabled,
       configLoaded,
       isInLiveMatch,
+      actionAdInProgress,
       setInLiveMatch,
+      setActionAdActive,
       triggerTimerAd,
     }}>
       {children}
