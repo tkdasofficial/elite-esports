@@ -11,6 +11,11 @@
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 
+# ─── EliteAdMob custom native module ─────────────────────────────────────────
+-keep class com.elite.esports.android.EliteAdMobModule { *; }
+-keep class com.elite.esports.android.EliteAdMobPackage { *; }
+# ─────────────────────────────────────────────────────────────────────────────
+
 # Add any project specific keep options here:
 
 # ─── Google AdMob / Mobile Ads SDK ───────────────────────────────────────────
