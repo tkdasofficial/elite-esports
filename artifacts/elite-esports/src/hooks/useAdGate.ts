@@ -1,5 +1,11 @@
 import { useCallback, useRef, useState } from 'react';
-import { DeviceEventEmitter, NativeModules, Platform } from 'react-native';
+import { Platform } from 'react-native';
+import {
+  InterstitialAd,
+  RewardedAd,
+  AdEventType,
+  RewardedAdEventType,
+} from '@/utils/admob';
 import { AdGateConfig, useAds } from '@/store/AdContext';
 
 export interface AdGateOverlayState {
@@ -8,91 +14,88 @@ export interface AdGateOverlayState {
   label:    string;
 }
 
-const FALLBACK_BYPASS = 15;
-
-const EliteAdMob: {
-  loadAd: (unitId: string, type: string) => void;
-  showAd: () => void;
-} | null = Platform.OS === 'android' ? (NativeModules.EliteAdMob ?? null) : null;
+const HIDDEN: AdGateOverlayState = { visible: false, duration: 15, label: '' };
+const IS_NATIVE = Platform.OS === 'android' || Platform.OS === 'ios';
 
 export function useAdGate() {
   const { adsEnabled, setActionAdActive } = useAds();
+  const [overlay, setOverlay] = useState<AdGateOverlayState>(HIDDEN);
 
-  const [overlay, setOverlay] = useState<AdGateOverlayState>({
-    visible:  false,
-    duration: FALLBACK_BYPASS,
-    label:    '',
-  });
+  // Refs so event callbacks always see fresh values without re-subscribing
+  const executed   = useRef(false);
+  const cleanups   = useRef<Array<() => void>>([]);
+  const onFinishRef = useRef<(() => void) | null>(null);
 
-  const pendingAction  = useRef<(() => void) | null>(null);
-  const subscriptions  = useRef<ReturnType<typeof DeviceEventEmitter.addListener>[]>([]);
-  const actionExecuted = useRef(false);
-
-  const cleanupListeners = useCallback(() => {
-    subscriptions.current.forEach(sub => sub.remove());
-    subscriptions.current = [];
+  const runCleanup = useCallback(() => {
+    cleanups.current.forEach(fn => { try { fn(); } catch { /* ignore */ } });
+    cleanups.current = [];
   }, []);
 
-  const executeAction = useCallback(() => {
-    if (actionExecuted.current) return;
-    actionExecuted.current = true;
-    cleanupListeners();
+  /** Complete the ad gate — hide overlay, execute the gated action */
+  const complete = useCallback(() => {
+    if (executed.current) return;
+    executed.current = true;
+    runCleanup();
     setActionAdActive(false);
-    setOverlay({ visible: false, duration: FALLBACK_BYPASS, label: '' });
-    const fn = pendingAction.current;
-    pendingAction.current = null;
-    if (fn) fn();
-  }, [cleanupListeners, setActionAdActive]);
+    setOverlay(HIDDEN);
+    onFinishRef.current?.();
+    onFinishRef.current = null;
+  }, [runCleanup, setActionAdActive]);
 
-  const dismiss = useCallback(() => {
-    executeAction();
-  }, [executeAction]);
+  /** Called by the AdLoadingOverlay "Continue / Skip" button */
+  const dismiss = useCallback(() => { complete(); }, [complete]);
 
   const gateAction = useCallback(
     (config: AdGateConfig, action: () => void, label = 'Loading Ad...') => {
-      // Skip ad entirely if disabled, no unit ID, or native module unavailable
-      if (!adsEnabled || !config.enabled || !config.unitId || !EliteAdMob) {
+      // Bypass if ads are off, no unit ID, or running in web/Expo-Go without native build
+      if (!adsEnabled || !config.enabled || !config.unitId || !IS_NATIVE) {
         action();
         return;
       }
 
-      actionExecuted.current = false;
-      pendingAction.current  = action;
-      cleanupListeners();
-
-      // Signal to AdProvider: an action ad is starting — hold off timer ads
+      executed.current   = false;
+      onFinishRef.current = action;
+      runCleanup();
       setActionAdActive(true);
+      setOverlay({ visible: true, duration: config.duration > 0 ? config.duration : 15, label });
 
-      const bypassSecs = config.duration > 0 ? config.duration : FALLBACK_BYPASS;
-      setOverlay({ visible: true, duration: bypassSecs, label });
+      if (config.type === 'rewarded') {
+        /* ── Rewarded ──────────────────────────────────────────── */
+        const ad = RewardedAd.createForAdRequest(config.unitId, {
+          requestNonPersonalizedAdsOnly: true,
+        });
+        cleanups.current = [
+          ad.addAdEventListener(RewardedAdEventType.LOADED, () => {
+            ad.show().catch(() => complete());
+          }),
+          ad.addAdEventListener(RewardedAdEventType.EARNED_REWARD, () => {
+            // reward earned; complete() fires after CLOSED
+          }),
+          ad.addAdEventListener(AdEventType.CLOSED as any, () => complete()),
+          ad.addAdEventListener(AdEventType.ERROR  as any, () => {
+            // leave overlay visible so countdown Skip button can fire
+          }),
+        ];
+        ad.load();
 
-      // When native module signals ad is loaded → show it immediately
-      const onLoaded = DeviceEventEmitter.addListener('EliteAdMob:loaded', () => {
-        try { EliteAdMob.showAd(); } catch (_) { executeAction(); }
-      });
-
-      // Ad dismissed → run the originally gated action
-      const onClosed = DeviceEventEmitter.addListener('EliteAdMob:closed', () => {
-        executeAction();
-      });
-
-      // Rewarded ad finished earning — closed fires right after; handled there
-      const onRewarded = DeviceEventEmitter.addListener('EliteAdMob:rewarded', () => {});
-
-      // Ad failed to load — overlay stays so bypass countdown can run
-      const onFailed = DeviceEventEmitter.addListener('EliteAdMob:failed', () => {
-        // Do nothing: countdown timer in AdLoadingOverlay allows user to Continue
-      });
-
-      subscriptions.current = [onLoaded, onClosed, onRewarded, onFailed];
-
-      try {
-        EliteAdMob.loadAd(config.unitId, config.type);
-      } catch (_) {
-        executeAction();
+      } else {
+        /* ── Interstitial ──────────────────────────────────────── */
+        const ad = InterstitialAd.createForAdRequest(config.unitId, {
+          requestNonPersonalizedAdsOnly: true,
+        });
+        cleanups.current = [
+          ad.addAdEventListener(AdEventType.LOADED, () => {
+            ad.show().catch(() => complete());
+          }),
+          ad.addAdEventListener(AdEventType.CLOSED, () => complete()),
+          ad.addAdEventListener(AdEventType.ERROR,  () => {
+            // leave overlay visible so countdown Skip button can fire
+          }),
+        ];
+        ad.load();
       }
     },
-    [adsEnabled, cleanupListeners, executeAction, setActionAdActive],
+    [adsEnabled, runCleanup, complete, setActionAdActive],
   );
 
   return { gateAction, overlay, dismiss };
