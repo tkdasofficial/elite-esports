@@ -49,8 +49,15 @@ class MainApplication : Application(), ReactApplication {
     loadReactNative(this)
     ApplicationLifecycleDispatcher.onApplicationCreate(this)
 
-    // Initialize Google Mobile Ads SDK
-    MobileAds.initialize(this)
+    // Initialize Google Mobile Ads SDK.
+    // Wrapped in try-catch: on devices with outdated Play Services or
+    // restricted Google environments this call can throw, but it must
+    // never crash the app — ads are a non-critical feature.
+    try {
+      MobileAds.initialize(this)
+    } catch (_: Exception) {
+      // Initialization failure is non-fatal — ads simply won't load.
+    }
   }
 
   override fun onConfigurationChanged(newConfig: Configuration) {

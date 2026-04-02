@@ -28,133 +28,186 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
     private var interstitialAd: InterstitialAd? = null
     private var rewardedAd: RewardedAd?         = null
     private var appOpenAd: AppOpenAd?           = null
-    private var currentType: String             = "interstitial"
+
+    // @Volatile so that reads in showAd() always see the latest write from loadAd()
+    @Volatile private var currentType: String = "interstitial"
 
     override fun getName(): String = "EliteAdMob"
+
+    // ─── loadAd ─────────────────────────────────────────────────────────────
 
     @ReactMethod
     fun loadAd(unitId: String, type: String) {
         currentType = type
-        // Always use Application context — required by Google Mobile Ads SDK
-        // for AppOpenAd and recommended for all ad types to avoid memory leaks.
         val appContext = reactContext.applicationContext
-        val request = AdRequest.Builder().build()
 
-        when (type) {
-            "rewarded" -> {
-                RewardedAd.load(
+        val request = try {
+            AdRequest.Builder().build()
+        } catch (e: Exception) {
+            safeEmit(EVENT_FAILED, "AdRequest build failed: ${e.message}")
+            return
+        }
+
+        try {
+            when (type) {
+                "rewarded" -> RewardedAd.load(
                     appContext, unitId, request,
                     object : RewardedAdLoadCallback() {
                         override fun onAdLoaded(ad: RewardedAd) {
                             rewardedAd = ad
-                            emit(EVENT_LOADED, null)
+                            safeEmit(EVENT_LOADED, null)
                         }
                         override fun onAdFailedToLoad(error: LoadAdError) {
-                            emit(EVENT_FAILED, error.message)
+                            safeEmit(EVENT_FAILED, error.message)
                         }
                     }
                 )
-            }
-            "app_open" -> {
-                // AppOpenAd MUST use Application context — activity context causes crashes.
-                AppOpenAd.load(
+
+                "app_open" -> AppOpenAd.load(
                     appContext, unitId, request,
                     object : AppOpenAd.AppOpenAdLoadCallback() {
                         override fun onAdLoaded(ad: AppOpenAd) {
                             appOpenAd = ad
-                            emit(EVENT_LOADED, null)
+                            safeEmit(EVENT_LOADED, null)
                         }
                         override fun onAdFailedToLoad(error: LoadAdError) {
-                            emit(EVENT_FAILED, error.message)
+                            safeEmit(EVENT_FAILED, error.message)
                         }
                     }
                 )
-            }
-            else -> {
-                InterstitialAd.load(
+
+                else -> InterstitialAd.load(
                     appContext, unitId, request,
                     object : InterstitialAdLoadCallback() {
                         override fun onAdLoaded(ad: InterstitialAd) {
                             interstitialAd = ad
-                            emit(EVENT_LOADED, null)
+                            safeEmit(EVENT_LOADED, null)
                         }
                         override fun onAdFailedToLoad(error: LoadAdError) {
-                            emit(EVENT_FAILED, error.message)
+                            safeEmit(EVENT_FAILED, error.message)
                         }
                     }
                 )
             }
+        } catch (e: Exception) {
+            safeEmit(EVENT_FAILED, "loadAd exception [type=$type]: ${e.message}")
         }
     }
+
+    // ─── showAd ─────────────────────────────────────────────────────────────
 
     @ReactMethod
     fun showAd() {
-        val activity = reactContext.currentActivity ?: run {
-            emit(EVENT_FAILED, "No activity available")
+        // Use currentActivity from ReactContextBaseJavaModule (safer than reactContext.currentActivity)
+        val activity = currentActivity
+        if (activity == null || activity.isFinishing || activity.isDestroyed) {
+            safeEmit(EVENT_FAILED, "No valid activity to show ad")
             return
         }
 
-        when (currentType) {
-            "rewarded" -> {
-                val ad = rewardedAd ?: run { emit(EVENT_FAILED, "Rewarded ad not loaded"); return }
-                activity.runOnUiThread {
-                    ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                        override fun onAdDismissedFullScreenContent() {
+        try {
+            when (currentType) {
+
+                "rewarded" -> {
+                    val ad = rewardedAd
+                    if (ad == null) {
+                        safeEmit(EVENT_FAILED, "Rewarded ad not loaded")
+                        return
+                    }
+                    activity.runOnUiThread {
+                        try {
+                            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                                override fun onAdDismissedFullScreenContent() {
+                                    rewardedAd = null
+                                    safeEmit(EVENT_CLOSED, null)
+                                }
+                                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                                    rewardedAd = null
+                                    safeEmit(EVENT_FAILED, error.message)
+                                }
+                            }
+                            ad.show(activity) { safeEmit(EVENT_REWARDED, null) }
+                        } catch (e: Exception) {
                             rewardedAd = null
-                            emit(EVENT_CLOSED, null)
-                        }
-                        override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                            rewardedAd = null
-                            emit(EVENT_FAILED, error.message)
+                            safeEmit(EVENT_FAILED, "showRewarded UI exception: ${e.message}")
                         }
                     }
-                    ad.show(activity) { emit(EVENT_REWARDED, null) }
                 }
-            }
-            "app_open" -> {
-                val ad = appOpenAd ?: run { emit(EVENT_FAILED, "App open ad not loaded"); return }
-                activity.runOnUiThread {
-                    ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                        override fun onAdDismissedFullScreenContent() {
+
+                "app_open" -> {
+                    val ad = appOpenAd
+                    if (ad == null) {
+                        safeEmit(EVENT_FAILED, "App open ad not loaded")
+                        return
+                    }
+                    activity.runOnUiThread {
+                        try {
+                            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                                override fun onAdDismissedFullScreenContent() {
+                                    appOpenAd = null
+                                    safeEmit(EVENT_CLOSED, null)
+                                }
+                                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                                    appOpenAd = null
+                                    safeEmit(EVENT_FAILED, error.message)
+                                }
+                            }
+                            ad.show(activity)
+                        } catch (e: Exception) {
                             appOpenAd = null
-                            emit(EVENT_CLOSED, null)
-                        }
-                        override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                            appOpenAd = null
-                            emit(EVENT_FAILED, error.message)
+                            safeEmit(EVENT_FAILED, "showAppOpen UI exception: ${e.message}")
                         }
                     }
-                    ad.show(activity)
                 }
-            }
-            else -> {
-                val ad = interstitialAd ?: run { emit(EVENT_FAILED, "Interstitial ad not loaded"); return }
-                activity.runOnUiThread {
-                    ad.fullScreenContentCallback = object : FullScreenContentCallback() {
-                        override fun onAdDismissedFullScreenContent() {
+
+                else -> {
+                    val ad = interstitialAd
+                    if (ad == null) {
+                        safeEmit(EVENT_FAILED, "Interstitial ad not loaded")
+                        return
+                    }
+                    activity.runOnUiThread {
+                        try {
+                            ad.fullScreenContentCallback = object : FullScreenContentCallback() {
+                                override fun onAdDismissedFullScreenContent() {
+                                    interstitialAd = null
+                                    safeEmit(EVENT_CLOSED, null)
+                                }
+                                override fun onAdFailedToShowFullScreenContent(error: AdError) {
+                                    interstitialAd = null
+                                    safeEmit(EVENT_FAILED, error.message)
+                                }
+                            }
+                            ad.show(activity)
+                        } catch (e: Exception) {
                             interstitialAd = null
-                            emit(EVENT_CLOSED, null)
-                        }
-                        override fun onAdFailedToShowFullScreenContent(error: AdError) {
-                            interstitialAd = null
-                            emit(EVENT_FAILED, error.message)
+                            safeEmit(EVENT_FAILED, "showInterstitial UI exception: ${e.message}")
                         }
                     }
-                    ad.show(activity)
                 }
             }
+        } catch (e: Exception) {
+            safeEmit(EVENT_FAILED, "showAd outer exception: ${e.message}")
         }
     }
 
-    private fun emit(eventName: String, data: String?) {
-        reactContext
-            .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
-            .emit(eventName, data)
+    // ─── safeEmit ────────────────────────────────────────────────────────────
+    // Every event emission is wrapped so that a torn-down / not-yet-ready
+    // React context (destroyed activity, app backgrounded during async ad
+    // callback, New-Arch bridge not yet initialised) never propagates an
+    // unhandled exception into the Google Mobile Ads SDK and crashes the process.
+
+    private fun safeEmit(eventName: String, data: String?) {
+        try {
+            reactContext
+                .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                ?.emit(eventName, data)
+        } catch (_: Exception) {
+            // Silently discard — React context is unavailable
+        }
     }
 
-    @ReactMethod
-    fun addListener(eventName: String) {}
-
-    @ReactMethod
-    fun removeListeners(count: Int) {}
+    // Required by React Native so NativeEventEmitter doesn't warn in JS
+    @ReactMethod fun addListener(eventName: String) {}
+    @ReactMethod fun removeListeners(count: Int) {}
 }
