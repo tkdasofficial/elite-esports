@@ -207,7 +207,7 @@ export default function MatchDetailScreen() {
   const isFree        = match.entry_fee === 0;
   const isFull        = match.players_joined >= match.max_players;
   const canJoin       = match.status === 'upcoming' && !isFull && !hasJoined;
-  const showLeaveBtn  = isLive && hasJoined;
+  const canLeave      = hasJoined && match.status !== 'completed';
   const showClaimBtn  = match.status === 'completed' && hasJoined && claimResult !== null && claimResult.prize > 0 && !alreadyClaimed;
   const filledPct     = Math.min((match.players_joined / match.max_players) * 100, 100);
   const rules         = match.rules ? match.rules.split('\n').filter(l => l.trim()) : [];
@@ -474,8 +474,8 @@ export default function MatchDetailScreen() {
         </View>
       )}
 
-      {/* Leave Match (live + joined) */}
-      {showLeaveBtn && (
+      {/* Leave Match — shown any time the user has joined and match isn't completed */}
+      {canLeave && (
         <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
           <View style={styles.leaveCtaRow}>
             <View style={styles.joinedSmallBadge}>
@@ -490,16 +490,6 @@ export default function MatchDetailScreen() {
               <Ionicons name="exit-outline" size={18} color="#fff" />
               <Text style={styles.leaveBtnText}>Leave Match</Text>
             </TouchableOpacity>
-          </View>
-        </View>
-      )}
-
-      {/* Registered but not live */}
-      {hasJoined && !showLeaveBtn && !showClaimBtn && match.status !== 'completed' && (
-        <View style={[styles.cta, { paddingBottom: bottomPad + 16 }]}>
-          <View style={styles.joinedBadge}>
-            <Ionicons name="checkmark-circle" size={20} color={colors.status.success} />
-            <Text style={styles.joinedText}>You're registered for this match</Text>
           </View>
         </View>
       )}
