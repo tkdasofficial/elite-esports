@@ -109,11 +109,30 @@ RCT_EXPORT_METHOD(loadAd:(NSString *)unitId type:(NSString *)type) {
 }
 
 // MARK: - Show
+// Uses UIWindowScene API (iOS 15+) — replaces deprecated keyWindow.
 
 RCT_EXPORT_METHOD(showAd) {
   dispatch_async(dispatch_get_main_queue(), ^{
-    UIViewController *root = [UIApplication sharedApplication]
-      .keyWindow.rootViewController;
+    // Resolve the active root view controller using the modern UIWindowScene API.
+    UIViewController *root = nil;
+    for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
+      if (scene.activationState == UISceneActivationStateForegroundActive &&
+          [scene isKindOfClass:[UIWindowScene class]]) {
+        UIWindowScene *windowScene = (UIWindowScene *)scene;
+        for (UIWindow *window in windowScene.windows) {
+          if (window.isKeyWindow) {
+            root = window.rootViewController;
+            break;
+          }
+        }
+        if (root) break;
+      }
+    }
+
+    if (!root) {
+      [self emitEvent:@"EliteAdMob:failed" data:@"No active root view controller"];
+      return;
+    }
 
     if ([self.currentType isEqualToString:@"rewarded"]) {
       if (!self.rewardedAd) {
@@ -126,7 +145,6 @@ RCT_EXPORT_METHOD(showAd) {
         userDidEarnRewardHandler:^{
           [weakSelf emitEvent:@"EliteAdMob:rewarded" data:nil];
         }];
-      // EVENT_CLOSED fires from adDidDismissFullScreenContent delegate
 
     } else if ([self.currentType isEqualToString:@"app_open"]) {
       if (!self.appOpenAd) {
@@ -134,7 +152,6 @@ RCT_EXPORT_METHOD(showAd) {
         return;
       }
       [self.appOpenAd presentFromRootViewController:root];
-      // EVENT_CLOSED fires from adDidDismissFullScreenContent delegate
 
     } else {
       if (!self.interstitialAd) {
@@ -142,7 +159,6 @@ RCT_EXPORT_METHOD(showAd) {
         return;
       }
       [self.interstitialAd presentFromRootViewController:root];
-      // EVENT_CLOSED fires from adDidDismissFullScreenContent delegate
     }
   });
 }

@@ -14,6 +14,10 @@
       "bundleIdentifier": "com.elite.esports.ios",
       "googleServicesFile": "./GoogleService-Info.plist",
       "infoPlist": {
+        "GADApplicationIdentifier": "ca-app-pub-2219438935030744~2611426514",
+        "SKAdNetworkItems": [
+          { "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork" }
+        ],
         "NSLocationWhenInUseUsageDescription": "Elite eSports uses your location to find nearby tournaments and match you with local competitors.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Elite eSports uses your location to find nearby tournaments and match you with local competitors.",
         "NSUserNotificationUsageDescription": "Elite eSports sends match alerts, tournament updates, reward notifications, and account security alerts to keep you in the game."
@@ -69,6 +73,13 @@
     "extra": {
       "eas": {
         "projectId": "6a10f6c8-fa7b-46be-bb86-98328356c220"
+      },
+      "admob": {
+        "androidAppId": "ca-app-pub-2219438935030744~5831569923",
+        "iosAppId": "ca-app-pub-2219438935030744~2611426514",
+        "appOpenUnitId": "ca-app-pub-2219438935030744/4030020209",
+        "interstitialUnitId": "ca-app-pub-2219438935030744/6236112228",
+        "rewardedUnitId": "ca-app-pub-2219438935030744/4867190230"
       }
     },
     "experiments": {

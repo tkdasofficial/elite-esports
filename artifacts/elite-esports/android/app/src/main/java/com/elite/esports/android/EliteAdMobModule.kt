@@ -35,12 +35,15 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
     @ReactMethod
     fun loadAd(unitId: String, type: String) {
         currentType = type
+        // Always use Application context — required by Google Mobile Ads SDK
+        // for AppOpenAd and recommended for all ad types to avoid memory leaks.
+        val appContext = reactContext.applicationContext
         val request = AdRequest.Builder().build()
 
         when (type) {
             "rewarded" -> {
                 RewardedAd.load(
-                    reactContext, unitId, request,
+                    appContext, unitId, request,
                     object : RewardedAdLoadCallback() {
                         override fun onAdLoaded(ad: RewardedAd) {
                             rewardedAd = ad
@@ -53,8 +56,9 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
                 )
             }
             "app_open" -> {
+                // AppOpenAd MUST use Application context — activity context causes crashes.
                 AppOpenAd.load(
-                    reactContext, unitId, request,
+                    appContext, unitId, request,
                     object : AppOpenAd.AppOpenAdLoadCallback() {
                         override fun onAdLoaded(ad: AppOpenAd) {
                             appOpenAd = ad
@@ -68,7 +72,7 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
             }
             else -> {
                 InterstitialAd.load(
-                    reactContext, unitId, request,
+                    appContext, unitId, request,
                     object : InterstitialAdLoadCallback() {
                         override fun onAdLoaded(ad: InterstitialAd) {
                             interstitialAd = ad

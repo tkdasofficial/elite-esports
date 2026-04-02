@@ -3,9 +3,6 @@
 #import <React/RCTBundleURLProvider.h>
 #import <React/RCTLinkingManager.h>
 #import <UserNotifications/UserNotifications.h>
-#import <RNCPushNotificationIOS.h>
-#import <GoogleService-Info.h>
-#import <Firebase.h>
 #import <GoogleMobileAds/GoogleMobileAds.h>
 
 @implementation AppDelegate
@@ -15,13 +12,11 @@
   self.moduleName = @"main";
   self.initialProps = @{};
 
-  // Configure Firebase
-  [FIRApp configure];
-
   // Initialize Google Mobile Ads SDK
   [[GADMobileAds sharedInstance] startWithCompletionHandler:nil];
 
-  // Register for remote notifications
+  // Set notification center delegate — expo-notifications handles APNs registration
+  // and remote notification callbacks automatically via its Expo module subscriber.
   UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
   center.delegate = self;
 
@@ -42,10 +37,11 @@
 #endif
 }
 
-// Deep linking
+// MARK: - Deep Linking
+
 - (BOOL)application:(UIApplication *)application
-   openURL:(NSURL *)url
-   options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
+            openURL:(NSURL *)url
+            options:(NSDictionary<UIApplicationOpenURLOptionsKey,id> *)options
 {
   return [RCTLinkingManager application:application openURL:url options:options];
 }
@@ -59,33 +55,10 @@ continueUserActivity:(nonnull NSUserActivity *)userActivity
                      restorationHandler:restorationHandler];
 }
 
-// Push notification delegates
-- (void)application:(UIApplication *)application
-didRegisterForRemoteNotificationsWithDeviceToken:(NSData *)deviceToken
-{
-  [RNCPushNotificationIOS didRegisterForRemoteNotificationsWithDeviceToken:deviceToken];
-}
-
-- (void)application:(UIApplication *)application
-didReceiveRemoteNotification:(NSDictionary *)userInfo
-fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
-{
-  [RNCPushNotificationIOS didReceiveRemoteNotification:userInfo fetchCompletionHandler:completionHandler];
-}
-
-- (void)application:(UIApplication *)application
-didFailToRegisterForRemoteNotificationsWithError:(NSError *)error
-{
-  [RNCPushNotificationIOS didFailToRegisterForRemoteNotificationsWithError:error];
-}
-
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center
-didReceiveNotificationResponse:(UNNotificationResponse *)response
-         withCompletionHandler:(void (^)(void))completionHandler
-{
-  [RNCPushNotificationIOS didReceiveNotificationResponse:response];
-  completionHandler();
-}
+// MARK: - UNUserNotificationCenterDelegate
+// expo-notifications handles didRegisterForRemoteNotificationsWithDeviceToken,
+// didReceiveRemoteNotification, and didFailToRegisterForRemoteNotificationsWithError
+// automatically via its Expo module subscriber — no manual bridging needed here.
 
 - (void)userNotificationCenter:(UNUserNotificationCenter *)center
        willPresentNotification:(UNNotification *)notification
@@ -94,6 +67,13 @@ didReceiveNotificationResponse:(UNNotificationResponse *)response
   completionHandler(UNNotificationPresentationOptionBadge
                   | UNNotificationPresentationOptionSound
                   | UNNotificationPresentationOptionBanner);
+}
+
+- (void)userNotificationCenter:(UNUserNotificationCenter *)center
+didReceiveNotificationResponse:(UNNotificationResponse *)response
+         withCompletionHandler:(void (^)(void))completionHandler
+{
+  completionHandler();
 }
 
 @end
