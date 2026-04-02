@@ -1,5 +1,7 @@
 package com.elite.esports.android
 
+import android.app.Activity
+
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule
 import com.facebook.react.bridge.ReactMethod
@@ -33,6 +35,16 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
     @Volatile private var currentType: String = "interstitial"
 
     override fun getName(): String = "EliteAdMob"
+
+    // ─── helper: resolve the current Activity safely ─────────────────────────
+    // reactContext.currentActivity returns Any? in newer RN versions; we must
+    // cast it explicitly to android.app.Activity.
+
+    private fun safeActivity(): Activity? {
+        val act = reactContext.currentActivity as? Activity ?: return null
+        if (act.isFinishing || act.isDestroyed) return null
+        return act
+    }
 
     // ─── loadAd ─────────────────────────────────────────────────────────────
 
@@ -98,9 +110,8 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
 
     @ReactMethod
     fun showAd() {
-        // Use currentActivity from ReactContextBaseJavaModule (safer than reactContext.currentActivity)
-        val activity = currentActivity
-        if (activity == null || activity.isFinishing || activity.isDestroyed) {
+        val activity = safeActivity()
+        if (activity == null) {
             safeEmit(EVENT_FAILED, "No valid activity to show ad")
             return
         }
@@ -110,10 +121,7 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
 
                 "rewarded" -> {
                     val ad = rewardedAd
-                    if (ad == null) {
-                        safeEmit(EVENT_FAILED, "Rewarded ad not loaded")
-                        return
-                    }
+                    if (ad == null) { safeEmit(EVENT_FAILED, "Rewarded ad not loaded"); return }
                     activity.runOnUiThread {
                         try {
                             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
@@ -136,10 +144,7 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
 
                 "app_open" -> {
                     val ad = appOpenAd
-                    if (ad == null) {
-                        safeEmit(EVENT_FAILED, "App open ad not loaded")
-                        return
-                    }
+                    if (ad == null) { safeEmit(EVENT_FAILED, "App open ad not loaded"); return }
                     activity.runOnUiThread {
                         try {
                             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
@@ -162,10 +167,7 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
 
                 else -> {
                     val ad = interstitialAd
-                    if (ad == null) {
-                        safeEmit(EVENT_FAILED, "Interstitial ad not loaded")
-                        return
-                    }
+                    if (ad == null) { safeEmit(EVENT_FAILED, "Interstitial ad not loaded"); return }
                     activity.runOnUiThread {
                         try {
                             ad.fullScreenContentCallback = object : FullScreenContentCallback() {
@@ -193,9 +195,7 @@ class EliteAdMobModule(private val reactContext: ReactApplicationContext)
 
     // ─── safeEmit ────────────────────────────────────────────────────────────
     // Every event emission is wrapped so that a torn-down / not-yet-ready
-    // React context (destroyed activity, app backgrounded during async ad
-    // callback, New-Arch bridge not yet initialised) never propagates an
-    // unhandled exception into the Google Mobile Ads SDK and crashes the process.
+    // React context never propagates an unhandled exception into the process.
 
     private fun safeEmit(eventName: String, data: String?) {
         try {
