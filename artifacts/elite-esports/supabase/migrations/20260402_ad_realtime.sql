@@ -26,9 +26,8 @@ $$;
 
 -- Ensure ad_settings has at least one row (required for the app to read it)
 INSERT INTO public.ad_settings (id, ads_enabled, default_cooldown)
-  SELECT 1, false, 15
-  WHERE NOT EXISTS (SELECT 1 FROM public.ad_settings)
-  ON CONFLICT DO NOTHING;
+  SELECT gen_random_uuid(), false, 15
+  WHERE NOT EXISTS (SELECT 1 FROM public.ad_settings);
 
 -- =============================================================================
 -- DONE. Realtime enabled for: ad_units, ad_triggers, ad_settings
