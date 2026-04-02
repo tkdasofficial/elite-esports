@@ -11,6 +11,7 @@ export function useMatchDetail(id: string, userId?: string) {
   const [loading, setLoading] = useState(true);
   const [hasJoined, setHasJoined] = useState(false);
   const [joining, setJoining] = useState(false);
+  const [leaving, setLeaving] = useState(false);
 
   const fetch = async () => {
     const { data } = await supabase
@@ -50,6 +51,66 @@ export function useMatchDetail(id: string, userId?: string) {
     return { error: null };
   };
 
+  /**
+   * Removes the current user from the match.
+   * - Deletes their row from match_participants.
+   * - Decrements joined_players on the match.
+   * - Credits a refund to wallet_transactions if the match is still upcoming
+   *   and there was an entry fee.
+   *
+   * Returns { error, refunded } — refunded=true means the entry fee was returned.
+   */
+  const leaveMatch = async (): Promise<{ error: Error | null; refunded: boolean }> => {
+    if (!userId) return { error: new Error('Not authenticated'), refunded: false };
+    if (!match)  return { error: new Error('Match data unavailable'), refunded: false };
+
+    setLeaving(true);
+    try {
+      // ── Step 1: Remove the participant row ─────────────────────────────
+      const { error: deleteError } = await supabase
+        .from('match_participants')
+        .delete()
+        .eq('match_id', id)
+        .eq('user_id', userId);
+
+      if (deleteError) return { error: deleteError, refunded: false };
+
+      // ── Step 2: Decrement the player count ─────────────────────────────
+      // Clamp at 0 to avoid negative counts if there's any stale state.
+      const newCount = Math.max(0, match.players_joined - 1);
+      await supabase
+        .from('matches')
+        .update({ joined_players: newCount })
+        .eq('id', id);
+
+      // ── Step 3: Refund entry fee (upcoming matches only) ───────────────
+      let refunded = false;
+      if (match.entry_fee > 0 && match.status === 'upcoming') {
+        const { error: refundError } = await supabase
+          .from('wallet_transactions')
+          .insert({
+            user_id:      userId,
+            type:         'credit',
+            amount:       match.entry_fee,
+            status:       'completed',
+            reference_id: `refund:${id}`,
+          });
+        // Credit the local wallet immediately even if DB insert succeeded
+        if (!refundError) refunded = true;
+      }
+
+      // ── Step 4: Sync local state ───────────────────────────────────────
+      setHasJoined(false);
+      await fetch();
+
+      return { error: null, refunded };
+    } catch (e: any) {
+      return { error: new Error(e?.message ?? 'Failed to leave match'), refunded: false };
+    } finally {
+      setLeaving(false);
+    }
+  };
+
   useEffect(() => {
     fetch();
     const channel = supabase
@@ -58,7 +119,6 @@ export function useMatchDetail(id: string, userId?: string) {
         'postgres_changes',
         { event: 'UPDATE', schema: 'public', table: 'matches', filter: `id=eq.${id}` },
         () => {
-          // Re-fetch the full row (with games join) so prize_pool and all fields stay accurate
           fetch();
         },
       )
@@ -66,5 +126,5 @@ export function useMatchDetail(id: string, userId?: string) {
     return () => { supabase.removeChannel(channel); };
   }, [id, userId]);
 
-  return { match, loading, hasJoined, joining, joinMatch };
+  return { match, loading, hasJoined, joining, joinMatch, leaving, leaveMatch };
 }

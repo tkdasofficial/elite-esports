@@ -64,7 +64,7 @@ export default function MatchDetailScreen() {
   const { user }                 = useAuth();
   const { refreshWallet, creditBalance } = useWallet();
   const insets                   = useSafeAreaInsets();
-  const { match, loading, hasJoined, joining, joinMatch } = useMatchDetail(id, user?.id);
+  const { match, loading, hasJoined, joining, joinMatch, leaving, leaveMatch } = useMatchDetail(id, user?.id);
   const { gateWithInterstitial, gateWithRewarded, overlay, dismiss } = useAdGate();
   const { colors, isDark }        = useTheme();
   const styles                   = useMemo(() => createStyles(colors), [colors]);
@@ -122,19 +122,44 @@ export default function MatchDetailScreen() {
   }, [gateWithInterstitial, joinMatch]);
 
   const handleLeave = useCallback(() => {
+    if (!match) return;
+
+    const isUpcoming  = match.status === 'upcoming';
+    const hasEntryFee = match.entry_fee > 0;
+    const refundLine  = isUpcoming && hasEntryFee
+      ? `\n\n₹${match.entry_fee} entry fee will be refunded to your wallet.`
+      : '';
+
     Alert.alert(
       'Leave Match',
-      'Are you sure you want to leave this match?',
+      `Are you sure you want to leave this match?${refundLine}`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Leave',
           style: 'destructive',
-          onPress: () => gateWithInterstitial(() => router.back()),
+          onPress: () => gateWithInterstitial(async () => {
+            const { error, refunded } = await leaveMatch();
+            if (error) {
+              Alert.alert('Error', error.message);
+              return;
+            }
+            if (refunded) {
+              creditBalance(match.entry_fee);
+              refreshWallet().catch(() => {});
+              Alert.alert(
+                'Left Match',
+                `You have left the match.\n₹${match.entry_fee} has been refunded to your wallet.`,
+              );
+            } else {
+              Alert.alert('Left Match', 'You have successfully left the match.');
+            }
+            router.back();
+          }),
         },
-      ]
+      ],
     );
-  }, [gateWithInterstitial]);
+  }, [match, gateWithInterstitial, leaveMatch, creditBalance, refreshWallet]);
 
   const handleClaim = useCallback(() => {
     if (!claimResult || claimResult.prize <= 0 || !user) return;
@@ -475,12 +500,19 @@ export default function MatchDetailScreen() {
               <Text style={styles.joinedSmallText}>You're In</Text>
             </View>
             <TouchableOpacity
-              style={styles.leaveBtn}
+              style={[styles.leaveBtn, leaving && styles.disabled]}
               onPress={handleLeave}
+              disabled={leaving}
               activeOpacity={0.85}
             >
-              <Ionicons name="exit-outline" size={18} color="#fff" />
-              <Text style={styles.leaveBtnText}>Leave Match</Text>
+              {leaving ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="exit-outline" size={18} color="#fff" />
+                  <Text style={styles.leaveBtnText}>Leave Match</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </View>
