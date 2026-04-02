@@ -9,10 +9,11 @@ import type { WalletTransaction } from '@/services/walletApi';
 export type { WalletTransaction as Transaction };
 
 interface WalletContextValue {
-  balance:        number;
-  transactions:   WalletTransaction[];
-  loading:        boolean;
-  refreshWallet:  () => Promise<void>;
+  balance:       number;
+  transactions:  WalletTransaction[];
+  loading:       boolean;
+  refreshWallet: () => Promise<void>;
+  creditBalance: (amount: number) => void;
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null);
@@ -20,6 +21,7 @@ const WalletContext = createContext<WalletContextValue | null>(null);
 /* ─── helpers ──────────────────────────────────────────────────────────── */
 
 async function fetchSupabaseBalance(userId: string): Promise<number> {
+  // 1. Try the wallets table (kept in sync by DB triggers)
   const { data: walletRow } = await supabase
     .from('wallets')
     .select('balance')
@@ -28,24 +30,44 @@ async function fetchSupabaseBalance(userId: string): Promise<number> {
 
   if (walletRow?.balance != null) return Number(walletRow.balance);
 
+  // 2. Fall back to profiles.balance
   const { data: profileRow } = await supabase
     .from('profiles')
     .select('balance')
     .eq('id', userId)
     .maybeSingle();
 
-  return Number(profileRow?.balance ?? 0);
+  if (profileRow?.balance != null) return Number(profileRow.balance);
+
+  return 0;
 }
 
-/** ISO timestamp exactly 7 days ago — used in every transaction query */
+/** ISO timestamp exactly 7 days ago */
 function sevenDaysAgo(): string {
   return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+}
+
+function labelFromRef(referenceId: string | null, type: string): string {
+  if (!referenceId) return type === 'credit' ? 'Credit' : 'Debit';
+  if (referenceId.startsWith('result:'))  return 'Prize Won';
+  if (referenceId.startsWith('entry:'))   return 'Entry Fee';
+  if (referenceId.startsWith('refund:'))  return 'Refund';
+  return type === 'credit' ? 'Credit' : 'Entry Fee';
+}
+
+function descFromRef(referenceId: string | null, type: string): string {
+  if (!referenceId) return type === 'credit' ? 'Wallet credit' : 'Wallet debit';
+  if (referenceId.startsWith('result:'))  return 'Match prize credited';
+  if (referenceId.startsWith('entry:'))   return 'Match entry fee';
+  if (referenceId.startsWith('refund:'))  return 'Match refund';
+  return referenceId;
 }
 
 async function fetchSupabaseTransactions(userId: string): Promise<WalletTransaction[]> {
   const cutoff = sevenDaysAgo();
 
   const [paymentsRes, withdrawalsRes, txnsRes, walletTxnsRes] = await Promise.allSettled([
+    // Deposits submitted by user
     supabase
       .from('payments')
       .select('id, amount, utr, status, created_at')
@@ -53,7 +75,7 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
 
-    // Select without upi_id — that column may not exist yet (migration 005 pending)
+    // Withdrawal requests
     supabase
       .from('withdrawals')
       .select('id, amount, status, created_at')
@@ -61,6 +83,7 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
 
+    // Legacy transactions table (from 001_games.sql schema)
     supabase
       .from('transactions')
       .select('id, type, amount, utr, status, created_at')
@@ -68,9 +91,11 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
 
+    // Internal ledger: entry fees, prizes, bonuses
+    // NOTE: wallet_transactions has no 'description' column — use reference_id instead
     supabase
       .from('wallet_transactions')
-      .select('id, type, amount, description, status, created_at')
+      .select('id, type, amount, status, reference_id, created_at')
       .eq('user_id', userId)
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
@@ -86,6 +111,7 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
     }
   };
 
+  // ── Deposits ──
   if (paymentsRes.status === 'fulfilled' && paymentsRes.value.data) {
     for (const p of paymentsRes.value.data) {
       push({
@@ -100,6 +126,7 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
     }
   }
 
+  // ── Withdrawals ──
   if (withdrawalsRes.status === 'fulfilled' && withdrawalsRes.value.data) {
     for (const w of withdrawalsRes.value.data) {
       push({
@@ -114,6 +141,7 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
     }
   }
 
+  // ── Legacy transactions table ──
   if (txnsRes.status === 'fulfilled' && txnsRes.value.data) {
     for (const t of txnsRes.value.data) {
       push({
@@ -128,21 +156,23 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
     }
   }
 
+  // ── Wallet transactions (prizes, entry fees, bonuses) ──
   if (walletTxnsRes.status === 'fulfilled' && walletTxnsRes.value.data) {
     for (const t of walletTxnsRes.value.data) {
+      const ref = t.reference_id as string | null;
       push({
         id:          t.id,
         type:        t.type === 'credit' ? 'credit' : 'debit',
         amount:      Number(t.amount),
         status:      'approved' as WalletTransaction['status'],
-        description: t.description ?? (t.type === 'credit' ? 'Prize credit' : 'Entry fee'),
-        label:       t.type === 'credit' ? 'Prize Won' : 'Entry Fee',
+        description: descFromRef(ref, t.type),
+        label:       labelFromRef(ref, t.type),
         created_at:  t.created_at,
       });
     }
   }
 
-  // Always sort newest first after merging all sources
+  // Sort newest first across all sources
   result.sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
@@ -161,19 +191,23 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const loadWallet = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-
     try {
       const [balanceResult, txnsResult] = await Promise.allSettled([
         fetchSupabaseBalance(user.id),
         fetchSupabaseTransactions(user.id),
       ]);
-
       setBalance(balanceResult.status === 'fulfilled' ? balanceResult.value : 0);
       setTransactions(txnsResult.status === 'fulfilled' ? txnsResult.value : []);
     } finally {
       setLoading(false);
     }
   }, [user]);
+
+  /** Immediately credit the local balance — used after prize claims so the
+   *  UI updates instantly without waiting for the DB trigger to propagate. */
+  const creditBalance = useCallback((amount: number) => {
+    setBalance(prev => Math.max(0, prev + amount));
+  }, []);
 
   useEffect(() => {
     if (!user) {
@@ -184,7 +218,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     loadWallet();
   }, [user, loadWallet]);
 
-  // Realtime: re-fetch whenever admin approves/rejects in Supabase
+  // Realtime: re-fetch whenever admin approves/rejects or a new row is inserted
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -215,7 +249,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     transactions,
     loading,
     refreshWallet: loadWallet,
-  }), [balance, transactions, loading, loadWallet]);
+    creditBalance,
+  }), [balance, transactions, loading, loadWallet, creditBalance]);
 
   return (
     <WalletContext.Provider value={value}>

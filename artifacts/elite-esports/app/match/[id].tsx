@@ -21,6 +21,23 @@ import { supabase } from '@/services/supabase';
 import { useWallet } from '@/store/WalletContext';
 import type { AppColors } from '@/utils/colors';
 
+/** Display a prize amount cleanly — whole numbers show without decimals,
+ *  fractional amounts show with 2 decimal places. */
+function formatPrize(amount: number): string {
+  const n = Math.round(amount * 100) / 100;   // avoid floating-point drift
+  return n % 1 === 0
+    ? n.toLocaleString('en-IN')
+    : n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/** The prize a given rank earns — mirrors the claim_match_prize RPC formula. */
+function calcPrize(rank: number, prizePool: number): number {
+  if (rank === 1) return prizePool * 0.50;
+  if (rank === 2) return prizePool * 0.30;
+  if (rank === 3) return prizePool * 0.10;
+  return 0;
+}
+
 const BANNER_HEIGHT = 240;
 const GOLD = '#FFA200';
 
@@ -46,7 +63,7 @@ function SectionLabel({ icon, title }: { icon: keyof typeof Ionicons.glyphMap; t
 export default function MatchDetailScreen() {
   const { id }                   = useLocalSearchParams<{ id: string }>();
   const { user }                 = useAuth();
-  const { refreshWallet }        = useWallet();
+  const { refreshWallet, creditBalance } = useWallet();
   const insets                   = useSafeAreaInsets();
   const { match, loading, hasJoined, joining, joinMatch } = useMatchDetail(id, user?.id);
   const { adConfig, setInLiveMatch } = useAds();
@@ -71,27 +88,28 @@ export default function MatchDetailScreen() {
   useEffect(() => {
     if (!user || match?.status !== 'completed') return;
     (async () => {
+      // 1. Fetch rank/points from match_results
       const { data } = await supabase
         .from('match_results')
         .select('rank, points')
         .eq('match_id', id)
         .eq('user_id', user.id)
         .maybeSingle();
+
       if (data) {
-        const pool  = match?.prize_pool ?? 0;
-        const prize = data.rank === 1 ? pool * 0.5
-                    : data.rank === 2 ? pool * 0.3
-                    : data.rank === 3 ? pool * 0.1
-                    : 0;
+        // Use the same formula as the claim_match_prize RPC
+        const prize = calcPrize(data.rank, match?.prize_pool ?? 0);
         setClaimResult({ rank: data.rank, points: data.points, prize });
-        const { data: txn } = await supabase
-          .from('wallet_transactions')
-          .select('id')
-          .eq('reference_id', `result:${id}`)
-          .eq('user_id', user.id)
-          .maybeSingle();
-        setAlreadyClaimed(!!txn);
       }
+
+      // 2. Check if prize already claimed — query only exists columns (id, reference_id)
+      const { data: txn } = await supabase
+        .from('wallet_transactions')
+        .select('id')
+        .eq('reference_id', `result:${id}`)
+        .eq('user_id', user.id)
+        .maybeSingle();
+      setAlreadyClaimed(!!txn);
     })();
   }, [id, user, match?.status, match?.prize_pool]);
 
@@ -131,19 +149,32 @@ export default function MatchDetailScreen() {
     if (!claimResult || claimResult.prize <= 0 || !user) return;
     gateAction(adConfig.reward, async () => {
       setClaimLoading(true);
-      const { data, error } = await supabase.rpc('claim_match_prize', { _match_id: id });
-      if (error) {
-        Alert.alert('Error', error.message);
-      } else if (data?.success === false) {
-        Alert.alert('Could not claim', data.error ?? 'Please try again.');
-      } else {
-        await refreshWallet();
-        setAlreadyClaimed(true);
-        Alert.alert('🏆 Prize Claimed!', `₹${Math.round(data?.prize ?? claimResult.prize)} has been added to your wallet.`);
+      try {
+        const { data, error } = await supabase.rpc('claim_match_prize', { _match_id: id });
+        if (error) {
+          Alert.alert('Error', error.message);
+        } else if (data?.success === false) {
+          // Backend already has the prize — show "already claimed" state
+          setAlreadyClaimed(true);
+          Alert.alert('Already Claimed', data.error ?? 'You have already claimed this prize.');
+        } else {
+          // Use the server-returned prize amount; fall back to client calculation
+          const actualPrize = Number(data?.prize ?? claimResult.prize);
+          // Immediately reflect the new balance in the UI
+          creditBalance(actualPrize);
+          setAlreadyClaimed(true);
+          Alert.alert(
+            '🏆 Prize Claimed!',
+            `₹${formatPrize(actualPrize)} has been added to your wallet.`,
+          );
+          // Background refresh to sync the true server balance
+          refreshWallet().catch(() => {/* silent — local update already applied */});
+        }
+      } finally {
+        setClaimLoading(false);
       }
-      setClaimLoading(false);
     }, 'Loading Reward Ad...');
-  }, [claimResult, user, adConfig.reward, gateAction, id, refreshWallet]);
+  }, [claimResult, user, adConfig.reward, gateAction, id, creditBalance, refreshWallet]);
 
   if (loading) {
     return (
@@ -412,7 +443,7 @@ export default function MatchDetailScreen() {
                 </View>
               </View>
               {claimResult.prize > 0 && (
-                <Text style={styles.winnerPrize}>₹{claimResult.prize.toFixed(0)}</Text>
+                <Text style={styles.winnerPrize}>₹{formatPrize(claimResult.prize)}</Text>
               )}
             </View>
           )}
@@ -485,7 +516,7 @@ export default function MatchDetailScreen() {
             {claimLoading ? <ActivityIndicator color="#000" /> : (
               <>
                 <Ionicons name="trophy" size={20} color="#000" />
-                <Text style={styles.claimBtnText}>Claim ₹{claimResult?.prize.toFixed(0)} Prize</Text>
+                <Text style={styles.claimBtnText}>Claim ₹{formatPrize(claimResult?.prize ?? 0)} Prize</Text>
               </>
             )}
           </TouchableOpacity>
