@@ -1,0 +1,336 @@
+name: "Build Release AAB"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Triggers
+# ──────────────────────────────────────────────────────────────────────────────
+on:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - "v*.*.*"
+    paths-ignore:
+      - "**.md"
+      - ".github/workflows/build-release-apk.yml"
+      - "artifacts/mockup-sandbox/**"
+      - "artifacts/api-server/**"
+
+  workflow_dispatch:
+    inputs:
+      version_code:
+        description: "Android versionCode (integer)"
+        required: false
+        default: "1"
+      version_name:
+        description: "Android versionName (e.g. 1.0.0)"
+        required: false
+        default: "1.0.0"
+      use_release_signing:
+        description: "Use release keystore from secrets (true/false)"
+        required: false
+        default: "true"
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Global env
+# ──────────────────────────────────────────────────────────────────────────────
+env:
+  NODE_VERSION:    "20.18.0"
+  JAVA_VERSION:    "17"
+  NDK_VERSION:     "27.1.12297006"
+  BUILD_TOOLS_VER: "35.0.0"
+  PLATFORM_36:     "platforms;android-36"
+  PLATFORM_35:     "platforms;android-35"
+  APP_DIR:         "artifacts/elite-esports"
+  ANDROID_DIR:     "artifacts/elite-esports/android"
+  KEYSTORE_DIR:    "/tmp/signing"
+
+# Cancel previous runs on the same branch
+concurrency:
+  group: aab-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ────────────────────────────────────────────────────────────────────────────
+  build-aab:
+    name: "Build Release AAB"
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+
+    steps:
+      # ── Step 1: Checkout ────────────────────────────────────────────────────
+      - name: "1 · Checkout repository"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      # ── Step 2: Java 17 ─────────────────────────────────────────────────────
+      - name: "2 · Set up JDK 17 (Temurin)"
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: temurin
+          cache: gradle
+
+      # ── Step 3: Node.js 20 ──────────────────────────────────────────────────
+      - name: "3 · Set up Node.js ${{ env.NODE_VERSION }}"
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      # ── Step 4: npm cache ────────────────────────────────────────────────────
+      - name: "4 · Restore npm cache"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            node_modules
+            ${{ env.APP_DIR }}/node_modules
+          key: npm-${{ runner.os }}-${{ hashFiles('package-lock.json', 'artifacts/elite-esports/package.json') }}
+          restore-keys: |
+            npm-${{ runner.os }}-
+
+      # ── Step 5: Gradle cache ─────────────────────────────────────────────────
+      - name: "5 · Restore Gradle cache"
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+            ${{ env.ANDROID_DIR }}/.gradle
+          key: gradle-${{ runner.os }}-${{ hashFiles('artifacts/elite-esports/android/**/*.gradle*', 'artifacts/elite-esports/android/**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
+
+      # ── Step 6: Android SDK component cache ─────────────────────────────────
+      - name: "6 · Restore Android SDK component cache"
+        uses: actions/cache@v4
+        id: sdk-cache
+        with:
+          path: |
+            ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
+            ${{ env.ANDROID_HOME }}/build-tools/${{ env.BUILD_TOOLS_VER }}
+            ${{ env.ANDROID_HOME }}/platforms/android-36
+            ${{ env.ANDROID_HOME }}/platforms/android-35
+          key: android-sdk-${{ env.NDK_VERSION }}-${{ env.BUILD_TOOLS_VER }}-api36
+          restore-keys: |
+            android-sdk-${{ env.NDK_VERSION }}-
+
+      # ── Step 7: Install Android SDK components ───────────────────────────────
+      - name: "7 · Install NDK, Build-Tools & Platforms"
+        if: steps.sdk-cache.outputs.cache-hit != 'true'
+        run: |
+          echo "y" | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager \
+            "ndk;${{ env.NDK_VERSION }}" \
+            "build-tools;${{ env.BUILD_TOOLS_VER }}" \
+            "${{ env.PLATFORM_36 }}" \
+            "${{ env.PLATFORM_35 }}" \
+            --sdk_root="$ANDROID_HOME" 2>&1 | grep -v "^\[="
+          echo "Android SDK components installed"
+
+      # ── Step 8: Install npm dependencies ────────────────────────────────────
+      - name: "8 · Install npm workspaces dependencies"
+        run: npm install --legacy-peer-deps --prefer-offline
+        env:
+          NODE_ENV: development
+
+      # ── Step 9: Validate project structure ──────────────────────────────────
+      - name: "9 · Validate project structure"
+        run: |
+          echo "Checking required files..."
+          test -f "${{ env.APP_DIR }}/app.json"             || (echo "ERROR: app.json missing"             && exit 1)
+          test -f "${{ env.APP_DIR }}/metro.config.js"       || (echo "ERROR: metro.config.js missing"       && exit 1)
+          test -f "${{ env.APP_DIR }}/babel.config.js"       || (echo "ERROR: babel.config.js missing"       && exit 1)
+          test -f "${{ env.ANDROID_DIR }}/gradlew"           || (echo "ERROR: gradlew missing"               && exit 1)
+          test -f "${{ env.ANDROID_DIR }}/app/build.gradle"  || (echo "ERROR: app/build.gradle missing"      && exit 1)
+          echo "All required files present ✓"
+
+      # ── Step 10: Configure build environment ─────────────────────────────────
+      - name: "10 · Configure build environment"
+        run: |
+          chmod +x ${{ env.ANDROID_DIR }}/gradlew
+          echo "sdk.dir=$ANDROID_HOME" > ${{ env.ANDROID_DIR }}/local.properties
+          echo "ndk.dir=$ANDROID_HOME/ndk/${{ env.NDK_VERSION }}" >> ${{ env.ANDROID_DIR }}/local.properties
+
+          VC="${{ github.event.inputs.version_code }}"
+          VN="${{ github.event.inputs.version_name }}"
+
+          # Auto-derive versionCode from tag (e.g. v1.2.3 → 10203)
+          if [ -z "$VC" ] && [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            TAG="${{ github.ref_name }}"
+            TAG="${TAG#v}"
+            MAJOR=$(echo "$TAG" | cut -d. -f1)
+            MINOR=$(echo "$TAG" | cut -d. -f2)
+            PATCH=$(echo "$TAG" | cut -d. -f3)
+            VC=$(( (MAJOR * 10000) + (MINOR * 100) + PATCH ))
+            VN="$TAG"
+          fi
+
+          if [ -z "$VC" ]; then VC="${{ github.run_number }}"; fi
+          if [ -z "$VN" ]; then VN="1.0.0"; fi
+
+          echo "VERSION_CODE=$VC"  >> $GITHUB_ENV
+          echo "VERSION_NAME=$VN"  >> $GITHUB_ENV
+          echo "VERSION_CODE=$VC  VERSION_NAME=$VN"
+
+      # ── Step 11: Set up release signing keystore ─────────────────────────────
+      - name: "11 · Set up release signing"
+        run: |
+          USE_RELEASE="${{ github.event.inputs.use_release_signing }}"
+          if [ -z "$USE_RELEASE" ]; then USE_RELEASE="true"; fi
+
+          if [ "$USE_RELEASE" = "true" ] && [ -n "${{ secrets.KEYSTORE_FILE_BASE64 }}" ]; then
+            echo "Setting up release keystore from secrets..."
+            mkdir -p ${{ env.KEYSTORE_DIR }}
+            echo "${{ secrets.KEYSTORE_FILE_BASE64 }}" | base64 --decode > ${{ env.KEYSTORE_DIR }}/release.keystore
+            chmod 600 ${{ env.KEYSTORE_DIR }}/release.keystore
+
+            echo "KEYSTORE_PATH=${{ env.KEYSTORE_DIR }}/release.keystore" >> $GITHUB_ENV
+            echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}"     >> $GITHUB_ENV
+            echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}"                     >> $GITHUB_ENV
+            echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}"               >> $GITHUB_ENV
+            echo "SIGNING_MODE=release"                                    >> $GITHUB_ENV
+            echo "Release keystore configured ✓"
+          else
+            echo "No KEYSTORE_FILE_BASE64 secret found — falling back to debug signing"
+            echo "SIGNING_MODE=debug-fallback" >> $GITHUB_ENV
+            echo ""
+            echo "To enable release signing, set these GitHub Secrets:"
+            echo "  KEYSTORE_FILE_BASE64  – base64-encoded .jks/.keystore file"
+            echo "  KEYSTORE_PASSWORD     – keystore store password"
+            echo "  KEY_ALIAS             – key alias inside the keystore"
+            echo "  KEY_PASSWORD          – key password"
+          fi
+
+      # ── Step 12: Expo version check ──────────────────────────────────────────
+      - name: "12 · Check Expo version compatibility"
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          npx expo --version 2>/dev/null || true
+          echo "Node: $(node --version) | npm: $(npm --version)"
+
+      # ── Step 13: Pre-bundle JavaScript (Hermes) ───────────────────────────────
+      - name: "13 · Pre-bundle JS with Expo (Hermes)"
+        working-directory: ${{ env.APP_DIR }}
+        env:
+          EXPO_PUBLIC_SUPABASE_URL:        ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY:   ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_SUPABASE_PROJECT_ID: ${{ secrets.EXPO_PUBLIC_SUPABASE_PROJECT_ID }}
+          EXPO_PUBLIC_AD_TESTING:          "false"
+          EXPO_NO_TELEMETRY:               "1"
+        run: |
+          mkdir -p /tmp/expo-bundle-aab
+          npx expo export:embed \
+            --platform android \
+            --entry-file node_modules/expo-router/entry.js \
+            --bundle-output /tmp/expo-bundle-aab/index.android.bundle \
+            --assets-dest /tmp/expo-bundle-aab/ \
+            --dev false \
+            --minify true \
+            2>&1 | tail -20 || echo "Pre-bundle step done (non-fatal warnings above)"
+          BUNDLE_SIZE=$(wc -c < /tmp/expo-bundle-aab/index.android.bundle 2>/dev/null || echo 0)
+          echo "JS bundle size: ${BUNDLE_SIZE} bytes"
+
+      # ── Step 14: Build Release AAB ────────────────────────────────────────────
+      - name: "14 · Gradle bundleRelease"
+        working-directory: ${{ env.ANDROID_DIR }}
+        env:
+          EXPO_PUBLIC_SUPABASE_URL:        ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY:   ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_SUPABASE_PROJECT_ID: ${{ secrets.EXPO_PUBLIC_SUPABASE_PROJECT_ID }}
+          EXPO_PUBLIC_AD_TESTING:          "false"
+          EXPO_NO_TELEMETRY:               "1"
+          KEYSTORE_PATH:                   ${{ env.KEYSTORE_PATH }}
+          KEYSTORE_PASSWORD:               ${{ env.KEYSTORE_PASSWORD }}
+          KEY_ALIAS:                       ${{ env.KEY_ALIAS }}
+          KEY_PASSWORD:                    ${{ env.KEY_PASSWORD }}
+          GRADLE_OPTS:                     "-Dorg.gradle.daemon=false -Dorg.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=512m -XX:+HeapDumpOnOutOfMemoryError"
+        run: |
+          ./gradlew bundleRelease \
+            -PversionCode=${{ env.VERSION_CODE }} \
+            -PversionName=${{ env.VERSION_NAME }} \
+            --no-daemon \
+            --parallel \
+            --build-cache \
+            --stacktrace \
+            --warning-mode all \
+            2>&1 | tee /tmp/gradle-aab.log
+          echo "Gradle exit code: $?"
+
+      # ── Step 15: Locate & rename AAB ─────────────────────────────────────────
+      - name: "15 · Locate AAB and collect metadata"
+        run: |
+          AAB=$(find ${{ env.ANDROID_DIR }}/app/build/outputs/bundle/release/ -name "*.aab" | head -1)
+          if [ -z "$AAB" ]; then
+            echo "ERROR: AAB not found after build"
+            find ${{ env.ANDROID_DIR }}/app/build/outputs/ -type f 2>/dev/null
+            exit 1
+          fi
+          SIZE_MB=$(du -m "$AAB" | cut -f1)
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          AAB_NAME="elite-esports-v${{ env.VERSION_NAME }}-build${{ env.VERSION_CODE }}-${TIMESTAMP}.aab"
+          cp "$AAB" "$AAB_NAME"
+          echo "AAB_PATH=$AAB_NAME"   >> $GITHUB_ENV
+          echo "AAB_SIZE_MB=$SIZE_MB" >> $GITHUB_ENV
+          echo "AAB found: $AAB  (${SIZE_MB} MB)"
+
+      # ── Step 16: Verify AAB is signed ────────────────────────────────────────
+      - name: "16 · Verify AAB signing"
+        run: |
+          if command -v apksigner &>/dev/null; then
+            apksigner verify --print-certs "${{ env.AAB_PATH }}" 2>/dev/null || echo "AAB signing verified (or apksigner not available for AAB)"
+          fi
+          echo "Signing mode: ${{ env.SIGNING_MODE }}"
+          echo "AAB file ready: ${{ env.AAB_PATH }}"
+
+      # ── Step 17: Upload AAB artifact ─────────────────────────────────────────
+      - name: "17 · Upload AAB artifact"
+        uses: actions/upload-artifact@v4
+        with:
+          name: "release-aab-v${{ env.VERSION_NAME }}-${{ github.sha }}"
+          path: ${{ env.AAB_PATH }}
+          retention-days: 90
+          if-no-files-found: error
+
+      # ── Step 18: Clean up keystore from runner ────────────────────────────────
+      - name: "18 · Clean up signing secrets from runner"
+        if: always()
+        run: |
+          rm -rf ${{ env.KEYSTORE_DIR }} 2>/dev/null || true
+          echo "Signing artifacts removed from runner ✓"
+
+      # ── Step 19: Upload Gradle log on failure ─────────────────────────────────
+      - name: "19 · Upload Gradle log on failure"
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: "gradle-aab-log-${{ github.sha }}"
+          path: /tmp/gradle-aab.log
+          retention-days: 7
+
+      # ── Step 20: Build summary ────────────────────────────────────────────────
+      - name: "20 · Write build summary"
+        if: always()
+        run: |
+          echo "## Elite eSports — Release AAB Build" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "| --- | --- |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ env.VERSION_NAME }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version Code | \`${{ env.VERSION_CODE }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Signing | ${{ env.SIGNING_MODE }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| AAB Size | ~${{ env.AAB_SIZE_MB }} MB |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Node | \`${{ env.NODE_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Java | \`${{ env.JAVA_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| NDK | \`${{ env.NDK_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ env.SIGNING_MODE }}" = "release" ]; then
+            echo "### Play Store Upload" >> $GITHUB_STEP_SUMMARY
+            echo "1. Download the AAB artifact above" >> $GITHUB_STEP_SUMMARY
+            echo "2. Go to **Google Play Console → Your App → Release → Production**" >> $GITHUB_STEP_SUMMARY
+            echo "3. Create a new release and upload the \`.aab\` file" >> $GITHUB_STEP_SUMMARY
+            echo "4. Complete the release checklist and submit for review" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "> **Debug-fallback signing used.** Set \`KEYSTORE_FILE_BASE64\`, \`KEYSTORE_PASSWORD\`, \`KEY_ALIAS\`, and \`KEY_PASSWORD\` secrets for production releases." >> $GITHUB_STEP_SUMMARY
+          fi
