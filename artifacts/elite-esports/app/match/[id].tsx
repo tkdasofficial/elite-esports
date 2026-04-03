@@ -133,7 +133,7 @@ export default function MatchDetailScreen() {
     if (!claimResult || claimResult.prize <= 0 || !user) return;
     gateWithRewarded(
       () => {
-        supabase.rpc('credit_ad_bonus').catch(() => {});
+        void supabase.rpc('credit_ad_bonus').then(null, () => {});
       },
       async () => {
         setClaimLoading(true);

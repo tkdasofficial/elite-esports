@@ -16,7 +16,7 @@ class NoOpEmitter {
 }
 
 export const admobEmitter: Pick<NativeEventEmitter, 'addListener'> = _IS_AVAILABLE
-  ? new NativeEventEmitter(_module!)
+  ? new NativeEventEmitter(_module as any)
   : new NoOpEmitter();
 
 export const AD_EVENTS = {

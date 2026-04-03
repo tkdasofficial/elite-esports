@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, ReactNode } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
@@ -89,20 +89,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     const userId = session?.user?.id;
     if (userId) {
       await removeFcmTokenForUser(userId).catch(() => {});
     }
     await supabase.auth.signOut();
-  };
+  }, [session?.user?.id]);
 
   const value = useMemo(() => ({
     session,
     user: session?.user ?? null,
     loading,
     signOut,
-  }), [session, loading]);
+  }), [session, loading, signOut]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

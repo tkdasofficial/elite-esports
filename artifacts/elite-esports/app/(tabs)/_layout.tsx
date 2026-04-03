@@ -8,6 +8,7 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@/store/ThemeContext';
 import { triggerHaptic } from '@/utils/haptics';
 import { useProfileCtx } from '@/store/ProfileContext';
+import { useAuth } from '@/store/AuthContext';
 
 const TAB_HEIGHT = 62;
 
@@ -132,13 +133,15 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 function ProfileGate() {
+  const { user } = useAuth();
   const { profile, loading } = useProfileCtx();
   useEffect(() => {
+    if (!user) return;
     if (loading) return;
     if (!profile.full_name || !profile.username) {
       router.replace('/(auth)/profile-setup' as any);
     }
-  }, [loading, profile.full_name, profile.username]);
+  }, [user, loading, profile.full_name, profile.username]);
   return null;
 }
 
