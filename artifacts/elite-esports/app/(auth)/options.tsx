@@ -16,40 +16,11 @@ import { navigateAfterAuth } from '@/utils/authHelpers';
 
 WebBrowser.maybeCompleteAuthSession();
 
-type Provider = 'google' | 'github' | 'facebook';
-
-const SOCIAL = [
-  {
-    id: 'google' as Provider,
-    label: 'Continue with Google',
-    icon: 'logo-google' as const,
-    bg: '#FFFFFF',
-    text: '#1A1A1A',
-    border: '#DDDDDD',
-  },
-  {
-    id: 'github' as Provider,
-    label: 'Continue with GitHub',
-    icon: 'logo-github' as const,
-    bg: '#24292E',
-    text: '#FFFFFF',
-    border: '#3A3F44',
-  },
-  {
-    id: 'facebook' as Provider,
-    label: 'Continue with Facebook',
-    icon: 'logo-facebook' as const,
-    bg: '#1877F2',
-    text: '#FFFFFF',
-    border: '#1877F2',
-  },
-];
-
 export default function AuthOptionsScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
-  const [loadingProvider, setLoadingProvider] = useState<Provider | null>(null);
+  const [loadingGoogle, setLoadingGoogle] = useState(false);
 
   const topPad = insets.top;
   const bottomPad = insets.bottom;
@@ -58,12 +29,12 @@ export default function AuthOptionsScreen() {
     ? ['#150400', '#0A0A0A', '#0A0A0A']
     : [colors.primary + '18', colors.background.dark, colors.background.dark];
 
-  const handleSocialAuth = async (provider: Provider) => {
-    setLoadingProvider(provider);
+  const handleGoogleAuth = async () => {
+    setLoadingGoogle(true);
     try {
       const redirectUrl = Linking.createURL('/');
       const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
+        provider: 'google',
         options: { redirectTo: redirectUrl, skipBrowserRedirect: true },
       });
       if (error) throw error;
@@ -81,7 +52,7 @@ export default function AuthOptionsScreen() {
     } catch (err: any) {
       Alert.alert('Sign In Failed', err?.message ?? 'Something went wrong. Please try again.');
     } finally {
-      setLoadingProvider(null);
+      setLoadingGoogle(false);
     }
   };
 
@@ -112,24 +83,22 @@ export default function AuthOptionsScreen() {
           <Text style={styles.sub}>Sign in or create your account</Text>
         </View>
 
-        {/* ── Social buttons ── */}
+        {/* ── Google Button ── */}
         <View style={styles.btnList}>
-          {SOCIAL.map(s => (
-            <TouchableOpacity
-              key={s.id}
-              style={[styles.socialBtn, { backgroundColor: s.bg, borderColor: s.border }]}
-              onPress={() => handleSocialAuth(s.id)}
-              disabled={loadingProvider !== null}
-              activeOpacity={0.85}
-            >
-              <View style={styles.btnIconSlot}>
-                {loadingProvider === s.id
-                  ? <ActivityIndicator color={s.text} size="small" />
-                  : <Ionicons name={s.icon} size={19} color={s.text} />}
-              </View>
-              <Text style={[styles.btnLabel, { color: s.text }]}>{s.label}</Text>
-            </TouchableOpacity>
-          ))}
+          <TouchableOpacity
+            style={[styles.socialBtn, { backgroundColor: '#FFFFFF', borderColor: '#DDDDDD' }]}
+            onPress={handleGoogleAuth}
+            disabled={loadingGoogle}
+            activeOpacity={0.85}
+          >
+            <View style={styles.btnIconSlot}>
+              {loadingGoogle
+                ? <ActivityIndicator size="small" color="#1A1A1A" />
+                : <Ionicons name="logo-google" size={19} color="#1A1A1A" />
+              }
+            </View>
+            <Text style={[styles.btnLabel, { color: '#1A1A1A' }]}>Continue with Google</Text>
+          </TouchableOpacity>
         </View>
 
         {/* ── Divider ── */}

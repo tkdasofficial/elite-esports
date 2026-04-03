@@ -23,10 +23,12 @@ const BTN_R = BTN_H / 2;
 const ADMIN_ID = '6771dad2-8719-48c0-8907-3bb6da336835';
 
 const MENU_ITEMS = [
-  { icon: 'users',      label: 'My Team',    route: '/my-team' },
-  { icon: 'grid',       label: 'My Matches', route: '/my-matches' },
-  { icon: 'settings',   label: 'Settings',   route: '/settings' },
-  { icon: 'headphones', label: 'Support',    route: '/support' },
+  { icon: 'users',      label: 'My Team',        route: '/my-team' },
+  { icon: 'grid',       label: 'My Matches',     route: '/my-matches' },
+  { icon: 'gift',       label: 'Referral',       route: '/referral' },
+  { icon: 'star',       label: 'Get Sponsored',  route: '/sponsored' },
+  { icon: 'settings',   label: 'Settings',       route: '/settings' },
+  { icon: 'headphones', label: 'Support',        route: '/support' },
 ] as const;
 
 type LinkedGame = { game_id?: string; game: string; uid: string; inGameName?: string };

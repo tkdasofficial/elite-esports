@@ -42,18 +42,28 @@ function sevenDaysAgo(): string {
 }
 
 function labelFromRef(referenceId: string | null, type: string): string {
-  if (!referenceId) return type === 'credit' ? 'Credit' : 'Debit';
-  if (referenceId.startsWith('result:'))  return 'Prize Won';
-  if (referenceId.startsWith('entry:'))   return 'Entry Fee';
-  if (referenceId.startsWith('refund:'))  return 'Refund';
-  return type === 'credit' ? 'Credit' : 'Entry Fee';
+  if (!referenceId) return type === 'credit' ? 'Deposit' : 'Withdraw';
+  if (referenceId.startsWith('result:'))     return 'Winning Prize';
+  if (referenceId.startsWith('entry:'))      return 'Entry Fee';
+  if (referenceId.startsWith('refund:'))     return 'Refund';
+  if (referenceId.startsWith('referral:'))   return 'Referral Bonus';
+  if (referenceId.startsWith('ad_bonus:'))   return 'Ad Bonus';
+  if (referenceId.startsWith('sponsored:'))  return 'Sponsored Reward';
+  if (referenceId.startsWith('deposit:'))    return 'Deposit';
+  if (referenceId.startsWith('withdraw:'))   return 'Withdraw';
+  return type === 'credit' ? 'Deposit' : 'Entry Fee';
 }
 
 function descFromRef(referenceId: string | null, type: string): string {
-  if (!referenceId) return type === 'credit' ? 'Wallet credit' : 'Wallet debit';
-  if (referenceId.startsWith('result:'))  return 'Match prize credited';
-  if (referenceId.startsWith('entry:'))   return 'Match entry fee';
-  if (referenceId.startsWith('refund:'))  return 'Match refund';
+  if (!referenceId) return type === 'credit' ? 'Wallet deposit' : 'Wallet debit';
+  if (referenceId.startsWith('result:'))     return 'Match winning prize credited';
+  if (referenceId.startsWith('entry:'))      return 'Match entry fee paid';
+  if (referenceId.startsWith('refund:'))     return 'Entry fee refunded';
+  if (referenceId.startsWith('referral:'))   return 'Referral reward earned';
+  if (referenceId.startsWith('ad_bonus:'))   return 'Ad reward bonus';
+  if (referenceId.startsWith('sponsored:'))  return 'Sponsorship reward approved';
+  if (referenceId.startsWith('deposit:'))    return 'Wallet deposit';
+  if (referenceId.startsWith('withdraw:'))   return 'Withdrawal request';
   return referenceId;
 }
 
