@@ -20,13 +20,12 @@ async function handleAuthUrl(url: string) {
     const parsed = Linking.parse(url);
     const params = parsed.queryParams ?? {};
 
-    if (params.code) {
-      const { data, error } = await supabase.auth.exchangeCodeForSession(url);
-      if (!error && data.session?.user) {
-        await navigateAfterAuth(data.session.user.id);
-      }
-      return;
-    }
+    // NOTE: URLs with ?code= (PKCE OAuth callbacks) are intentionally NOT handled
+    // here. options.tsx exchanges the code immediately via WebBrowser.openAuthSessionAsync,
+    // which resolves with the URL synchronously. Handling it here too would cause a
+    // race condition: both callers attempt exchangeCodeForSession with the same URL,
+    // the first consumes the one-time PKCE code_verifier, and the second gets
+    // "both auth code and code verifier should be non-empty".
 
     if (params.type === 'recovery') {
       router.replace('/(auth)/email-auth');
