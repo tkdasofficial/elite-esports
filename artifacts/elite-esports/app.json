@@ -3,7 +3,7 @@
     "name": "Elite eSports",
     "slug": "elite-esports",
     "version": "1.0.0",
-    "owner": "avzio",
+    "owner": "avzio-expo",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "elite-esports",
@@ -69,7 +69,7 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "6a10f6c8-fa7b-46be-bb86-98328356c220"
+        "projectId": "76a1d1cf-d260-4bc6-bec6-a1da46bb819d"
       },
       "admob": {
         "androidAppId": "ca-app-pub-2219438935030744~5831569923",
