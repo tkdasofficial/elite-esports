@@ -28,13 +28,17 @@ export function useAdGate() {
   }, []);
 
   const gateWithInterstitial = useCallback(
-    (action: () => void, label = 'Loading Ad...') => {
+    (
+      action: () => void,
+      label = 'Loading Ad...',
+      trigger: 'join_match' | 'leave_match' = 'join_match',
+    ) => {
       showOverlay(label);
       skipRef.current = action;
       showInterstitial(() => {
         hideOverlay();
         action();
-      });
+      }, trigger);
     },
     [showInterstitial],
   );

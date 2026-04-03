@@ -126,7 +126,7 @@ export default function MatchDetailScreen() {
         Alert.alert('Left Match', 'You have successfully left the match.');
       }
       router.back();
-    });
+    }, 'Loading Ad...', 'leave_match');
   }, [match, gateWithInterstitial, leaveMatch, refreshWallet]);
 
   const handleClaim = useCallback(() => {

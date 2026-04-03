@@ -73,10 +73,7 @@
       },
       "admob": {
         "androidAppId": "ca-app-pub-2219438935030744~5831569923",
-        "iosAppId": "ca-app-pub-2219438935030744~2611426514",
-        "appOpenUnitId": "ca-app-pub-2219438935030744/4030020209",
-        "interstitialUnitId": "ca-app-pub-2219438935030744/6236112228",
-        "rewardedUnitId": "ca-app-pub-2219438935030744/4867190230"
+        "iosAppId": "ca-app-pub-2219438935030744~2611426514"
       }
     },
     "experiments": {
