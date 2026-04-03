@@ -5,6 +5,7 @@ import {
   ActivityIndicator, Linking,
 } from 'react-native';
 import { SkeletonBar } from '@/components/SkeletonBar';
+import { ConfirmModal } from '@/components/ConfirmModal';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Image } from 'expo-image';
 import { Ionicons } from '@expo/vector-icons';
@@ -69,9 +70,10 @@ export default function MatchDetailScreen() {
   const { colors, isDark }        = useTheme();
   const styles                   = useMemo(() => createStyles(colors), [colors]);
 
-  const [claimLoading,   setClaimLoading]   = useState(false);
-  const [claimResult,    setClaimResult]    = useState<{ rank: number; points: number; prize: number } | null>(null);
-  const [alreadyClaimed, setAlreadyClaimed] = useState(false);
+  const [claimLoading,      setClaimLoading]      = useState(false);
+  const [claimResult,       setClaimResult]       = useState<{ rank: number; points: number; prize: number } | null>(null);
+  const [alreadyClaimed,    setAlreadyClaimed]    = useState(false);
+  const [leaveModalVisible, setLeaveModalVisible] = useState(false);
 
   const bottomPad = insets.bottom;
   const isLive    = match?.status === 'ongoing';
@@ -123,42 +125,30 @@ export default function MatchDetailScreen() {
 
   const handleLeave = useCallback(() => {
     if (!match) return;
+    setLeaveModalVisible(true);
+  }, [match]);
 
-    const isUpcoming  = match.status === 'upcoming';
-    const hasEntryFee = match.entry_fee > 0;
-    const refundLine  = isUpcoming && hasEntryFee
-      ? `\n\n₹${match.entry_fee} entry fee will be refunded to your wallet.`
-      : '';
-
-    Alert.alert(
-      'Leave Match',
-      `Are you sure you want to leave this match?${refundLine}`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Leave',
-          style: 'destructive',
-          onPress: () => gateWithInterstitial(async () => {
-            const { error, refunded } = await leaveMatch();
-            if (error) {
-              Alert.alert('Error', error.message);
-              return;
-            }
-            if (refunded) {
-              creditBalance(match.entry_fee);
-              refreshWallet().catch(() => {});
-              Alert.alert(
-                'Left Match',
-                `You have left the match.\n₹${match.entry_fee} has been refunded to your wallet.`,
-              );
-            } else {
-              Alert.alert('Left Match', 'You have successfully left the match.');
-            }
-            router.back();
-          }),
-        },
-      ],
-    );
+  const handleLeaveConfirm = useCallback(() => {
+    if (!match) return;
+    setLeaveModalVisible(false);
+    gateWithInterstitial(async () => {
+      const { error, refunded } = await leaveMatch();
+      if (error) {
+        Alert.alert('Error', error.message);
+        return;
+      }
+      if (refunded) {
+        creditBalance(match.entry_fee);
+        refreshWallet().catch(() => {});
+        Alert.alert(
+          'Left Match',
+          `You have left the match.\n₹${match.entry_fee} has been refunded to your wallet.`,
+        );
+      } else {
+        Alert.alert('Left Match', 'You have successfully left the match.');
+      }
+      router.back();
+    });
   }, [match, gateWithInterstitial, leaveMatch, creditBalance, refreshWallet]);
 
   const handleClaim = useCallback(() => {
@@ -546,6 +536,24 @@ export default function MatchDetailScreen() {
           </View>
         </View>
       )}
+
+      {/* ── Leave Confirmation Modal ── */}
+      <ConfirmModal
+        visible={leaveModalVisible}
+        icon="exit-outline"
+        iconColor={colors.status.error}
+        title="Leave Match?"
+        message={
+          match.status === 'upcoming' && match.entry_fee > 0
+            ? `Are you sure you want to leave this match?\n\n₹${match.entry_fee} entry fee will be refunded to your wallet.`
+            : 'Are you sure you want to leave this match?'
+        }
+        cancelLabel="Stay"
+        confirmLabel="Leave"
+        destructive
+        onCancel={() => setLeaveModalVisible(false)}
+        onConfirm={handleLeaveConfirm}
+      />
     </View>
   );
 }
