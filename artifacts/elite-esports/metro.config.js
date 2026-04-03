@@ -15,12 +15,26 @@ config.resolver.nodeModulesPaths = [
 
 // Exclude directories that should not be watched by Metro
 config.resolver.blockList = [
-  // Ignore the .local directory (agent skills, temp files, state)
   new RegExp(`${workspaceRoot.replace(/\//g, '\\/')}\\/.local\\/.*`),
-  // Ignore old pnpm node_modules directories
   /node_modules_pnpm_old\/.*/,
-  // Ignore supabase temp files
   /supabase\/.temp\/.*/,
 ];
+
+// Production bundle optimisations: minify and tree-shake dead code
+if (process.env.NODE_ENV === 'production') {
+  config.transformer = {
+    ...config.transformer,
+    minifierConfig: {
+      compress: {
+        reduce_funcs: false,
+        dead_code: true,
+        drop_console: true,
+        drop_debugger: true,
+        passes: 2,
+      },
+      mangle: true,
+    },
+  };
+}
 
 module.exports = config;

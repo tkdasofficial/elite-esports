@@ -1,9 +1,8 @@
 import React, { useRef, useState, useMemo } from 'react';
 import {
-  View, Text, Pressable, StyleSheet, Platform,
+  View, Text, Pressable, StyleSheet,
   Animated, TextInput, Keyboard,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -53,102 +52,89 @@ export function GlobalHeader({ onSearch }: Props) {
   const logoOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [1, 0], extrapolate: 'clamp' });
   const searchOpacity = anim.interpolate({ inputRange: [0, 1], outputRange: [0, 1], extrapolate: 'clamp' });
 
-  const Inner = (
-    <View style={[styles.inner, { paddingTop: topInset }]}>
-      <View style={styles.content}>
-        <View style={styles.centerFlex}>
-          <Animated.View
-            style={[styles.logoRow, { opacity: logoOpacity }]}
-            pointerEvents={searching ? 'none' : 'auto'}
-          >
-            <View style={styles.logoMark}>
-              <Ionicons name="flash" size={17} color={colors.primary} />
-            </View>
-            <Text style={styles.logoText}>
-              Elite <Text style={styles.logoAccent}>eSports</Text>
-            </Text>
-          </Animated.View>
-
-          {searching && (
+  return (
+    <View style={styles.wrap}>
+      <View style={styles.blurBorder} />
+      <View style={[styles.inner, { paddingTop: topInset }]}>
+        <View style={styles.content}>
+          <View style={styles.centerFlex}>
             <Animated.View
-              style={[StyleSheet.absoluteFill, styles.searchBar, { opacity: searchOpacity }]}
+              style={[styles.logoRow, { opacity: logoOpacity }]}
+              pointerEvents={searching ? 'none' : 'auto'}
             >
-              <Feather name="search" size={17} color={colors.text.muted} />
-              <TextInput
-                ref={inputRef}
-                style={styles.searchInput}
-                value={query}
-                onChangeText={handleChange}
-                placeholder="Game, prize pool, status…"
-                placeholderTextColor={colors.text.muted}
-                autoCorrect={false}
-                autoCapitalize="none"
-                returnKeyType="search"
-                onSubmitEditing={() => Keyboard.dismiss()}
-              />
-              {query.length > 0 && (
-                <Pressable
-                  onPress={() => handleChange('')}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                >
-                  <Feather name="x-circle" size={17} color={colors.text.muted} />
-                </Pressable>
-              )}
+              <View style={styles.logoMark}>
+                <Ionicons name="flash" size={17} color={colors.primary} />
+              </View>
+              <Text style={styles.logoText}>
+                Elite <Text style={styles.logoAccent}>eSports</Text>
+              </Text>
             </Animated.View>
-          )}
-        </View>
 
-        <View style={styles.right}>
-          {searching ? (
-            <Pressable onPress={closeSearch} style={styles.cancelBtn}>
-              <Text style={styles.cancelText}>Cancel</Text>
-            </Pressable>
-          ) : (
-            <>
-              <Pressable
-                style={styles.iconBtn}
-                onPress={openSearch}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+            {searching && (
+              <Animated.View
+                style={[StyleSheet.absoluteFill, styles.searchBar, { opacity: searchOpacity }]}
               >
-                <Feather name="search" size={21} color={colors.text.secondary} />
-              </Pressable>
-              <Pressable
-                style={styles.iconBtn}
-                onPress={() => {
-                  triggerHaptic();
-                  router.push('/notifications');
-                }}
-                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-              >
-                <Feather name="bell" size={21} color={colors.text.secondary} />
-                {unreadCount > 0 && (
-                  <View style={styles.badge}>
-                    <Text style={styles.badgeTxt}>
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </Text>
-                  </View>
+                <Feather name="search" size={17} color={colors.text.muted} />
+                <TextInput
+                  ref={inputRef}
+                  style={styles.searchInput}
+                  value={query}
+                  onChangeText={handleChange}
+                  placeholder="Game, prize pool, status…"
+                  placeholderTextColor={colors.text.muted}
+                  autoCorrect={false}
+                  autoCapitalize="none"
+                  returnKeyType="search"
+                  onSubmitEditing={() => Keyboard.dismiss()}
+                />
+                {query.length > 0 && (
+                  <Pressable
+                    onPress={() => handleChange('')}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <Feather name="x-circle" size={17} color={colors.text.muted} />
+                  </Pressable>
                 )}
+              </Animated.View>
+            )}
+          </View>
+
+          <View style={styles.right}>
+            {searching ? (
+              <Pressable onPress={closeSearch} style={styles.cancelBtn}>
+                <Text style={styles.cancelText}>Cancel</Text>
               </Pressable>
-            </>
-          )}
+            ) : (
+              <>
+                <Pressable
+                  style={styles.iconBtn}
+                  onPress={openSearch}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                >
+                  <Feather name="search" size={21} color={colors.text.secondary} />
+                </Pressable>
+                <Pressable
+                  style={styles.iconBtn}
+                  onPress={() => {
+                    triggerHaptic();
+                    router.push('/notifications');
+                  }}
+                  hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                >
+                  <Feather name="bell" size={21} color={colors.text.secondary} />
+                  {unreadCount > 0 && (
+                    <View style={styles.badge}>
+                      <Text style={styles.badgeTxt}>
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
+              </>
+            )}
+          </View>
         </View>
       </View>
-    </View>
-  );
-
-  if (Platform.OS === 'ios') {
-    return (
-      <BlurView intensity={80} tint={isDark ? 'dark' : 'light'} style={styles.blurWrap}>
-        <View style={styles.blurBorder} />
-        {Inner}
-      </BlurView>
-    );
-  }
-
-  return (
-    <View style={styles.androidWrap}>
-      <View style={styles.blurBorder} />
-      {Inner}
     </View>
   );
 }
@@ -158,8 +144,7 @@ function createStyles(
   isDark: boolean,
 ) {
   return StyleSheet.create({
-    blurWrap: { zIndex: 10 },
-    androidWrap: {
+    wrap: {
       backgroundColor: isDark ? '#080808EE' : '#FFFFFFEE',
       zIndex: 10,
     },
@@ -167,9 +152,7 @@ function createStyles(
       position: 'absolute', bottom: 0, left: 0, right: 0,
       height: 1, backgroundColor: colors.border.subtle,
     },
-    inner: {
-      backgroundColor: Platform.OS === 'ios' ? 'transparent' : undefined,
-    },
+    inner: {},
     content: {
       height: 56, flexDirection: 'row', alignItems: 'center',
       paddingLeft: 16, paddingRight: 4, gap: 8,

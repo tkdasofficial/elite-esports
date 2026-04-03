@@ -16,6 +16,7 @@
       "compileSdkVersion": 36,
       "targetSdkVersion": 35,
       "minSdkVersion": 24,
+      "jsEngine": "hermes",
       "enableProguardInReleaseBuilds": true,
       "enableShrinkResourcesInReleaseBuilds": true,
       "adaptiveIcon": {

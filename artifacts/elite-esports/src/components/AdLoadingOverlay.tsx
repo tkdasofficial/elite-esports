@@ -7,13 +7,11 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Modal,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '@/store/ThemeContext';
 import type { AppColors } from '@/utils/colors';
@@ -30,7 +28,7 @@ export function AdLoadingOverlay({ visible, bypassAfter, onSkip, label = 'Loadin
   const [canSkip, setCanSkip]     = useState(false);
   const dotScale                  = useRef(new Animated.Value(1)).current;
   const fadeAnim                  = useRef(new Animated.Value(0)).current;
-  const { colors, isDark }        = useTheme();
+  const { colors }                = useTheme();
 
   useEffect(() => {
     if (!visible) return;
@@ -72,15 +70,11 @@ export function AdLoadingOverlay({ visible, bypassAfter, onSkip, label = 'Loadin
   if (!visible) return null;
 
   const styles = createStyles(colors);
-  const Glass = Platform.OS === 'ios' ? BlurView : View;
-  const glassProps = Platform.OS === 'ios'
-    ? { intensity: 60, tint: isDark ? 'dark' as const : 'light' as const }
-    : {};
 
   return (
     <Modal transparent animationType="fade" visible={visible} statusBarTranslucent>
       <Animated.View style={[styles.backdrop, { opacity: fadeAnim }]}>
-        <Glass {...glassProps} style={styles.card}>
+        <View style={styles.card}>
           <Animated.View style={[styles.iconRing, { transform: [{ scale: dotScale }] }]}>
             <Ionicons name="play-circle" size={44} color={colors.primary} />
           </Animated.View>
@@ -104,7 +98,7 @@ export function AdLoadingOverlay({ visible, bypassAfter, onSkip, label = 'Loadin
               <Text style={styles.skipText}>Continue</Text>
             </TouchableOpacity>
           )}
-        </Glass>
+        </View>
       </Animated.View>
     </Modal>
   );
@@ -124,14 +118,10 @@ function createStyles(colors: AppColors) {
       padding: 32,
       alignItems: 'center',
       gap: 16,
-      backgroundColor: Platform.OS === 'ios' ? 'transparent' : colors.background.card,
+      backgroundColor: colors.background.card,
       borderWidth: 1,
       borderColor: colors.border.default,
       overflow: 'hidden',
-      shadowColor: colors.primary,
-      shadowOffset: { width: 0, height: 0 },
-      shadowOpacity: 0.25,
-      shadowRadius: 20,
       elevation: 20,
     },
     iconRing: {

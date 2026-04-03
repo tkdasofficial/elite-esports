@@ -7,8 +7,6 @@ export default function AuthLayout() {
       <Stack.Screen name="options" />
       <Stack.Screen name="email-auth" />
       <Stack.Screen name="profile-setup" />
-      <Stack.Screen name="login" />
-      <Stack.Screen name="signup" />
     </Stack>
   );
 }

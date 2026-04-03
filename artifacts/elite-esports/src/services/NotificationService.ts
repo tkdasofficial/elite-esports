@@ -99,13 +99,7 @@ export async function requestNotificationPermissions(): Promise<boolean> {
   const { status: current } = await Notifications.getPermissionsAsync();
   if (current === 'granted') return true;
 
-  const { status } = await Notifications.requestPermissionsAsync({
-    ios: {
-      allowAlert: true,
-      allowBadge: true,
-      allowSound: true,
-    },
-  });
+  const { status } = await Notifications.requestPermissionsAsync();
 
   await AsyncStorage.setItem(PERMISSION_PROMPTED_KEY, 'true');
   return status === 'granted';

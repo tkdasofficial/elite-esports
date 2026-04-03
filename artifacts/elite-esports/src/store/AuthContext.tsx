@@ -29,7 +29,7 @@ async function handleAuthUrl(url: string) {
     }
 
     if (params.type === 'recovery') {
-      router.replace('/(auth)/login');
+      router.replace('/(auth)/email-auth');
       return;
     }
 

@@ -1,8 +1,7 @@
-import { BlurView } from 'expo-blur';
 import { Tabs, router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import React, { useRef, useEffect } from 'react';
-import { Platform, StyleSheet, View, Pressable, Animated } from 'react-native';
+import { StyleSheet, View, Pressable, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@/store/ThemeContext';
@@ -118,15 +117,7 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         { paddingBottom: bottomPad, borderTopColor: borderColor },
       ]}
     >
-      {Platform.OS === 'ios' ? (
-        <BlurView
-          intensity={90}
-          tint={isDark ? 'dark' : 'light'}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : (
-        <View style={[StyleSheet.absoluteFill, { backgroundColor: tabBarBg }]} />
-      )}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: tabBarBg }]} />
       {BarContent}
     </View>
   );
@@ -138,10 +129,10 @@ function ProfileGate() {
   useEffect(() => {
     if (!user) return;
     if (loading) return;
-    if (!profile.full_name || !profile.username) {
+    if (!profile.username) {
       router.replace('/(auth)/profile-setup' as any);
     }
-  }, [user, loading, profile.full_name, profile.username]);
+  }, [user, loading, profile.username]);
   return null;
 }
 
