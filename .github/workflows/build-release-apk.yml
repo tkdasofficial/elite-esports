@@ -1,4 +1,4 @@
-name: Build Android APK (Ultimate Fixed)
+name: Build Android APK (FINAL PERFECT FIX)
 
 on:
   push:
@@ -19,51 +19,51 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Setup Node (FINAL FIX → 18)
+      # 2. Node Setup
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      # 3. Clean install
+      # 3. Install dependencies
       - name: Install dependencies
         run: |
           rm -rf node_modules package-lock.json
           npm install
 
-      # 4. FIX ALL RN COMPATIBILITY
-      - name: Fix React Native Environment
+      # 4. Fix RN deps
+      - name: Install React Native dependencies
         run: |
-          npm install @react-native-community/cli@latest
-          npm install @react-native/metro-config@latest
-          npm install metro@latest metro-config@latest metro-react-native-babel-preset@latest
+          npm install @react-native-community/cli
+          npm install @react-native/metro-config
+          npm install metro metro-config metro-react-native-babel-preset
 
       # 5. Create assets folder
       - name: Create assets folder
         run: mkdir -p android/app/src/main/assets
 
-      # 6. Bundle JS (FINAL STABLE)
+      # 6. Bundle JS (PATH FIXED)
       - name: Bundle React Native JS
         run: |
-          node node_modules/react-native/cli.js bundle \
+          npx react-native bundle \
             --platform android \
             --dev false \
             --entry-file index.js \
             --bundle-output android/app/src/main/assets/index.android.bundle \
             --assets-dest android/app/src/main/res/
 
-      # 7. Setup Java
+      # 7. Java setup
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 8. Setup Android SDK
+      # 8. Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 9. Grant permission
+      # 9. Permission
       - name: Grant execute permission
         run: chmod +x android/gradlew
 
@@ -73,9 +73,9 @@ jobs:
           cd android
           ./gradlew assembleRelease --no-daemon
 
-      # 11. Upload APK
+      # 11. Upload APK (PATH FIXED)
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: elite-esports-apk
-          path: artifacts/elite-esports/android/app/build/outputs/apk/release/app-release.apk
+          path: android/app/build/outputs/apk/release/app-release.apk
