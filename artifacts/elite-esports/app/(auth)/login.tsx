@@ -11,6 +11,7 @@ import { useTheme } from '@/store/ThemeContext';
 import type { AppColors } from '@/utils/colors';
 import { AuthLogo } from '@/features/auth/components/AuthLogo';
 import { AuthInput } from '@/features/auth/components/AuthInput';
+import { navigateAfterAuth } from '@/utils/authHelpers';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -42,7 +43,7 @@ export default function LoginScreen() {
         Alert.alert('Login Failed', error.message);
       }
     } else if (data.user) {
-      router.replace('/(tabs)');
+      await navigateAfterAuth(data.user.id);
     }
   };
 

@@ -12,9 +12,7 @@ async function requestNotifications(): Promise<PermissionStatus> {
   try {
     const { status: current } = await Notifications.getPermissionsAsync();
     if (current === 'granted') return 'granted';
-    const { status } = await Notifications.requestPermissionsAsync({
-      ios: { allowAlert: true, allowBadge: true, allowSound: true },
-    });
+    const { status } = await Notifications.requestPermissionsAsync();
     return status as PermissionStatus;
   } catch {
     return 'undetermined';

@@ -1,0 +1,165 @@
+PROJECT OPTIMIZATION & AUTH FIX MASTER PROMPT
+
+You are an expert React Native (Expo) engineer. Your task is to optimize, fix, and restructure the existing project without breaking any functionality.
+
+---
+
+🎯 PRIMARY GOALS
+
+1. Reduce APK size from ~92MB to under 60MB (mandatory), target ~50–55MB if possible.
+2. Convert the project into a pure Android-only build.
+3. Fix all authentication issues (Email + Social লগins).
+4. Improve and standardize the user onboarding & profile setup flow.
+5. Keep 100% UI/UX and features unchanged.
+
+---
+
+📦 ANDROID-ONLY CONVERSION (STRICT)
+
+- Remove completely:
+  - "/ios" folder
+  - iOS configs, plist files, pods, and related scripts
+  - Any iOS-specific dependencies or packages
+- Ensure:
+  - Project builds and runs ONLY for Android
+  - No iOS references remain anywhere in codebase
+
+---
+
+⚡ APP SIZE OPTIMIZATION (CRITICAL)
+
+Apply aggressive optimization WITHOUT breaking functionality:
+
+- Remove:
+  - Unused dependencies
+  - Dead code / unused components
+  - Redundant assets
+- Enable:
+  - Tree shaking
+  - Code minification
+  - Hermes engine (if not enabled)
+- Optimize:
+  - Bundle splitting (if possible)
+  - Lazy loading for screens/components
+- Compress:
+  - Any assets (even if minimal)
+- Ensure:
+  - Final APK size MUST be < 60MB
+  - No feature/UI is removed or degraded
+
+---
+
+🔐 AUTHENTICATION FIX (HIGH PRIORITY)
+
+Fix and make fully working:
+
+Social Auth:
+
+- Google Login
+- GitHub Login
+- Facebook Login
+
+Requirements:
+
+- Fix existing integrations (credentials already added)
+- Ensure successful login flow
+- Handle errors properly
+- Ensure session persistence
+
+---
+
+📧 EMAIL AUTH FIX
+
+- Fix email signup (currently broken)
+- Ensure:
+  - User enters email + password
+  - On signup → send verification email
+  - Verification link must work properly
+
+---
+
+🔄 USER FLOW (VERY IMPORTANT)
+
+Implement this exact flow for ALL authentication methods:
+
+Step 1: Signup/Login
+
+- User logs in via:
+  - Email OR
+  - Google / GitHub / Facebook
+
+Step 2: Redirect Logic
+
+- IF user is new (first time):
+  → Redirect to Profile Setup Page (Edit Profile Page)
+
+- IF user already exists:
+  → Redirect to main app/home
+
+---
+
+👤 PROFILE SETUP FLOW (FIRST TIME ONLY)
+
+On first login/signup:
+
+User MUST land on Profile Edit Page and fill:
+
+- Name
+- Username
+- Avatar (select from available options)
+- Any additional required fields
+
+Rules:
+
+- This step is mandatory only once
+- After completion → save permanently
+- Never show again for same user
+
+---
+
+🔁 UNIFIED AUTH FLOW
+
+- Same onboarding flow must apply to:
+  - Email auth
+  - Google
+  - GitHub
+  - Facebook
+
+(No exceptions)
+
+---
+
+🚫 STRICT RULES
+
+- DO NOT:
+  - Break UI design
+  - Remove any existing features
+  - Change user experience
+- ONLY:
+  - Optimize
+  - Fix
+  - Improve performance & flow
+
+---
+
+✅ FINAL EXPECTED OUTPUT
+
+- Fully working Android app
+- All auth methods working
+- Proper onboarding flow
+- APK size under 60MB
+- Smooth performance on low-end devices
+
+---
+
+⚠️ PRIORITY ORDER
+
+1. Fix Authentication
+2. Fix User Flow
+3. Remove iOS completely
+4. Optimize App Size
+5. Final Testing & Stability
+
+---
+
+Execute all steps carefully and verify before finalizing.

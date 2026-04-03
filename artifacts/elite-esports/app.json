@@ -9,20 +9,6 @@
     "scheme": "elite-esports",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": {
-      "supportsTablet": false,
-      "bundleIdentifier": "com.elite.esports.ios",
-      "googleServicesFile": "./GoogleService-Info.plist",
-      "infoPlist": {
-        "GADApplicationIdentifier": "ca-app-pub-2219438935030744~2611426514",
-        "SKAdNetworkItems": [
-          { "SKAdNetworkIdentifier": "cstr6suwn9.skadnetwork" }
-        ],
-        "NSLocationWhenInUseUsageDescription": "Elite eSports uses your location to find nearby tournaments and match you with local competitors.",
-        "NSLocationAlwaysAndWhenInUseUsageDescription": "Elite eSports uses your location to find nearby tournaments and match you with local competitors.",
-        "NSUserNotificationUsageDescription": "Elite eSports sends match alerts, tournament updates, reward notifications, and account security alerts to keep you in the game."
-      }
-    },
     "android": {
       "package": "com.elite.esports.android",
       "googleServicesFile": "./google-services.json",
@@ -30,6 +16,8 @@
       "compileSdkVersion": 36,
       "targetSdkVersion": 35,
       "minSdkVersion": 24,
+      "enableProguardInReleaseBuilds": true,
+      "enableShrinkResourcesInReleaseBuilds": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#000000"
@@ -61,8 +49,6 @@
         "expo-location",
         {
           "locationWhenInUsePermission": "Elite eSports uses your location to find nearby tournaments and match you with local competitors.",
-          "locationAlwaysAndWhenInUsePermission": "Elite eSports uses your location to find nearby tournaments and match you with local competitors.",
-          "isIosBackgroundLocationEnabled": false,
           "isAndroidBackgroundLocationEnabled": false
         }
       ]
@@ -72,8 +58,7 @@
         "projectId": "76a1d1cf-d260-4bc6-bec6-a1da46bb819d"
       },
       "admob": {
-        "androidAppId": "ca-app-pub-2219438935030744~5831569923",
-        "iosAppId": "ca-app-pub-2219438935030744~2611426514"
+        "androidAppId": "ca-app-pub-2219438935030744~5831569923"
       }
     },
     "experiments": {
