@@ -1,4 +1,4 @@
-name: Build Android APK (FINAL PERFECT FIX)
+name: Build Android APK (FINAL STABLE NO ERRORS)
 
 on:
   push:
@@ -19,30 +19,26 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Node Setup
+      # 2. Setup Node (compatible)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      # 3. Install dependencies
-      - name: Install dependencies
+      # 3. Clean install (NO manual overrides)
+      - name: Install dependencies clean
         run: |
           rm -rf node_modules package-lock.json
           npm install
 
-      # 4. Fix RN deps
-      - name: Install React Native dependencies
-        run: |
-          npm install @react-native-community/cli
-          npm install @react-native/metro-config
-          npm install metro metro-config metro-react-native-babel-preset
+      # ❌ IMPORTANT: REMOVE ALL MANUAL METRO INSTALLS
+      # (No metro install here)
 
-      # 5. Create assets folder
+      # 4. Create assets folder
       - name: Create assets folder
         run: mkdir -p android/app/src/main/assets
 
-      # 6. Bundle JS (PATH FIXED)
+      # 5. Bundle JS (PURE RN SYSTEM)
       - name: Bundle React Native JS
         run: |
           npx react-native bundle \
@@ -52,28 +48,28 @@ jobs:
             --bundle-output android/app/src/main/assets/index.android.bundle \
             --assets-dest android/app/src/main/res/
 
-      # 7. Java setup
+      # 6. Setup Java
       - name: Setup JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 8. Android SDK
+      # 7. Setup Android SDK
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 9. Permission
+      # 8. Grant permission
       - name: Grant execute permission
         run: chmod +x android/gradlew
 
-      # 10. Build APK
+      # 9. Build APK
       - name: Build Release APK
         run: |
           cd android
           ./gradlew assembleRelease --no-daemon
 
-      # 11. Upload APK (PATH FIXED)
+      # 10. Upload APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
