@@ -1,4 +1,4 @@
-name: Build Android APK (Stable Fixed)
+name: Build Android APK (100% Fixed)
 
 on:
   push:
@@ -19,27 +19,30 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Setup Node (FIXED VERSION)
+      # 2. Setup Node (Stable Version)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 16
 
-      # 3. Install Dependencies Clean
-      - name: Install dependencies
+      # 3. Clean Install
+      - name: Install dependencies clean
         run: |
           rm -rf node_modules package-lock.json
           npm install
 
-      # 4. Fix React Native CLI (CRITICAL FIX)
-      - name: Install React Native CLI Fix
-        run: npm install @react-native-community/cli
+      # 4. FIX ALL RN MISSING DEPENDENCIES
+      - name: Install Required React Native Dependencies
+        run: |
+          npm install @react-native-community/cli
+          npm install @react-native/metro-config
+          npm install metro metro-config metro-react-native-babel-preset
 
-      # 5. Create assets folder (IMPORTANT)
+      # 5. Create assets folder
       - name: Create assets folder
         run: mkdir -p android/app/src/main/assets
 
-      # 6. Bundle JS (CRASH FIXED)
+      # 6. Bundle JS (FINAL FIXED)
       - name: Bundle React Native JS
         run: |
           npx react-native bundle \
@@ -60,11 +63,11 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 9. Gradle Permission
+      # 9. Grant Permission
       - name: Grant execute permission
         run: chmod +x android/gradlew
 
-      # 10. Build Release APK
+      # 10. Build APK
       - name: Build Release APK
         run: |
           cd android
