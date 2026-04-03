@@ -20,6 +20,7 @@ export interface Notification {
 interface NotificationsContextValue {
   notifications: Notification[];
   unreadCount: number;
+  loading: boolean;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
   refreshNotifications: () => Promise<void>;
@@ -32,22 +33,25 @@ const SYNC_INTERVAL_MS = 24 * 60 * 60 * 1000; // 24 hours
 export function NotificationsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
   const lastSyncRef = useRef<number>(0);
   const appStateRef = useRef<AppStateStatus>(AppState.currentState);
 
   // ── In-app notifications from Supabase ──────────────────────────────────
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
+    setLoading(true);
     const { data } = await supabase
       .from('notifications')
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
     if (data) setNotifications(data as Notification[]);
+    setLoading(false);
   }, [user]);
 
   useEffect(() => {
-    if (!user) { setNotifications([]); return; }
+    if (!user) { setNotifications([]); setLoading(false); return; }
     fetchNotifications();
     const channel = supabase
       .channel(`notifications-${user.id}`)
@@ -120,10 +124,11 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({
     notifications,
     unreadCount: notifications.filter(n => !n.is_read).length,
+    loading,
     markAsRead,
     markAllAsRead,
     refreshNotifications: fetchNotifications,
-  }), [notifications, markAsRead, markAllAsRead, fetchNotifications]);
+  }), [notifications, loading, markAsRead, markAllAsRead, fetchNotifications]);
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;
 }

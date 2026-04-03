@@ -1,5 +1,5 @@
 import { BlurView } from 'expo-blur';
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
 import React, { useRef, useEffect } from 'react';
 import { Platform, StyleSheet, View, Pressable, Animated } from 'react-native';
@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useTheme } from '@/store/ThemeContext';
 import { triggerHaptic } from '@/utils/haptics';
+import { useProfileCtx } from '@/store/ProfileContext';
 
 const TAB_HEIGHT = 62;
 
@@ -130,18 +131,32 @@ function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   );
 }
 
+function ProfileGate() {
+  const { profile, loading } = useProfileCtx();
+  useEffect(() => {
+    if (loading) return;
+    if (!profile.full_name || !profile.username) {
+      router.replace('/(auth)/profile-setup' as any);
+    }
+  }, [loading, profile.full_name, profile.username]);
+  return null;
+}
+
 export default function TabLayout() {
   return (
-    <Tabs
-      tabBar={props => <CustomTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
-    >
-      <Tabs.Screen name="index"       options={{ title: 'Home' }} />
-      <Tabs.Screen name="live"        options={{ title: 'Live' }} />
-      <Tabs.Screen name="leaderboard" options={{ title: 'Ranks' }} />
-      <Tabs.Screen name="wallet"      options={{ title: 'Wallet' }} />
-      <Tabs.Screen name="profile"     options={{ title: 'Profile' }} />
-    </Tabs>
+    <>
+      <ProfileGate />
+      <Tabs
+        tabBar={props => <CustomTabBar {...props} />}
+        screenOptions={{ headerShown: false }}
+      >
+        <Tabs.Screen name="index"       options={{ title: 'Home' }} />
+        <Tabs.Screen name="live"        options={{ title: 'Live' }} />
+        <Tabs.Screen name="leaderboard" options={{ title: 'Ranks' }} />
+        <Tabs.Screen name="wallet"      options={{ title: 'Wallet' }} />
+        <Tabs.Screen name="profile"     options={{ title: 'Profile' }} />
+      </Tabs>
+    </>
   );
 }
 

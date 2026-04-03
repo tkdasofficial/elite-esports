@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { SkeletonBar } from '@/components/SkeletonBar';
 import { useNotifications, Notification } from '@/store/NotificationsContext';
 import type { AppColors } from '@/utils/colors';
 
@@ -13,6 +14,30 @@ const ICON_MAP: Record<string, string> = {
   wallet: 'wallet-outline',
   general: 'notifications-outline',
 };
+
+const SKELETON_COUNT = 5;
+
+function NotifSkeleton({ colors }: { colors: AppColors }) {
+  return (
+    <View style={{
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: 12,
+      backgroundColor: colors.background.card,
+      borderRadius: 14,
+      padding: 14,
+      borderWidth: 1,
+      borderColor: colors.border.subtle,
+    }}>
+      <SkeletonBar width={42} height={42} radius={12} />
+      <View style={{ flex: 1, gap: 8 }}>
+        <SkeletonBar width="60%" height={14} radius={6} />
+        <SkeletonBar width="90%" height={12} radius={6} />
+        <SkeletonBar width="40%" height={10} radius={6} />
+      </View>
+    </View>
+  );
+}
 
 function NotifCard({ notif, onPress, colors }: { notif: Notification; onPress: () => void; colors: AppColors }) {
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -40,10 +65,12 @@ function NotifCard({ notif, onPress, colors }: { notif: Notification; onPress: (
 }
 
 export default function NotificationsScreen() {
-  const { notifications, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, markAsRead, markAllAsRead, loading } = useNotifications();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = useMemo(() => createStyles(colors), [colors]);
+
+  const showSkeleton = loading && notifications.length === 0;
 
   function handleNotifPress(item: Notification) {
     if (!item.is_read) markAsRead(item.id);
@@ -53,28 +80,39 @@ export default function NotificationsScreen() {
   return (
     <View style={styles.container}>
       <ScreenHeader title="Notifications" />
-      <FlatList
-        data={notifications}
-        keyExtractor={item => item.id}
-        renderItem={({ item }) => <NotifCard notif={item} onPress={() => handleNotifPress(item)} colors={colors} />}
-        contentContainerStyle={[styles.list, { paddingBottom: insets.bottom }]}
-        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-        ListHeaderComponent={
-          notifications.some(n => !n.is_read) ? (
-            <TouchableOpacity style={styles.markAllBtn} onPress={markAllAsRead} activeOpacity={0.8}>
-              <Text style={styles.markAllText}>Mark all as read</Text>
-            </TouchableOpacity>
-          ) : null
-        }
-        ListEmptyComponent={
-          <View style={styles.empty}>
-            <Ionicons name="notifications-off-outline" size={56} color={colors.text.muted} />
-            <Text style={styles.emptyTitle}>No Notifications</Text>
-            <Text style={styles.emptyText}>You're all caught up</Text>
-          </View>
-        }
-        showsVerticalScrollIndicator={false}
-      />
+      {showSkeleton ? (
+        <FlatList
+          data={Array.from({ length: SKELETON_COUNT }, (_, i) => i)}
+          keyExtractor={i => `skel-${i}`}
+          renderItem={() => <NotifSkeleton colors={colors} />}
+          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom }]}
+          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+          showsVerticalScrollIndicator={false}
+        />
+      ) : (
+        <FlatList
+          data={notifications}
+          keyExtractor={item => item.id}
+          renderItem={({ item }) => <NotifCard notif={item} onPress={() => handleNotifPress(item)} colors={colors} />}
+          contentContainerStyle={[styles.list, { paddingBottom: insets.bottom }]}
+          ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+          ListHeaderComponent={
+            notifications.some(n => !n.is_read) ? (
+              <TouchableOpacity style={styles.markAllBtn} onPress={markAllAsRead} activeOpacity={0.8}>
+                <Text style={styles.markAllText}>Mark all as read</Text>
+              </TouchableOpacity>
+            ) : null
+          }
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Ionicons name="notifications-off-outline" size={56} color={colors.text.muted} />
+              <Text style={styles.emptyTitle}>No Notifications</Text>
+              <Text style={styles.emptyText}>You're all caught up</Text>
+            </View>
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </View>
   );
 }
