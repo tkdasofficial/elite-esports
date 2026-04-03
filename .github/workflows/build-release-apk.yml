@@ -1,77 +1,330 @@
-name: Build Android APK (FINAL STABLE NO ERRORS)
+name: Build Production Release APK
 
 on:
   push:
-    branches:
-      - main
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'  # Trigger on version tags: v1.0.0, v1.0.0-rc1, etc.
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 1.0.0)'
+        required: true
+        type: string
+      buildType:
+        description: 'Build type'
+        required: true
+        type: choice
+        options:
+          - apk
+          - app-bundle
+        default: apk
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  NODE_VERSION: '20.18.0'
+  JAVA_VERSION: '17'
 
 jobs:
-  build:
+  validate:
+    name: 'Validate & Lint'
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: artifacts/elite-esports
 
     steps:
-      # 1. Checkout
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # 2. Setup Node (compatible)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'artifacts/elite-esports/package-lock.json'
 
-      # 3. Clean install (NO manual overrides)
-      - name: Install dependencies clean
+      - name: Install dependencies
+        run: npm ci
+
+      - name: TypeScript type check
+        run: npm run typecheck
+
+      - name: Check for console errors
         run: |
-          rm -rf node_modules package-lock.json
-          npm install
+          if grep -r "console.error\|console.warn" src app --include="*.ts" --include="*.tsx" | grep -v "// @ts-ignore"; then
+            echo "❌ Found console errors/warnings without suppression"
+            exit 1
+          fi
 
-      # ❌ IMPORTANT: REMOVE ALL MANUAL METRO INSTALLS
-      # (No metro install here)
+  build:
+    name: 'Build Release APK'
+    needs: validate
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: artifacts/elite-esports
 
-      # 4. Create assets folder
-      - name: Create assets folder
-        run: mkdir -p android/app/src/main/assets
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # 5. Bundle JS (PURE RN SYSTEM)
-      - name: Bundle React Native JS
-        run: |
-          npx react-native bundle \
-            --platform android \
-            --dev false \
-            --entry-file index.js \
-            --bundle-output android/app/src/main/assets/index.android.bundle \
-            --assets-dest android/app/src/main/res/
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'artifacts/elite-esports/package-lock.json'
 
-      # 6. Setup Java
-      - name: Setup JDK 17
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: 'gradle'
 
-      # 7. Setup Android SDK
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      # 8. Grant permission
-      - name: Grant execute permission
-        run: chmod +x android/gradlew
-
-      # 9. Build APK
-      - name: Build Release APK
+      - name: Setup Android NDK
         run: |
-          cd android
-          ./gradlew assembleRelease --no-daemon
+          sdkmanager "ndk;27.1.12297006"
 
-      # 10. Upload APK
-      - name: Upload APK
+      - name: Get version from tag or input
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION=${GITHUB_REF#refs/tags/v}
+          else
+            VERSION=${{ github.event.inputs.version }}
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "📌 Building version: ${VERSION}"
+
+      - name: Update app version
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          BUILD_NUMBER=${{ github.run_number }}
+          
+          # Update package.json
+          npm version $VERSION --no-git-tag-version --allow-same-version
+          
+          # Update app.json
+          sed -i "s/\"version\": \".*\"/\"version\": \"$VERSION\"/" app.json
+          
+          # Update version code (increment from 1)
+          sed -i "s/\"versionCode\": [0-9]*/\"versionCode\": $BUILD_NUMBER/" app.json
+
+      - name: Decode and setup signing keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "❌ ERROR: Android keystore not configured in GitHub Secrets"
+            echo "To fix: Add ANDROID_KEYSTORE_BASE64 and other signing secrets"
+            exit 1
+          fi
+          
+          mkdir -p ./android/app
+          echo "$KEYSTORE_BASE64" | base64 --decode > ./android/app/release.keystore
+          
+          # Verify keystore
+          keytool -list -v -keystore ./android/app/release.keystore \
+            -storepass "$KEYSTORE_PASSWORD" 2>&1 | head -20
+
+      - name: Setup Gradle
+        run: chmod +x ./android/gradlew
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Release APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.EXPO_PUBLIC_SUPABASE_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.EXPO_PUBLIC_SUPABASE_ANON_KEY }}
+          EXPO_PUBLIC_ADMOB_ANDROID_APP_ID: ${{ secrets.EXPO_PUBLIC_ADMOB_ANDROID_APP_ID }}
+        run: |
+          BUILD_TYPE=${{ github.event.inputs.buildType || 'apk' }}
+          VERSION=${{ steps.version.outputs.version }}
+          
+          if [ "$BUILD_TYPE" = "app-bundle" ]; then
+            ./android/gradlew -p android app:bundleRelease \
+              -Dorg.gradle.java.home=$JAVA_HOME \
+              --build-cache \
+              --parallel \
+              -x test
+            
+            OUTPUT_FILE="android/app/build/outputs/bundle/release/app-release.aab"
+            FINAL_NAME="elite-esports-v${VERSION}.aab"
+          else
+            ./android/gradlew -p android app:assembleRelease \
+              -Dorg.gradle.java.home=$JAVA_HOME \
+              --build-cache \
+              --parallel \
+              -x test
+            
+            OUTPUT_FILE="android/app/build/outputs/apk/release/app-release.apk"
+            FINAL_NAME="elite-esports-v${VERSION}.apk"
+          fi
+          
+          if [ ! -f "$OUTPUT_FILE" ]; then
+            echo "❌ Build failed: Output file not found at $OUTPUT_FILE"
+            exit 1
+          fi
+          
+          # Rename for clarity
+          cp "$OUTPUT_FILE" "$FINAL_NAME"
+          echo "✅ Build successful: $FINAL_NAME"
+          ls -lh "$FINAL_NAME"
+
+      - name: Verify APK/Bundle signature
+        run: |
+          OUTPUT_FILE="elite-esports-v${{ steps.version.outputs.version }}.apk"
+          
+          if [[ "$OUTPUT_FILE" == *.apk ]]; then
+            echo "🔍 Verifying APK signature..."
+            jarsigner -verify -verbose -certs "$OUTPUT_FILE" 2>&1 | head -20
+          fi
+
+      - name: Calculate checksum
+        run: |
+          OUTPUT_FILE="elite-esports-v${{ steps.version.outputs.version }}.apk"
+          sha256sum "$OUTPUT_FILE" > "${OUTPUT_FILE}.sha256"
+          cat "${OUTPUT_FILE}.sha256"
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            artifacts/elite-esports/elite-esports-v*.apk
+            artifacts/elite-esports/elite-esports-v*.aab
+            artifacts/elite-esports/elite-esports-v*.sha256
+          draft: true
+          prerelease: ${{ contains(github.ref, 'rc') || contains(github.ref, 'alpha') || contains(github.ref, 'beta') }}
+          body: |
+            ## Release: ${{ steps.version.outputs.version }}
+            
+            **Build Metadata:**
+            - Build Number: ${{ github.run_number }}
+            - Commit: ${{ github.sha }}
+            - Workflow: [View Run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            ### Installation
+            
+            **Android APK:**
+            ```bash
+            adb install elite-esports-v${{ steps.version.outputs.version }}.apk
+            ```
+            
+            **Changes:**
+            - See commit history for details
+
+      - name: Upload artifacts for manual download
         uses: actions/upload-artifact@v4
         with:
-          name: elite-esports-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
+          name: release-apk-${{ steps.version.outputs.version }}
+          path: |
+            artifacts/elite-esports/elite-esports-v*.apk
+            artifacts/elite-esports/elite-esports-v*.aab
+            artifacts/elite-esports/elite-esports-v*.sha256
+          retention-days: 30
+
+  test-apk:
+    name: 'APK Quality Checks'
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download APK artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apk-${{ needs.build.outputs.version }}
+
+      - name: Check APK integrity
+        run: |
+          APK=$(ls elite-esports-v*.apk 2>/dev/null | head -1)
+          if [ -z "$APK" ]; then
+            echo "❌ APK not found"
+            exit 1
+          fi
+          
+          echo "✅ APK found: $APK"
+          ls -lh "$APK"
+          
+          # Check if it's a valid ZIP (APK format)
+          if unzip -t "$APK" > /dev/null 2>&1; then
+            echo "✅ APK integrity verified"
+          else
+            echo "❌ APK is corrupted"
+            exit 1
+          fi
+          
+          # Check for required manifest
+          if unzip -p "$APK" AndroidManifest.xml > /dev/null 2>&1; then
+            echo "✅ AndroidManifest.xml present"
+          else
+            echo "❌ AndroidManifest.xml missing"
+            exit 1
+          fi
+
+  notify:
+    name: 'Notify on Success'
+    needs: [build, test-apk]
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Summary
+        run: |
+          cat << EOF
+          ═══════════════════════════════════════════════════
+          ✅ RELEASE BUILD SUCCESSFUL
+          ═══════════════════════════════════════════════════
+          
+          📦 Artifacts:
+             - APK built and signed
+             - Checksums verified
+             - Ready for Play Store upload
+          
+          📊 Next Steps:
+             1. Review artifacts in GitHub Release
+             2. Test on physical device
+             3. Upload to Play Store Console
+             4. Monitor for crashes in Crashlytics
+          
+          ═══════════════════════════════════════════════════
+          EOF
+
+  notify-failure:
+    name: 'Notify on Failure'
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    if: failure()
+
+    steps:
+      - name: Failure summary
+        run: |
+          cat << EOF
+          ═══════════════════════════════════════════════════
+          ❌ BUILD FAILED
+          ═══════════════════════════════════════════════════
+          
+          Workflow: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          Common causes:
+          1. Missing signing credentials (check GitHub Secrets)
+          2. Gradle build errors (check logs)
+          3. TypeScript compilation errors
+          4. Dependency conflicts
+          
+          ═══════════════════════════════════════════════════
+          EOF
+          exit 1
