@@ -1,4 +1,4 @@
-name: Build Android APK (100% Fixed)
+name: Build Android APK (Ultimate Fixed)
 
 on:
   push:
@@ -15,37 +15,37 @@ jobs:
         working-directory: artifacts/elite-esports
 
     steps:
-      # 1. Checkout Repo
+      # 1. Checkout
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Setup Node (Stable Version)
+      # 2. Setup Node (FINAL FIX → 18)
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 16
+          node-version: 18
 
-      # 3. Clean Install
-      - name: Install dependencies clean
+      # 3. Clean install
+      - name: Install dependencies
         run: |
           rm -rf node_modules package-lock.json
           npm install
 
-      # 4. FIX ALL RN MISSING DEPENDENCIES
-      - name: Install Required React Native Dependencies
+      # 4. FIX ALL RN COMPATIBILITY
+      - name: Fix React Native Environment
         run: |
-          npm install @react-native-community/cli
-          npm install @react-native/metro-config
-          npm install metro metro-config metro-react-native-babel-preset
+          npm install @react-native-community/cli@latest
+          npm install @react-native/metro-config@latest
+          npm install metro@latest metro-config@latest metro-react-native-babel-preset@latest
 
       # 5. Create assets folder
       - name: Create assets folder
         run: mkdir -p android/app/src/main/assets
 
-      # 6. Bundle JS (FINAL FIXED)
+      # 6. Bundle JS (FINAL STABLE)
       - name: Bundle React Native JS
         run: |
-          npx react-native bundle \
+          node node_modules/react-native/cli.js bundle \
             --platform android \
             --dev false \
             --entry-file index.js \
@@ -63,7 +63,7 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # 9. Grant Permission
+      # 9. Grant permission
       - name: Grant execute permission
         run: chmod +x android/gradlew
 
