@@ -3,61 +3,34 @@ import { supabase } from '@/services/supabase';
 import { LeaderEntry } from '@/utils/types';
 
 export function useLeaderboard() {
-  const [data, setData]           = useState<LeaderEntry[]>([]);
-  const [loading, setLoading]     = useState(true);
+  const [data, setData]             = useState<LeaderEntry[]>([]);
+  const [loading, setLoading]       = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetch = async () => {
     try {
-      // Pull every rank-1 result (= a trophy / match win)
-      const { data: wins, error } = await supabase
-        .from('match_results')
-        .select('user_id')
-        .eq('rank', 1);
+      const { data: rows, error } = await supabase
+        .from('leaderboard')
+        .select('user_id, username, avatar_url, wins, total_points, total_kills, matches_played')
+        .order('wins', { ascending: false })
+        .order('total_points', { ascending: false })
+        .limit(100);
 
-      if (error || !wins) {
+      if (error || !rows) {
         setData([]);
         return;
       }
 
-      if (wins.length === 0) {
-        setData([]);
-        return;
-      }
-
-      // Count trophies per user
-      const winsCount = new Map<string, number>();
-      for (const row of wins) {
-        winsCount.set(row.user_id, (winsCount.get(row.user_id) ?? 0) + 1);
-      }
-
-      // Fetch usernames / avatars for every winner
-      const userIds = Array.from(winsCount.keys());
-      const { data: users } = await supabase
-        .from('users')
-        .select('id, username, avatar_url')
-        .in('id', userIds);
-
-      if (!users) {
-        setData([]);
-        return;
-      }
-
-      // Build & sort: most trophies first; same trophies → A–Z by name
-      const entries: LeaderEntry[] = users
-        .map(u => ({
-          id:         u.id,
-          username:   u.username ?? 'Unknown',
-          wins:       winsCount.get(u.id) ?? 0,
-          rank:       0,
-          avatar_url: u.avatar_url ?? undefined,
-        }))
-        .sort((a, b) => {
-          if (b.wins !== a.wins) return b.wins - a.wins;
-          return a.username.localeCompare(b.username, undefined, { sensitivity: 'base' });
-        })
-        .slice(0, 100)
-        .map((entry, i) => ({ ...entry, rank: i + 1 }));
+      const entries: LeaderEntry[] = rows.map((row, i) => ({
+        id:             row.user_id,
+        username:       row.username ?? 'Unknown',
+        wins:           row.wins ?? 0,
+        rank:           i + 1,
+        avatar_url:     row.avatar_url ?? undefined,
+        total_points:   row.total_points ?? 0,
+        total_kills:    row.total_kills ?? 0,
+        matches_played: row.matches_played ?? 0,
+      }));
 
       setData(entries);
     } finally {

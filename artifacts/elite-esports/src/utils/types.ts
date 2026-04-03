@@ -27,6 +27,9 @@ export interface LeaderEntry {
   wins: number;
   rank: number;
   avatar_url?: string;
+  total_points?: number;
+  total_kills?: number;
+  matches_played?: number;
 }
 
 export interface ProfileData {
@@ -62,8 +65,8 @@ export type TransactionType = 'credit' | 'debit';
 export type TransactionStatus = 'pending' | 'approved' | 'rejected';
 
 export const STATUS_CONFIG: Record<MatchStatus, { label: string; color: string }> = {
-  upcoming: { label: 'Upcoming', color: '#3B82F6' },
-  ongoing: { label: 'Live', color: '#22C55E' },
-  completed: { label: 'Ended', color: '#666666' },
+  upcoming:  { label: 'Upcoming',  color: '#3B82F6' },
+  ongoing:   { label: 'Live',      color: '#22C55E' },
+  completed: { label: 'Ended',     color: '#666666' },
   cancelled: { label: 'Cancelled', color: '#EF4444' },
 };

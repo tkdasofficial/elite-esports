@@ -12,15 +12,17 @@ import { submitWithdrawal } from '@/services/walletApi';
 import { useWallet } from '@/store/WalletContext';
 import { AdLoadingOverlay } from '@/components/AdLoadingOverlay';
 import { useAdGate } from '@/hooks/useAdGate';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import type { AppColors } from '@/utils/colors';
 
 type Step = 'form' | 'processing' | 'error';
 
 export default function WithdrawScreen() {
-  const { balance, refreshWallet } = useWallet();
-  const insets                     = useSafeAreaInsets();
-  const { colors }                 = useTheme();
-  const styles                     = useMemo(() => createStyles(colors), [colors]);
+  const { balance, refreshWallet }           = useWallet();
+  const { settings }                         = useAppSettings();
+  const insets                               = useSafeAreaInsets();
+  const { colors }                           = useTheme();
+  const styles                               = useMemo(() => createStyles(colors), [colors]);
 
   const { gateWithInterstitial, overlay, dismiss } = useAdGate();
 
@@ -43,10 +45,13 @@ export default function WithdrawScreen() {
 
   const handleSubmit = () => {
     const val = parseFloat(amount);
-    if (!val || val < 50)     { setError('Minimum withdrawal is ₹50');              setStep('error'); return; }
-    if (val > balance)         { setError('You don\'t have enough balance');          setStep('error'); return; }
-    if (!upiId.trim())         { setError('Please enter your UPI ID');               setStep('error'); return; }
-    if (!upiId.includes('@'))  { setError('Enter a valid UPI ID (e.g. name@bank)'); setStep('error'); return; }
+    const min = settings.min_withdraw;
+    const max = Math.min(settings.max_withdraw, balance);
+    if (!val || val < min)    { setError(`Minimum withdrawal is ₹${min}`);           setStep('error'); return; }
+    if (val > balance)         { setError('You don\'t have enough balance');           setStep('error'); return; }
+    if (val > max)             { setError(`Maximum withdrawal is ₹${max}`);           setStep('error'); return; }
+    if (!upiId.trim())         { setError('Please enter your UPI ID');                setStep('error'); return; }
+    if (!upiId.includes('@'))  { setError('Enter a valid UPI ID (e.g. name@bank)');   setStep('error'); return; }
 
     const upi = upiId.trim();
     gateWithInterstitial(() => doSubmit(val, upi));
@@ -99,7 +104,7 @@ export default function WithdrawScreen() {
             keyboardType="numeric"
           />
         </View>
-        <Text style={styles.hint}>Min ₹50 · Max ₹{balance.toFixed(0)}</Text>
+        <Text style={styles.hint}>Min ₹{settings.min_withdraw} · Max ₹{Math.min(settings.max_withdraw, balance).toFixed(0)}</Text>
 
         {/* UPI ID */}
         <Text style={[styles.label, { marginTop: 20 }]}>UPI ID</Text>

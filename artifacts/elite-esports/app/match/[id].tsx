@@ -24,18 +24,10 @@ import type { AppColors } from '@/utils/colors';
 /** Display a prize amount cleanly — whole numbers show without decimals,
  *  fractional amounts show with 2 decimal places. */
 function formatPrize(amount: number): string {
-  const n = Math.round(amount * 100) / 100;   // avoid floating-point drift
+  const n = Math.round(amount * 100) / 100;
   return n % 1 === 0
     ? n.toLocaleString('en-IN')
     : n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
-
-/** The prize a given rank earns — mirrors the claim_match_prize RPC formula. */
-function calcPrize(rank: number, prizePool: number): number {
-  if (rank === 1) return prizePool * 0.50;
-  if (rank === 2) return prizePool * 0.30;
-  if (rank === 3) return prizePool * 0.10;
-  return 0;
 }
 
 const BANNER_HEIGHT = 240;
@@ -63,7 +55,7 @@ function SectionLabel({ icon, title }: { icon: keyof typeof Ionicons.glyphMap; t
 export default function MatchDetailScreen() {
   const { id }                   = useLocalSearchParams<{ id: string }>();
   const { user }                 = useAuth();
-  const { refreshWallet, creditBalance } = useWallet();
+  const { refreshWallet } = useWallet();
   const insets                   = useSafeAreaInsets();
   const { match, loading, hasJoined, joining, joinMatch, leaving, leaveMatch } = useMatchDetail(id, user?.id);
   const { gateWithInterstitial, gateWithRewarded, overlay, dismiss } = useAdGate();
@@ -81,30 +73,17 @@ export default function MatchDetailScreen() {
   useEffect(() => {
     if (!user || match?.status !== 'completed') return;
     (async () => {
-      // 1. Fetch rank/points from match_results
-      const { data } = await supabase
-        .from('match_results')
-        .select('rank, points')
-        .eq('match_id', id)
-        .eq('user_id', user.id)
-        .maybeSingle();
+      const { data, error } = await supabase.rpc('get_user_match_result', { _match_id: id });
+      if (error || !data?.found) return;
 
-      if (data) {
-        // Use the same formula as the claim_match_prize RPC
-        const prize = calcPrize(data.rank, match?.prize_pool ?? 0);
-        setClaimResult({ rank: data.rank, points: data.points, prize });
-      }
-
-      // 2. Check if prize already claimed — query only exists columns (id, reference_id)
-      const { data: txn } = await supabase
-        .from('wallet_transactions')
-        .select('id')
-        .eq('reference_id', `result:${id}`)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      setAlreadyClaimed(!!txn);
+      setClaimResult({
+        rank:   data.rank,
+        points: data.points,
+        prize:  Number(data.prize ?? 0),
+      });
+      setAlreadyClaimed(data.already_claimed ?? false);
     })();
-  }, [id, user, match?.status, match?.prize_pool]);
+  }, [id, user, match?.status]);
 
   useEffect(() => {
     if (!isLive || !hasJoined) return;
@@ -132,24 +111,23 @@ export default function MatchDetailScreen() {
     if (!match) return;
     setLeaveModalVisible(false);
     gateWithInterstitial(async () => {
-      const { error, refunded } = await leaveMatch();
+      const { error, refunded, refundAmount } = await leaveMatch();
       if (error) {
         Alert.alert('Error', error.message);
         return;
       }
-      if (refunded) {
-        creditBalance(match.entry_fee);
-        refreshWallet().catch(() => {});
+      refreshWallet().catch(() => {});
+      if (refunded && refundAmount > 0) {
         Alert.alert(
           'Left Match',
-          `You have left the match.\n₹${match.entry_fee} has been refunded to your wallet.`,
+          `You have left the match.\n₹${refundAmount} has been refunded to your wallet.`,
         );
       } else {
         Alert.alert('Left Match', 'You have successfully left the match.');
       }
       router.back();
     });
-  }, [match, gateWithInterstitial, leaveMatch, creditBalance, refreshWallet]);
+  }, [match, gateWithInterstitial, leaveMatch, refreshWallet]);
 
   const handleClaim = useCallback(() => {
     if (!claimResult || claimResult.prize <= 0 || !user) return;
@@ -168,20 +146,19 @@ export default function MatchDetailScreen() {
             Alert.alert('Already Claimed', data.error ?? 'You have already claimed this prize.');
           } else {
             const actualPrize = Number(data?.prize ?? claimResult.prize);
-            creditBalance(actualPrize);
             setAlreadyClaimed(true);
+            refreshWallet().catch(() => {});
             Alert.alert(
               '🏆 Prize Claimed!',
               `₹${formatPrize(actualPrize)} has been added to your wallet.`,
             );
-            refreshWallet().catch(() => {});
           }
         } finally {
           setClaimLoading(false);
         }
       },
     );
-  }, [claimResult, user, gateWithRewarded, id, creditBalance, refreshWallet]);
+  }, [claimResult, user, gateWithRewarded, id, refreshWallet]);
 
   if (loading) {
     return (

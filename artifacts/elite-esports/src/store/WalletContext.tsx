@@ -13,15 +13,11 @@ interface WalletContextValue {
   transactions:  WalletTransaction[];
   loading:       boolean;
   refreshWallet: () => Promise<void>;
-  creditBalance: (amount: number) => void;
 }
 
 const WalletContext = createContext<WalletContextValue | null>(null);
 
-/* ─── helpers ──────────────────────────────────────────────────────────── */
-
 async function fetchSupabaseBalance(userId: string): Promise<number> {
-  // 1. Try the wallets table (kept in sync by DB triggers)
   const { data: walletRow } = await supabase
     .from('wallets')
     .select('balance')
@@ -30,7 +26,6 @@ async function fetchSupabaseBalance(userId: string): Promise<number> {
 
   if (walletRow?.balance != null) return Number(walletRow.balance);
 
-  // 2. Fall back to profiles.balance
   const { data: profileRow } = await supabase
     .from('profiles')
     .select('balance')
@@ -42,7 +37,6 @@ async function fetchSupabaseBalance(userId: string): Promise<number> {
   return 0;
 }
 
-/** ISO timestamp exactly 7 days ago */
 function sevenDaysAgo(): string {
   return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
 }
@@ -67,7 +61,6 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
   const cutoff = sevenDaysAgo();
 
   const [paymentsRes, withdrawalsRes, txnsRes, walletTxnsRes] = await Promise.allSettled([
-    // Deposits submitted by user
     supabase
       .from('payments')
       .select('id, amount, utr, status, created_at')
@@ -75,7 +68,6 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
 
-    // Withdrawal requests
     supabase
       .from('withdrawals')
       .select('id, amount, status, created_at')
@@ -83,7 +75,6 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
 
-    // Legacy transactions table (from 001_games.sql schema)
     supabase
       .from('transactions')
       .select('id, type, amount, utr, status, created_at')
@@ -91,8 +82,6 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
       .gte('created_at', cutoff)
       .order('created_at', { ascending: false }),
 
-    // Internal ledger: entry fees, prizes, bonuses
-    // NOTE: wallet_transactions has no 'description' column — use reference_id instead
     supabase
       .from('wallet_transactions')
       .select('id, type, amount, status, reference_id, created_at')
@@ -105,13 +94,9 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
   const result: WalletTransaction[] = [];
 
   const push = (tx: WalletTransaction) => {
-    if (!seen.has(tx.id)) {
-      seen.add(tx.id);
-      result.push(tx);
-    }
+    if (!seen.has(tx.id)) { seen.add(tx.id); result.push(tx); }
   };
 
-  // ── Deposits ──
   if (paymentsRes.status === 'fulfilled' && paymentsRes.value.data) {
     for (const p of paymentsRes.value.data) {
       push({
@@ -126,7 +111,6 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
     }
   }
 
-  // ── Withdrawals ──
   if (withdrawalsRes.status === 'fulfilled' && withdrawalsRes.value.data) {
     for (const w of withdrawalsRes.value.data) {
       push({
@@ -141,7 +125,6 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
     }
   }
 
-  // ── Legacy transactions table ──
   if (txnsRes.status === 'fulfilled' && txnsRes.value.data) {
     for (const t of txnsRes.value.data) {
       push({
@@ -156,7 +139,6 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
     }
   }
 
-  // ── Wallet transactions (prizes, entry fees, bonuses) ──
   if (walletTxnsRes.status === 'fulfilled' && walletTxnsRes.value.data) {
     for (const t of walletTxnsRes.value.data) {
       const ref = t.reference_id as string | null;
@@ -172,15 +154,12 @@ async function fetchSupabaseTransactions(userId: string): Promise<WalletTransact
     }
   }
 
-  // Sort newest first across all sources
   result.sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
   return result;
 }
-
-/* ─── provider ─────────────────────────────────────────────────────────── */
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
@@ -203,12 +182,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
-  /** Immediately credit the local balance — used after prize claims so the
-   *  UI updates instantly without waiting for the DB trigger to propagate. */
-  const creditBalance = useCallback((amount: number) => {
-    setBalance(prev => Math.max(0, prev + amount));
-  }, []);
-
   useEffect(() => {
     if (!user) {
       setBalance(0);
@@ -218,7 +191,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     loadWallet();
   }, [user, loadWallet]);
 
-  // Realtime: re-fetch whenever admin approves/rejects or a new row is inserted
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -249,8 +221,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     transactions,
     loading,
     refreshWallet: loadWallet,
-    creditBalance,
-  }), [balance, transactions, loading, loadWallet, creditBalance]);
+  }), [balance, transactions, loading, loadWallet]);
 
   return (
     <WalletContext.Provider value={value}>

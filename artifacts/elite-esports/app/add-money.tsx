@@ -9,15 +9,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { submitDeposit } from '@/services/walletApi';
+import { useAppSettings } from '@/hooks/useAppSettings';
 import type { AppColors } from '@/utils/colors';
 
 const QUICK_AMOUNTS = [100, 250, 500, 1000, 2000, 5000];
 type Step = 'amount' | 'payment' | 'confirm' | 'processing' | 'success' | 'error';
 
 export default function AddMoneyScreen() {
-  const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const insets              = useSafeAreaInsets();
+  const { colors }          = useTheme();
+  const styles              = useMemo(() => createStyles(colors), [colors]);
+  const { settings }        = useAppSettings();
 
   const [amount, setAmount]   = useState('');
   const [utr,    setUtr]      = useState('');
@@ -26,7 +28,10 @@ export default function AddMoneyScreen() {
 
   const handleNext = () => {
     const val = parseFloat(amount);
-    if (!val || val < 10) { setError('Minimum deposit is ₹10'); setStep('error'); return; }
+    const min = settings.min_deposit;
+    const max = settings.max_deposit;
+    if (!val || val < min) { setError(`Minimum deposit is ₹${min}`); setStep('error'); return; }
+    if (val > max)          { setError(`Maximum deposit is ₹${max}`); setStep('error'); return; }
     setError('');
     setStep('payment');
   };
@@ -165,7 +170,7 @@ export default function AddMoneyScreen() {
               <Ionicons name="phone-portrait-outline" size={36} color={colors.primary} />
               <Text style={styles.payTitle}>Pay via UPI</Text>
               <View style={styles.upiRow}>
-                <Text style={styles.upiText}>elite@upi</Text>
+                <Text style={styles.upiText}>{settings.upi_id}</Text>
                 <Ionicons name="copy-outline" size={18} color={colors.text.secondary} />
               </View>
               <View style={styles.amtBadge}>
