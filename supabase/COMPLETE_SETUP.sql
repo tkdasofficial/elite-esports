@@ -252,6 +252,19 @@ CREATE POLICY "st_admin"  ON public.squad_types FOR ALL USING (
 
 -- leaderboard: aggregated view — wins + points + kills + matches played
 -- RLS is enforced on the underlying tables (users, match_results).
+-- Drop if it accidentally exists as a TABLE (older migrations created it as a table).
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'public' AND c.relname = 'leaderboard' AND c.relkind = 'r'
+  ) THEN
+    DROP TABLE public.leaderboard CASCADE;
+  END IF;
+END;
+$$;
+
 CREATE OR REPLACE VIEW public.leaderboard AS
 SELECT
   u.id                                                                       AS user_id,
