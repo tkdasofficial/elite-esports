@@ -248,30 +248,16 @@ export default function KYCScreen() {
             </View>
           </View>
 
-          <View style={[styles.fieldWrap, styles.row]}>
-            <View style={styles.half}>
-              <PillInput
-                label="Zip / Postal Code"
-                value={zip}
-                onChangeText={v => { setZip(v); setError(''); }}
-                placeholder="400001"
-                icon="pin-outline"
-                keyboardType="number-pad"
-                colors={colors} styles={styles}
-              />
-            </View>
-            <View style={styles.half}>
-              <PillInput
-                label="Referral Code"
-                value={referralCode}
-                onChangeText={v => { setReferralCode(v.toUpperCase().replace(/\s/g, '')); setError(''); }}
-                placeholder="Optional"
-                icon="gift-outline"
-                autoCapitalize="characters"
-                colors={colors} styles={styles}
-                optional
-              />
-            </View>
+          <View style={styles.fieldWrap}>
+            <PillInput
+              label="Zip / Postal Code"
+              value={zip}
+              onChangeText={v => { setZip(v); setError(''); }}
+              placeholder="400001"
+              icon="pin-outline"
+              keyboardType="number-pad"
+              colors={colors} styles={styles}
+            />
           </View>
 
           {/* ══ CONTACT ══ */}
@@ -383,6 +369,20 @@ export default function KYCScreen() {
             {confirmPassword.length > 0 && !passwordsMatch && (
               <Text style={styles.passwordHint}>Passwords do not match</Text>
             )}
+          </View>
+
+          {/* ── Referral Code (optional, standalone) ── */}
+          <View style={styles.fieldWrap}>
+            <PillInput
+              label="Referral Code"
+              value={referralCode}
+              onChangeText={v => { setReferralCode(v.toUpperCase().replace(/\s/g, '')); setError(''); }}
+              placeholder="Have a code? Enter it here"
+              icon="gift-outline"
+              autoCapitalize="characters"
+              colors={colors} styles={styles}
+              optional
+            />
           </View>
 
           {/* ══ AGREEMENTS ══ */}
