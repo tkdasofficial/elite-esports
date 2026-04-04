@@ -20,6 +20,7 @@ const SKELETON_COUNT = 4;
 type StatusFilter = 'all' | 'upcoming' | 'ongoing' | 'completed';
 
 const STATUS_CHIPS: { key: StatusFilter; label: string; color: string }[] = [
+  { key: 'all',       label: 'All',      color: '#8B5CF6' },
   { key: 'ongoing',   label: 'Ongoing',  color: '#22C55E' },
   { key: 'upcoming',  label: 'Upcoming', color: '#3B82F6' },
   { key: 'completed', label: 'Ended',    color: '#666666' },
@@ -166,7 +167,7 @@ export default function HomeScreen() {
               label={chip.label}
               selected={statusFilter === chip.key}
               color={chip.color}
-              onPress={() => setStatusFilter(statusFilter === chip.key ? 'all' : chip.key)}
+              onPress={() => setStatusFilter(chip.key)}
             />
           ))}
         </View>
