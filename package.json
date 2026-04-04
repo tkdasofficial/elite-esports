@@ -4,26 +4,15 @@
   "license": "MIT",
   "packageManager": "npm@10.8.2",
   "workspaces": [
-    "artifacts/api-server",
-    "artifacts/elite-esports",
-    "artifacts/mockup-sandbox",
-    "lib/*",
-    "scripts"
+    "artifacts/elite-esports"
   ],
   "scripts": {
-    "build": "npm run typecheck && npm run build --workspaces --if-present",
-    "typecheck:libs": "tsc --build",
-    "typecheck": "npm run typecheck:libs && npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present"
   },
   "private": true,
   "devDependencies": {
     "prettier": "^3.8.1",
-    "react-native-worklets": "0.5.1",
-    "sharp": "^0.34.5",
     "typescript": "~5.9.2"
   },
-  "//": "PNPM IS STRICTLY FORBIDDEN. USE NPM ONLY. See .npmrc for full rules.",
-  "dependencies": {
-    "react-dom": "^19.1.0"
-  }
+  "//": "PNPM IS STRICTLY FORBIDDEN. USE NPM ONLY. See .npmrc for full rules."
 }
