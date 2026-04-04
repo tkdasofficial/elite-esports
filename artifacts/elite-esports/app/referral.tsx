@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator, Alert, Share,
+  ScrollView, Share,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,20 +13,23 @@ import { supabase } from '@/services/supabase';
 import { useAuth } from '@/store/AuthContext';
 import type { AppColors } from '@/utils/colors';
 
+const CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+
 function generateReferralCode(userId: string): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let hash = 0;
+  let hash = 5381;
   for (let i = 0; i < userId.length; i++) {
-    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
-    hash |= 0;
+    hash = ((hash << 5) + hash) ^ userId.charCodeAt(i);
+    hash = hash >>> 0;
   }
   let code = '';
-  let n = Math.abs(hash);
+  let n = hash;
   for (let i = 0; i < 8; i++) {
-    code += chars[n % chars.length];
-    n = Math.floor(n / chars.length);
+    code += CHARSET[n % CHARSET.length];
+    n = Math.floor(n / CHARSET.length);
+    if (n === 0) n = hash ^ (i + 1) * 2654435761;
+    n = n >>> 0;
   }
-  return 'ELITE-' + code;
+  return code;
 }
 
 interface ReferralTx {
@@ -48,7 +51,7 @@ export default function ReferralScreen() {
   const [totalEarned, setTotalEarned] = useState(0);
   const [referralCount, setReferralCount] = useState(0);
 
-  const referralCode = user?.id ? generateReferralCode(user.id) : '---';
+  const referralCode = user?.id ? generateReferralCode(user.id) : '--------';
 
   const loadHistory = useCallback(async () => {
     if (!user?.id) return;
@@ -83,7 +86,7 @@ export default function ReferralScreen() {
   const handleShare = async () => {
     try {
       await Share.share({
-        message: `Join Elite eSports and compete in tournaments! Use my referral code: ${referralCode}\n\nDownload now and win real cash prizes!`,
+        message: `Join Elite eSports and compete in tournaments!\nUse my referral code: ${referralCode}\n\nDownload now and win real cash prizes!`,
         title: 'Join Elite eSports',
       });
     } catch {}
@@ -93,56 +96,62 @@ export default function ReferralScreen() {
     <View style={styles.container}>
       <ScreenHeader title="Referral Program" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 32 }]}
         showsVerticalScrollIndicator={false}
       >
         {/* Hero Card */}
         <View style={styles.heroCard}>
           <View style={styles.heroIcon}>
-            <Ionicons name="gift-outline" size={32} color={colors.primary} />
+            <Ionicons name="gift" size={30} color={colors.primary} />
           </View>
           <Text style={styles.heroTitle}>Invite Friends & Earn</Text>
           <Text style={styles.heroSub}>
-            Share your code. When your friend joins and plays, you both earn rewards!
+            Share your code — when your friend joins and plays their first match, you both earn wallet rewards!
           </Text>
         </View>
 
-        {/* Referral Code */}
+        {/* Referral Code Box */}
         <View style={styles.codeCard}>
           <Text style={styles.codeLabel}>Your Referral Code</Text>
-          <View style={styles.codeRow}>
-            <Text style={styles.codeText}>{referralCode}</Text>
+          <View style={styles.codeBox}>
+            {referralCode.split('').map((char, i) => (
+              <View key={i} style={[styles.charBox, { backgroundColor: colors.background.elevated, borderColor: colors.border.default }]}>
+                <Text style={[styles.charText, { color: colors.primary }]}>{char}</Text>
+              </View>
+            ))}
+          </View>
+          <View style={styles.codeActions}>
             <TouchableOpacity
-              style={[styles.copyBtn, copied && styles.copyBtnDone]}
+              style={[styles.actionBtn, { backgroundColor: colors.background.elevated, borderColor: colors.border.default }]}
               onPress={handleCopy}
               activeOpacity={0.8}
             >
-              <Ionicons
-                name={copied ? 'checkmark' : 'copy-outline'}
-                size={16}
-                color={copied ? colors.status.success : colors.primary}
-              />
-              <Text style={[styles.copyBtnText, copied && { color: colors.status.success }]}>
-                {copied ? 'Copied!' : 'Copy'}
+              <Ionicons name={copied ? 'checkmark-circle' : 'copy-outline'} size={16} color={copied ? colors.status.success : colors.text.secondary} />
+              <Text style={[styles.actionBtnText, { color: copied ? colors.status.success : colors.text.secondary }]}>
+                {copied ? 'Copied!' : 'Copy Code'}
               </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionBtn, { backgroundColor: colors.primary, borderColor: colors.primary }]}
+              onPress={handleShare}
+              activeOpacity={0.85}
+            >
+              <Ionicons name="share-social-outline" size={16} color="#fff" />
+              <Text style={[styles.actionBtnText, { color: '#fff' }]}>Share</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Share Button */}
-        <TouchableOpacity style={styles.shareBtn} onPress={handleShare} activeOpacity={0.85}>
-          <Ionicons name="share-social-outline" size={18} color="#fff" />
-          <Text style={styles.shareBtnText}>Share Referral Code</Text>
-        </TouchableOpacity>
-
         {/* Stats Row */}
         <View style={styles.statsRow}>
-          <View style={[styles.statCard, { flex: 1 }]}>
+          <View style={styles.statCard}>
+            <Ionicons name="people" size={20} color={colors.primary} style={{ marginBottom: 8 }} />
             <Text style={styles.statValue}>{referralCount}</Text>
             <Text style={styles.statLabel}>Referrals</Text>
           </View>
-          <View style={[styles.statCard, { flex: 1 }]}>
-            <Text style={styles.statValue}>₹{totalEarned.toFixed(0)}</Text>
+          <View style={[styles.statCard, styles.statDivider, { borderColor: colors.border.default }]}>
+            <Ionicons name="wallet" size={20} color="#22C55E" style={{ marginBottom: 8 }} />
+            <Text style={[styles.statValue, { color: '#22C55E' }]}>₹{totalEarned.toFixed(0)}</Text>
             <Text style={styles.statLabel}>Total Earned</Text>
           </View>
         </View>
@@ -151,15 +160,21 @@ export default function ReferralScreen() {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>How it works</Text>
           {[
-            { step: '1', text: 'Share your referral code with friends' },
-            { step: '2', text: 'They sign up and join their first match' },
-            { step: '3', text: 'You both receive a referral bonus in your wallet' },
+            { step: '1', icon: 'share-social-outline' as const, title: 'Share Code', text: 'Send your 8-character code to friends' },
+            { step: '2', icon: 'person-add-outline' as const, title: 'Friend Joins', text: 'They sign up using your referral code' },
+            { step: '3', icon: 'trophy-outline' as const, title: 'Both Earn', text: 'You both receive a bonus in your wallets' },
           ].map(item => (
             <View key={item.step} style={styles.stepRow}>
-              <View style={styles.stepNum}>
-                <Text style={styles.stepNumText}>{item.step}</Text>
+              <View style={styles.stepIconWrap}>
+                <Ionicons name={item.icon} size={18} color={colors.primary} />
               </View>
-              <Text style={styles.stepText}>{item.text}</Text>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.stepTitle}>{item.title}</Text>
+                <Text style={styles.stepText}>{item.text}</Text>
+              </View>
+              <View style={styles.stepBadge}>
+                <Text style={styles.stepBadgeText}>{item.step}</Text>
+              </View>
             </View>
           ))}
         </View>
@@ -168,7 +183,7 @@ export default function ReferralScreen() {
         <Text style={styles.histTitle}>Referral History</Text>
         {loading ? (
           <View style={{ gap: 10 }}>
-            {[1, 2, 3].map(i => <SkeletonBar key={i} width="100%" height={60} radius={14} />)}
+            {[1, 2, 3].map(i => <SkeletonBar key={i} width="100%" height={64} radius={14} />)}
           </View>
         ) : history.length === 0 ? (
           <View style={styles.emptyWrap}>
@@ -189,7 +204,9 @@ export default function ReferralScreen() {
                     {new Date(item.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
                   </Text>
                 </View>
-                <Text style={styles.histAmount}>+₹{Number(item.amount).toFixed(0)}</Text>
+                <View style={styles.histAmountWrap}>
+                  <Text style={styles.histAmount}>+₹{Number(item.amount).toFixed(0)}</Text>
+                </View>
               </View>
             ))}
           </View>
@@ -202,80 +219,100 @@ export default function ReferralScreen() {
 function createStyles(colors: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background.dark },
-    scroll: { padding: 16 },
+    scroll: { padding: 16, gap: 14 },
 
     heroCard: {
       backgroundColor: colors.background.card,
       borderRadius: 20, padding: 24,
-      alignItems: 'center', marginBottom: 16,
+      alignItems: 'center',
       borderWidth: 1, borderColor: colors.border.default,
     },
     heroIcon: {
-      width: 64, height: 64, borderRadius: 32,
-      backgroundColor: colors.primary + '18',
+      width: 60, height: 60, borderRadius: 30,
+      backgroundColor: colors.primary + '1A',
       alignItems: 'center', justifyContent: 'center',
       marginBottom: 14,
     },
     heroTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 8, textAlign: 'center' },
-    heroSub: { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.secondary, textAlign: 'center', lineHeight: 20 },
+    heroSub: { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.secondary, textAlign: 'center', lineHeight: 21 },
 
     codeCard: {
-      backgroundColor: colors.background.card, borderRadius: 16, padding: 18,
-      marginBottom: 12, borderWidth: 1, borderColor: colors.border.default,
+      backgroundColor: colors.background.card, borderRadius: 20, padding: 20,
+      borderWidth: 1, borderColor: colors.border.default, alignItems: 'center',
     },
-    codeLabel: { fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.text.muted, marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.8 },
-    codeRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-    codeText: { flex: 1, fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.primary, letterSpacing: 2 },
-    copyBtn: {
-      flexDirection: 'row', alignItems: 'center', gap: 6,
-      paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10,
-      backgroundColor: colors.primary + '18', borderWidth: 1, borderColor: colors.primary + '40',
+    codeLabel: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: colors.text.muted, marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1.2 },
+    codeBox: { flexDirection: 'row', gap: 6, marginBottom: 20 },
+    charBox: {
+      width: 34, height: 42, borderRadius: 10,
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: 1,
     },
-    copyBtnDone: { backgroundColor: colors.status.success + '18', borderColor: colors.status.success + '40' },
-    copyBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.primary },
+    charText: { fontSize: 18, fontFamily: 'Inter_700Bold', letterSpacing: 0 },
+    codeActions: { flexDirection: 'row', gap: 10, width: '100%' },
+    actionBtn: {
+      flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 7,
+      paddingVertical: 12, borderRadius: 12, borderWidth: 1,
+    },
+    actionBtnText: { fontSize: 14, fontFamily: 'Inter_600SemiBold' },
 
-    shareBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      backgroundColor: colors.primary, borderRadius: 14, height: 52, marginBottom: 16,
+    statsRow: {
+      flexDirection: 'row',
+      backgroundColor: colors.background.card,
+      borderRadius: 20, borderWidth: 1, borderColor: colors.border.default,
+      overflow: 'hidden',
     },
-    shareBtnText: { fontSize: 15, fontFamily: 'Inter_700Bold', color: '#fff' },
-
-    statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
     statCard: {
-      backgroundColor: colors.background.card, borderRadius: 16, padding: 18,
-      alignItems: 'center', borderWidth: 1, borderColor: colors.border.default,
+      flex: 1, padding: 20, alignItems: 'center',
     },
-    statValue: { fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 4 },
+    statDivider: {
+      borderLeftWidth: 1,
+    },
+    statValue: { fontSize: 26, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 4 },
     statLabel: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted },
 
     sectionCard: {
-      backgroundColor: colors.background.card, borderRadius: 16, padding: 18,
-      marginBottom: 20, borderWidth: 1, borderColor: colors.border.default,
+      backgroundColor: colors.background.card, borderRadius: 20, padding: 20,
+      borderWidth: 1, borderColor: colors.border.default,
     },
-    sectionTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 14 },
-    stepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 12 },
-    stepNum: {
-      width: 28, height: 28, borderRadius: 14, backgroundColor: colors.primary,
-      alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+    sectionTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 16 },
+    stepRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 14,
+      paddingVertical: 10,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border.subtle,
     },
-    stepNumText: { fontSize: 13, fontFamily: 'Inter_700Bold', color: '#fff' },
-    stepText: { flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.secondary, lineHeight: 20, paddingTop: 4 },
+    stepIconWrap: {
+      width: 38, height: 38, borderRadius: 12,
+      backgroundColor: colors.primary + '15',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    stepTitle: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary, marginBottom: 2 },
+    stepText: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted },
+    stepBadge: {
+      width: 24, height: 24, borderRadius: 12,
+      backgroundColor: colors.background.elevated,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    stepBadgeText: { fontSize: 12, fontFamily: 'Inter_700Bold', color: colors.text.muted },
 
-    histTitle: { fontSize: 16, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 12 },
+    histTitle: { fontSize: 16, fontFamily: 'Inter_700Bold', color: colors.text.primary },
     histRow: {
       flexDirection: 'row', alignItems: 'center', gap: 12,
       backgroundColor: colors.background.card, borderRadius: 14, padding: 14,
       borderWidth: 1, borderColor: colors.border.subtle,
     },
     histIcon: {
-      width: 40, height: 40, borderRadius: 12,
+      width: 42, height: 42, borderRadius: 12,
       backgroundColor: colors.primary + '18', alignItems: 'center', justifyContent: 'center',
     },
     histLabel: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary, marginBottom: 3 },
     histDate: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted },
-    histAmount: { fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.status.success },
+    histAmountWrap: {
+      backgroundColor: '#22C55E18', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6,
+    },
+    histAmount: { fontSize: 15, fontFamily: 'Inter_700Bold', color: '#22C55E' },
 
-    emptyWrap: { alignItems: 'center', paddingVertical: 32, gap: 8 },
+    emptyWrap: { alignItems: 'center', paddingVertical: 36, gap: 8 },
     emptyText: { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: colors.text.secondary },
     emptySub: { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted },
   });

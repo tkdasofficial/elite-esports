@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, StyleSheet, RefreshControl, TouchableOpacity,
-  ScrollView,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
@@ -64,12 +63,13 @@ function StatusChip({
 
 const chipStyles = StyleSheet.create({
   chip: {
-    flexDirection: 'row', alignItems: 'center', gap: 5,
-    paddingHorizontal: 14, paddingVertical: 7,
+    flex: 1,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
+    paddingHorizontal: 8, paddingVertical: 7,
     borderRadius: 20, borderWidth: 1.5,
   },
   liveDot: { width: 6, height: 6, borderRadius: 3 },
-  chipText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  chipText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
 });
 
 export default function HomeScreen() {
@@ -164,13 +164,8 @@ export default function HomeScreen() {
   const FilterBar = (
     <View style={[filterStyles.bar, { backgroundColor: colors.background.dark }]}>
       <View style={filterStyles.row}>
-        {/* Status chips — scrollable left side */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={filterStyles.chipsContainer}
-          style={filterStyles.chipsScroll}
-        >
+        {/* Status chips — all visible, no scroll */}
+        <View style={filterStyles.chipsContainer}>
           {STATUS_CHIPS.map(chip => (
             <StatusChip
               key={chip.key}
@@ -180,7 +175,7 @@ export default function HomeScreen() {
               onPress={() => setStatusFilter(chip.key)}
             />
           ))}
-        </ScrollView>
+        </View>
 
         {/* Right side — Filters button (fixed) */}
         <View style={filterStyles.rightSection}>
@@ -316,8 +311,7 @@ export default function HomeScreen() {
 const filterStyles = StyleSheet.create({
   bar: { paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#1E1E1E22' },
   row: { flexDirection: 'row', alignItems: 'center' },
-  chipsScroll: { flex: 1 },
-  chipsContainer: { paddingLeft: 14, paddingRight: 6, gap: 6, alignItems: 'center', flexDirection: 'row' },
+  chipsContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 12, paddingRight: 4 },
   rightSection: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 14, paddingLeft: 4 },
   filtersBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
