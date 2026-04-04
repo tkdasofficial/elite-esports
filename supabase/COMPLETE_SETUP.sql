@@ -252,16 +252,25 @@ CREATE POLICY "st_admin"  ON public.squad_types FOR ALL USING (
 
 -- leaderboard: aggregated view — wins + points + kills + matches played
 -- RLS is enforced on the underlying tables (users, match_results).
--- Drop if it accidentally exists as a TABLE (older migrations created it as a table).
+-- Drop leaderboard regardless of what type it currently is (table, mat view, etc.)
+-- so that CREATE OR REPLACE VIEW always succeeds.
 DO $$
+DECLARE
+  v_relkind CHAR;
 BEGIN
-  IF EXISTS (
-    SELECT 1 FROM pg_class c
-    JOIN pg_namespace n ON n.oid = c.relnamespace
-    WHERE n.nspname = 'public' AND c.relname = 'leaderboard' AND c.relkind = 'r'
-  ) THEN
-    DROP TABLE public.leaderboard CASCADE;
+  SELECT c.relkind INTO v_relkind
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'public' AND c.relname = 'leaderboard';
+
+  IF v_relkind = 'r' THEN
+    EXECUTE 'DROP TABLE public.leaderboard CASCADE';
+  ELSIF v_relkind = 'm' THEN
+    EXECUTE 'DROP MATERIALIZED VIEW public.leaderboard CASCADE';
+  ELSIF v_relkind = 'v' THEN
+    EXECUTE 'DROP VIEW public.leaderboard CASCADE';
   END IF;
+  -- If NOT FOUND (v_relkind IS NULL) nothing needs to happen.
 END;
 $$;
 
