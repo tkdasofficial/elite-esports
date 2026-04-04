@@ -36,6 +36,7 @@ function RootLayoutNav() {
       <Stack.Screen name="onboarding" />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="auth/callback" />
       <Stack.Screen name="notifications" />
       <Stack.Screen name="settings" />
       <Stack.Screen name="edit-profile" />

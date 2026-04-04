@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
+import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -130,7 +131,9 @@ export default function SettingsScreen() {
           text: 'Send Reset Link',
           onPress: async () => {
             setResetLoading(true);
-            const { error } = await supabase.auth.resetPasswordForEmail(email);
+            const { error } = await supabase.auth.resetPasswordForEmail(email, {
+              redirectTo: Linking.createURL('/auth/callback'),
+            });
             setResetLoading(false);
             if (error) {
               Alert.alert('Error', error.message);

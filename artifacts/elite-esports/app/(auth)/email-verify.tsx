@@ -14,8 +14,13 @@ import type { AppColors } from '@/utils/colors';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 import { navigateAfterAuth } from '@/utils/authHelpers';
 
+/**
+ * The redirect URL sent to Supabase.
+ * Supabase will redirect back to elite-esports:///auth/callback?code=XXXXX
+ * Expo Router routes that directly to app/auth/callback.tsx — no race with index.tsx.
+ */
 function getRedirectUrl(): string {
-  return Linking.createURL('/');
+  return Linking.createURL('/auth/callback');
 }
 
 type Step = 'email' | 'login' | 'verify' | 'reset-sent';

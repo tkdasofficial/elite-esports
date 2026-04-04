@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 import { useTheme } from '@/store/ThemeContext';
+import { useAuth } from '@/store/AuthContext';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 import type { AppColors } from '@/utils/colors';
 
@@ -46,6 +47,7 @@ function Rule({ ok, text }: { ok: boolean; text: string }) {
 export default function ResetPasswordScreen() {
   const insets             = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
+  const { session, loading: authLoading } = useAuth();
   const styles             = useMemo(() => createStyles(colors), [colors]);
 
   const [password,        setPassword]        = useState('');
@@ -62,14 +64,13 @@ export default function ResetPasswordScreen() {
     : [colors.primary + '18', colors.background.dark, colors.background.dark];
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setSessionReady(true);
-      } else {
-        router.replace('/(auth)/email-verify');
-      }
-    });
-  }, []);
+    if (authLoading) return;
+    if (session) {
+      setSessionReady(true);
+    } else {
+      router.replace('/(auth)/email-verify');
+    }
+  }, [session, authLoading]);
 
   const strength  = strengthLabel(password);
   const rulesOk   = password.length >= MIN_LENGTH;
@@ -95,7 +96,14 @@ export default function ResetPasswordScreen() {
     }
   };
 
-  if (!sessionReady) return null;
+  if (authLoading || !sessionReady) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <LinearGradient colors={gradientColors} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
+        <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
+  }
 
   if (success) {
     return (
@@ -126,7 +134,6 @@ export default function ResetPasswordScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Icon */}
           <View style={styles.iconWrap}>
             <Ionicons name="lock-open-outline" size={30} color={colors.primary} />
           </View>
@@ -136,7 +143,6 @@ export default function ResetPasswordScreen() {
             Choose a strong password to secure your account.
           </Text>
 
-          {/* New Password */}
           <View style={styles.fieldWrap}>
             <AuthInput
               label="New Password"
@@ -151,7 +157,6 @@ export default function ResetPasswordScreen() {
             />
           </View>
 
-          {/* Strength bar */}
           {password.length > 0 && (
             <View style={styles.strengthWrap}>
               <View style={styles.strengthTrack}>
@@ -163,14 +168,12 @@ export default function ResetPasswordScreen() {
             </View>
           )}
 
-          {/* Rules */}
           {password.length > 0 && (
             <View style={styles.rulesWrap}>
               <Rule ok={rulesOk} text="At least 8 characters" />
             </View>
           )}
 
-          {/* Confirm Password */}
           <View style={[styles.fieldWrap, { marginTop: 8 }]}>
             <AuthInput
               label="Confirm Password"
@@ -185,7 +188,6 @@ export default function ResetPasswordScreen() {
             />
           </View>
 
-          {/* Match indicator */}
           {confirmPassword.length > 0 && (
             <View style={styles.matchRow}>
               <Ionicons
@@ -199,7 +201,6 @@ export default function ResetPasswordScreen() {
             </View>
           )}
 
-          {/* Error */}
           {!!error && (
             <View style={styles.errorWrap}>
               <Ionicons name="alert-circle-outline" size={16} color={colors.status.error} />
@@ -207,7 +208,6 @@ export default function ResetPasswordScreen() {
             </View>
           )}
 
-          {/* Submit */}
           <TouchableOpacity
             style={[styles.btn, !canSubmit && styles.btnDisabled]}
             onPress={handleSubmit}
