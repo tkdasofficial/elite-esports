@@ -19,7 +19,7 @@ type Mode = 'signin' | 'signup' | 'unknown';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-export default function EmailAuthScreen() {
+export default function EmailVerifyScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
@@ -33,8 +33,6 @@ export default function EmailAuthScreen() {
   const [error, setError] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const topPad = insets.top;
 
   const gradientColors: [string, string, string] = isDark
     ? ['#150400', '#0A0A0A', '#0A0A0A']
@@ -82,12 +80,10 @@ export default function EmailAuthScreen() {
       });
 
       const identities = data?.user?.identities;
-
       if (Array.isArray(identities) && identities.length === 0) {
         setMode('signin');
       } else {
         setMode('signup');
-        startCooldown();
       }
     } catch {
       setMode('unknown');
@@ -144,7 +140,7 @@ export default function EmailAuthScreen() {
 
       if ((signUpData.user?.identities?.length ?? 0) === 0) {
         setMode('signin');
-        setError('An account already exists for this email. Please enter your correct password.');
+        setError('An account exists for this email. Please enter your correct password.');
         return;
       }
 
@@ -189,13 +185,6 @@ export default function EmailAuthScreen() {
     else router.back();
   };
 
-  const stepIcon: Record<Step, keyof typeof Ionicons.glyphMap> = {
-    email: 'person-outline',
-    password: mode === 'signin' ? 'lock-closed-outline' : 'lock-open-outline',
-    verify: 'mail-open-outline',
-    'reset-sent': 'mail-outline',
-  };
-
   const stepTitle: Record<Step, string> = {
     email: 'Get Started',
     password: mode === 'signin' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Enter Password',
@@ -204,23 +193,36 @@ export default function EmailAuthScreen() {
   };
 
   const stepSub: Record<Step, string> = {
-    email: 'Enter your email to continue',
+    email: 'Enter your email to sign in or create an account',
     password: mode === 'signin'
       ? 'Enter your password to log in'
       : mode === 'signup'
         ? 'Choose a password for your new account'
         : 'Enter your password to continue',
-    verify: 'We sent a verification link to your email. Click it and come back here.',
+    verify: `We sent a verification link to\n${email}\n\nClick it and come back here.`,
     'reset-sent': `A password reset link has been sent to\n${email}`,
   };
 
+  const stepIconName: Record<Step, keyof typeof Ionicons.glyphMap> = {
+    email: 'mail-outline',
+    password: mode === 'signin' ? 'lock-closed-outline' : 'lock-open-outline',
+    verify: 'mail-open-outline',
+    'reset-sent': 'mail-outline',
+  };
+
   return (
-    <View style={[styles.container, { paddingTop: topPad }]}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient colors={gradientColors} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
 
-      <TouchableOpacity style={[styles.backBtn, { top: topPad + 10 }]} onPress={goBack} activeOpacity={0.7}>
-        <Ionicons name="arrow-back" size={20} color={colors.text.primary} />
-      </TouchableOpacity>
+      {(step !== 'email') && (
+        <TouchableOpacity
+          style={[styles.backBtn, { top: insets.top + 10 }]}
+          onPress={goBack}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="arrow-back" size={20} color={colors.text.primary} />
+        </TouchableOpacity>
+      )}
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -228,13 +230,28 @@ export default function EmailAuthScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/* ── Brand mark (email step only) ── */}
+          {step === 'email' && (
+            <View style={styles.brand}>
+              <View style={styles.logoCircle}>
+                <Ionicons name="flash" size={32} color={colors.primary} />
+              </View>
+              <Text style={styles.appName}>
+                Elite <Text style={{ color: colors.primary }}>eSports</Text>
+              </Text>
+              <Text style={styles.tagline}>Compete. Win. Dominate.</Text>
+            </View>
+          )}
+
+          {/* ── Step icon ── */}
           <View style={styles.iconWrap}>
-            <Ionicons name={stepIcon[step]} size={30} color={colors.primary} />
+            <Ionicons name={stepIconName[step]} size={30} color={colors.primary} />
           </View>
 
           <Text style={styles.title}>{stepTitle[step]}</Text>
           <Text style={styles.subtitle}>{stepSub[step]}</Text>
 
+          {/* ── Email step ── */}
           {step === 'email' && (
             <>
               <View style={styles.fieldWrap}>
@@ -261,7 +278,7 @@ export default function EmailAuthScreen() {
                 activeOpacity={0.85}
               >
                 {checking ? (
-                  <View style={styles.checkingRow}>
+                  <View style={styles.row}>
                     <ActivityIndicator color="#fff" size="small" />
                     <Text style={styles.btnText}>Checking…</Text>
                   </View>
@@ -272,6 +289,7 @@ export default function EmailAuthScreen() {
             </>
           )}
 
+          {/* ── Password step ── */}
           {step === 'password' && (
             <>
               <TouchableOpacity
@@ -309,22 +327,25 @@ export default function EmailAuthScreen() {
                 {loading
                   ? <ActivityIndicator color="#fff" />
                   : <Text style={styles.btnText}>
-                      {mode === 'signin' ? 'Log In' : mode === 'signup' ? 'Sign Up' : 'Continue'}
+                      {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Continue'}
                     </Text>
                 }
               </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.forgotBtn}
-                onPress={handleForgotPassword}
-                disabled={loading}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.forgotText}>Forgot Password?</Text>
-              </TouchableOpacity>
+              {(mode === 'signin' || mode === 'unknown') && (
+                <TouchableOpacity
+                  style={styles.forgotBtn}
+                  onPress={handleForgotPassword}
+                  disabled={loading}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.forgotText}>Forgot Password?</Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
 
+          {/* ── Verify step ── */}
           {step === 'verify' && (
             <>
               <View style={styles.verifyBox}>
@@ -363,6 +384,7 @@ export default function EmailAuthScreen() {
             </>
           )}
 
+          {/* ── Reset sent step ── */}
           {step === 'reset-sent' && (
             <>
               <View style={styles.verifyBox}>
@@ -373,7 +395,7 @@ export default function EmailAuthScreen() {
                   <Text style={styles.verifyEmail}>{email}</Text>
                 </Text>
                 <Text style={styles.verifyHint}>
-                  Follow the link in the email to set a new password. You can then come back and log in.
+                  Follow the link in the email to set a new password, then come back and sign in.
                 </Text>
               </View>
 
@@ -386,14 +408,6 @@ export default function EmailAuthScreen() {
               </TouchableOpacity>
             </>
           )}
-
-          <TouchableOpacity
-            style={[styles.altLink, { marginTop: 20 }]}
-            onPress={() => router.replace('/(auth)/options')}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.altLinkText}>Other sign-in options</Text>
-          </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -420,7 +434,26 @@ function createStyles(colors: AppColors) {
     },
     scroll: {
       flexGrow: 1, justifyContent: 'center',
-      paddingHorizontal: 24, paddingTop: 60,
+      paddingHorizontal: 24, paddingTop: 48,
+    },
+    brand: {
+      alignItems: 'center',
+      marginBottom: 36,
+    },
+    logoCircle: {
+      width: 64, height: 64, borderRadius: 20,
+      backgroundColor: colors.background.elevated,
+      borderWidth: 1.5, borderColor: colors.primary + '44',
+      alignItems: 'center', justifyContent: 'center',
+      marginBottom: 12,
+    },
+    appName: {
+      fontSize: 22, fontFamily: 'Inter_700Bold',
+      color: colors.text.primary, textAlign: 'center', marginBottom: 3,
+    },
+    tagline: {
+      fontSize: 12, fontFamily: 'Inter_400Regular',
+      color: colors.text.muted, letterSpacing: 0.5, textAlign: 'center',
     },
     iconWrap: {
       alignSelf: 'center', width: 72, height: 72, borderRadius: 36,
@@ -435,7 +468,7 @@ function createStyles(colors: AppColors) {
     subtitle: {
       fontSize: 14, fontFamily: 'Inter_400Regular',
       color: colors.text.secondary, textAlign: 'center',
-      marginBottom: 32, lineHeight: 20, paddingHorizontal: 8,
+      marginBottom: 32, lineHeight: 21, paddingHorizontal: 8,
     },
     emailPill: {
       flexDirection: 'row', alignItems: 'center',
@@ -458,18 +491,16 @@ function createStyles(colors: AppColors) {
       fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18,
     },
     btn: {
-      backgroundColor: colors.primary, borderRadius: 25, height: 50,
+      backgroundColor: colors.primary, borderRadius: 25, height: 52,
       alignItems: 'center', justifyContent: 'center', marginTop: 8,
     },
     btnDisabled: { opacity: 0.45 },
     btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
-    checkingRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     forgotBtn: {
       alignItems: 'center', paddingVertical: 14, marginTop: 4,
     },
-    forgotText: {
-      color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold',
-    },
+    forgotText: { color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
     verifyBox: {
       backgroundColor: colors.background.elevated,
       borderRadius: 18, padding: 24, alignItems: 'center',
@@ -489,7 +520,7 @@ function createStyles(colors: AppColors) {
       color: colors.text.muted, textAlign: 'center', lineHeight: 18,
     },
     resendBtn: {
-      borderRadius: 25, height: 46, alignItems: 'center', justifyContent: 'center',
+      borderRadius: 25, height: 48, alignItems: 'center', justifyContent: 'center',
       borderWidth: 1.5, borderColor: colors.primary, marginBottom: 12,
     },
     resendText: { color: colors.primary, fontSize: 15, fontFamily: 'Inter_600SemiBold' },

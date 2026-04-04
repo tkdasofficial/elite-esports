@@ -12,7 +12,7 @@ export async function navigateAfterAuth(userId: string): Promise<void> {
     if (data?.username) {
       router.replace('/(tabs)');
     } else {
-      router.replace('/(auth)/profile-setup');
+      router.replace('/(auth)/kyc');
     }
   } catch {
     router.replace('/(tabs)');

@@ -4,9 +4,8 @@ import React from 'react';
 export default function AuthLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="options" />
-      <Stack.Screen name="email-auth" />
-      <Stack.Screen name="profile-setup" />
+      <Stack.Screen name="email-verify" />
+      <Stack.Screen name="kyc" />
     </Stack>
   );
 }

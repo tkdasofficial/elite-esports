@@ -130,7 +130,7 @@ function ProfileGate() {
     if (!user) return;
     if (loading) return;
     if (!profile.username) {
-      router.replace('/(auth)/profile-setup' as any);
+      router.replace('/(auth)/kyc' as any);
     }
   }, [user, loading, profile.username]);
   return null;

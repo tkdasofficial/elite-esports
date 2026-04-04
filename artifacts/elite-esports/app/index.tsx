@@ -22,7 +22,7 @@ export default function Index() {
 
   if (!onboardingSeen) return <Redirect href="/onboarding/Play" />;
 
-  if (!session) return <Redirect href="/(auth)/options" />;
+  if (!session) return <Redirect href="/(auth)/email-verify" />;
 
   return <Redirect href="/(tabs)" />;
 }

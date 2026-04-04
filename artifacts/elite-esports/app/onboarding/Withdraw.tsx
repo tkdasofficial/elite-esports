@@ -47,7 +47,7 @@ export default function WithdrawScreen() {
   const handleStart = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await AsyncStorage.setItem('onboarding_seen', 'true');
-    router.replace('/(auth)/options');
+    router.replace('/(auth)/email-verify');
   };
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);

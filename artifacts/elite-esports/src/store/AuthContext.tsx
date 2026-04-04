@@ -28,7 +28,7 @@ async function handleAuthUrl(url: string) {
     // "both auth code and code verifier should be non-empty".
 
     if (params.type === 'recovery') {
-      router.replace('/(auth)/email-auth');
+      router.replace('/(auth)/email-verify');
       return;
     }
 
@@ -61,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       if (event === 'SIGNED_OUT') {
-        router.replace('/(auth)/options');
+        router.replace('/(auth)/email-verify');
       }
     });
 
