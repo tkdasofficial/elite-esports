@@ -5,7 +5,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import * as Linking from 'expo-linking';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -124,21 +123,25 @@ export default function SettingsScreen() {
     }
     Alert.alert(
       'Reset Password',
-      `A password reset link will be sent to:\n\n${email}\n\nOpen the link in the email to set a new password.`,
+      `A 6-digit verification code will be sent to:\n\n${email}\n\nEnter the code to set a new password.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
-          text: 'Send Reset Link',
+          text: 'Send Code',
           onPress: async () => {
             setResetLoading(true);
-            const { error } = await supabase.auth.resetPasswordForEmail(email, {
-              redirectTo: Linking.createURL('auth/callback'),
+            const { error } = await supabase.auth.signInWithOtp({
+              email,
+              options: { shouldCreateUser: false },
             });
             setResetLoading(false);
             if (error) {
-              Alert.alert('Error', error.message);
+              Alert.alert('Error', error.message ?? 'Could not send reset code. Please try again.');
             } else {
-              Alert.alert('Email Sent', `Check your inbox at ${email} and follow the link to reset your password.`);
+              router.push({
+                pathname: '/(auth)/otp-verify',
+                params: { email, mode: 'reset' },
+              });
             }
           },
         },
@@ -302,7 +305,7 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.rowText}>
               <Text style={styles.rowLabel}>Reset Password</Text>
-              <Text style={styles.rowSublabel}>Send a reset link to your email</Text>
+              <Text style={styles.rowSublabel}>Send a verification code to your email</Text>
             </View>
             {resetLoading
               ? <ActivityIndicator size="small" color={colors.primary} />
