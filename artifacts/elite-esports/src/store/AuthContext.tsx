@@ -48,10 +48,20 @@ function parseDeepLinkParams(url: string): Record<string, string> {
   return result;
 }
 
+/**
+ * Set to true when onAuthStateChange fires PASSWORD_RECOVERY so that
+ * handleAuthUrl skips the normal navigateAfterAuth navigation (reset-password
+ * screen handles routing instead).
+ */
+let _passwordRecoveryNavigated = false;
+
 async function handleAuthUrl(url: string) {
   try {
     const params = parseDeepLinkParams(url);
     let session: Session | null = null;
+
+    // Reset flag before each exchange so it only applies to the current link
+    _passwordRecoveryNavigated = false;
 
     // Try PKCE code exchange first (covers signup verification, magic link, recovery)
     if (params.code) {
@@ -66,12 +76,17 @@ async function handleAuthUrl(url: string) {
         refresh_token: params.refresh_token,
       });
       if (!error && data.session) session = data.session;
+      // Implicit recovery flow has type=recovery in fragment
+      if (!error && data.session && params.type === 'recovery') {
+        _passwordRecoveryNavigated = true;
+        router.replace('/(auth)/reset-password');
+        return;
+      }
     }
 
-    // Navigate based on profile completeness:
-    // - No username yet  → KYC page (user sets up profile + password)
-    // - Username exists  → straight to the app
-    if (session?.user) {
+    // Navigate based on profile completeness — but skip if PASSWORD_RECOVERY
+    // already handled navigation via onAuthStateChange
+    if (session?.user && !_passwordRecoveryNavigated) {
       await navigateAfterAuth(session.user.id);
     }
   } catch {
@@ -85,6 +100,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, newSession) => {
       setSession(newSession);
+
+      // Password reset deep link — route to the dedicated set-password screen
+      // and mark the flag so handleAuthUrl skips navigateAfterAuth
+      if (event === 'PASSWORD_RECOVERY') {
+        _passwordRecoveryNavigated = true;
+        router.replace('/(auth)/reset-password');
+        return;
+      }
 
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         const authUser = newSession?.user;
