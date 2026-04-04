@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView,
@@ -11,8 +11,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { supabase } from '@/services/supabase';
 import { useTheme } from '@/store/ThemeContext';
 import { useAuth } from '@/store/AuthContext';
-import { AuthInput } from '@/features/auth/components/AuthInput';
 import type { AppColors } from '@/utils/colors';
+
+const INPUT_H = 52;
+const ICON_W  = 44;
 
 const COUNTRY_CODES: Record<string, string> = {
   india: '+91', 'in': '+91',
@@ -39,29 +41,29 @@ const COUNTRY_CODES: Record<string, string> = {
 };
 
 function getCountryCode(country: string): string {
-  const key = country.trim().toLowerCase();
-  return COUNTRY_CODES[key] ?? '+91';
+  return COUNTRY_CODES[country.trim().toLowerCase()] ?? '+91';
 }
 
 export default function KYCScreen() {
-  const insets = useSafeAreaInsets();
+  const insets   = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles   = useMemo(() => createStyles(colors), [colors]);
 
-  const [fullName, setFullName] = useState('');
-  const [username, setUsername] = useState('');
-  const [country, setCountry] = useState('India');
-  const [region, setRegion] = useState('');
-  const [city, setCity] = useState('');
-  const [zip, setZip] = useState('');
-  const [phone, setPhone] = useState('');
+  const [fullName,      setFullName]      = useState('');
+  const [username,      setUsername]      = useState('');
+  const [country,       setCountry]       = useState('India');
+  const [region,        setRegion]        = useState('');
+  const [city,          setCity]          = useState('');
+  const [zip,           setZip]           = useState('');
+  const [phone,         setPhone]         = useState('');
+  const [referralCode,  setReferralCode]  = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error,   setError]   = useState('');
 
-  const email = user?.email ?? '';
+  const email       = user?.email ?? '';
   const countryCode = getCountryCode(country);
 
   const gradientColors: [string, string, string] = isDark
@@ -72,25 +74,20 @@ export default function KYCScreen() {
     fullName.trim().length > 0 &&
     username.trim().length >= 3 &&
     country.trim().length > 0 &&
-    termsAccepted &&
-    privacyAccepted;
+    termsAccepted && privacyAccepted;
 
   const handleComplete = async () => {
-    const name = fullName.trim();
-    const uname = username.trim().toLowerCase().replace(/\s+/g, '');
+    const name       = fullName.trim();
+    const uname      = username.trim().toLowerCase().replace(/\s+/g, '');
     const countryVal = country.trim();
-    const regionVal = region.trim();
-    const cityVal = city.trim();
-    const zipVal = zip.trim();
-    const phoneVal = phone.trim();
 
-    if (!name) { setError('Please enter your full name.'); return; }
-    if (!uname || uname.length < 3) { setError('Username must be at least 3 characters.'); return; }
-    if (!/^[a-z0-9_]+$/.test(uname)) { setError('Username can only contain letters, numbers, and underscores.'); return; }
-    if (!countryVal) { setError('Please enter your country.'); return; }
-    if (!termsAccepted) { setError('Please accept the Terms of Service to continue.'); return; }
-    if (!privacyAccepted) { setError('Please accept the Privacy Policy to continue.'); return; }
-    if (!user?.id) { setError('Not authenticated. Please sign in again.'); return; }
+    if (!name)                          { setError('Please enter your full name.'); return; }
+    if (!uname || uname.length < 3)     { setError('Username must be at least 3 characters.'); return; }
+    if (!/^[a-z0-9_]+$/.test(uname))   { setError('Username can only contain letters, numbers, and underscores.'); return; }
+    if (!countryVal)                    { setError('Please enter your country.'); return; }
+    if (!termsAccepted)                 { setError('Please accept the Terms of Service to continue.'); return; }
+    if (!privacyAccepted)               { setError('Please accept the Privacy Policy to continue.'); return; }
+    if (!user?.id)                      { setError('Not authenticated. Please sign in again.'); return; }
 
     setError('');
     setLoading(true);
@@ -111,12 +108,7 @@ export default function KYCScreen() {
 
       const { error: upsertError } = await supabase
         .from('users')
-        .upsert({
-          id: user.id,
-          name,
-          username: uname,
-          avatar_url: '0',
-        }, { onConflict: 'id' });
+        .upsert({ id: user.id, name, username: uname, avatar_url: '0' }, { onConflict: 'id' });
 
       if (upsertError) {
         setError(upsertError.message);
@@ -126,16 +118,17 @@ export default function KYCScreen() {
 
       await supabase.auth.updateUser({
         data: {
-          full_name: name,
-          username: uname,
-          country: countryVal,
-          region: regionVal,
-          city: cityVal,
-          zip: zipVal,
-          phone: phoneVal ? `${countryCode}${phoneVal}` : '',
-          terms_accepted: true,
+          full_name:       name,
+          username:        uname,
+          country:         countryVal,
+          region:          region.trim(),
+          city:            city.trim(),
+          zip:             zip.trim(),
+          phone:           phone.trim() ? `${countryCode}${phone.trim()}` : '',
+          referral_code:   referralCode.trim().toUpperCase(),
+          terms_accepted:  true,
           privacy_accepted: true,
-          kyc_completed: true,
+          kyc_completed:   true,
         },
       });
 
@@ -162,112 +155,141 @@ export default function KYCScreen() {
               <Ionicons name="person-circle-outline" size={30} color={colors.primary} />
             </View>
             <Text style={styles.title}>Complete Your Profile</Text>
-            <Text style={styles.subtitle}>
-              Tell us a bit about yourself to get started
-            </Text>
+            <Text style={styles.subtitle}>Tell us a bit about yourself to get started</Text>
           </View>
 
-          {/* ── Section: Personal Info ── */}
+          {/* ══ PERSONAL INFO ══ */}
           <SectionLabel label="Personal Info" colors={colors} />
 
+          {/* Full Name — full width */}
           <View style={styles.fieldWrap}>
-            <AuthInput
+            <PillInput
               label="Full Name"
               value={fullName}
               onChangeText={v => { setFullName(v); setError(''); }}
               placeholder="e.g. Alex Jordan"
-              iconName="person-outline"
+              icon="person-outline"
               autoCapitalize="words"
               autoComplete="name"
+              colors={colors}
+              styles={styles}
             />
           </View>
 
-          <View style={styles.fieldWrap}>
-            <AuthInput
-              label="Username"
-              value={username}
-              onChangeText={v => { setUsername(v.toLowerCase().replace(/\s/g, '')); setError(''); }}
-              placeholder="e.g. alex_gamer"
-              iconName="at-outline"
-              autoCapitalize="none"
-              autoComplete="username"
-            />
+          {/* Username | Country — side by side */}
+          <View style={[styles.fieldWrap, styles.row]}>
+            <View style={styles.half}>
+              <PillInput
+                label="Username"
+                value={username}
+                onChangeText={v => { setUsername(v.toLowerCase().replace(/\s/g, '')); setError(''); }}
+                placeholder="alex_gamer"
+                icon="at-outline"
+                autoCapitalize="none"
+                colors={colors}
+                styles={styles}
+              />
+            </View>
+            <View style={styles.half}>
+              <PillInput
+                label="Country"
+                value={country}
+                onChangeText={v => { setCountry(v); setError(''); }}
+                placeholder="India"
+                icon="globe-outline"
+                autoCapitalize="words"
+                colors={colors}
+                styles={styles}
+              />
+            </View>
           </View>
 
-          {/* ── Section: Location ── */}
+          {/* ══ LOCATION ══ */}
           <SectionLabel label="Location" colors={colors} />
 
-          <View style={styles.fieldWrap}>
-            <AuthInput
-              label="Country"
-              value={country}
-              onChangeText={v => { setCountry(v); setError(''); }}
-              placeholder="e.g. India"
-              iconName="globe-outline"
-              autoCapitalize="words"
-            />
-          </View>
-
-          <View style={[styles.fieldWrap, styles.rowFields]}>
-            <View style={styles.halfField}>
-              <AuthInput
+          {/* Region | City — side by side */}
+          <View style={[styles.fieldWrap, styles.row]}>
+            <View style={styles.half}>
+              <PillInput
                 label="Region / State"
                 value={region}
                 onChangeText={v => { setRegion(v); setError(''); }}
-                placeholder="e.g. Maharashtra"
-                iconName="map-outline"
+                placeholder="Maharashtra"
+                icon="map-outline"
                 autoCapitalize="words"
+                colors={colors}
+                styles={styles}
               />
             </View>
-            <View style={styles.halfField}>
-              <AuthInput
+            <View style={styles.half}>
+              <PillInput
                 label="City"
                 value={city}
                 onChangeText={v => { setCity(v); setError(''); }}
-                placeholder="e.g. Mumbai"
-                iconName="location-outline"
+                placeholder="Mumbai"
+                icon="location-outline"
                 autoCapitalize="words"
+                colors={colors}
+                styles={styles}
               />
             </View>
           </View>
 
-          <View style={styles.fieldWrap}>
-            <AuthInput
-              label="Zip / Postal Code"
-              value={zip}
-              onChangeText={v => { setZip(v); setError(''); }}
-              placeholder="e.g. 400001"
-              iconName="pin-outline"
-              keyboardType="number-pad"
-            />
+          {/* Zip | Referral Code — side by side */}
+          <View style={[styles.fieldWrap, styles.row]}>
+            <View style={styles.half}>
+              <PillInput
+                label="Zip / Postal Code"
+                value={zip}
+                onChangeText={v => { setZip(v); setError(''); }}
+                placeholder="400001"
+                icon="pin-outline"
+                keyboardType="number-pad"
+                colors={colors}
+                styles={styles}
+              />
+            </View>
+            <View style={styles.half}>
+              <PillInput
+                label="Referral Code"
+                value={referralCode}
+                onChangeText={v => { setReferralCode(v.toUpperCase().replace(/\s/g, '')); setError(''); }}
+                placeholder="Optional"
+                icon="gift-outline"
+                autoCapitalize="characters"
+                colors={colors}
+                styles={styles}
+                optional
+              />
+            </View>
           </View>
 
-          {/* ── Section: Contact ── */}
+          {/* ══ CONTACT ══ */}
           <SectionLabel label="Contact" colors={colors} />
 
-          {/* Email — locked */}
+          {/* Email — locked, full width */}
           <View style={styles.fieldWrap}>
             <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
-            <View style={[styles.lockedField]}>
-              <View style={styles.lockedIcon}>
-                <Ionicons name="mail-outline" size={18} color={colors.text.muted} />
+            <View style={styles.lockedField}>
+              <View style={styles.iconSlot}>
+                <Ionicons name="mail-outline" size={17} color={colors.text.muted} />
               </View>
               <Text style={styles.lockedText} numberOfLines={1}>{email}</Text>
-              <View style={styles.lockedBadge}>
-                <Ionicons name="lock-closed" size={12} color={colors.text.muted} />
+              <View style={styles.iconSlot}>
+                <Ionicons name="lock-closed" size={13} color={colors.text.muted} />
               </View>
             </View>
           </View>
 
-          {/* Phone with locked country code */}
+          {/* Phone — country code locked + number, side by side */}
           <View style={styles.fieldWrap}>
             <Text style={styles.inputLabel}>WHATSAPP NUMBER</Text>
-            <View style={styles.phoneRow}>
+            <View style={styles.row}>
               <View style={styles.codeBox}>
                 <Text style={styles.codeText}>{countryCode}</Text>
-                <Ionicons name="lock-closed" size={11} color={colors.text.muted} style={{ marginLeft: 3 }} />
+                <Ionicons name="lock-closed" size={11} color={colors.text.muted} style={{ marginLeft: 2 }} />
               </View>
-              <View style={[styles.phoneInputWrap, { flex: 1 }]}>
+              <View style={styles.phoneBox}>
                 <TextInput
                   style={styles.phoneInput}
                   value={phone}
@@ -282,7 +304,7 @@ export default function KYCScreen() {
             <Text style={styles.phoneHint}>Used for WhatsApp notifications</Text>
           </View>
 
-          {/* ── Section: Agreements ── */}
+          {/* ══ AGREEMENTS ══ */}
           <SectionLabel label="Agreements" colors={colors} />
 
           <CheckboxRow
@@ -336,9 +358,54 @@ export default function KYCScreen() {
   );
 }
 
+/* ─── Pill Input (capsule shape) ─── */
+function PillInput({
+  label, value, onChangeText, placeholder, icon,
+  autoCapitalize, autoComplete, keyboardType,
+  colors, styles, optional,
+}: {
+  label: string; value: string;
+  onChangeText: (v: string) => void;
+  placeholder: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoComplete?: any;
+  keyboardType?: any;
+  colors: AppColors; styles: any;
+  optional?: boolean;
+}) {
+  const [focused, setFocused] = React.useState(false);
+  return (
+    <View>
+      <Text style={styles.inputLabel}>
+        {label.toUpperCase()}
+        {optional && <Text style={{ color: colors.text.muted, fontFamily: 'Inter_400Regular' }}> (opt)</Text>}
+      </Text>
+      <View style={[styles.pill, focused && styles.pillFocused]}>
+        <View style={styles.iconSlot}>
+          <Ionicons name={icon} size={17} color={focused ? colors.primary : colors.text.muted} />
+        </View>
+        <TextInput
+          style={styles.pillInput}
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={colors.text.muted}
+          autoCapitalize={autoCapitalize ?? 'none'}
+          autoComplete={autoComplete}
+          keyboardType={keyboardType ?? 'default'}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+        />
+      </View>
+    </View>
+  );
+}
+
+/* ─── Section divider label ─── */
 function SectionLabel({ label, colors }: { label: string; colors: AppColors }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 8, gap: 10 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 4, gap: 10 }}>
       <Text style={{ fontSize: 11, fontFamily: 'Inter_600SemiBold', color: colors.primary, letterSpacing: 1 }}>
         {label.toUpperCase()}
       </Text>
@@ -347,23 +414,16 @@ function SectionLabel({ label, colors }: { label: string; colors: AppColors }) {
   );
 }
 
+/* ─── Checkbox row ─── */
 function CheckboxRow({
   checked, onToggle, label, linkLabel, onLink, colors, styles,
 }: {
-  checked: boolean;
-  onToggle: () => void;
-  label: string;
-  linkLabel: string;
-  onLink: () => void;
-  colors: AppColors;
-  styles: any;
+  checked: boolean; onToggle: () => void;
+  label: string; linkLabel: string; onLink: () => void;
+  colors: AppColors; styles: any;
 }) {
   return (
-    <TouchableOpacity
-      style={styles.checkRow}
-      onPress={onToggle}
-      activeOpacity={0.75}
-    >
+    <TouchableOpacity style={styles.checkRow} onPress={onToggle} activeOpacity={0.75}>
       <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
         {checked && <Ionicons name="checkmark" size={13} color="#000" />}
       </View>
@@ -375,124 +435,129 @@ function CheckboxRow({
   );
 }
 
+/* ─── Styles ─── */
 function createStyles(colors: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background.dark },
-    scroll: {
-      flexGrow: 1,
-      paddingHorizontal: 22,
-      paddingTop: 20,
-    },
-    header: {
-      alignItems: 'center',
-      marginBottom: 28,
-    },
+    scroll: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 20 },
+
+    header: { alignItems: 'center', marginBottom: 26 },
     iconWrap: {
       width: 72, height: 72, borderRadius: 36,
       backgroundColor: colors.background.elevated,
       borderWidth: 1.5, borderColor: colors.primary + '35',
-      alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+      alignItems: 'center', justifyContent: 'center', marginBottom: 14,
     },
     title: {
-      fontSize: 24, fontFamily: 'Inter_700Bold',
-      color: colors.text.primary, textAlign: 'center', marginBottom: 6,
+      fontSize: 23, fontFamily: 'Inter_700Bold',
+      color: colors.text.primary, textAlign: 'center', marginBottom: 5,
     },
     subtitle: {
-      fontSize: 14, fontFamily: 'Inter_400Regular',
-      color: colors.text.secondary, textAlign: 'center', lineHeight: 21,
+      fontSize: 13, fontFamily: 'Inter_400Regular',
+      color: colors.text.secondary, textAlign: 'center', lineHeight: 20,
     },
-    fieldWrap: { marginBottom: 14 },
-    rowFields: {
-      flexDirection: 'row',
-      gap: 10,
-    },
-    halfField: { flex: 1 },
+
+    /* rows */
+    row: { flexDirection: 'row', gap: 10, alignItems: 'flex-end' },
+    half: { flex: 1 },
+    fieldWrap: { marginBottom: 12 },
+
+    /* pill / capsule input */
     inputLabel: {
-      fontSize: 11, fontFamily: 'Inter_600SemiBold',
-      color: colors.text.muted, marginBottom: 8,
-      letterSpacing: 0.6, textTransform: 'uppercase',
+      fontSize: 10, fontFamily: 'Inter_600SemiBold',
+      color: colors.text.muted, marginBottom: 6,
+      letterSpacing: 0.7, textTransform: 'uppercase',
     },
+    pill: {
+      flexDirection: 'row', alignItems: 'center',
+      height: INPUT_H, borderRadius: INPUT_H / 2,
+      backgroundColor: colors.background.elevated,
+      borderWidth: 1.5, borderColor: colors.border.default,
+      overflow: 'hidden',
+    },
+    pillFocused: {
+      borderColor: colors.primary,
+      backgroundColor: colors.background.card,
+    },
+    iconSlot: {
+      width: ICON_W, alignItems: 'center', justifyContent: 'center',
+    },
+    pillInput: {
+      flex: 1, color: colors.text.primary,
+      fontSize: 14, fontFamily: 'Inter_400Regular',
+      paddingRight: 14, paddingVertical: 0,
+      backgroundColor: 'transparent',
+    },
+
+    /* locked email */
     lockedField: {
       flexDirection: 'row', alignItems: 'center',
+      height: INPUT_H, borderRadius: INPUT_H / 2,
       backgroundColor: colors.background.elevated,
-      borderRadius: 27, borderWidth: 1.5, borderColor: colors.border.default,
-      height: 54, overflow: 'hidden', opacity: 0.7,
-    },
-    lockedIcon: {
-      width: 48, alignItems: 'center', justifyContent: 'center',
+      borderWidth: 1.5, borderColor: colors.border.default,
+      overflow: 'hidden', opacity: 0.65,
     },
     lockedText: {
       flex: 1, color: colors.text.secondary,
-      fontSize: 15, fontFamily: 'Inter_400Regular',
+      fontSize: 14, fontFamily: 'Inter_400Regular',
     },
-    lockedBadge: {
-      width: 48, alignItems: 'center', justifyContent: 'center',
-    },
-    phoneRow: {
-      flexDirection: 'row',
-      gap: 10,
-      alignItems: 'stretch',
-    },
+
+    /* phone */
     codeBox: {
-      flexDirection: 'row',
-      alignItems: 'center',
+      flexDirection: 'row', alignItems: 'center',
+      height: INPUT_H, borderRadius: INPUT_H / 2,
       backgroundColor: colors.background.elevated,
-      borderRadius: 27, borderWidth: 1.5, borderColor: colors.border.default,
-      height: 54,
-      paddingHorizontal: 14,
-      gap: 4,
-      opacity: 0.7,
+      borderWidth: 1.5, borderColor: colors.border.default,
+      paddingHorizontal: 14, gap: 3, opacity: 0.7,
     },
-    codeText: {
-      color: colors.text.secondary,
-      fontSize: 15, fontFamily: 'Inter_600SemiBold',
-    },
-    phoneInputWrap: {
+    codeText: { color: colors.text.secondary, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+    phoneBox: {
+      flex: 1, height: INPUT_H, borderRadius: INPUT_H / 2,
       backgroundColor: colors.background.elevated,
-      borderRadius: 27, borderWidth: 1.5, borderColor: colors.border.default,
-      height: 54, justifyContent: 'center', paddingHorizontal: 18,
+      borderWidth: 1.5, borderColor: colors.border.default,
+      justifyContent: 'center', paddingHorizontal: 18,
     },
     phoneInput: {
-      color: colors.text.primary, fontSize: 15,
+      color: colors.text.primary, fontSize: 14,
       fontFamily: 'Inter_400Regular',
     },
     phoneHint: {
-      fontSize: 11, fontFamily: 'Inter_400Regular',
-      color: colors.text.muted, marginTop: 5, paddingHorizontal: 4,
+      fontSize: 10, fontFamily: 'Inter_400Regular',
+      color: colors.text.muted, marginTop: 4, paddingLeft: 6,
     },
+
+    /* checkboxes */
     checkRow: {
       flexDirection: 'row', alignItems: 'flex-start',
-      gap: 12, marginBottom: 14, paddingHorizontal: 2,
+      gap: 12, marginBottom: 12, paddingHorizontal: 2,
     },
     checkbox: {
       width: 22, height: 22, borderRadius: 6,
       borderWidth: 1.5, borderColor: colors.border.default,
       backgroundColor: colors.background.elevated,
-      alignItems: 'center', justifyContent: 'center',
-      marginTop: 1,
+      alignItems: 'center', justifyContent: 'center', marginTop: 1,
     },
-    checkboxChecked: {
-      backgroundColor: colors.primary,
-      borderColor: colors.primary,
-    },
+    checkboxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
     checkLabel: {
-      flex: 1, fontSize: 14, fontFamily: 'Inter_400Regular',
-      color: colors.text.secondary, lineHeight: 21,
+      flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular',
+      color: colors.text.secondary, lineHeight: 20,
     },
-    checkLink: {
-      color: colors.primary, fontFamily: 'Inter_600SemiBold',
-    },
+    checkLink: { color: colors.primary, fontFamily: 'Inter_600SemiBold' },
+
+    /* error */
     errorWrap: {
       flexDirection: 'row', alignItems: 'flex-start',
-      gap: 6, marginBottom: 16, paddingHorizontal: 4,
+      gap: 6, marginBottom: 14, paddingHorizontal: 4,
     },
     errorText: {
       color: colors.status.error, fontSize: 13,
       fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18,
     },
+
+    /* submit button */
     btn: {
-      backgroundColor: colors.primary, borderRadius: 25, height: 52,
-      alignItems: 'center', justifyContent: 'center', marginTop: 8,
+      backgroundColor: colors.primary, borderRadius: 26, height: 52,
+      alignItems: 'center', justifyContent: 'center', marginTop: 10,
     },
     btnDisabled: { opacity: 0.45 },
     btnInner: { flexDirection: 'row', alignItems: 'center' },
