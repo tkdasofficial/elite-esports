@@ -501,15 +501,23 @@ function CheckboxRow({
   colors: AppColors; styles: any;
 }) {
   return (
-    <TouchableOpacity style={styles.checkRow} onPress={onToggle} activeOpacity={0.75}>
-      <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
-        {checked && <Ionicons name="checkmark" size={13} color="#000" />}
+    <View style={styles.checkRow}>
+      <TouchableOpacity
+        onPress={onToggle}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      >
+        <View style={[styles.checkbox, checked && styles.checkboxChecked]}>
+          {checked && <Ionicons name="checkmark" size={13} color="#000" />}
+        </View>
+      </TouchableOpacity>
+      <View style={styles.checkLabelWrap}>
+        <Text style={styles.checkLabel}>{label}</Text>
+        <TouchableOpacity onPress={onLink} activeOpacity={0.7}>
+          <Text style={styles.checkLink}>{linkLabel}</Text>
+        </TouchableOpacity>
       </View>
-      <Text style={styles.checkLabel}>
-        {label}
-        <Text onPress={onLink} style={styles.checkLink}>{linkLabel}</Text>
-      </Text>
-    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -609,21 +617,27 @@ function createStyles(colors: AppColors) {
     },
 
     checkRow: {
-      flexDirection: 'row', alignItems: 'flex-start',
+      flexDirection: 'row', alignItems: 'center',
       gap: 12, marginBottom: 12, paddingHorizontal: 2,
     },
     checkbox: {
       width: 22, height: 22, borderRadius: 6,
       borderWidth: 1.5, borderColor: colors.border.default,
       backgroundColor: colors.background.elevated,
-      alignItems: 'center', justifyContent: 'center', marginTop: 1,
+      alignItems: 'center', justifyContent: 'center',
     },
     checkboxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
+    checkLabelWrap: {
+      flex: 1, flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap',
+    },
     checkLabel: {
-      flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular',
+      fontSize: 13, fontFamily: 'Inter_400Regular',
       color: colors.text.secondary, lineHeight: 20,
     },
-    checkLink: { color: colors.primary, fontFamily: 'Inter_600SemiBold' },
+    checkLink: {
+      fontSize: 13, fontFamily: 'Inter_600SemiBold',
+      color: colors.primary, lineHeight: 20,
+    },
 
     errorWrap: {
       flexDirection: 'row', alignItems: 'flex-start',
