@@ -529,6 +529,74 @@ CREATE INDEX IF NOT EXISTS idx_fcm_tokens_user ON public.fcm_tokens(user_id);
 
 
 -- ─────────────────────────────────────────────────────────────────────────────
+-- sponsorship_applications: Stage 1 — user applies to become a sponsor
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.sponsorship_applications (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  platform        TEXT        NOT NULL,           -- instagram | youtube | facebook | twitter | tiktok | snapchat | linkedin | other
+  handle          TEXT        NOT NULL,           -- @username or channel name
+  profile_url     TEXT        NOT NULL,           -- direct link to their profile/channel
+  followers_count INTEGER     NOT NULL,           -- audience size the user declares
+  niche           TEXT        NOT NULL DEFAULT 'gaming', -- gaming | tech | lifestyle | sports | entertainment | other
+  note            TEXT,                           -- optional message to admin
+  status          TEXT        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  admin_note      TEXT,                           -- admin's feedback / rejection reason
+  reward_amount   NUMERIC     NOT NULL DEFAULT 50, -- ₹ reward for one verified post (set by admin on approve)
+  reviewed_at     TIMESTAMPTZ,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.sponsorship_applications ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "sa_select_own"  ON public.sponsorship_applications;
+DROP POLICY IF EXISTS "sa_insert_own"  ON public.sponsorship_applications;
+DROP POLICY IF EXISTS "sa_admin"       ON public.sponsorship_applications;
+CREATE POLICY "sa_select_own" ON public.sponsorship_applications
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "sa_insert_own" ON public.sponsorship_applications
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "sa_admin" ON public.sponsorship_applications FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.admin_users WHERE user_id = auth.uid())
+);
+
+CREATE INDEX IF NOT EXISTS idx_sa_user   ON public.sponsorship_applications(user_id);
+CREATE INDEX IF NOT EXISTS idx_sa_status ON public.sponsorship_applications(status);
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
+-- sponsored_posts: Stage 2 — approved sponsors submit their post links
+-- ─────────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.sponsored_posts (
+  id              UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  application_id  UUID        NOT NULL REFERENCES public.sponsorship_applications(id) ON DELETE CASCADE,
+  platform        TEXT        NOT NULL,
+  post_url        TEXT        NOT NULL,           -- link to the published post
+  note            TEXT,
+  status          TEXT        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','verified','rejected')),
+  admin_note      TEXT,
+  reward_paid     BOOLEAN     NOT NULL DEFAULT false,
+  created_at      TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.sponsored_posts ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "sp_select_own"  ON public.sponsored_posts;
+DROP POLICY IF EXISTS "sp_insert_own"  ON public.sponsored_posts;
+DROP POLICY IF EXISTS "sp_admin"       ON public.sponsored_posts;
+CREATE POLICY "sp_select_own" ON public.sponsored_posts
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "sp_insert_own" ON public.sponsored_posts
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "sp_admin" ON public.sponsored_posts FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.admin_users WHERE user_id = auth.uid())
+);
+
+CREATE INDEX IF NOT EXISTS idx_sp_user          ON public.sponsored_posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_sp_application   ON public.sponsored_posts(application_id);
+CREATE INDEX IF NOT EXISTS idx_sp_status        ON public.sponsored_posts(status);
+
+
+-- ─────────────────────────────────────────────────────────────────────────────
 -- PART 5 · TEAMS
 -- team_members MUST be created before the teams_update policy (cross-reference)
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -1144,6 +1212,91 @@ REVOKE ALL ON FUNCTION public.credit_ad_bonus() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.credit_ad_bonus() TO authenticated;
 
 
+-- ── 9e. verify_sponsored_post — admin credits reward after verifying a post ──
+CREATE OR REPLACE FUNCTION public.verify_sponsored_post(
+  _post_id        UUID,
+  _reward_amount  NUMERIC DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_admin         UUID := auth.uid();
+  v_user_id       UUID;
+  v_app_id        UUID;
+  v_reward        NUMERIC;
+  v_already_paid  BOOLEAN;
+  v_ref           TEXT;
+BEGIN
+  -- Must be admin
+  IF NOT EXISTS (SELECT 1 FROM public.admin_users WHERE user_id = v_admin) THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Admin access required');
+  END IF;
+
+  -- Load the post
+  SELECT sp.user_id, sp.application_id, sp.reward_paid
+  INTO v_user_id, v_app_id, v_already_paid
+  FROM public.sponsored_posts sp
+  WHERE sp.id = _post_id;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Post not found');
+  END IF;
+
+  IF v_already_paid THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Reward already paid for this post');
+  END IF;
+
+  -- Reward amount: explicit param → application's reward_amount → default 50
+  IF _reward_amount IS NOT NULL AND _reward_amount > 0 THEN
+    v_reward := _reward_amount;
+  ELSE
+    SELECT reward_amount INTO v_reward FROM public.sponsorship_applications WHERE id = v_app_id;
+    v_reward := COALESCE(v_reward, 50);
+  END IF;
+
+  v_ref := 'sponsored:' || _post_id;
+
+  -- Mark post verified
+  UPDATE public.sponsored_posts
+  SET status = 'verified', reward_paid = true, admin_note = NULL
+  WHERE id = _post_id;
+
+  -- Credit wallet
+  INSERT INTO public.wallets (user_id, balance, updated_at)
+  VALUES (v_user_id, v_reward, NOW())
+  ON CONFLICT (user_id) DO UPDATE
+    SET balance    = public.wallets.balance + v_reward,
+        updated_at = NOW();
+
+  -- Wallet transaction record
+  INSERT INTO public.wallet_transactions (user_id, type, amount, status, reference_id)
+  VALUES (v_user_id, 'credit', v_reward, 'approved', v_ref);
+
+  -- Push notification to user
+  INSERT INTO public.notifications (user_id, title, message, type)
+  VALUES (
+    v_user_id,
+    'Sponsorship Reward Credited! 🎉',
+    '₹' || v_reward || ' has been added to your wallet for your sponsored post. Thank you!',
+    'info'
+  );
+
+  RETURN jsonb_build_object(
+    'success',        true,
+    'reward_amount',  v_reward,
+    'user_id',        v_user_id,
+    'post_id',        _post_id
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.verify_sponsored_post(UUID, NUMERIC) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.verify_sponsored_post(UUID, NUMERIC) TO authenticated;
+
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- PART 10 · REALTIME — enable for all live-subscribed tables
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -1158,7 +1311,9 @@ BEGIN
     'wallet_transactions',
     'withdrawals',
     'teams',
-    'team_members'
+    'team_members',
+    'sponsorship_applications',
+    'sponsored_posts'
   ] LOOP
     BEGIN
       EXECUTE format('ALTER PUBLICATION supabase_realtime ADD TABLE public.%I', tbl);
@@ -1244,29 +1399,33 @@ ON CONFLICT (name) DO NOTHING;
 -- =============================================================================
 -- ✅ SETUP COMPLETE
 --
--- TABLES (27 total):
+-- TABLES (29 total):
 --   users · admin_users · wallets · user_roles
 --   games · matches · match_participants · match_results
 --   payments · withdrawals · wallet_transactions
 --   notifications · user_games · support_tickets · reports · broadcasts
 --   fcm_tokens (push notification tokens)
+--   sponsorship_applications (Stage 1: user applies with platform + follower count)
+--   sponsored_posts          (Stage 2: approved users submit post links for wallet rewards)
 --   teams · team_members
 --   app_settings · points_settings
 --   ad_units · ad_triggers · ad_settings
---   match_modes · squad_types · user_roles
+--   match_modes · squad_types
 --
 -- VIEWS:  leaderboard (wins + points + kills + matches_played)
 --
--- RPCs (5 total):
---   join_match(uuid)           — check balance → deduct fee → add participant
---   claim_match_prize(uuid)    — credit rank prize, sync wallet
---   leave_match(uuid)          — remove participant, refund fee if upcoming
---   get_user_match_result(uuid)— backend-computed prize info for display
---   credit_ad_bonus()          — ₹1 daily rewarded-ad bonus
+-- RPCs (6 total):
+--   join_match(uuid)                     — check balance → deduct fee → add participant
+--   claim_match_prize(uuid)              — credit rank prize, sync wallet
+--   leave_match(uuid)                    — remove participant, refund fee if upcoming
+--   get_user_match_result(uuid)          — backend-computed prize info for display
+--   credit_ad_bonus()                    — ₹1 daily rewarded-ad bonus
+--   verify_sponsored_post(uuid, numeric) — admin: credit reward, push notification
 --
 -- TRIGGER: handle_new_user() — auto-creates users row + wallet on signup
 -- REALTIME: matches · notifications · wallets · wallet_transactions
 --           withdrawals · teams · team_members
+--           sponsorship_applications · sponsored_posts
 -- STORAGE:  game-banners (public read, admin write)
 --
 -- TO GRANT ADMIN ACCESS to a user:

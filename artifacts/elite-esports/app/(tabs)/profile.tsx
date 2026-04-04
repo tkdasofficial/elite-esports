@@ -270,6 +270,18 @@ export default function ProfileScreen() {
                 <Text style={styles.menuLabel}>App Config</Text>
                 <Feather name="chevron-right" size={17} color={colors.text.muted} />
               </TouchableOpacity>
+              <View style={styles.menuDivider} />
+              <TouchableOpacity
+                style={styles.menuRow}
+                onPress={() => router.push('/admin-sponsorships')}
+                activeOpacity={0.75}
+              >
+                <View style={[styles.menuIconBox, { backgroundColor: 'rgba(238,61,45,0.15)' }]}>
+                  <Ionicons name="star-outline" size={18} color={colors.primary} />
+                </View>
+                <Text style={styles.menuLabel}>Sponsorships</Text>
+                <Feather name="chevron-right" size={17} color={colors.text.muted} />
+              </TouchableOpacity>
             </View>
           </View>
         )}
