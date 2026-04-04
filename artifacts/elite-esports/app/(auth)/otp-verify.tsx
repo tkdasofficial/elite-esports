@@ -14,7 +14,7 @@ import { navigateAfterAuth } from '@/utils/authHelpers';
 import { deviceFingerprint } from '@/services/DeviceFingerprint';
 import type { AppColors } from '@/utils/colors';
 
-const OTP_LENGTH = 6;
+const OTP_LENGTH = 8;
 
 /**
  * Universal OTP Verification Screen.
@@ -184,8 +184,8 @@ export default function OtpVerifyScreen() {
 
   const modeTitle = mode === 'reset' ? 'Reset Password' : 'Verify Email';
   const modeSubtitle = mode === 'reset'
-    ? 'Enter the 6-digit code we sent to reset your password'
-    : 'Enter the 6-digit code we sent to verify your email';
+    ? 'Enter the 8-digit code we sent to reset your password'
+    : 'Enter the 8-digit code we sent to verify your email';
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
@@ -309,7 +309,7 @@ export default function OtpVerifyScreen() {
               <View style={styles.hintBox}>
                 <Ionicons name="information-circle-outline" size={15} color={colors.text.muted} />
                 <Text style={styles.hintText}>
-                  Check your spam folder if you don't see the email. The code expires in 10 minutes.
+                  Check your spam folder if you don't see the email. The code expires in 15 minutes.
                 </Text>
               </View>
             </>
@@ -354,13 +354,13 @@ function createStyles(colors: AppColors) {
       marginBottom: 36, lineHeight: 22, paddingHorizontal: 8,
     },
 
-    /* OTP boxes */
+    /* OTP boxes — 8 digits, sized to fit all screens */
     otpRow: {
       flexDirection: 'row', justifyContent: 'center',
-      gap: 10, marginBottom: 24,
+      gap: 7, marginBottom: 24,
     },
     otpBox: {
-      width: 48, height: 58, borderRadius: 14,
+      width: 36, height: 50, borderRadius: 12,
       backgroundColor: colors.background.elevated,
       borderWidth: 1.5, borderColor: colors.border.default,
       alignItems: 'center', justifyContent: 'center',
@@ -376,7 +376,7 @@ function createStyles(colors: AppColors) {
     otpInput: {
       width: '100%', height: '100%',
       textAlign: 'center',
-      fontSize: 22, fontFamily: 'Inter_700Bold',
+      fontSize: 18, fontFamily: 'Inter_700Bold',
       color: colors.text.primary,
     },
 
