@@ -253,7 +253,7 @@ export default function HomeScreen() {
           ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
           refreshControl={
             <RefreshControl
-              refreshing={false}
+              refreshing={refreshing}
               onRefresh={refresh}
               tintColor={colors.primary}
             />

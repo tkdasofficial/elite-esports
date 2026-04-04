@@ -195,15 +195,18 @@ export default function GetSponsoredScreen() {
             </View>
 
             <Text style={[styles.formLabel, { marginTop: 14 }]}>3. Additional Note (optional)</Text>
-            <TextInput
-              style={[styles.inputWrap, styles.noteInput]}
-              value={note}
-              onChangeText={setNote}
-              placeholder="Describe your post or reach..."
-              placeholderTextColor={colors.text.muted}
-              multiline
-              numberOfLines={3}
-            />
+            <View style={[styles.inputWrap, styles.noteWrap]}>
+              <TextInput
+                style={styles.noteTextInput}
+                value={note}
+                onChangeText={setNote}
+                placeholder="Describe your post or reach..."
+                placeholderTextColor={colors.text.muted}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            </View>
 
             <TouchableOpacity
               style={[styles.submitBtn, submitting && { opacity: 0.6 }]}
@@ -299,9 +302,11 @@ function createStyles(colors: AppColors) {
       borderWidth: 1, borderColor: colors.border.default,
     },
     input: { flex: 1, color: colors.text.primary, fontSize: 14, fontFamily: 'Inter_400Regular', paddingVertical: 12 },
-    noteInput: {
-      alignItems: 'flex-start', paddingVertical: 12, minHeight: 80,
+    noteWrap: { alignItems: 'flex-start', minHeight: 80, paddingVertical: 12 },
+    noteTextInput: {
+      flex: 1, width: '100%',
       color: colors.text.primary, fontSize: 14, fontFamily: 'Inter_400Regular',
+      paddingVertical: 0,
     },
 
     submitBtn: {

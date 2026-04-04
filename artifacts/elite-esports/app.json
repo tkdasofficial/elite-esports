@@ -13,12 +13,7 @@
       "package": "com.elite.esports.android",
       "googleServicesFile": "./google-services.json",
       "versionCode": 2,
-      "compileSdkVersion": 36,
-      "targetSdkVersion": 35,
-      "minSdkVersion": 24,
       "jsEngine": "hermes",
-      "enableProguardInReleaseBuilds": true,
-      "enableShrinkResourcesInReleaseBuilds": true,
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
         "backgroundColor": "#000000"

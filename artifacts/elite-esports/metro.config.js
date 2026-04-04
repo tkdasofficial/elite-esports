@@ -6,7 +6,8 @@ const workspaceRoot = path.resolve(projectRoot, '../..');
 
 const config = getDefaultConfig(projectRoot);
 
-config.watchFolders = [workspaceRoot];
+// Merge workspace root into Expo's default watchFolders (do NOT replace them)
+config.watchFolders = [...(config.watchFolders ?? []), workspaceRoot];
 
 config.resolver.nodeModulesPaths = [
   path.resolve(projectRoot, 'node_modules'),

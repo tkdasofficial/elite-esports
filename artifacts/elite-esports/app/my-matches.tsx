@@ -58,7 +58,7 @@ export default function MyMatchesScreen() {
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
-              refreshing={false}
+              refreshing={refreshing}
               onRefresh={refresh}
               tintColor={colors.primary}
             />
