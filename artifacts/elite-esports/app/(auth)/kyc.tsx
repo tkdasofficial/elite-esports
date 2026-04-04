@@ -18,7 +18,7 @@ const ICON_W  = 44;
 
 const COUNTRY_CODES: Record<string, string> = {
   india: '+91', 'in': '+91',
-  usa: '+1', 'us': '+1', 'united states': '+1', 'united states of america': '+1',
+  usa: '+1', 'us': '+1', 'united states': '+1',
   uk: '+44', 'united kingdom': '+44', england: '+44',
   canada: '+1', ca: '+1',
   australia: '+61', au: '+61',
@@ -45,23 +45,27 @@ function getCountryCode(country: string): string {
 }
 
 export default function KYCScreen() {
-  const insets   = useSafeAreaInsets();
+  const insets             = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
-  const { user } = useAuth();
-  const styles   = useMemo(() => createStyles(colors), [colors]);
+  const { user }           = useAuth();
+  const styles             = useMemo(() => createStyles(colors), [colors]);
 
-  const [fullName,      setFullName]      = useState('');
-  const [username,      setUsername]      = useState('');
-  const [country,       setCountry]       = useState('India');
-  const [region,        setRegion]        = useState('');
-  const [city,          setCity]          = useState('');
-  const [zip,           setZip]           = useState('');
-  const [phone,         setPhone]         = useState('');
-  const [referralCode,  setReferralCode]  = useState('');
-  const [termsAccepted, setTermsAccepted] = useState(false);
+  const [fullName,        setFullName]        = useState('');
+  const [username,        setUsername]        = useState('');
+  const [country,         setCountry]         = useState('India');
+  const [region,          setRegion]          = useState('');
+  const [city,            setCity]            = useState('');
+  const [zip,             setZip]             = useState('');
+  const [phone,           setPhone]           = useState('');
+  const [referralCode,    setReferralCode]    = useState('');
+  const [password,        setPassword]        = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPass,        setShowPass]        = useState(false);
+  const [showConfirm,     setShowConfirm]     = useState(false);
+  const [termsAccepted,   setTermsAccepted]   = useState(false);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error,   setError]   = useState('');
+  const [loading,         setLoading]         = useState(false);
+  const [error,           setError]           = useState('');
 
   const email       = user?.email ?? '';
   const countryCode = getCountryCode(country);
@@ -70,10 +74,14 @@ export default function KYCScreen() {
     ? ['#150400', '#0A0A0A', '#0A0A0A']
     : [colors.primary + '18', colors.background.dark, colors.background.dark];
 
+  const passwordsMatch  = password === confirmPassword;
+  const passwordReady   = password.length >= 6 && confirmPassword.length >= 6 && passwordsMatch;
+
   const isReady =
     fullName.trim().length > 0 &&
     username.trim().length >= 3 &&
     country.trim().length > 0 &&
+    passwordReady &&
     termsAccepted && privacyAccepted;
 
   const handleComplete = async () => {
@@ -81,18 +89,21 @@ export default function KYCScreen() {
     const uname      = username.trim().toLowerCase().replace(/\s+/g, '');
     const countryVal = country.trim();
 
-    if (!name)                          { setError('Please enter your full name.'); return; }
-    if (!uname || uname.length < 3)     { setError('Username must be at least 3 characters.'); return; }
-    if (!/^[a-z0-9_]+$/.test(uname))   { setError('Username can only contain letters, numbers, and underscores.'); return; }
-    if (!countryVal)                    { setError('Please enter your country.'); return; }
-    if (!termsAccepted)                 { setError('Please accept the Terms of Service to continue.'); return; }
-    if (!privacyAccepted)               { setError('Please accept the Privacy Policy to continue.'); return; }
-    if (!user?.id)                      { setError('Not authenticated. Please sign in again.'); return; }
+    if (!name)                           { setError('Please enter your full name.'); return; }
+    if (!uname || uname.length < 3)      { setError('Username must be at least 3 characters.'); return; }
+    if (!/^[a-z0-9_]+$/.test(uname))    { setError('Username can only contain letters, numbers and underscores.'); return; }
+    if (!countryVal)                     { setError('Please enter your country.'); return; }
+    if (password.length < 6)             { setError('Password must be at least 6 characters.'); return; }
+    if (!passwordsMatch)                 { setError('Passwords do not match.'); return; }
+    if (!termsAccepted)                  { setError('Please accept the Terms of Service.'); return; }
+    if (!privacyAccepted)               { setError('Please accept the Privacy Policy.'); return; }
+    if (!user?.id)                       { setError('Not authenticated. Please sign in again.'); return; }
 
     setError('');
     setLoading(true);
 
     try {
+      /* Check username availability */
       const { data: existing } = await supabase
         .from('users')
         .select('id')
@@ -106,6 +117,15 @@ export default function KYCScreen() {
         return;
       }
 
+      /* Set real password (replaces temporary probe password) */
+      const { error: passErr } = await supabase.auth.updateUser({ password });
+      if (passErr) {
+        setError(passErr.message);
+        setLoading(false);
+        return;
+      }
+
+      /* Save profile */
       const { error: upsertError } = await supabase
         .from('users')
         .upsert({ id: user.id, name, username: uname, avatar_url: '0' }, { onConflict: 'id' });
@@ -116,19 +136,20 @@ export default function KYCScreen() {
         return;
       }
 
+      /* Save extra meta */
       await supabase.auth.updateUser({
         data: {
-          full_name:       name,
-          username:        uname,
-          country:         countryVal,
-          region:          region.trim(),
-          city:            city.trim(),
-          zip:             zip.trim(),
-          phone:           phone.trim() ? `${countryCode}${phone.trim()}` : '',
-          referral_code:   referralCode.trim().toUpperCase(),
-          terms_accepted:  true,
+          full_name:        name,
+          username:         uname,
+          country:          countryVal,
+          region:           region.trim(),
+          city:             city.trim(),
+          zip:              zip.trim(),
+          phone:            phone.trim() ? `${countryCode}${phone.trim()}` : '',
+          referral_code:    referralCode.trim().toUpperCase(),
+          terms_accepted:   true,
           privacy_accepted: true,
-          kyc_completed:   true,
+          kyc_completed:    true,
         },
       });
 
@@ -155,13 +176,12 @@ export default function KYCScreen() {
               <Ionicons name="person-circle-outline" size={30} color={colors.primary} />
             </View>
             <Text style={styles.title}>Complete Your Profile</Text>
-            <Text style={styles.subtitle}>Tell us a bit about yourself to get started</Text>
+            <Text style={styles.subtitle}>Just a few details to set up your account</Text>
           </View>
 
           {/* ══ PERSONAL INFO ══ */}
           <SectionLabel label="Personal Info" colors={colors} />
 
-          {/* Full Name — full width */}
           <View style={styles.fieldWrap}>
             <PillInput
               label="Full Name"
@@ -171,12 +191,10 @@ export default function KYCScreen() {
               icon="person-outline"
               autoCapitalize="words"
               autoComplete="name"
-              colors={colors}
-              styles={styles}
+              colors={colors} styles={styles}
             />
           </View>
 
-          {/* Username | Country — side by side */}
           <View style={[styles.fieldWrap, styles.row]}>
             <View style={styles.half}>
               <PillInput
@@ -186,8 +204,7 @@ export default function KYCScreen() {
                 placeholder="alex_gamer"
                 icon="at-outline"
                 autoCapitalize="none"
-                colors={colors}
-                styles={styles}
+                colors={colors} styles={styles}
               />
             </View>
             <View style={styles.half}>
@@ -198,8 +215,7 @@ export default function KYCScreen() {
                 placeholder="India"
                 icon="globe-outline"
                 autoCapitalize="words"
-                colors={colors}
-                styles={styles}
+                colors={colors} styles={styles}
               />
             </View>
           </View>
@@ -207,7 +223,6 @@ export default function KYCScreen() {
           {/* ══ LOCATION ══ */}
           <SectionLabel label="Location" colors={colors} />
 
-          {/* Region | City — side by side */}
           <View style={[styles.fieldWrap, styles.row]}>
             <View style={styles.half}>
               <PillInput
@@ -217,8 +232,7 @@ export default function KYCScreen() {
                 placeholder="Maharashtra"
                 icon="map-outline"
                 autoCapitalize="words"
-                colors={colors}
-                styles={styles}
+                colors={colors} styles={styles}
               />
             </View>
             <View style={styles.half}>
@@ -229,13 +243,11 @@ export default function KYCScreen() {
                 placeholder="Mumbai"
                 icon="location-outline"
                 autoCapitalize="words"
-                colors={colors}
-                styles={styles}
+                colors={colors} styles={styles}
               />
             </View>
           </View>
 
-          {/* Zip | Referral Code — side by side */}
           <View style={[styles.fieldWrap, styles.row]}>
             <View style={styles.half}>
               <PillInput
@@ -245,8 +257,7 @@ export default function KYCScreen() {
                 placeholder="400001"
                 icon="pin-outline"
                 keyboardType="number-pad"
-                colors={colors}
-                styles={styles}
+                colors={colors} styles={styles}
               />
             </View>
             <View style={styles.half}>
@@ -257,8 +268,7 @@ export default function KYCScreen() {
                 placeholder="Optional"
                 icon="gift-outline"
                 autoCapitalize="characters"
-                colors={colors}
-                styles={styles}
+                colors={colors} styles={styles}
                 optional
               />
             </View>
@@ -267,7 +277,7 @@ export default function KYCScreen() {
           {/* ══ CONTACT ══ */}
           <SectionLabel label="Contact" colors={colors} />
 
-          {/* Email — locked, full width */}
+          {/* Email — locked */}
           <View style={styles.fieldWrap}>
             <Text style={styles.inputLabel}>EMAIL ADDRESS</Text>
             <View style={styles.lockedField}>
@@ -281,7 +291,7 @@ export default function KYCScreen() {
             </View>
           </View>
 
-          {/* Phone — country code locked + number, side by side */}
+          {/* Phone */}
           <View style={styles.fieldWrap}>
             <Text style={styles.inputLabel}>WHATSAPP NUMBER</Text>
             <View style={styles.row}>
@@ -304,6 +314,77 @@ export default function KYCScreen() {
             <Text style={styles.phoneHint}>Used for WhatsApp notifications</Text>
           </View>
 
+          {/* ══ SECURITY ══ */}
+          <SectionLabel label="Security" colors={colors} />
+
+          {/* Password */}
+          <View style={styles.fieldWrap}>
+            <Text style={styles.inputLabel}>PASSWORD</Text>
+            <View style={[styles.pill, password.length > 0 && styles.pillFocused]}>
+              <View style={styles.iconSlot}>
+                <Ionicons name="lock-closed-outline" size={17} color={password.length > 0 ? colors.primary : colors.text.muted} />
+              </View>
+              <TextInput
+                style={styles.pillInput}
+                value={password}
+                onChangeText={v => { setPassword(v); setError(''); }}
+                placeholder="Min. 6 characters"
+                placeholderTextColor={colors.text.muted}
+                secureTextEntry={!showPass}
+                autoComplete="new-password"
+              />
+              <TouchableOpacity
+                onPress={() => setShowPass(v => !v)}
+                style={styles.eyeSlot}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                activeOpacity={0.6}
+              >
+                <Ionicons name={showPass ? 'eye-outline' : 'eye-off-outline'} size={17} color={colors.text.muted} />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Confirm Password */}
+          <View style={styles.fieldWrap}>
+            <Text style={styles.inputLabel}>CONFIRM PASSWORD</Text>
+            <View style={[
+              styles.pill,
+              confirmPassword.length > 0 && styles.pillFocused,
+              confirmPassword.length > 0 && !passwordsMatch && styles.pillError,
+            ]}>
+              <View style={styles.iconSlot}>
+                <Ionicons
+                  name={confirmPassword.length > 0 ? (passwordsMatch ? 'checkmark-circle-outline' : 'alert-circle-outline') : 'lock-closed-outline'}
+                  size={17}
+                  color={
+                    confirmPassword.length === 0 ? colors.text.muted :
+                    passwordsMatch ? colors.status.success : colors.status.error
+                  }
+                />
+              </View>
+              <TextInput
+                style={styles.pillInput}
+                value={confirmPassword}
+                onChangeText={v => { setConfirmPassword(v); setError(''); }}
+                placeholder="Re-enter password"
+                placeholderTextColor={colors.text.muted}
+                secureTextEntry={!showConfirm}
+                autoComplete="new-password"
+              />
+              <TouchableOpacity
+                onPress={() => setShowConfirm(v => !v)}
+                style={styles.eyeSlot}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                activeOpacity={0.6}
+              >
+                <Ionicons name={showConfirm ? 'eye-outline' : 'eye-off-outline'} size={17} color={colors.text.muted} />
+              </TouchableOpacity>
+            </View>
+            {confirmPassword.length > 0 && !passwordsMatch && (
+              <Text style={styles.passwordHint}>Passwords do not match</Text>
+            )}
+          </View>
+
           {/* ══ AGREEMENTS ══ */}
           <SectionLabel label="Agreements" colors={colors} />
 
@@ -313,18 +394,15 @@ export default function KYCScreen() {
             label="I agree to the "
             linkLabel="Terms of Service"
             onLink={() => router.push('/terms')}
-            colors={colors}
-            styles={styles}
+            colors={colors} styles={styles}
           />
-
           <CheckboxRow
             checked={privacyAccepted}
             onToggle={() => setPrivacyAccepted(v => !v)}
             label="I agree to the "
             linkLabel="Privacy Policy"
             onLink={() => router.push('/privacy')}
-            colors={colors}
-            styles={styles}
+            colors={colors} styles={styles}
           />
 
           {/* ── Error ── */}
@@ -358,7 +436,7 @@ export default function KYCScreen() {
   );
 }
 
-/* ─── Pill Input (capsule shape) ─── */
+/* ─── Pill Input ─── */
 function PillInput({
   label, value, onChangeText, placeholder, icon,
   autoCapitalize, autoComplete, keyboardType,
@@ -402,7 +480,7 @@ function PillInput({
   );
 }
 
-/* ─── Section divider label ─── */
+/* ─── Section label ─── */
 function SectionLabel({ label, colors }: { label: string; colors: AppColors }) {
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, marginTop: 4, gap: 10 }}>
@@ -414,7 +492,7 @@ function SectionLabel({ label, colors }: { label: string; colors: AppColors }) {
   );
 }
 
-/* ─── Checkbox row ─── */
+/* ─── Checkbox ─── */
 function CheckboxRow({
   checked, onToggle, label, linkLabel, onLink, colors, styles,
 }: {
@@ -457,12 +535,10 @@ function createStyles(colors: AppColors) {
       color: colors.text.secondary, textAlign: 'center', lineHeight: 20,
     },
 
-    /* rows */
     row: { flexDirection: 'row', gap: 10, alignItems: 'flex-end' },
     half: { flex: 1 },
     fieldWrap: { marginBottom: 12 },
 
-    /* pill / capsule input */
     inputLabel: {
       fontSize: 10, fontFamily: 'Inter_600SemiBold',
       color: colors.text.muted, marginBottom: 6,
@@ -479,17 +555,21 @@ function createStyles(colors: AppColors) {
       borderColor: colors.primary,
       backgroundColor: colors.background.card,
     },
+    pillError: {
+      borderColor: colors.status.error,
+    },
     iconSlot: {
+      width: ICON_W, alignItems: 'center', justifyContent: 'center',
+    },
+    eyeSlot: {
       width: ICON_W, alignItems: 'center', justifyContent: 'center',
     },
     pillInput: {
       flex: 1, color: colors.text.primary,
       fontSize: 14, fontFamily: 'Inter_400Regular',
-      paddingRight: 14, paddingVertical: 0,
-      backgroundColor: 'transparent',
+      paddingVertical: 0, backgroundColor: 'transparent',
     },
 
-    /* locked email */
     lockedField: {
       flexDirection: 'row', alignItems: 'center',
       height: INPUT_H, borderRadius: INPUT_H / 2,
@@ -502,7 +582,6 @@ function createStyles(colors: AppColors) {
       fontSize: 14, fontFamily: 'Inter_400Regular',
     },
 
-    /* phone */
     codeBox: {
       flexDirection: 'row', alignItems: 'center',
       height: INPUT_H, borderRadius: INPUT_H / 2,
@@ -518,15 +597,17 @@ function createStyles(colors: AppColors) {
       justifyContent: 'center', paddingHorizontal: 18,
     },
     phoneInput: {
-      color: colors.text.primary, fontSize: 14,
-      fontFamily: 'Inter_400Regular',
+      color: colors.text.primary, fontSize: 14, fontFamily: 'Inter_400Regular',
     },
     phoneHint: {
       fontSize: 10, fontFamily: 'Inter_400Regular',
       color: colors.text.muted, marginTop: 4, paddingLeft: 6,
     },
+    passwordHint: {
+      fontSize: 11, fontFamily: 'Inter_400Regular',
+      color: colors.status.error, marginTop: 4, paddingLeft: 6,
+    },
 
-    /* checkboxes */
     checkRow: {
       flexDirection: 'row', alignItems: 'flex-start',
       gap: 12, marginBottom: 12, paddingHorizontal: 2,
@@ -544,7 +625,6 @@ function createStyles(colors: AppColors) {
     },
     checkLink: { color: colors.primary, fontFamily: 'Inter_600SemiBold' },
 
-    /* error */
     errorWrap: {
       flexDirection: 'row', alignItems: 'flex-start',
       gap: 6, marginBottom: 14, paddingHorizontal: 4,
@@ -554,12 +634,11 @@ function createStyles(colors: AppColors) {
       fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18,
     },
 
-    /* submit button */
     btn: {
-      backgroundColor: colors.primary, borderRadius: 26, height: 52,
+      backgroundColor: colors.primary, borderRadius: 26, height: 54,
       alignItems: 'center', justifyContent: 'center', marginTop: 10,
     },
-    btnDisabled: { opacity: 0.45 },
+    btnDisabled: { opacity: 0.4 },
     btnInner: { flexDirection: 'row', alignItems: 'center' },
     btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
   });

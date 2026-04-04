@@ -20,18 +20,27 @@ async function handleAuthUrl(url: string) {
     const parsed = Linking.parse(url);
     const params = parsed.queryParams ?? {};
 
-    // NOTE: URLs with ?code= (PKCE OAuth callbacks) are intentionally NOT handled
-    // here. options.tsx exchanges the code immediately via WebBrowser.openAuthSessionAsync,
-    // which resolves with the URL synchronously. Handling it here too would cause a
-    // race condition: both callers attempt exchangeCodeForSession with the same URL,
-    // the first consumes the one-time PKCE code_verifier, and the second gets
-    // "both auth code and code verifier should be non-empty".
-
+    /* Password reset recovery */
     if (params.type === 'recovery') {
       router.replace('/(auth)/email-verify');
       return;
     }
 
+    /*
+     * PKCE code exchange — handles email verification and magic link deep links.
+     * OAuth codes from WebBrowser.openAuthSessionAsync are handled by the OAuth
+     * caller directly and are resolved before they ever reach Linking, so there
+     * is no race condition here.
+     */
+    if (params.code && typeof params.code === 'string') {
+      const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+      if (!error && data.session?.user) {
+        await navigateAfterAuth(data.session.user.id);
+      }
+      return;
+    }
+
+    /* Legacy implicit flow — tokens in URL fragment */
     if (params.access_token && params.refresh_token) {
       const { data, error } = await supabase.auth.setSession({
         access_token: params.access_token as string,

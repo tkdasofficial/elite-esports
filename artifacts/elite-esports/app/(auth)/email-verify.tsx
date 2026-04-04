@@ -4,7 +4,6 @@ import {
   KeyboardAvoidingView, Platform, ScrollView,
   ActivityIndicator,
 } from 'react-native';
-import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,8 +13,7 @@ import type { AppColors } from '@/utils/colors';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 import { navigateAfterAuth } from '@/utils/authHelpers';
 
-type Step = 'email' | 'password' | 'verify' | 'reset-sent';
-type Mode = 'signin' | 'signup' | 'unknown';
+type Step = 'email' | 'login' | 'verify' | 'reset-sent';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -24,13 +22,12 @@ export default function EmailVerifyScreen() {
   const { colors, isDark } = useTheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  const [step, setStep] = useState<Step>('email');
-  const [mode, setMode] = useState<Mode>('unknown');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [checking, setChecking] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [step, setStep]               = useState<Step>('email');
+  const [email, setEmail]             = useState('');
+  const [password, setPassword]       = useState('');
+  const [checking, setChecking]       = useState(false);
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -38,6 +35,7 @@ export default function EmailVerifyScreen() {
     ? ['#150400', '#0A0A0A', '#0A0A0A']
     : [colors.primary + '18', colors.background.dark, colors.background.dark];
 
+  /* Listen for auth state when waiting for email verification */
   useEffect(() => {
     if (step !== 'verify') return;
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -48,11 +46,7 @@ export default function EmailVerifyScreen() {
     return () => subscription.unsubscribe();
   }, [step]);
 
-  useEffect(() => {
-    return () => {
-      if (cooldownRef.current) clearInterval(cooldownRef.current);
-    };
-  }, []);
+  useEffect(() => () => { if (cooldownRef.current) clearInterval(cooldownRef.current); }, []);
 
   const startCooldown = () => {
     setResendCooldown(60);
@@ -64,6 +58,7 @@ export default function EmailVerifyScreen() {
     }, 1000);
   };
 
+  /* ── Step 1: Check email and route to login or signup ── */
   const handleEmailContinue = async () => {
     const trimmed = email.trim().toLowerCase();
     if (!trimmed || !EMAIL_REGEX.test(trimmed)) {
@@ -77,144 +72,126 @@ export default function EmailVerifyScreen() {
       const { data } = await supabase.auth.signUp({
         email: trimmed,
         password: `__probe_${Math.random().toString(36).slice(2)}__`,
+        options: { emailRedirectTo: 'elite-esports://' },
       });
 
       const identities = data?.user?.identities;
       if (Array.isArray(identities) && identities.length === 0) {
-        setMode('signin');
+        /* Email already registered → go to login */
+        setStep('login');
       } else {
-        setMode('signup');
+        /* New user — confirmation email already sent by probe signUp */
+        startCooldown();
+        setStep('verify');
       }
     } catch {
-      setMode('unknown');
+      setError('Could not reach the server. Please try again.');
     } finally {
       setChecking(false);
-      setStep('password');
     }
   };
 
-  const handlePasswordContinue = async () => {
+  /* ── Step 2a (login): Sign in with password ── */
+  const handleSignIn = async () => {
     if (!password || password.length < 6) {
       setError('Password must be at least 6 characters.');
       return;
     }
     setError('');
     setLoading(true);
-    const trimmedEmail = email.trim().toLowerCase();
-
     try {
-      if (mode === 'signin' || mode === 'unknown') {
-        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-          email: trimmedEmail,
-          password,
-        });
-
-        if (!signInError && signInData.user) {
-          await navigateAfterAuth(signInData.user.id);
-          return;
-        }
-
-        const msg = (signInError?.message ?? '').toLowerCase();
-
-        if (msg.includes('email not confirmed')) {
-          startCooldown();
-          setStep('verify');
-          return;
-        }
-
-        if (mode === 'signin') {
-          setError('Incorrect password. Please try again.');
-          return;
-        }
-      }
-
-      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-        email: trimmedEmail,
+      const { data, error: err } = await supabase.auth.signInWithPassword({
+        email: email.trim().toLowerCase(),
         password,
       });
 
-      if (signUpError) {
-        setError(signUpError.message);
+      if (!err && data.user) {
+        await navigateAfterAuth(data.user.id);
         return;
       }
 
-      if ((signUpData.user?.identities?.length ?? 0) === 0) {
-        setMode('signin');
-        setError('An account exists for this email. Please enter your correct password.');
+      const msg = (err?.message ?? '').toLowerCase();
+      if (msg.includes('email not confirmed')) {
+        startCooldown();
+        setStep('verify');
         return;
       }
-
-      startCooldown();
-      setStep('verify');
+      setError('Incorrect password. Please try again.');
     } catch (e: any) {
-      setError(e?.message ?? 'Something went wrong. Please try again.');
+      setError(e?.message ?? 'Something went wrong.');
     } finally {
       setLoading(false);
     }
   };
 
+  /* ── Forgot password ── */
   const handleForgotPassword = async () => {
     setError('');
     setLoading(true);
     try {
-      await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase());
-    } catch {
-    } finally {
+      await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
+        redirectTo: 'elite-esports://',
+      });
+    } catch {}
+    finally {
       setLoading(false);
       setStep('reset-sent');
     }
   };
 
+  /* ── Resend verification email ── */
   const handleResend = async () => {
     if (resendCooldown > 0) return;
     setLoading(true);
     try {
       await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase() });
       startCooldown();
-    } catch {
-    } finally {
-      setLoading(false);
-    }
+    } catch {}
+    finally { setLoading(false); }
   };
 
   const goBack = () => {
     setError('');
-    if (step === 'password') { setStep('email'); setPassword(''); setMode('unknown'); }
-    else if (step === 'verify') { setStep('password'); }
-    else if (step === 'reset-sent') { setStep('password'); }
-    else router.back();
+    if (step === 'login') { setStep('email'); setPassword(''); }
+    else if (step === 'verify') { setStep('email'); setPassword(''); }
+    else if (step === 'reset-sent') { setStep('login'); }
   };
 
-  const stepTitle: Record<Step, string> = {
-    email: 'Get Started',
-    password: mode === 'signin' ? 'Welcome Back' : mode === 'signup' ? 'Create Account' : 'Enter Password',
-    verify: 'Verify Your Email',
-    'reset-sent': 'Check Your Inbox',
+  /* ── Step meta ── */
+  const meta: Record<Step, {
+    icon: keyof typeof Ionicons.glyphMap;
+    title: string;
+    subtitle: string;
+  }> = {
+    email: {
+      icon: 'mail-outline',
+      title: 'Get Started',
+      subtitle: 'Enter your email to sign in or create an account',
+    },
+    login: {
+      icon: 'lock-closed-outline',
+      title: 'Welcome Back',
+      subtitle: 'Enter your password to continue',
+    },
+    verify: {
+      icon: 'mail-open-outline',
+      title: 'Check Your Email',
+      subtitle: `We've sent a verification link to`,
+    },
+    'reset-sent': {
+      icon: 'checkmark-circle-outline',
+      title: 'Reset Link Sent',
+      subtitle: `We've emailed a password reset link to`,
+    },
   };
 
-  const stepSub: Record<Step, string> = {
-    email: 'Enter your email to sign in or create an account',
-    password: mode === 'signin'
-      ? 'Enter your password to log in'
-      : mode === 'signup'
-        ? 'Choose a password for your new account'
-        : 'Enter your password to continue',
-    verify: `We sent a verification link to\n${email}\n\nClick it and come back here.`,
-    'reset-sent': `A password reset link has been sent to\n${email}`,
-  };
-
-  const stepIconName: Record<Step, keyof typeof Ionicons.glyphMap> = {
-    email: 'mail-outline',
-    password: mode === 'signin' ? 'lock-closed-outline' : 'lock-open-outline',
-    verify: 'mail-open-outline',
-    'reset-sent': 'mail-outline',
-  };
+  const { icon, title, subtitle } = meta[step];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient colors={gradientColors} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
 
-      {(step !== 'email') && (
+      {step !== 'email' && (
         <TouchableOpacity
           style={[styles.backBtn, { top: insets.top + 10 }]}
           onPress={goBack}
@@ -226,30 +203,28 @@ export default function EmailVerifyScreen() {
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 40 }]}
+          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 48 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* ── Brand mark (email step only) ── */}
-          {step === 'email' && (
-            <View style={styles.brand}>
-              <View style={styles.logoCircle}>
-                <Ionicons name="flash" size={32} color={colors.primary} />
-              </View>
-              <Text style={styles.appName}>
-                Elite <Text style={{ color: colors.primary }}>eSports</Text>
-              </Text>
-              <Text style={styles.tagline}>Compete. Win. Dominate.</Text>
-            </View>
-          )}
-
           {/* ── Step icon ── */}
           <View style={styles.iconWrap}>
-            <Ionicons name={stepIconName[step]} size={30} color={colors.primary} />
+            <Ionicons name={icon} size={30} color={colors.primary} />
           </View>
 
-          <Text style={styles.title}>{stepTitle[step]}</Text>
-          <Text style={styles.subtitle}>{stepSub[step]}</Text>
+          <Text style={styles.title}>{title}</Text>
+
+          {/* Subtitle: plain for email/login, shows email for verify/reset */}
+          {(step === 'verify' || step === 'reset-sent') ? (
+            <Text style={styles.subtitle}>
+              {subtitle}{'\n'}
+              <Text style={[styles.subtitle, { color: colors.primary, fontFamily: 'Inter_600SemiBold' }]}>
+                {email.trim().toLowerCase()}
+              </Text>
+            </Text>
+          ) : (
+            <Text style={styles.subtitle}>{subtitle}</Text>
+          )}
 
           {/* ── Email step ── */}
           {step === 'email' && (
@@ -289,12 +264,12 @@ export default function EmailVerifyScreen() {
             </>
           )}
 
-          {/* ── Password step ── */}
-          {step === 'password' && (
+          {/* ── Login step ── */}
+          {step === 'login' && (
             <>
               <TouchableOpacity
                 style={styles.emailPill}
-                onPress={() => { setStep('email'); setMode('unknown'); }}
+                onPress={() => { setStep('email'); setPassword(''); setError(''); }}
                 activeOpacity={0.7}
               >
                 <Ionicons name="mail-outline" size={15} color={colors.text.muted} />
@@ -307,11 +282,11 @@ export default function EmailVerifyScreen() {
                   label="Password"
                   value={password}
                   onChangeText={v => { setPassword(v); setError(''); }}
-                  placeholder="Min. 6 characters"
+                  placeholder="Your password"
                   iconName="lock-closed-outline"
                   secureTextEntry
-                  autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
-                  onSubmitEditing={handlePasswordContinue}
+                  autoComplete="current-password"
+                  onSubmitEditing={handleSignIn}
                   returnKeyType="go"
                 />
               </View>
@@ -320,28 +295,24 @@ export default function EmailVerifyScreen() {
 
               <TouchableOpacity
                 style={[styles.btn, (!password || loading) && styles.btnDisabled]}
-                onPress={handlePasswordContinue}
+                onPress={handleSignIn}
                 disabled={!password || loading}
                 activeOpacity={0.85}
               >
                 {loading
                   ? <ActivityIndicator color="#fff" />
-                  : <Text style={styles.btnText}>
-                      {mode === 'signin' ? 'Sign In' : mode === 'signup' ? 'Create Account' : 'Continue'}
-                    </Text>
+                  : <Text style={styles.btnText}>Sign In</Text>
                 }
               </TouchableOpacity>
 
-              {(mode === 'signin' || mode === 'unknown') && (
-                <TouchableOpacity
-                  style={styles.forgotBtn}
-                  onPress={handleForgotPassword}
-                  disabled={loading}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.forgotText}>Forgot Password?</Text>
-                </TouchableOpacity>
-              )}
+              <TouchableOpacity
+                style={styles.forgotBtn}
+                onPress={handleForgotPassword}
+                disabled={loading}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.forgotText}>Forgot Password?</Text>
+              </TouchableOpacity>
             </>
           )}
 
@@ -349,26 +320,21 @@ export default function EmailVerifyScreen() {
           {step === 'verify' && (
             <>
               <View style={styles.verifyBox}>
-                <Ionicons name="checkmark-circle-outline" size={52} color={colors.primary} style={{ marginBottom: 14 }} />
-                <Text style={styles.verifyTitle}>Check your inbox</Text>
-                <Text style={styles.verifyBody}>
-                  We sent a verification link to{'\n'}
-                  <Text style={styles.verifyEmail}>{email}</Text>
-                </Text>
                 <Text style={styles.verifyHint}>
-                  Once you click the link, this screen will automatically move forward.
+                  Tap the link in the email to verify your account.{'\n'}
+                  This screen will update automatically once verified.
                 </Text>
               </View>
 
               <TouchableOpacity
-                style={[styles.resendBtn, (resendCooldown > 0 || loading) && styles.btnDisabled]}
+                style={[styles.btn, (resendCooldown > 0 || loading) && styles.btnDisabled]}
                 onPress={handleResend}
                 disabled={resendCooldown > 0 || loading}
-                activeOpacity={0.7}
+                activeOpacity={0.85}
               >
                 {loading
-                  ? <ActivityIndicator color={colors.primary} size="small" />
-                  : <Text style={styles.resendText}>
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.btnText}>
                       {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Verification Email'}
                     </Text>
                 }
@@ -376,7 +342,7 @@ export default function EmailVerifyScreen() {
 
               <TouchableOpacity
                 style={styles.altLink}
-                onPress={() => { setStep('email'); setMode('unknown'); setPassword(''); }}
+                onPress={() => { setStep('email'); setPassword(''); setError(''); }}
                 activeOpacity={0.7}
               >
                 <Text style={styles.altLinkText}>Use a different email</Text>
@@ -388,23 +354,18 @@ export default function EmailVerifyScreen() {
           {step === 'reset-sent' && (
             <>
               <View style={styles.verifyBox}>
-                <Ionicons name="mail-outline" size={52} color={colors.primary} style={{ marginBottom: 14 }} />
-                <Text style={styles.verifyTitle}>Reset link sent</Text>
-                <Text style={styles.verifyBody}>
-                  Check your inbox at{'\n'}
-                  <Text style={styles.verifyEmail}>{email}</Text>
-                </Text>
                 <Text style={styles.verifyHint}>
-                  Follow the link in the email to set a new password, then come back and sign in.
+                  Follow the link in the email to set a new password,{'\n'}
+                  then come back and sign in.
                 </Text>
               </View>
 
               <TouchableOpacity
                 style={styles.btn}
-                onPress={() => { setStep('email'); setMode('unknown'); setPassword(''); }}
+                onPress={() => { setStep('email'); setPassword(''); setError(''); }}
                 activeOpacity={0.85}
               >
-                <Text style={styles.btnText}>Back to Sign In</Text>
+                <Text style={styles.btnText}>Back to Get Started</Text>
               </TouchableOpacity>
             </>
           )}
@@ -434,54 +395,35 @@ function createStyles(colors: AppColors) {
     },
     scroll: {
       flexGrow: 1, justifyContent: 'center',
-      paddingHorizontal: 24, paddingTop: 48,
-    },
-    brand: {
-      alignItems: 'center',
-      marginBottom: 36,
-    },
-    logoCircle: {
-      width: 64, height: 64, borderRadius: 20,
-      backgroundColor: colors.background.elevated,
-      borderWidth: 1.5, borderColor: colors.primary + '44',
-      alignItems: 'center', justifyContent: 'center',
-      marginBottom: 12,
-    },
-    appName: {
-      fontSize: 22, fontFamily: 'Inter_700Bold',
-      color: colors.text.primary, textAlign: 'center', marginBottom: 3,
-    },
-    tagline: {
-      fontSize: 12, fontFamily: 'Inter_400Regular',
-      color: colors.text.muted, letterSpacing: 0.5, textAlign: 'center',
+      paddingHorizontal: 24, paddingTop: 56,
     },
     iconWrap: {
-      alignSelf: 'center', width: 72, height: 72, borderRadius: 36,
+      alignSelf: 'center', width: 80, height: 80, borderRadius: 40,
       backgroundColor: colors.background.elevated,
       borderWidth: 1.5, borderColor: colors.primary + '35',
-      alignItems: 'center', justifyContent: 'center', marginBottom: 22,
+      alignItems: 'center', justifyContent: 'center', marginBottom: 24,
     },
     title: {
-      fontSize: 24, fontFamily: 'Inter_700Bold',
-      color: colors.text.primary, textAlign: 'center', marginBottom: 8,
+      fontSize: 26, fontFamily: 'Inter_700Bold',
+      color: colors.text.primary, textAlign: 'center', marginBottom: 10,
     },
     subtitle: {
       fontSize: 14, fontFamily: 'Inter_400Regular',
       color: colors.text.secondary, textAlign: 'center',
-      marginBottom: 32, lineHeight: 21, paddingHorizontal: 8,
+      marginBottom: 32, lineHeight: 22, paddingHorizontal: 8,
     },
     emailPill: {
       flexDirection: 'row', alignItems: 'center',
       backgroundColor: colors.background.card,
-      borderRadius: 22, borderWidth: 1, borderColor: colors.border.default,
-      paddingHorizontal: 16, paddingVertical: 11, marginBottom: 14, gap: 8,
+      borderRadius: 26, borderWidth: 1, borderColor: colors.border.default,
+      paddingHorizontal: 16, paddingVertical: 12, marginBottom: 16, gap: 8,
     },
     emailPillText: {
       flex: 1, color: colors.text.secondary,
       fontSize: 13, fontFamily: 'Inter_400Regular',
     },
     changeText: { color: colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-    fieldWrap: { marginBottom: 8 },
+    fieldWrap: { marginBottom: 10 },
     errorWrap: {
       flexDirection: 'row', alignItems: 'flex-start',
       gap: 6, marginBottom: 14, paddingHorizontal: 4,
@@ -491,40 +433,25 @@ function createStyles(colors: AppColors) {
       fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18,
     },
     btn: {
-      backgroundColor: colors.primary, borderRadius: 25, height: 52,
-      alignItems: 'center', justifyContent: 'center', marginTop: 8,
+      backgroundColor: colors.primary, borderRadius: 30, height: 54,
+      alignItems: 'center', justifyContent: 'center', marginTop: 6,
     },
-    btnDisabled: { opacity: 0.45 },
+    btnDisabled: { opacity: 0.4 },
     btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
     row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-    forgotBtn: {
-      alignItems: 'center', paddingVertical: 14, marginTop: 4,
-    },
+    forgotBtn: { alignItems: 'center', paddingVertical: 16, marginTop: 2 },
     forgotText: { color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
     verifyBox: {
       backgroundColor: colors.background.elevated,
-      borderRadius: 18, padding: 24, alignItems: 'center',
-      borderWidth: 1, borderColor: colors.border.default, marginBottom: 20,
+      borderRadius: 16, paddingHorizontal: 20, paddingVertical: 20,
+      borderWidth: 1, borderColor: colors.border.default,
+      marginBottom: 24, alignItems: 'center',
     },
-    verifyTitle: {
-      fontSize: 18, fontFamily: 'Inter_700Bold',
-      color: colors.text.primary, marginBottom: 8, textAlign: 'center',
-    },
-    verifyBody: {
-      fontSize: 14, fontFamily: 'Inter_400Regular',
-      color: colors.text.secondary, textAlign: 'center', marginBottom: 12, lineHeight: 22,
-    },
-    verifyEmail: { color: colors.primary, fontFamily: 'Inter_600SemiBold' },
     verifyHint: {
-      fontSize: 12, fontFamily: 'Inter_400Regular',
-      color: colors.text.muted, textAlign: 'center', lineHeight: 18,
+      fontSize: 13, fontFamily: 'Inter_400Regular',
+      color: colors.text.secondary, textAlign: 'center', lineHeight: 20,
     },
-    resendBtn: {
-      borderRadius: 25, height: 48, alignItems: 'center', justifyContent: 'center',
-      borderWidth: 1.5, borderColor: colors.primary, marginBottom: 12,
-    },
-    resendText: { color: colors.primary, fontSize: 15, fontFamily: 'Inter_600SemiBold' },
-    altLink: { alignItems: 'center', marginTop: 8, paddingVertical: 6 },
+    altLink: { alignItems: 'center', marginTop: 12, paddingVertical: 6 },
     altLinkText: { color: colors.text.muted, fontSize: 13, fontFamily: 'Inter_400Regular' },
   });
 }
