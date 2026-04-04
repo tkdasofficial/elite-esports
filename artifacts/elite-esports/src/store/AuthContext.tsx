@@ -15,34 +15,32 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+/**
+ * Parses both query string (?key=val) and URL fragment (#key=val) params.
+ * Supabase puts tokens in the fragment for implicit flow, so we must read both.
+ */
 function parseDeepLinkParams(url: string): Record<string, string> {
   const result: Record<string, string> = {};
 
-  // Parse query string (?key=value)
   const qIndex = url.indexOf('?');
   const hIndex = url.indexOf('#');
+
+  // Parse query string
   if (qIndex !== -1) {
     const qEnd = hIndex !== -1 && hIndex > qIndex ? hIndex : url.length;
-    const qs = url.slice(qIndex + 1, qEnd);
-    qs.split('&').forEach(part => {
+    url.slice(qIndex + 1, qEnd).split('&').forEach(part => {
       const eq = part.indexOf('=');
-      if (eq !== -1) {
-        const k = decodeURIComponent(part.slice(0, eq));
-        const v = decodeURIComponent(part.slice(eq + 1));
-        result[k] = v;
-      }
+      if (eq !== -1) result[decodeURIComponent(part.slice(0, eq))] = decodeURIComponent(part.slice(eq + 1));
     });
   }
 
-  // Parse URL fragment (#key=value) — Supabase implicit flow puts tokens here
+  // Parse URL fragment — Supabase implicit flow puts access_token/refresh_token here
   if (hIndex !== -1) {
-    const fragment = url.slice(hIndex + 1);
-    fragment.split('&').forEach(part => {
+    url.slice(hIndex + 1).split('&').forEach(part => {
       const eq = part.indexOf('=');
       if (eq !== -1) {
         const k = decodeURIComponent(part.slice(0, eq));
-        const v = decodeURIComponent(part.slice(eq + 1));
-        if (!result[k]) result[k] = v; // query params take precedence
+        if (!result[k]) result[k] = decodeURIComponent(part.slice(eq + 1));
       }
     });
   }
@@ -53,60 +51,28 @@ function parseDeepLinkParams(url: string): Record<string, string> {
 async function handleAuthUrl(url: string) {
   try {
     const params = parseDeepLinkParams(url);
+    let session: Session | null = null;
 
-    /* ── Password reset / recovery ── */
-    if (params.type === 'recovery') {
-      let session: Session | null = null;
-
-      if (params.code) {
-        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
-        if (!error && data.session) session = data.session;
-      }
-
-      if (!session && params.access_token && params.refresh_token) {
-        const { data, error } = await supabase.auth.setSession({
-          access_token: params.access_token,
-          refresh_token: params.refresh_token,
-        });
-        if (!error && data.session) session = data.session;
-      }
-
-      if (session?.user) {
-        const { data } = await supabase
-          .from('users')
-          .select('username')
-          .eq('id', session.user.id)
-          .maybeSingle();
-
-        if (data?.username) {
-          router.replace('/(auth)/set-password');
-        } else {
-          router.replace('/(auth)/kyc');
-        }
-      } else {
-        router.replace('/(auth)/email-verify');
-      }
-      return;
-    }
-
-    /* ── PKCE code exchange (email verification / magic link) ── */
+    // Try PKCE code exchange first (covers signup verification, magic link, recovery)
     if (params.code) {
       const { data, error } = await supabase.auth.exchangeCodeForSession(url);
-      if (!error && data.session?.user) {
-        await navigateAfterAuth(data.session.user.id);
-      }
-      return;
+      if (!error && data.session) session = data.session;
     }
 
-    /* ── Legacy implicit flow — tokens in URL fragment ── */
-    if (params.access_token && params.refresh_token) {
+    // Fall back to implicit flow tokens in URL fragment
+    if (!session && params.access_token && params.refresh_token) {
       const { data, error } = await supabase.auth.setSession({
         access_token: params.access_token,
         refresh_token: params.refresh_token,
       });
-      if (!error && data.session?.user) {
-        await navigateAfterAuth(data.session.user.id);
-      }
+      if (!error && data.session) session = data.session;
+    }
+
+    // Navigate based on profile completeness:
+    // - No username yet  → KYC page (user sets up profile + password)
+    // - Username exists  → straight to the app
+    if (session?.user) {
+      await navigateAfterAuth(session.user.id);
     }
   } catch {
   }
@@ -122,9 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         const authUser = newSession?.user;
-        if (authUser) {
-          saveFcmTokenForUser(authUser).catch(() => {});
-        }
+        if (authUser) saveFcmTokenForUser(authUser).catch(() => {});
       }
 
       if (event === 'SIGNED_OUT') {
@@ -135,18 +99,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
       setSession(initialSession);
       setLoading(false);
-      const authUser = initialSession?.user;
-      if (authUser) {
-        saveFcmTokenForUser(authUser).catch(() => {});
-      }
+      if (initialSession?.user) saveFcmTokenForUser(initialSession.user).catch(() => {});
     });
 
-    Linking.getInitialURL().then((url) => {
-      if (url) handleAuthUrl(url);
-    });
-
+    // Handle deep links when the app is already open
     const deepLinkSub = Linking.addEventListener('url', (event) => {
       handleAuthUrl(event.url);
+    });
+
+    // Handle deep link that cold-started the app
+    Linking.getInitialURL().then((url) => {
+      if (url) handleAuthUrl(url);
     });
 
     return () => {
@@ -157,9 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     const userId = session?.user?.id;
-    if (userId) {
-      await removeFcmTokenForUser(userId).catch(() => {});
-    }
+    if (userId) await removeFcmTokenForUser(userId).catch(() => {});
     await supabase.auth.signOut();
   }, [session?.user?.id]);
 

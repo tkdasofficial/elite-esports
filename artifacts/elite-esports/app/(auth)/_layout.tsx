@@ -6,7 +6,6 @@ export default function AuthLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="email-verify" />
       <Stack.Screen name="kyc" />
-      <Stack.Screen name="set-password" />
     </Stack>
   );
 }

@@ -203,7 +203,13 @@ export default function EmailVerifyScreen() {
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
-          contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 48 }]}
+          contentContainerStyle={[
+            styles.scroll,
+            {
+              paddingBottom: insets.bottom + 48,
+              paddingTop: step !== 'email' ? 56 : 16,
+            },
+          ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -395,7 +401,7 @@ function createStyles(colors: AppColors) {
     },
     scroll: {
       flexGrow: 1, justifyContent: 'center',
-      paddingHorizontal: 24, paddingTop: 56,
+      paddingHorizontal: 24,
     },
     iconWrap: {
       alignSelf: 'center', width: 80, height: 80, borderRadius: 40,
