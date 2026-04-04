@@ -12,15 +12,17 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { useAppConfig } from '@/hooks/useAppConfig';
 import type { AppColors } from '@/utils/colors';
 
-const APP_VERSION = '1.0.0 Alpha';
+const APP_VERSION = '2.5.0';
 
 const FEATURES = [
-  { icon: 'trophy-outline',           text: 'Competitive eSports tournaments' },
-  { icon: 'pulse-outline',            text: 'Live match tracking & leaderboards' },
-  { icon: 'wallet-outline',           text: 'Wallet & prize payouts in ₹ INR' },
+  { icon: 'trophy-outline',           text: 'Daily & weekly competitive tournaments' },
+  { icon: 'pulse-outline',            text: 'Live match tracking & real-time leaderboards' },
+  { icon: 'wallet-outline',           text: 'Instant wallet & prize payouts in ₹ INR' },
   { icon: 'people-outline',           text: 'Team management & player profiles' },
-  { icon: 'notifications-outline',    text: 'Real-time match & reward alerts' },
-  { icon: 'shield-checkmark-outline', text: 'Secure accounts via Supabase Auth' },
+  { icon: 'notifications-outline',    text: 'Real-time match, prize & reward alerts' },
+  { icon: 'game-controller-outline',  text: 'BGMI, Free Fire & more games supported' },
+  { icon: 'podium-outline',           text: 'Skill-based ranking & points system' },
+  { icon: 'shield-checkmark-outline', text: 'Secure & verified accounts' },
 ];
 
 const LEGAL_LINKS = [
@@ -87,14 +89,14 @@ export default function AboutScreen() {
         <Text style={styles.sectionLabel}>About Us</Text>
         <View style={styles.card}>
           <Text style={styles.description}>
-            Elite eSports is an Indian skill-based competitive gaming platform that empowers players
-            to compete in real-money tournaments and win rewards based entirely on their skill and
-            in-game performance.
+            Elite eSports is India's premier skill-based competitive gaming platform — built for
+            players who compete to win. Join thousands of gamers in daily and weekly tournaments
+            across BGMI, Free Fire, and more, with real cash prizes paid directly to your wallet.
           </Text>
           <Text style={[styles.description, { marginTop: 0 }]}>
-            We are dedicated to building a fair, transparent, and professional eSports ecosystem for
-            the Indian gaming community. Every match is governed by strict fair-play rules, and every
-            rupee won is a result of pure player skill.
+            Every match on Elite eSports is 100% skill-based, governed by strict fair-play rules,
+            and powered by a transparent points and ranking system. We're here to give every player
+            a legitimate stage to prove their skill and earn from it.
           </Text>
         </View>
 
@@ -102,9 +104,9 @@ export default function AboutScreen() {
         <Text style={styles.sectionLabel}>Our Mission</Text>
         <View style={styles.card}>
           <Text style={styles.description}>
-            Our mission is to provide a world-class competitive gaming experience to Indian eSports
-            enthusiasts — from casual players to aspiring professionals. We believe talent deserves
-            recognition and reward, regardless of background.
+            Our mission is to build India's most trusted competitive gaming ecosystem — where skill
+            is rewarded, every rupee won is earned fairly, and every player has an equal opportunity
+            to rise. From first-time competitors to seasoned pros, Elite eSports is your arena.
           </Text>
         </View>
 
