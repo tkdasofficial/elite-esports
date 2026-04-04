@@ -123,26 +123,16 @@ export default function SettingsScreen() {
     }
     Alert.alert(
       'Reset Password',
-      `A 6-digit verification code will be sent to:\n\n${email}\n\nEnter the code to set a new password.`,
+      `An 8-digit verification code will be sent to:\n\n${email}\n\nEnter the code to set a new password.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Send Code',
-          onPress: async () => {
-            setResetLoading(true);
-            const { error } = await supabase.auth.signInWithOtp({
-              email,
-              options: { shouldCreateUser: false },
+          onPress: () => {
+            router.push({
+              pathname: '/(auth)/otp-verify',
+              params: { email, mode: 'reset' },
             });
-            setResetLoading(false);
-            if (error) {
-              Alert.alert('Error', error.message ?? 'Could not send reset code. Please try again.');
-            } else {
-              router.push({
-                pathname: '/(auth)/otp-verify',
-                params: { email, mode: 'reset' },
-              });
-            }
           },
         },
       ]

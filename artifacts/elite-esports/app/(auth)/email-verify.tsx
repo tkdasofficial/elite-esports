@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
   KeyboardAvoidingView, Platform, ScrollView,
@@ -27,7 +27,6 @@ export default function EmailVerifyScreen() {
   const [step, setStep]         = useState<Step>('email');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [checking, setChecking] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
 
@@ -35,60 +34,33 @@ export default function EmailVerifyScreen() {
     ? ['#150400', '#0A0A0A', '#0A0A0A']
     : [colors.primary + '18', colors.background.dark, colors.background.dark];
 
-  /* ── Step 1: Check email → login or send OTP for signup ── */
-  const handleEmailContinue = async () => {
-    const trimmed = email.trim().toLowerCase();
-    if (!trimmed || !EMAIL_REGEX.test(trimmed)) {
+  const trimmedEmail = email.trim().toLowerCase();
+
+  /* ── Validate email then send OTP (for new accounts) ── */
+  const handleEmailContinue = () => {
+    if (!trimmedEmail || !EMAIL_REGEX.test(trimmedEmail)) {
       setError('Please enter a valid email address.');
       return;
     }
     setError('');
-    setChecking(true);
-
-    try {
-      /* Probe: try to sign up with a dummy password to detect if email is registered */
-      const { data, error: signUpErr } = await supabase.auth.signUp({
-        email: trimmed,
-        password: `__probe_${Math.random().toString(36).slice(2)}__`,
-      });
-
-      if (signUpErr) throw signUpErr;
-
-      const identities = data?.user?.identities;
-      const userExists = Array.isArray(identities) && identities.length === 0;
-
-      if (userExists) {
-        /* Existing user → show password login */
-        setStep('login');
-      } else {
-        /* New user → send OTP and redirect to OTP verify page */
-        const { error: otpErr } = await supabase.auth.signInWithOtp({
-          email: trimmed,
-          options: { shouldCreateUser: false },
-        });
-
-        if (otpErr) {
-          /* Fallback: user might have been created just now, try without shouldCreateUser: false */
-          const { error: otpErr2 } = await supabase.auth.signInWithOtp({ email: trimmed });
-          if (otpErr2) {
-            setError('Could not send verification code. Please try again.');
-            return;
-          }
-        }
-
-        router.push({
-          pathname: '/(auth)/otp-verify',
-          params: { email: trimmed, mode: 'signup' },
-        });
-      }
-    } catch {
-      setError('Could not reach the server. Please try again.');
-    } finally {
-      setChecking(false);
-    }
+    /* Navigate to OTP page — it will send the code itself on mount */
+    router.push({
+      pathname: '/(auth)/otp-verify',
+      params: { email: trimmedEmail, mode: 'auth' },
+    });
   };
 
-  /* ── Step 2: Sign in with password ── */
+  /* ── Show password login step ── */
+  const handleShowLogin = () => {
+    if (!trimmedEmail || !EMAIL_REGEX.test(trimmedEmail)) {
+      setError('Please enter your email first.');
+      return;
+    }
+    setError('');
+    setStep('login');
+  };
+
+  /* ── Password sign-in ── */
   const handleSignIn = async () => {
     if (!password || password.length < 6) {
       setError('Password must be at least 6 characters.');
@@ -98,7 +70,7 @@ export default function EmailVerifyScreen() {
     setLoading(true);
     try {
       const { data, error: err } = await supabase.auth.signInWithPassword({
-        email: email.trim().toLowerCase(),
+        email: trimmedEmail,
         password,
       });
 
@@ -110,19 +82,12 @@ export default function EmailVerifyScreen() {
 
       const msg = (err?.message ?? '').toLowerCase();
       if (msg.includes('email not confirmed')) {
-        /* Account not yet verified — send OTP to let them verify */
-        const trimmed = email.trim().toLowerCase();
-        const { error: otpErr } = await supabase.auth.signInWithOtp({
-          email: trimmed,
-          options: { shouldCreateUser: false },
+        /* Account exists but unconfirmed → send OTP to verify */
+        router.push({
+          pathname: '/(auth)/otp-verify',
+          params: { email: trimmedEmail, mode: 'auth' },
         });
-        if (!otpErr) {
-          router.push({
-            pathname: '/(auth)/otp-verify',
-            params: { email: trimmed, mode: 'signup' },
-          });
-          return;
-        }
+        return;
       }
 
       setError('Incorrect password. Please try again.');
@@ -133,33 +98,14 @@ export default function EmailVerifyScreen() {
     }
   };
 
-  /* ── Forgot password → send OTP → OTP verify in reset mode ── */
-  const handleForgotPassword = async () => {
-    const trimmed = email.trim().toLowerCase();
+  /* ── Forgot password → OTP in reset mode ── */
+  const handleForgotPassword = () => {
     setError('');
-    setLoading(true);
-    try {
-      const { error: otpErr } = await supabase.auth.signInWithOtp({
-        email: trimmed,
-        options: { shouldCreateUser: false },
-      });
-
-      if (otpErr) {
-        setError('Could not send reset code. Please try again.');
-        return;
-      }
-
-      await deviceFingerprint.logEvent('password_reset_request', trimmed);
-
-      router.push({
-        pathname: '/(auth)/otp-verify',
-        params: { email: trimmed, mode: 'reset' },
-      });
-    } catch (e: any) {
-      setError(e?.message ?? 'Could not send reset code. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    /* Navigate to OTP page — it will send the reset code itself on mount */
+    router.push({
+      pathname: '/(auth)/otp-verify',
+      params: { email: trimmedEmail, mode: 'reset' },
+    });
   };
 
   const goBack = () => {
@@ -205,10 +151,7 @@ export default function EmailVerifyScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            {
-              paddingBottom: insets.bottom + 48,
-              paddingTop: step !== 'email' ? 56 : 16,
-            },
+            { paddingBottom: insets.bottom + 48, paddingTop: step !== 'email' ? 56 : 16 },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
@@ -241,20 +184,30 @@ export default function EmailVerifyScreen() {
 
               {!!error && <ErrorRow text={error} colors={colors} styles={styles} />}
 
+              {/* Primary: send OTP (new accounts / continue with code) */}
               <TouchableOpacity
-                style={[styles.btn, (!email.trim() || checking) && styles.btnDisabled]}
+                style={[styles.btn, !email.trim() && styles.btnDisabled]}
                 onPress={handleEmailContinue}
-                disabled={!email.trim() || checking}
+                disabled={!email.trim()}
                 activeOpacity={0.85}
               >
-                {checking ? (
-                  <View style={styles.row}>
-                    <ActivityIndicator color="#fff" size="small" />
-                    <Text style={styles.btnText}>Checking…</Text>
-                  </View>
-                ) : (
-                  <Text style={styles.btnText}>Continue</Text>
-                )}
+                <View style={styles.row}>
+                  <Ionicons name="mail-outline" size={18} color="#fff" />
+                  <Text style={styles.btnText}>Continue with Code</Text>
+                </View>
+              </TouchableOpacity>
+
+              {/* Secondary: password login (existing accounts) */}
+              <TouchableOpacity
+                style={[styles.passwordBtn, !email.trim() && styles.btnDisabled]}
+                onPress={handleShowLogin}
+                disabled={!email.trim()}
+                activeOpacity={0.85}
+              >
+                <View style={styles.row}>
+                  <Ionicons name="lock-closed-outline" size={17} color={colors.text.primary} />
+                  <Text style={styles.passwordBtnText}>Sign In with Password</Text>
+                </View>
               </TouchableOpacity>
             </>
           )}
@@ -262,7 +215,7 @@ export default function EmailVerifyScreen() {
           {/* ── Login step ── */}
           {step === 'login' && (
             <>
-              {/* Email pill showing current email */}
+              {/* Email pill */}
               <TouchableOpacity
                 style={styles.emailPill}
                 onPress={goBack}
@@ -308,6 +261,16 @@ export default function EmailVerifyScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.forgotText}>Forgot Password?</Text>
+              </TouchableOpacity>
+
+              {/* Let existing users also use OTP if they prefer */}
+              <TouchableOpacity
+                style={styles.otpLink}
+                onPress={handleEmailContinue}
+                disabled={loading}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.otpLinkText}>Sign in with verification code instead</Text>
               </TouchableOpacity>
             </>
           )}
@@ -374,14 +337,32 @@ function createStyles(colors: AppColors) {
       color: colors.status.error, fontSize: 13,
       fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18,
     },
+
+    /* Primary button (OTP / sign in) */
     btn: {
       backgroundColor: colors.primary, borderRadius: 30, height: 54,
       alignItems: 'center', justifyContent: 'center', marginTop: 6,
     },
     btnDisabled: { opacity: 0.4 },
     btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+
+    /* Secondary button (password login) */
+    passwordBtn: {
+      backgroundColor: colors.background.elevated,
+      borderRadius: 30, height: 54,
+      alignItems: 'center', justifyContent: 'center',
+      marginTop: 12, borderWidth: 1, borderColor: colors.border.default,
+    },
+    passwordBtnText: {
+      color: colors.text.primary, fontSize: 15,
+      fontFamily: 'Inter_600SemiBold', letterSpacing: 0.1,
+    },
+
     forgotBtn: { alignItems: 'center', paddingVertical: 16, marginTop: 2 },
     forgotText: { color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+
+    otpLink: { alignItems: 'center', paddingVertical: 8 },
+    otpLinkText: { color: colors.text.muted, fontSize: 13, fontFamily: 'Inter_400Regular' },
   });
 }
