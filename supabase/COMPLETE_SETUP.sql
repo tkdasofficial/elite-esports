@@ -142,12 +142,19 @@ CREATE TABLE IF NOT EXISTS public.matches (
   joined_players  INTEGER     NOT NULL DEFAULT 0,
   status          TEXT        NOT NULL DEFAULT 'upcoming'
                               CHECK (status IN ('upcoming','ongoing','completed','cancelled')),
+  scheduled_at    TIMESTAMPTZ,
   starts_at       TIMESTAMPTZ,
   room_id         TEXT,
   room_password   TEXT,
+  room_visible    BOOLEAN     NOT NULL DEFAULT false,
   description     TEXT,
+  rules           TEXT,
   live_stream_url TEXT,
   stream_url      TEXT,
+  youtube_url     TEXT,
+  twitch_url      TEXT,
+  facebook_url    TEXT,
+  tiktok_url      TEXT,
   game_mode       TEXT,
   squad_type      TEXT,
   created_at      TIMESTAMPTZ DEFAULT NOW()
@@ -156,10 +163,17 @@ ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS game_id         UUID REFEREN
 ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS game            TEXT;
 ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS banner_url      TEXT;
 ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS joined_players  INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS scheduled_at    TIMESTAMPTZ;
 ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS starts_at       TIMESTAMPTZ;
+ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS room_visible    BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS description     TEXT;
+ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS rules           TEXT;
 ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS live_stream_url TEXT;
 ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS stream_url      TEXT;
+ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS youtube_url     TEXT;
+ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS twitch_url      TEXT;
+ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS facebook_url    TEXT;
+ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS tiktok_url      TEXT;
 ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS game_mode       TEXT;
 ALTER TABLE public.matches ADD COLUMN IF NOT EXISTS squad_type      TEXT;
 ALTER TABLE public.matches ENABLE ROW LEVEL SECURITY;
@@ -482,6 +496,38 @@ CREATE POLICY "bc_admin"  ON public.broadcasts FOR ALL USING (
 );
 
 
+-- fcm_tokens: Firebase Cloud Messaging device tokens for push notifications
+CREATE TABLE IF NOT EXISTS public.fcm_tokens (
+  id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id    UUID        NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  token      TEXT        NOT NULL,
+  platform   TEXT        NOT NULL DEFAULT 'android',
+  email      TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE(user_id, token)
+);
+ALTER TABLE public.fcm_tokens ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "fcm_select_own" ON public.fcm_tokens;
+DROP POLICY IF EXISTS "fcm_upsert_own" ON public.fcm_tokens;
+DROP POLICY IF EXISTS "fcm_delete_own" ON public.fcm_tokens;
+DROP POLICY IF EXISTS "fcm_admin"      ON public.fcm_tokens;
+CREATE POLICY "fcm_select_own" ON public.fcm_tokens
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "fcm_upsert_own" ON public.fcm_tokens
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "fcm_update_own" ON public.fcm_tokens
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "fcm_delete_own" ON public.fcm_tokens
+  FOR DELETE USING (auth.uid() = user_id);
+CREATE POLICY "fcm_admin" ON public.fcm_tokens FOR ALL USING (
+  EXISTS (SELECT 1 FROM public.admin_users WHERE user_id = auth.uid())
+);
+
+CREATE INDEX IF NOT EXISTS idx_fcm_tokens_user ON public.fcm_tokens(user_id);
+
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- PART 5 · TEAMS
 -- team_members MUST be created before the teams_update policy (cross-reference)
@@ -730,7 +776,99 @@ CREATE TRIGGER on_auth_user_created
 -- PART 9 · RPCs (SECURITY DEFINER functions)
 -- ─────────────────────────────────────────────────────────────────────────────
 
--- ── 9a. claim_match_prize — credit prize to wallet (idempotent) ──────────────
+-- ── 9a. join_match — atomic match join: checks balance, deducts fee, adds participant
+CREATE OR REPLACE FUNCTION public.join_match(_match_id UUID)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user_id      UUID    := auth.uid();
+  v_status       TEXT;
+  v_max_players  INTEGER;
+  v_joined       INTEGER;
+  v_fee          NUMERIC;
+  v_balance      NUMERIC;
+  v_ref          TEXT    := 'entry:' || _match_id;
+  v_already      BOOLEAN;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
+  END IF;
+
+  -- 1. Load match details
+  SELECT status, max_players, joined_players, entry_fee
+  INTO v_status, v_max_players, v_joined, v_fee
+  FROM public.matches
+  WHERE id = _match_id;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Match not found');
+  END IF;
+
+  IF v_status <> 'upcoming' THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Match is not open for registration');
+  END IF;
+
+  IF v_joined >= v_max_players THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Match is full');
+  END IF;
+
+  -- 2. Idempotency: already joined?
+  SELECT EXISTS (
+    SELECT 1 FROM public.match_participants
+    WHERE match_id = _match_id AND user_id = v_user_id
+  ) INTO v_already;
+
+  IF v_already THEN
+    RETURN jsonb_build_object('success', false, 'error', 'You have already joined this match');
+  END IF;
+
+  -- 3. Balance check (only if entry_fee > 0)
+  IF v_fee > 0 THEN
+    SELECT COALESCE(balance, 0) INTO v_balance
+    FROM public.wallets
+    WHERE user_id = v_user_id;
+
+    IF v_balance IS NULL OR v_balance < v_fee THEN
+      RETURN jsonb_build_object('success', false, 'error', 'Insufficient wallet balance');
+    END IF;
+
+    -- 4a. Deduct from wallet
+    UPDATE public.wallets
+    SET balance    = balance - v_fee,
+        updated_at = NOW()
+    WHERE user_id = v_user_id;
+
+    -- 4b. Record the debit transaction
+    INSERT INTO public.wallet_transactions (user_id, type, amount, status, reference_id)
+    VALUES (v_user_id, 'debit', v_fee, 'approved', v_ref);
+  END IF;
+
+  -- 5. Add participant
+  INSERT INTO public.match_participants (match_id, user_id)
+  VALUES (_match_id, v_user_id)
+  ON CONFLICT (match_id, user_id) DO NOTHING;
+
+  -- 6. Increment joined_players
+  UPDATE public.matches
+  SET joined_players = joined_players + 1
+  WHERE id = _match_id;
+
+  RETURN jsonb_build_object(
+    'success',    true,
+    'fee_paid',   v_fee,
+    'match_id',   _match_id
+  );
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.join_match(UUID) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.join_match(UUID) TO authenticated;
+
+
+-- ── 9b. claim_match_prize — credit prize to wallet (idempotent) ──────────────
 CREATE OR REPLACE FUNCTION public.claim_match_prize(_match_id UUID)
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -1106,9 +1244,31 @@ ON CONFLICT (name) DO NOTHING;
 -- =============================================================================
 -- ✅ SETUP COMPLETE
 --
+-- TABLES (27 total):
+--   users · admin_users · wallets · user_roles
+--   games · matches · match_participants · match_results
+--   payments · withdrawals · wallet_transactions
+--   notifications · user_games · support_tickets · reports · broadcasts
+--   fcm_tokens (push notification tokens)
+--   teams · team_members
+--   app_settings · points_settings
+--   ad_units · ad_triggers · ad_settings
+--   match_modes · squad_types · user_roles
+--
+-- VIEWS:  leaderboard (wins + points + kills + matches_played)
+--
+-- RPCs (5 total):
+--   join_match(uuid)           — check balance → deduct fee → add participant
+--   claim_match_prize(uuid)    — credit rank prize, sync wallet
+--   leave_match(uuid)          — remove participant, refund fee if upcoming
+--   get_user_match_result(uuid)— backend-computed prize info for display
+--   credit_ad_bonus()          — ₹1 daily rewarded-ad bonus
+--
+-- TRIGGER: handle_new_user() — auto-creates users row + wallet on signup
+-- REALTIME: matches · notifications · wallets · wallet_transactions
+--           withdrawals · teams · team_members
+-- STORAGE:  game-banners (public read, admin write)
+--
 -- TO GRANT ADMIN ACCESS to a user:
 --   INSERT INTO public.admin_users (user_id) VALUES ('<auth-user-id-here>');
---
--- All 13 migrations are now consolidated into this single file.
--- Run only this file — do not run the individual migration files separately.
 -- =============================================================================
