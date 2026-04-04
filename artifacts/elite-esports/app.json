@@ -57,6 +57,11 @@
         "androidAppId": "ca-app-pub-2219438935030744~5831569923"
       }
     },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/images/icon.png"
+    },
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": false
