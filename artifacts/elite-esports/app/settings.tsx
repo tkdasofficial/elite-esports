@@ -132,7 +132,7 @@ export default function SettingsScreen() {
           onPress: async () => {
             setResetLoading(true);
             const { error } = await supabase.auth.resetPasswordForEmail(email, {
-              redirectTo: Linking.createURL('/auth/callback'),
+              redirectTo: Linking.createURL('auth/callback'),
             });
             setResetLoading(false);
             if (error) {
