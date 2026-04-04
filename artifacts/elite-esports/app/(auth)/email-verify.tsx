@@ -7,11 +7,16 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Linking from 'expo-linking';
 import { supabase } from '@/services/supabase';
 import { useTheme } from '@/store/ThemeContext';
 import type { AppColors } from '@/utils/colors';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 import { navigateAfterAuth } from '@/utils/authHelpers';
+
+function getRedirectUrl(): string {
+  return Linking.createURL('/');
+}
 
 type Step = 'email' | 'login' | 'verify' | 'reset-sent';
 
@@ -69,11 +74,12 @@ export default function EmailVerifyScreen() {
     setChecking(true);
 
     try {
-      const { data } = await supabase.auth.signUp({
+      const { data, error: signUpErr } = await supabase.auth.signUp({
         email: trimmed,
         password: `__probe_${Math.random().toString(36).slice(2)}__`,
-        options: { emailRedirectTo: 'elite-esports://' },
+        options: { emailRedirectTo: getRedirectUrl() },
       });
+      if (signUpErr) throw signUpErr;
 
       const identities = data?.user?.identities;
       if (Array.isArray(identities) && identities.length === 0) {
@@ -129,13 +135,19 @@ export default function EmailVerifyScreen() {
     setError('');
     setLoading(true);
     try {
-      await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), {
-        redirectTo: 'elite-esports://',
-      });
-    } catch {}
-    finally {
-      setLoading(false);
+      const { error: resetErr } = await supabase.auth.resetPasswordForEmail(
+        email.trim().toLowerCase(),
+        { redirectTo: getRedirectUrl() },
+      );
+      if (resetErr) {
+        setError(resetErr.message ?? 'Could not send reset email. Please try again.');
+        return;
+      }
       setStep('reset-sent');
+    } catch (e: any) {
+      setError(e?.message ?? 'Could not send reset email. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -144,10 +156,21 @@ export default function EmailVerifyScreen() {
     if (resendCooldown > 0) return;
     setLoading(true);
     try {
-      await supabase.auth.resend({ type: 'signup', email: email.trim().toLowerCase() });
+      const { error: resendErr } = await supabase.auth.resend({
+        type: 'signup',
+        email: email.trim().toLowerCase(),
+        options: { emailRedirectTo: getRedirectUrl() },
+      });
+      if (resendErr) {
+        setError(resendErr.message ?? 'Could not resend email. Please try again.');
+        return;
+      }
       startCooldown();
-    } catch {}
-    finally { setLoading(false); }
+    } catch (e: any) {
+      setError(e?.message ?? 'Could not resend email. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const goBack = () => {
@@ -331,6 +354,8 @@ export default function EmailVerifyScreen() {
                   This screen will update automatically once verified.
                 </Text>
               </View>
+
+              {!!error && <ErrorRow text={error} colors={colors} styles={styles} />}
 
               <TouchableOpacity
                 style={[styles.btn, (resendCooldown > 0 || loading) && styles.btnDisabled]}
