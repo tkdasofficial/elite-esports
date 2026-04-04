@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-  View, Text, StyleSheet, RefreshControl, TouchableOpacity,
+  View, Text, StyleSheet, RefreshControl, TouchableOpacity, ScrollView,
 } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { router } from 'expo-router';
@@ -50,7 +50,7 @@ function StatusChip({
       onPress={onPress}
       activeOpacity={0.75}
     >
-      <Text style={[chipStyles.chipText, { color: selected ? color : '#888888' }]}>
+      <Text style={[chipStyles.chipText, { color: selected ? color : '#888888' }]} numberOfLines={1}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -59,12 +59,11 @@ function StatusChip({
 
 const chipStyles = StyleSheet.create({
   chip: {
-    flex: 1,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingHorizontal: 8, paddingVertical: 7,
+    paddingHorizontal: 14, paddingVertical: 7,
     borderRadius: 20, borderWidth: 1.5,
   },
-  chipText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  chipText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
 });
 
 export default function HomeScreen() {
@@ -159,8 +158,13 @@ export default function HomeScreen() {
   const FilterBar = (
     <View style={[filterStyles.bar, { backgroundColor: colors.background.dark }]}>
       <View style={filterStyles.row}>
-        {/* Status chips — all visible, no scroll */}
-        <View style={filterStyles.chipsContainer}>
+        {/* Status chips — horizontal scroll, one line */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={filterStyles.chipsContainer}
+          style={filterStyles.chipsScroll}
+        >
           {STATUS_CHIPS.map(chip => (
             <StatusChip
               key={chip.key}
@@ -170,7 +174,7 @@ export default function HomeScreen() {
               onPress={() => setStatusFilter(chip.key)}
             />
           ))}
-        </View>
+        </ScrollView>
 
         {/* Right side — Filters button (fixed) */}
         <View style={filterStyles.rightSection}>
@@ -306,7 +310,8 @@ export default function HomeScreen() {
 const filterStyles = StyleSheet.create({
   bar: { paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#1E1E1E22' },
   row: { flexDirection: 'row', alignItems: 'center' },
-  chipsContainer: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 5, paddingLeft: 12, paddingRight: 4 },
+  chipsScroll: { flex: 1 },
+  chipsContainer: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 12, paddingRight: 4 },
   rightSection: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 14, paddingLeft: 4 },
   filtersBtn: {
     flexDirection: 'row', alignItems: 'center', gap: 5,
