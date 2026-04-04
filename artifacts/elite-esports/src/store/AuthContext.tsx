@@ -15,24 +15,82 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function parseDeepLinkParams(url: string): Record<string, string> {
+  const result: Record<string, string> = {};
+
+  // Parse query string (?key=value)
+  const qIndex = url.indexOf('?');
+  const hIndex = url.indexOf('#');
+  if (qIndex !== -1) {
+    const qEnd = hIndex !== -1 && hIndex > qIndex ? hIndex : url.length;
+    const qs = url.slice(qIndex + 1, qEnd);
+    qs.split('&').forEach(part => {
+      const eq = part.indexOf('=');
+      if (eq !== -1) {
+        const k = decodeURIComponent(part.slice(0, eq));
+        const v = decodeURIComponent(part.slice(eq + 1));
+        result[k] = v;
+      }
+    });
+  }
+
+  // Parse URL fragment (#key=value) — Supabase implicit flow puts tokens here
+  if (hIndex !== -1) {
+    const fragment = url.slice(hIndex + 1);
+    fragment.split('&').forEach(part => {
+      const eq = part.indexOf('=');
+      if (eq !== -1) {
+        const k = decodeURIComponent(part.slice(0, eq));
+        const v = decodeURIComponent(part.slice(eq + 1));
+        if (!result[k]) result[k] = v; // query params take precedence
+      }
+    });
+  }
+
+  return result;
+}
+
 async function handleAuthUrl(url: string) {
   try {
-    const parsed = Linking.parse(url);
-    const params = parsed.queryParams ?? {};
+    const params = parseDeepLinkParams(url);
 
-    /* Password reset recovery */
+    /* ── Password reset / recovery ── */
     if (params.type === 'recovery') {
-      router.replace('/(auth)/email-verify');
+      let session: Session | null = null;
+
+      if (params.code) {
+        const { data, error } = await supabase.auth.exchangeCodeForSession(url);
+        if (!error && data.session) session = data.session;
+      }
+
+      if (!session && params.access_token && params.refresh_token) {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: params.access_token,
+          refresh_token: params.refresh_token,
+        });
+        if (!error && data.session) session = data.session;
+      }
+
+      if (session?.user) {
+        const { data } = await supabase
+          .from('users')
+          .select('username')
+          .eq('id', session.user.id)
+          .maybeSingle();
+
+        if (data?.username) {
+          router.replace('/(auth)/set-password');
+        } else {
+          router.replace('/(auth)/kyc');
+        }
+      } else {
+        router.replace('/(auth)/email-verify');
+      }
       return;
     }
 
-    /*
-     * PKCE code exchange — handles email verification and magic link deep links.
-     * OAuth codes from WebBrowser.openAuthSessionAsync are handled by the OAuth
-     * caller directly and are resolved before they ever reach Linking, so there
-     * is no race condition here.
-     */
-    if (params.code && typeof params.code === 'string') {
+    /* ── PKCE code exchange (email verification / magic link) ── */
+    if (params.code) {
       const { data, error } = await supabase.auth.exchangeCodeForSession(url);
       if (!error && data.session?.user) {
         await navigateAfterAuth(data.session.user.id);
@@ -40,11 +98,11 @@ async function handleAuthUrl(url: string) {
       return;
     }
 
-    /* Legacy implicit flow — tokens in URL fragment */
+    /* ── Legacy implicit flow — tokens in URL fragment ── */
     if (params.access_token && params.refresh_token) {
       const { data, error } = await supabase.auth.setSession({
-        access_token: params.access_token as string,
-        refresh_token: params.refresh_token as string,
+        access_token: params.access_token,
+        refresh_token: params.refresh_token,
       });
       if (!error && data.session?.user) {
         await navigateAfterAuth(data.session.user.id);
