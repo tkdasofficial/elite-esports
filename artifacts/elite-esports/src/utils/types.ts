@@ -2,6 +2,7 @@ export interface Match {
   id: string;
   title: string;
   game: string;
+  game_id?: string;
   banner_url?: string;
   entry_fee: number;
   prize_pool: number;
@@ -19,6 +20,8 @@ export interface Match {
   twitch_url?: string;
   facebook_url?: string;
   tiktok_url?: string;
+  game_mode?: string;
+  squad_type?: string;
 }
 
 export interface LeaderEntry {

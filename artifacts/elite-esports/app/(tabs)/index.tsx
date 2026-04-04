@@ -11,54 +11,50 @@ import { useTheme } from '@/store/ThemeContext';
 import { GlobalHeader } from '@/components/GlobalHeader';
 import { MatchCard } from '@/features/home/components/MatchCard';
 import { SkeletonCard } from '@/features/home/components/SkeletonCard';
+import { AdvancedFiltersSheet, AdvancedFilters } from '@/features/home/components/AdvancedFiltersSheet';
 import { useMatches } from '@/features/home/hooks/useMatches';
+import { useMatchOptions } from '@/features/home/hooks/useMatchOptions';
 import { Match } from '@/utils/types';
 
 const SKELETON_COUNT = 4;
 
 type StatusFilter = 'all' | 'upcoming' | 'ongoing' | 'completed';
-type SortOption = 'time' | 'prize' | 'entry';
-type EntryFilter = 'all' | 'free' | 'paid';
 
-const STATUS_CHIPS: { key: StatusFilter; label: string }[] = [
-  { key: 'all',       label: 'All' },
-  { key: 'upcoming',  label: 'Upcoming' },
-  { key: 'ongoing',   label: 'Live' },
-  { key: 'completed', label: 'Ended' },
+const STATUS_CHIPS: { key: StatusFilter; label: string; color: string }[] = [
+  { key: 'all',       label: 'All',      color: '#8B5CF6' },
+  { key: 'ongoing',   label: 'Live',     color: '#22C55E' },
+  { key: 'upcoming',  label: 'Upcoming', color: '#3B82F6' },
+  { key: 'completed', label: 'Ended',    color: '#666666' },
 ];
 
-const SORT_OPTIONS: { key: SortOption; label: string; icon: string }[] = [
-  { key: 'time',  label: 'Time',  icon: 'clock' },
-  { key: 'prize', label: 'Prize', icon: 'award' },
-  { key: 'entry', label: 'Entry', icon: 'tag' },
-];
+const DEFAULT_ADV_FILTERS: AdvancedFilters = {
+  sortBy: 'time',
+  entryFilter: 'all',
+  selectedGame: null,
+  selectedMode: null,
+  selectedSquad: null,
+};
 
-const ENTRY_CHIPS: { key: EntryFilter; label: string }[] = [
-  { key: 'all',  label: 'All Entries' },
-  { key: 'free', label: 'Free' },
-  { key: 'paid', label: 'Paid' },
-];
-
-function FilterChip({
-  label, selected, onPress, colors,
+function StatusChip({
+  label, selected, color, onPress,
 }: {
-  label: string; selected: boolean; onPress: () => void; colors: any;
+  label: string; selected: boolean; color: string; onPress: () => void;
 }) {
   return (
     <TouchableOpacity
       style={[
         chipStyles.chip,
-        {
-          backgroundColor: selected ? colors.primary : colors.background.elevated,
-          borderColor: selected ? colors.primary : colors.border.default,
-        },
+        selected
+          ? { backgroundColor: color + '20', borderColor: color }
+          : { backgroundColor: 'transparent', borderColor: 'transparent' },
       ]}
       onPress={onPress}
       activeOpacity={0.75}
     >
+      {selected && label === 'Live' && <View style={[chipStyles.liveDot, { backgroundColor: color }]} />}
       <Text style={[
         chipStyles.chipText,
-        { color: selected ? '#fff' : colors.text.secondary },
+        { color: selected ? color : '#888888' },
       ]}>
         {label}
       </Text>
@@ -68,35 +64,58 @@ function FilterChip({
 
 const chipStyles = StyleSheet.create({
   chip: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 14, paddingVertical: 7,
-    borderRadius: 20, borderWidth: 1,
+    borderRadius: 20, borderWidth: 1.5,
   },
-  chipText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  liveDot: { width: 6, height: 6, borderRadius: 3 },
+  chipText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
 });
 
 export default function HomeScreen() {
   const { colors } = useTheme();
   const { matches, loading, refreshing, error, refresh, retry } = useMatches();
+  const { modes: adminModes, squads: adminSquads } = useMatchOptions();
   const tabBarHeight = useBottomTabBarHeight();
-  const [query, setQuery] = useState('');
+  const [query, setQuery]               = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [entryFilter, setEntryFilter] = useState<EntryFilter>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('time');
-  const [showSort, setShowSort] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [advFilters, setAdvFilters]     = useState<AdvancedFilters>(DEFAULT_ADV_FILTERS);
 
-  const hasActiveFilters = statusFilter !== 'all' || entryFilter !== 'all' || sortBy !== 'time';
+  const advActiveCount = useMemo(() => [
+    advFilters.sortBy !== 'time',
+    advFilters.entryFilter !== 'all',
+    !!advFilters.selectedGame,
+    !!advFilters.selectedMode,
+    !!advFilters.selectedSquad,
+  ].filter(Boolean).length, [advFilters]);
 
-  const resetFilters = useCallback(() => {
+  const hasActiveFilters = statusFilter !== 'all' || advActiveCount > 0;
+
+  const resetAll = useCallback(() => {
     setStatusFilter('all');
-    setEntryFilter('all');
-    setSortBy('time');
-    setShowSort(false);
+    setAdvFilters(DEFAULT_ADV_FILTERS);
   }, []);
+
+  /* Derive unique option lists from loaded matches */
+  const availableGames = useMemo(() => {
+    const s = new Set(matches.map(m => m.game).filter(Boolean));
+    return Array.from(s).sort();
+  }, [matches]);
+
+  const availableModes = useMemo(() => {
+    const s = new Set(matches.map(m => m.game_mode).filter((v): v is string => !!v));
+    return Array.from(s).sort();
+  }, [matches]);
+
+  const availableSquads = useMemo(() => {
+    const s = new Set(matches.map(m => m.squad_type).filter((v): v is string => !!v));
+    return Array.from(s).sort();
+  }, [matches]);
 
   const filtered = useMemo(() => {
     let result = [...matches];
 
-    // Search query
     if (query.trim()) {
       const q = query.toLowerCase().trim();
       result = result.filter(m =>
@@ -108,113 +127,104 @@ export default function HomeScreen() {
       );
     }
 
-    // Status filter
     if (statusFilter !== 'all') {
       result = result.filter(m => m.status === statusFilter);
     }
 
-    // Entry fee filter
-    if (entryFilter === 'free') {
+    if (advFilters.entryFilter === 'free') {
       result = result.filter(m => !m.entry_fee || m.entry_fee === 0);
-    } else if (entryFilter === 'paid') {
+    } else if (advFilters.entryFilter === 'paid') {
       result = result.filter(m => m.entry_fee > 0);
     }
 
-    // Sort
+    if (advFilters.selectedGame) {
+      result = result.filter(m => m.game === advFilters.selectedGame);
+    }
+
+    if (advFilters.selectedMode) {
+      result = result.filter(m => m.game_mode === advFilters.selectedMode);
+    }
+
+    if (advFilters.selectedSquad) {
+      result = result.filter(m => m.squad_type === advFilters.selectedSquad);
+    }
+
     result.sort((a, b) => {
-      if (sortBy === 'prize') return (b.prize_pool ?? 0) - (a.prize_pool ?? 0);
-      if (sortBy === 'entry') return (a.entry_fee ?? 0) - (b.entry_fee ?? 0);
+      if (advFilters.sortBy === 'prize') return (b.prize_pool ?? 0) - (a.prize_pool ?? 0);
+      if (advFilters.sortBy === 'entry') return (a.entry_fee ?? 0) - (b.entry_fee ?? 0);
       return new Date(b.starts_at ?? 0).getTime() - new Date(a.starts_at ?? 0).getTime();
     });
 
     return result;
-  }, [matches, query, statusFilter, entryFilter, sortBy]);
+  }, [matches, query, statusFilter, advFilters]);
 
   const showSkeleton = loading && matches.length === 0;
 
-  const FilterBar = useMemo(() => (
+  /* ── Filter Bar ── */
+  const FilterBar = (
     <View style={[filterStyles.bar, { backgroundColor: colors.background.dark }]}>
-      {/* Status chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={filterStyles.row}
-      >
-        {STATUS_CHIPS.map(chip => (
-          <FilterChip
-            key={chip.key}
-            label={chip.label}
-            selected={statusFilter === chip.key}
-            onPress={() => setStatusFilter(chip.key)}
-            colors={colors}
-          />
-        ))}
-        <View style={filterStyles.divider} />
-        {ENTRY_CHIPS.map(chip => (
-          <FilterChip
-            key={chip.key}
-            label={chip.label}
-            selected={entryFilter === chip.key}
-            onPress={() => setEntryFilter(chip.key)}
-            colors={colors}
-          />
-        ))}
-        <View style={filterStyles.divider} />
-        {/* Sort button */}
-        <TouchableOpacity
-          style={[
-            filterStyles.sortBtn,
-            {
-              backgroundColor: sortBy !== 'time' ? colors.primary : colors.background.elevated,
-              borderColor: sortBy !== 'time' ? colors.primary : colors.border.default,
-            },
-          ]}
-          onPress={() => setShowSort(v => !v)}
-          activeOpacity={0.8}
+      <View style={filterStyles.row}>
+        {/* Status chips — scrollable left side */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={filterStyles.chipsContainer}
+          style={filterStyles.chipsScroll}
         >
-          <Feather
-            name="sliders" size={12}
-            color={sortBy !== 'time' ? '#fff' : colors.text.secondary}
-          />
-          <Text style={[
-            filterStyles.sortBtnText,
-            { color: sortBy !== 'time' ? '#fff' : colors.text.secondary },
-          ]}>
-            Sort
-          </Text>
-        </TouchableOpacity>
-        {hasActiveFilters && (
+          {STATUS_CHIPS.map(chip => (
+            <StatusChip
+              key={chip.key}
+              label={chip.label}
+              selected={statusFilter === chip.key}
+              color={chip.color}
+              onPress={() => setStatusFilter(chip.key)}
+            />
+          ))}
+        </ScrollView>
+
+        {/* Right side — Filters button (fixed) */}
+        <View style={filterStyles.rightSection}>
+          {hasActiveFilters && (
+            <TouchableOpacity
+              style={[filterStyles.resetBtn, { borderColor: colors.status.error + '50' }]}
+              onPress={resetAll}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="close" size={12} color={colors.status.error} />
+            </TouchableOpacity>
+          )}
           <TouchableOpacity
-            style={[filterStyles.resetBtn, { borderColor: colors.status.error + '60' }]}
-            onPress={resetFilters}
+            style={[
+              filterStyles.filtersBtn,
+              {
+                backgroundColor: advActiveCount > 0 ? colors.primary : colors.background.elevated,
+                borderColor: advActiveCount > 0 ? colors.primary : colors.border.default,
+              },
+            ]}
+            onPress={() => setShowAdvanced(true)}
             activeOpacity={0.8}
           >
-            <Ionicons name="close" size={12} color={colors.status.error} />
-            <Text style={[filterStyles.resetText, { color: colors.status.error }]}>Reset</Text>
+            <Feather
+              name="sliders"
+              size={14}
+              color={advActiveCount > 0 ? '#fff' : colors.text.secondary}
+            />
+            <Text style={[
+              filterStyles.filtersBtnText,
+              { color: advActiveCount > 0 ? '#fff' : colors.text.secondary },
+            ]}>
+              Filters
+            </Text>
+            {advActiveCount > 0 && (
+              <View style={filterStyles.badge}>
+                <Text style={filterStyles.badgeText}>{advActiveCount}</Text>
+              </View>
+            )}
           </TouchableOpacity>
-        )}
-      </ScrollView>
-
-      {/* Sort dropdown */}
-      {showSort && (
-        <View style={[filterStyles.sortDropdown, { backgroundColor: colors.background.card, borderColor: colors.border.default }]}>
-          {SORT_OPTIONS.map(opt => (
-            <TouchableOpacity
-              key={opt.key}
-              style={[filterStyles.sortOption, sortBy === opt.key && { backgroundColor: colors.primary + '18' }]}
-              onPress={() => { setSortBy(opt.key); setShowSort(false); }}
-            >
-              <Feather name={opt.icon as any} size={14} color={sortBy === opt.key ? colors.primary : colors.text.secondary} />
-              <Text style={[filterStyles.sortOptionText, { color: sortBy === opt.key ? colors.primary : colors.text.secondary }]}>
-                Sort by {opt.label}
-              </Text>
-              {sortBy === opt.key && <Ionicons name="checkmark" size={14} color={colors.primary} />}
-            </TouchableOpacity>
-          ))}
         </View>
-      )}
+      </View>
     </View>
-  ), [statusFilter, entryFilter, sortBy, showSort, hasActiveFilters, colors]);
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background.dark }}>
@@ -279,7 +289,7 @@ export default function HomeScreen() {
               {hasActiveFilters && (
                 <TouchableOpacity
                   style={[styles.retryBtn, { backgroundColor: colors.background.elevated, marginTop: 4 }]}
-                  onPress={resetFilters}
+                  onPress={resetAll}
                 >
                   <Ionicons name="close-circle-outline" size={16} color={colors.text.secondary} />
                   <Text style={[styles.retryText, { color: colors.text.secondary }]}>Clear Filters</Text>
@@ -289,39 +299,43 @@ export default function HomeScreen() {
           }
         />
       )}
+
+      <AdvancedFiltersSheet
+        visible={showAdvanced}
+        onClose={() => setShowAdvanced(false)}
+        filters={advFilters}
+        onApply={setAdvFilters}
+        availableGames={availableGames}
+        availableModes={adminModes.length > 0 ? adminModes : availableModes}
+        availableSquads={adminSquads.length > 0 ? adminSquads : availableSquads}
+      />
     </View>
   );
 }
 
 const filterStyles = StyleSheet.create({
-  bar: { paddingTop: 6, paddingBottom: 6, position: 'relative', zIndex: 10 },
-  row: { paddingHorizontal: 16, gap: 8, alignItems: 'center', flexDirection: 'row' },
-  divider: { width: 1, height: 20, backgroundColor: '#33333355', marginHorizontal: 2 },
-  sortBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
+  bar: { paddingVertical: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#1E1E1E22' },
+  row: { flexDirection: 'row', alignItems: 'center' },
+  chipsScroll: { flex: 1 },
+  chipsContainer: { paddingLeft: 14, paddingRight: 6, gap: 6, alignItems: 'center', flexDirection: 'row' },
+  rightSection: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingRight: 14, paddingLeft: 4 },
+  filtersBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 5,
     paddingHorizontal: 12, paddingVertical: 7,
-    borderRadius: 20, borderWidth: 1,
+    borderRadius: 20, borderWidth: 1.5,
   },
-  sortBtnText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  filtersBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+  badge: {
+    backgroundColor: '#fff',
+    borderRadius: 8, minWidth: 16, height: 16,
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: { fontSize: 10, fontFamily: 'Inter_700Bold', color: '#EE3D2D' },
   resetBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 4,
-    paddingHorizontal: 10, paddingVertical: 7,
-    borderRadius: 20, borderWidth: 1,
+    width: 30, height: 30, borderRadius: 15,
+    borderWidth: 1, alignItems: 'center', justifyContent: 'center',
   },
-  resetText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
-  sortDropdown: {
-    position: 'absolute',
-    top: 44, right: 16,
-    borderWidth: 1, borderRadius: 14,
-    overflow: 'hidden', zIndex: 100,
-    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 8, shadowOffset: { width: 0, height: 4 },
-    elevation: 8, minWidth: 180,
-  },
-  sortOption: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    paddingHorizontal: 16, paddingVertical: 12,
-  },
-  sortOptionText: { flex: 1, fontSize: 14, fontFamily: 'Inter_500Medium' },
 });
 
 const styles = StyleSheet.create({
@@ -334,20 +348,12 @@ const styles = StyleSheet.create({
   },
   retryText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#fff' },
   empty: {
-    alignItems: 'center',
-    paddingTop: 80,
-    gap: 12,
-    paddingHorizontal: 32,
+    alignItems: 'center', paddingTop: 80, gap: 12, paddingHorizontal: 32,
   },
   emptyTitle: {
-    fontSize: 20,
-    fontFamily: 'Inter_700Bold',
-    textAlign: 'center',
+    fontSize: 20, fontFamily: 'Inter_700Bold', textAlign: 'center',
   },
   emptyText: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    textAlign: 'center',
-    lineHeight: 20,
+    fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 20,
   },
 });

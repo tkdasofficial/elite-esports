@@ -14,6 +14,7 @@ export function adaptMatch(row: any): Match {
     id: row.id,
     title: row.title ?? '',
     game: row.games?.name ?? row.game ?? 'Unknown',
+    game_id: row.game_id ?? undefined,
     banner_url: getBannerUrl(row.banner_url),
     entry_fee: row.entry_fee ?? 0,
     prize_pool: row.prize_pool ?? 0,
@@ -31,6 +32,8 @@ export function adaptMatch(row: any): Match {
     twitch_url:   row.twitch_url   ?? undefined,
     facebook_url: row.facebook_url ?? undefined,
     tiktok_url:   row.tiktok_url   ?? undefined,
+    game_mode: row.game_mode ?? undefined,
+    squad_type: row.squad_type ?? undefined,
   };
 }
 
