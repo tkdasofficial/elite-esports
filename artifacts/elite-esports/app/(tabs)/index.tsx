@@ -20,8 +20,7 @@ const SKELETON_COUNT = 4;
 type StatusFilter = 'all' | 'upcoming' | 'ongoing' | 'completed';
 
 const STATUS_CHIPS: { key: StatusFilter; label: string; color: string }[] = [
-  { key: 'all',       label: 'All',      color: '#8B5CF6' },
-  { key: 'ongoing',   label: 'Live',     color: '#22C55E' },
+  { key: 'ongoing',   label: 'Ongoing',  color: '#22C55E' },
   { key: 'upcoming',  label: 'Upcoming', color: '#3B82F6' },
   { key: 'completed', label: 'Ended',    color: '#666666' },
 ];
@@ -50,11 +49,7 @@ function StatusChip({
       onPress={onPress}
       activeOpacity={0.75}
     >
-      {selected && label === 'Live' && <View style={[chipStyles.liveDot, { backgroundColor: color }]} />}
-      <Text style={[
-        chipStyles.chipText,
-        { color: selected ? color : '#888888' },
-      ]}>
+      <Text style={[chipStyles.chipText, { color: selected ? color : '#888888' }]}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -64,11 +59,10 @@ function StatusChip({
 const chipStyles = StyleSheet.create({
   chip: {
     flex: 1,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 8, paddingVertical: 7,
     borderRadius: 20, borderWidth: 1.5,
   },
-  liveDot: { width: 6, height: 6, borderRadius: 3 },
   chipText: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
 });
 
@@ -172,7 +166,7 @@ export default function HomeScreen() {
               label={chip.label}
               selected={statusFilter === chip.key}
               color={chip.color}
-              onPress={() => setStatusFilter(chip.key)}
+              onPress={() => setStatusFilter(statusFilter === chip.key ? 'all' : chip.key)}
             />
           ))}
         </View>
