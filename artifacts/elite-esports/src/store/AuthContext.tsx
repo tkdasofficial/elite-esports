@@ -3,6 +3,7 @@ import { Session, User } from '@supabase/supabase-js';
 import { router } from 'expo-router';
 import { supabase } from '@/services/supabase';
 import { saveFcmTokenForUser, removeFcmTokenForUser } from '@/services/NotificationService';
+import { deviceFingerprint } from '@/services/DeviceFingerprint';
 
 interface AuthContextValue {
   session: Session | null;
@@ -23,10 +24,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
         const authUser = newSession?.user;
-        if (authUser) saveFcmTokenForUser(authUser).catch(() => {});
+        if (authUser) {
+          saveFcmTokenForUser(authUser).catch(() => {});
+          if (event === 'SIGNED_IN') {
+            deviceFingerprint.logEvent('sign_in', authUser.email).catch(() => {});
+          }
+        }
       }
 
       if (event === 'SIGNED_OUT') {
+        deviceFingerprint.logEvent('sign_out').catch(() => {});
         router.replace('/(auth)/email-verify');
       }
     });

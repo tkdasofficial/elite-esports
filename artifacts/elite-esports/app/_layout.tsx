@@ -21,6 +21,8 @@ import { AdProvider } from '@/store/AdContext';
 import { setupAndroidChannels } from '@/services/NotificationService';
 import { requestAppPermissions } from '@/services/PermissionService';
 import { loadHapticPreference } from '@/utils/haptics';
+import { deepLinkService } from '@/services/DeepLinkService';
+import { deviceFingerprint } from '@/services/DeviceFingerprint';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -75,6 +77,12 @@ function ThemedRoot() {
     setupAndroidChannels().catch(() => {});
     requestAppPermissions().catch(() => {});
     loadHapticPreference().catch(() => {});
+    deepLinkService.init();
+    deviceFingerprint.init().catch(() => {});
+
+    return () => {
+      deepLinkService.destroy();
+    };
   }, []);
 
   if (!fontsLoaded && !fontError) {

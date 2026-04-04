@@ -13,6 +13,7 @@ import { useTheme } from '@/store/ThemeContext';
 import type { AppColors } from '@/utils/colors';
 import { AuthInput } from '@/features/auth/components/AuthInput';
 import { navigateAfterAuth } from '@/utils/authHelpers';
+import { deviceFingerprint } from '@/services/DeviceFingerprint';
 
 /**
  * The redirect URL sent to Supabase.
@@ -117,6 +118,7 @@ export default function EmailVerifyScreen() {
       });
 
       if (!err && data.user) {
+        await deviceFingerprint.logEvent('sign_in', data.user.email);
         await navigateAfterAuth(data.user.id);
         return;
       }
@@ -148,6 +150,7 @@ export default function EmailVerifyScreen() {
         setError(resetErr.message ?? 'Could not send reset email. Please try again.');
         return;
       }
+      await deviceFingerprint.logEvent('password_reset_request', email.trim().toLowerCase());
       setStep('reset-sent');
     } catch (e: any) {
       setError(e?.message ?? 'Could not send reset email. Please try again.');
