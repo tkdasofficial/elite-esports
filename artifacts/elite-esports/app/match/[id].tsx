@@ -374,20 +374,24 @@ export default function MatchDetailScreen() {
               <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
             </TouchableOpacity>
 
-            {match.status === 'completed' && (
-              <TouchableOpacity
-                style={[styles.actionBtn, { borderColor: GOLD + '55' }]}
-                onPress={() => setShowWinners(true)}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="trophy-outline" size={18} color={GOLD} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.actionBtnLabel, { color: GOLD }]}>Winners</Text>
-                  <Text style={styles.actionBtnSub}>View leaderboard</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
-              </TouchableOpacity>
-            )}
+            <TouchableOpacity
+              style={[styles.actionBtn, { borderColor: GOLD + '55' }]}
+              onPress={() => setShowWinners(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="trophy-outline" size={18} color={GOLD} />
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.actionBtnLabel, { color: GOLD }]}>
+                  {match.status === 'completed' ? 'Winners' : 'Prize Distribution'}
+                </Text>
+                <Text style={styles.actionBtnSub}>
+                  {match.status === 'completed'
+                    ? 'View final leaderboard'
+                    : `₹${match.prize_pool.toLocaleString('en-IN')} total pool`}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+            </TouchableOpacity>
           </View>
 
           {/* ── Slot Meter ── */}
@@ -637,7 +641,9 @@ export default function MatchDetailScreen() {
         <View style={[styles.sheetContainer, { backgroundColor: colors.background.dark }]}>
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeader}>
-            <Text style={styles.sheetTitle}>Winners</Text>
+            <Text style={styles.sheetTitle}>
+              {match.status === 'completed' ? 'Winners' : 'Prize Distribution'}
+            </Text>
             <TouchableOpacity onPress={() => setShowWinners(false)} style={styles.sheetClose}>
               <Ionicons name="close" size={22} color={colors.text.primary} />
             </TouchableOpacity>
@@ -648,8 +654,28 @@ export default function MatchDetailScreen() {
             </View>
           ) : winners.length === 0 ? (
             <View style={styles.sheetEmpty}>
-              <Ionicons name="trophy-outline" size={44} color="#444" />
-              <Text style={styles.sheetEmptyText}>Results not published yet</Text>
+              <View style={styles.prizePoolCard}>
+                <Ionicons name="trophy" size={36} color={GOLD} />
+                <Text style={styles.prizePoolAmount}>
+                  ₹{match.prize_pool.toLocaleString('en-IN')}
+                </Text>
+                <Text style={styles.prizePoolLabel}>Total Prize Pool</Text>
+              </View>
+              {match.status === 'completed' ? (
+                <Text style={styles.sheetEmptyText}>Results not published yet</Text>
+              ) : (
+                <>
+                  <View style={styles.prizeInfoRow}>
+                    <Ionicons name="people-outline" size={16} color={colors.text.muted} />
+                    <Text style={styles.prizeInfoText}>
+                      {match.max_players} players · {match.players_joined} joined
+                    </Text>
+                  </View>
+                  <Text style={styles.sheetEmptyText}>
+                    Prize breakdown will be published{'\n'}once results are finalised.
+                  </Text>
+                </>
+              )}
             </View>
           ) : (
             <FlatList
@@ -1155,6 +1181,27 @@ function createStyles(colors: AppColors) {
     },
     winnerRowPrize: {
       fontSize: 16, fontFamily: 'Inter_700Bold', color: SUCCESS,
+    },
+
+    /* ── Prize Pool Card (in winners sheet, no results yet) ── */
+    prizePoolCard: {
+      alignItems: 'center', gap: 6,
+      backgroundColor: 'rgba(255,215,0,0.07)',
+      borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,215,0,0.25)',
+      paddingHorizontal: 40, paddingVertical: 24, marginBottom: 20,
+    },
+    prizePoolAmount: {
+      fontSize: 36, fontFamily: 'Inter_700Bold', color: GOLD, letterSpacing: -1,
+    },
+    prizePoolLabel: {
+      fontSize: 13, fontFamily: 'Inter_600SemiBold',
+      color: colors.text.muted, textTransform: 'uppercase', letterSpacing: 1,
+    },
+    prizeInfoRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12,
+    },
+    prizeInfoText: {
+      fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.muted,
     },
   });
 }
