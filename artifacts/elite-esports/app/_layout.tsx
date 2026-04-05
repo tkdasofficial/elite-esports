@@ -56,6 +56,8 @@ function RootLayoutNav() {
       <Stack.Screen name="about" />
       <Stack.Screen name="referral" />
       <Stack.Screen name="sponsored" />
+      <Stack.Screen name="account-info" />
+      <Stack.Screen name="disclaimer" />
     </Stack>
   );
 }

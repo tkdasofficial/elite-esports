@@ -49,6 +49,7 @@ export default function AccountInfoScreen() {
 
   /* Editable personal fields */
   const [fullName, setFullName] = useState('');
+  const [username, setUsername] = useState('');
   const [country, setCountry]   = useState('');
   const [region, setRegion]     = useState('');
   const [city, setCity]         = useState('');
@@ -92,6 +93,7 @@ export default function AccountInfoScreen() {
 
       setData(kycData);
       setFullName(kycData.fullName);
+      setUsername(kycData.username);
       setCountry(kycData.country);
       setRegion(kycData.region);
       setCity(kycData.city);
@@ -105,17 +107,42 @@ export default function AccountInfoScreen() {
   };
 
   const handleSave = async () => {
-    if (!fullName.trim()) { setError('Full name is required.'); return; }
-    if (!country.trim())  { setError('Country is required.'); return; }
+    const name  = fullName.trim();
+    const uname = username.trim().toLowerCase().replace(/\s+/g, '');
+
+    if (!name)                        { setError('Full name is required.'); return; }
+    if (!country.trim())              { setError('Country is required.'); return; }
+    if (uname && uname.length < 3)    { setError('Username must be at least 3 characters.'); return; }
+    if (uname && !/^[a-z0-9_]+$/.test(uname)) {
+      setError('Username can only contain letters, numbers and underscores.');
+      return;
+    }
+
     setSaving(true);
     setError('');
     try {
+      /* Check username uniqueness if it changed */
+      if (uname && uname !== (data?.username ?? '').toLowerCase()) {
+        const { data: taken } = await supabase
+          .from('users')
+          .select('id')
+          .eq('username', uname)
+          .neq('id', user!.id)
+          .maybeSingle();
+        if (taken) {
+          setError('That username is already taken. Please choose another.');
+          setSaving(false);
+          return;
+        }
+      }
+
       const countryCode = getCountryCode(country);
       const phoneVal    = phone.trim() ? `${countryCode}${phone.trim()}` : '';
 
       const { error: updateErr } = await supabase.auth.updateUser({
         data: {
-          full_name: fullName.trim(),
+          full_name: name,
+          username:  uname || undefined,
           country:   country.trim(),
           region:    region.trim(),
           city:      city.trim(),
@@ -126,12 +153,14 @@ export default function AccountInfoScreen() {
 
       if (updateErr) throw updateErr;
 
-      /* Also update name in public users table */
+      /* Also update name + username in public users table */
       if (user?.id) {
         await supabase
           .from('users')
-          .update({ name: fullName.trim() })
-          .eq('id', user.id);
+          .upsert(
+            { id: user.id, name, ...(uname ? { username: uname } : {}) },
+            { onConflict: 'id' }
+          );
       }
 
       /* Refresh local state */
@@ -148,6 +177,7 @@ export default function AccountInfoScreen() {
   const handleCancel = () => {
     if (data) {
       setFullName(data.fullName);
+      setUsername(data.username);
       setCountry(data.country);
       setRegion(data.region);
       setCity(data.city);
@@ -286,8 +316,6 @@ export default function AccountInfoScreen() {
               value={data?.username ? `@${data.username}` : '—'}
               colors={colors}
               styles={styles}
-              note="Change via Edit Profile"
-              onPress={() => router.push('/edit-profile')}
             />
             {data?.referralCode ? (
               <>
@@ -316,6 +344,16 @@ export default function AccountInfoScreen() {
                   placeholder="Your full name"
                   iconName="person-outline"
                   autoCapitalize="words"
+                />
+              </View>
+              <View style={styles.fieldGap}>
+                <AuthInput
+                  label="Username"
+                  value={username}
+                  onChangeText={v => { setUsername(v.toLowerCase().replace(/\s/g, '')); setError(''); }}
+                  placeholder="alex_gamer"
+                  iconName="at-outline"
+                  autoCapitalize="none"
                 />
               </View>
               <View style={styles.fieldGap}>
