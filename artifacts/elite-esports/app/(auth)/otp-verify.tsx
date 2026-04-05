@@ -19,13 +19,22 @@ const OTP_LENGTH = 8;
 /**
  * Universal OTP Verification Screen.
  * THIS screen is responsible for sending AND verifying OTPs.
- * Callers just navigate here — they never call signInWithOtp themselves.
+ * Callers just navigate here — they never send emails themselves.
  *
  * Route params:
  *   email — the email address to send OTP to
- *   mode  — 'auth'  → after verify, navigateAfterAuth (KYC for new / tabs for existing)
- *            'reset' → after verify, navigate to reset-password
+ *   mode  — 'signup' → signUp()           → verifyOtp type:'signup'  → KYC
+ *            'auth'  → signInWithOtp()     → verifyOtp type:'email'   → tabs
+ *            'reset' → resetPasswordForEmail() → verifyOtp type:'recovery' → reset-password
+ *
+ * Template mapping:
+ *   signup → "Confirm Sign Up" template
+ *   auth   → "Magic Link" template
+ *   reset  → "Reset Password" template
  */
+
+type OtpMode = 'signup' | 'auth' | 'reset';
+
 export default function OtpVerifyScreen() {
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -33,19 +42,20 @@ export default function OtpVerifyScreen() {
 
   const params = useLocalSearchParams<{ email?: string; mode?: string }>();
   const email = (params.email ?? '').trim().toLowerCase();
-  const mode  = (params.mode ?? 'auth') as 'auth' | 'reset';
+  const mode  = (params.mode ?? 'signup') as OtpMode;
 
   const [digits, setDigits]               = useState<string[]>(Array(OTP_LENGTH).fill(''));
-  const [sending, setSending]             = useState(true);   // initial OTP send in progress
-  const [sendError, setSendError]         = useState('');     // error while sending
+  const [sending, setSending]             = useState(true);
+  const [sendError, setSendError]         = useState('');
   const [verifying, setVerifying]         = useState(false);
   const [verifyError, setVerifyError]     = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [success, setSuccess]             = useState(false);
 
-  const inputRefs  = useRef<Array<TextInput | null>>(Array(OTP_LENGTH).fill(null));
+  const inputRefs   = useRef<Array<TextInput | null>>(Array(OTP_LENGTH).fill(null));
   const cooldownRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const mounted    = useRef(true);
+  const mounted     = useRef(true);
+  const hasSent     = useRef(false); // track if initial signUp was done (for resend)
 
   const gradientColors: [string, string, string] = isDark
     ? ['#150400', '#0A0A0A', '#0A0A0A']
@@ -63,30 +73,57 @@ export default function OtpVerifyScreen() {
     }, 1000);
   }, []);
 
-  /* ── Send OTP (called on mount AND on resend) ── */
+  /* ── Send OTP ──
+   * mode='signup': signUp() → "Confirm Sign Up" template; resend uses resend({ type:'signup' })
+   * mode='auth':   signInWithOtp() → "Magic Link" template
+   * mode='reset':  resetPasswordForEmail() → "Reset Password" template
+   */
   const sendOtp = useCallback(async (isResend = false) => {
     if (!mounted.current) return;
     if (isResend) setSendError('');
     setSending(true);
+
     try {
-      /*
-       * Reset mode → resetPasswordForEmail (triggers "Reset Password" email template,
-       *   verifyOtp type: 'recovery')
-       * Auth mode  → signInWithOtp (triggers "Confirm signup" / "Magic Link" template,
-       *   verifyOtp type: 'email')
-       */
-      const { error } = mode === 'reset'
-        ? await supabase.auth.resetPasswordForEmail(email)
-        : await supabase.auth.signInWithOtp({
-            email,
-            options: { shouldCreateUser: true },
-          });
+      let err: any = null;
+
+      if (mode === 'signup') {
+        if (isResend || hasSent.current) {
+          /* Resend "Confirm Sign Up" email (user already created) */
+          const { error } = await supabase.auth.resend({ type: 'signup', email });
+          err = error;
+        } else {
+          /* First send: create account + send "Confirm Sign Up" email */
+          const tempPwd = `_T${Math.random().toString(36).slice(2)}${Date.now()}_`;
+          const { error } = await supabase.auth.signUp({ email, password: tempPwd });
+          if (error && error.message?.toLowerCase().includes('already registered')) {
+            /* Account already exists from a previous attempt — just resend */
+            const { error: resendErr } = await supabase.auth.resend({ type: 'signup', email });
+            err = resendErr;
+          } else {
+            err = error;
+          }
+          hasSent.current = true;
+        }
+      } else if (mode === 'reset') {
+        /* "Reset Password" template */
+        const { error } = await supabase.auth.resetPasswordForEmail(email);
+        err = error;
+      } else {
+        /* mode='auth' — "Magic Link" template */
+        const { error } = await supabase.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: false },
+        });
+        err = error;
+      }
+
       if (!mounted.current) return;
-      if (error) {
+
+      if (err) {
         setSendError(
-          error.message?.toLowerCase().includes('rate')
+          err.message?.toLowerCase().includes('rate')
             ? 'Please wait a moment before requesting a new code.'
-            : 'Could not send verification code. Please try again.'
+            : `Could not send verification code: ${err.message ?? 'Please try again.'}`
         );
       } else {
         setSendError('');
@@ -104,7 +141,7 @@ export default function OtpVerifyScreen() {
     }
   }, [email, mode, startCooldown]);
 
-  /* ── On mount: send OTP immediately, then focus first box ── */
+  /* ── On mount: send OTP immediately ── */
   useEffect(() => {
     mounted.current = true;
     sendOtp(false);
@@ -121,11 +158,15 @@ export default function OtpVerifyScreen() {
     setVerifyError('');
     setVerifying(true);
     try {
+      const otpType =
+        mode === 'signup' ? 'signup' :
+        mode === 'reset'  ? 'recovery' :
+                            'email';
+
       const { data, error: verifyErr } = await supabase.auth.verifyOtp({
         email,
         token: code,
-        /* 'recovery' pairs with resetPasswordForEmail; 'email' pairs with signInWithOtp */
-        type: mode === 'reset' ? 'recovery' : 'email',
+        type: otpType,
       });
 
       if (!mounted.current) return;
@@ -143,7 +184,7 @@ export default function OtpVerifyScreen() {
       }
 
       await deviceFingerprint.logEvent(
-        mode === 'reset' ? 'otp_verify_reset' : 'otp_verify_auth',
+        `otp_verify_${mode}`,
         data.session.user.email,
       );
 
@@ -163,11 +204,9 @@ export default function OtpVerifyScreen() {
     }
   }, [email, mode, verifying]);
 
-  /* ── Digit input handler ── */
+  /* ── Digit input ── */
   const handleChange = useCallback((text: string, index: number) => {
     const pasted = text.replace(/[^0-9]/g, '');
-
-    /* Handle full-code paste */
     if (pasted.length >= OTP_LENGTH) {
       const filled = pasted.slice(0, OTP_LENGTH).split('');
       setDigits(filled);
@@ -176,21 +215,14 @@ export default function OtpVerifyScreen() {
       verify(filled.join(''));
       return;
     }
-
     const char = pasted.slice(-1);
     if (!char) return;
-
     const next = [...digits];
     next[index] = char;
     setDigits(next);
     setVerifyError('');
-
-    if (index < OTP_LENGTH - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
-
-    const full = next.join('');
-    if (!next.includes('')) verify(full);
+    if (index < OTP_LENGTH - 1) inputRefs.current[index + 1]?.focus();
+    if (!next.includes('')) verify(next.join(''));
   }, [digits, verify]);
 
   const handleKeyPress = useCallback((key: string, index: number) => {
@@ -202,53 +234,57 @@ export default function OtpVerifyScreen() {
     }
   }, [digits]);
 
-  /* ── Derived UI state ── */
-  const modeLabel = mode === 'reset' ? 'Reset Password' : 'Verify Email';
-  const modeSubtitle = mode === 'reset'
-    ? 'Enter the 8-digit code we sent to reset your password'
-    : 'Enter the 8-digit code we sent to verify your email';
+  /* ── Mode labels ── */
+  const modeConfig = {
+    signup: {
+      icon:     'person-add-outline' as const,
+      title:    'Verify Email',
+      subtitle: 'Enter the 8-digit code from your\n"Confirm Sign Up" email',
+    },
+    auth: {
+      icon:     'key-outline' as const,
+      title:    'Sign In',
+      subtitle: 'Enter the 8-digit code from your\nlogin email',
+    },
+    reset: {
+      icon:     'lock-open-outline' as const,
+      title:    'Reset Password',
+      subtitle: 'Enter the 8-digit code from your\n"Reset Password" email',
+    },
+  };
+  const { icon, title, subtitle } = modeConfig[mode];
 
   const isInputBlocked = sending || success;
-  const filled = digits.filter(Boolean).length === OTP_LENGTH;
+  const filled         = digits.filter(Boolean).length === OTP_LENGTH;
 
-  /* ══════════════════════════════════════════════════════
-     SUCCESS STATE
-  ══════════════════════════════════════════════════════ */
+  /* ══ SUCCESS ══ */
   if (success) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient colors={gradientColors} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
-        <View style={styles.successWrap}>
+        <View style={styles.centeredWrap}>
           <View style={[styles.iconWrap, { borderColor: '#22C55E55' }]}>
             <Ionicons name="checkmark-circle" size={36} color="#22C55E" />
           </View>
           <Text style={styles.title}>Verified!</Text>
-          <Text style={styles.subtitle}>Identity confirmed. Taking you there…</Text>
+          <Text style={styles.subtitle}>Identity confirmed.{'\n'}Taking you there…</Text>
           <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 24 }} />
         </View>
       </View>
     );
   }
 
-  /* ══════════════════════════════════════════════════════
-     SENDING STATE (initial load)
-  ══════════════════════════════════════════════════════ */
+  /* ══ INITIAL SENDING ══ */
   if (sending && !sendError) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient colors={gradientColors} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
-        <TouchableOpacity
-          style={[styles.backBtn, { top: insets.top + 10 }]}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="arrow-back" size={20} color={colors.text.primary} />
-        </TouchableOpacity>
-        <View style={styles.successWrap}>
+        <BackBtn insets={insets} colors={colors} styles={styles} />
+        <View style={styles.centeredWrap}>
           <View style={styles.iconWrap}>
             <Ionicons name="mail-outline" size={30} color={colors.primary} />
           </View>
-          <Text style={styles.title}>{modeLabel}</Text>
+          <Text style={styles.title}>{title}</Text>
           <ActivityIndicator color={colors.primary} size="large" style={{ marginTop: 16 }} />
           <Text style={[styles.subtitle, { marginTop: 16 }]}>
             Sending code to{'\n'}
@@ -259,38 +295,22 @@ export default function OtpVerifyScreen() {
     );
   }
 
-  /* ══════════════════════════════════════════════════════
-     SEND ERROR STATE
-  ══════════════════════════════════════════════════════ */
+  /* ══ SEND ERROR ══ */
   if (sendError && !sending) {
     return (
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <LinearGradient colors={gradientColors} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
-        <TouchableOpacity
-          style={[styles.backBtn, { top: insets.top + 10 }]}
-          onPress={() => router.back()}
-          activeOpacity={0.7}
-        >
-          <Ionicons name="arrow-back" size={20} color={colors.text.primary} />
-        </TouchableOpacity>
-        <View style={styles.successWrap}>
+        <BackBtn insets={insets} colors={colors} styles={styles} />
+        <View style={styles.centeredWrap}>
           <View style={[styles.iconWrap, { borderColor: colors.status.error + '55' }]}>
             <Ionicons name="mail-unread-outline" size={30} color={colors.status.error} />
           </View>
           <Text style={styles.title}>Could Not Send Code</Text>
           <Text style={[styles.subtitle, { color: colors.status.error }]}>{sendError}</Text>
-          <TouchableOpacity
-            style={styles.btn}
-            onPress={() => sendOtp(false)}
-            activeOpacity={0.85}
-          >
+          <TouchableOpacity style={styles.btn} onPress={() => sendOtp(false)} activeOpacity={0.85}>
             <Text style={styles.btnText}>Try Again</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.backLink}
-            onPress={() => router.back()}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity style={styles.backLink} onPress={() => router.back()} activeOpacity={0.7}>
             <Text style={styles.backLinkText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -298,20 +318,11 @@ export default function OtpVerifyScreen() {
     );
   }
 
-  /* ══════════════════════════════════════════════════════
-     MAIN OTP ENTRY STATE
-  ══════════════════════════════════════════════════════ */
+  /* ══ MAIN OTP ENTRY ══ */
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient colors={gradientColors} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
-
-      <TouchableOpacity
-        style={[styles.backBtn, { top: insets.top + 10 }]}
-        onPress={() => router.back()}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="arrow-back" size={20} color={colors.text.primary} />
-      </TouchableOpacity>
+      <BackBtn insets={insets} colors={colors} styles={styles} />
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -319,14 +330,13 @@ export default function OtpVerifyScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          {/* Icon */}
           <View style={styles.iconWrap}>
-            <Ionicons name="shield-checkmark-outline" size={30} color={colors.primary} />
+            <Ionicons name={icon} size={30} color={colors.primary} />
           </View>
 
-          <Text style={styles.title}>{modeLabel}</Text>
+          <Text style={styles.title}>{title}</Text>
           <Text style={styles.subtitle}>
-            {modeSubtitle}{'\n'}
+            {subtitle}{'\n'}
             <Text style={{ color: colors.primary, fontFamily: 'Inter_600SemiBold' }}>{email}</Text>
           </Text>
 
@@ -358,7 +368,6 @@ export default function OtpVerifyScreen() {
             ))}
           </View>
 
-          {/* Verify error */}
           {!!verifyError && (
             <View style={styles.errorWrap}>
               <Ionicons name="alert-circle-outline" size={16} color={colors.status.error} />
@@ -366,7 +375,6 @@ export default function OtpVerifyScreen() {
             </View>
           )}
 
-          {/* Verify button */}
           <TouchableOpacity
             style={[styles.btn, (!filled || verifying || isInputBlocked) && styles.btnDisabled]}
             onPress={() => verify(digits.join(''))}
@@ -415,6 +423,18 @@ export default function OtpVerifyScreen() {
   );
 }
 
+function BackBtn({ insets, colors, styles }: { insets: any; colors: AppColors; styles: any }) {
+  return (
+    <TouchableOpacity
+      style={[styles.backBtn, { top: insets.top + 10 }]}
+      onPress={() => router.back()}
+      activeOpacity={0.7}
+    >
+      <Ionicons name="arrow-back" size={20} color={colors.text.primary} />
+    </TouchableOpacity>
+  );
+}
+
 function createStyles(colors: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background.dark },
@@ -424,13 +444,8 @@ function createStyles(colors: AppColors) {
       backgroundColor: colors.background.elevated,
       alignItems: 'center', justifyContent: 'center',
     },
-    scroll: {
-      flexGrow: 1, justifyContent: 'center',
-      paddingHorizontal: 24,
-    },
-    successWrap: {
-      flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32,
-    },
+    scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24 },
+    centeredWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
     iconWrap: {
       alignSelf: 'center', width: 80, height: 80, borderRadius: 40,
       backgroundColor: colors.background.elevated,
@@ -446,33 +461,19 @@ function createStyles(colors: AppColors) {
       color: colors.text.secondary, textAlign: 'center',
       marginBottom: 36, lineHeight: 22, paddingHorizontal: 8,
     },
-
-    /* OTP boxes — 8 digits */
-    otpRow: {
-      flexDirection: 'row', justifyContent: 'center',
-      gap: 7, marginBottom: 24,
-    },
+    otpRow: { flexDirection: 'row', justifyContent: 'center', gap: 7, marginBottom: 24 },
     otpBox: {
       width: 36, height: 50, borderRadius: 12,
       backgroundColor: colors.background.elevated,
       borderWidth: 1.5, borderColor: colors.border.default,
       alignItems: 'center', justifyContent: 'center',
     },
-    otpBoxFilled: {
-      borderColor: colors.primary,
-      backgroundColor: colors.primary + '12',
-    },
-    otpBoxError: {
-      borderColor: colors.status.error,
-      backgroundColor: colors.status.error + '10',
-    },
+    otpBoxFilled:  { borderColor: colors.primary, backgroundColor: colors.primary + '12' },
+    otpBoxError:   { borderColor: colors.status.error, backgroundColor: colors.status.error + '10' },
     otpInput: {
-      width: '100%', height: '100%',
-      textAlign: 'center',
-      fontSize: 18, fontFamily: 'Inter_700Bold',
-      color: colors.text.primary,
+      width: '100%', height: '100%', textAlign: 'center',
+      fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.text.primary,
     },
-
     errorWrap: {
       flexDirection: 'row', alignItems: 'flex-start',
       gap: 6, marginBottom: 16, paddingHorizontal: 4,
@@ -481,39 +482,27 @@ function createStyles(colors: AppColors) {
       color: colors.status.error, fontSize: 13,
       fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18,
     },
-
     btn: {
       backgroundColor: colors.primary, borderRadius: 30, height: 54,
       alignItems: 'center', justifyContent: 'center', marginTop: 4,
     },
     btnDisabled: { opacity: 0.4 },
-    btnInner: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-    btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
-
-    backLink: { alignItems: 'center', marginTop: 16, paddingVertical: 6 },
-    backLinkText: { color: colors.text.muted, fontSize: 13, fontFamily: 'Inter_400Regular' },
-
+    btnInner:    { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    btnText:     { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
+    backLink:    { alignItems: 'center', marginTop: 16, paddingVertical: 6 },
+    backLinkText:{ color: colors.text.muted, fontSize: 13, fontFamily: 'Inter_400Regular' },
     resendRow: {
       flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
       gap: 6, marginTop: 20,
     },
-    resendLabel: {
-      fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted,
-    },
-    resendBtn: {
-      fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.primary,
-    },
-    resendBtnDisabled: { opacity: 0.45 },
-
+    resendLabel:      { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted },
+    resendBtn:        { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.primary },
+    resendBtnDisabled:{ opacity: 0.45 },
     hintBox: {
-      flexDirection: 'row', alignItems: 'flex-start', gap: 8,
-      marginTop: 24, padding: 16,
-      backgroundColor: colors.background.elevated,
+      flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 24,
+      padding: 16, backgroundColor: colors.background.elevated,
       borderRadius: 14, borderWidth: 1, borderColor: colors.border.default,
     },
-    hintText: {
-      flex: 1, fontSize: 12, fontFamily: 'Inter_400Regular',
-      color: colors.text.muted, lineHeight: 18,
-    },
+    hintText: { flex: 1, fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, lineHeight: 18 },
   });
 }

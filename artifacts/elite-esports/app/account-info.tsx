@@ -47,13 +47,19 @@ export default function AccountInfoScreen() {
   const [saving, setSaving]   = useState(false);
   const [error, setError]     = useState('');
 
-  /* Editable fields */
+  /* Editable personal fields */
   const [fullName, setFullName] = useState('');
   const [country, setCountry]   = useState('');
   const [region, setRegion]     = useState('');
   const [city, setCity]         = useState('');
   const [zip, setZip]           = useState('');
   const [phone, setPhone]       = useState('');
+
+  /* Email change */
+  const [changingEmail, setChangingEmail] = useState(false);
+  const [newEmail, setNewEmail]           = useState('');
+  const [emailSaving, setEmailSaving]     = useState(false);
+  const [emailMsg, setEmailMsg]           = useState('');
 
   useEffect(() => {
     loadData();
@@ -152,6 +158,31 @@ export default function AccountInfoScreen() {
     setEditing(false);
   };
 
+  const handleChangeEmail = async () => {
+    const trimmed = newEmail.trim().toLowerCase();
+    if (!trimmed) { setEmailMsg('Please enter a new email address.'); return; }
+    if (trimmed === (data?.email ?? '').toLowerCase()) {
+      setEmailMsg('This is already your current email address.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      setEmailMsg('Please enter a valid email address.');
+      return;
+    }
+    setEmailSaving(true);
+    setEmailMsg('');
+    try {
+      const { error: updateErr } = await supabase.auth.updateUser({ email: trimmed });
+      if (updateErr) throw updateErr;
+      setEmailMsg('✓ A confirmation link was sent to your new email. Click it to complete the change.');
+      setNewEmail('');
+    } catch (e: any) {
+      setEmailMsg(e?.message ?? 'Failed to request email change. Try again.');
+    } finally {
+      setEmailSaving(false);
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.container}>
@@ -192,17 +223,62 @@ export default function AccountInfoScreen() {
             </View>
           )}
 
-          {/* ── Account credentials (read-only) ── */}
+          {/* ── Account credentials ── */}
           <SectionTitle label="Account" colors={colors} styles={styles} />
           <View style={styles.card}>
-            <InfoRow
-              icon="mail-outline"
-              label="Email"
-              value={data?.email ?? '—'}
-              colors={colors}
-              styles={styles}
-              note="Contact support to change email"
-            />
+            {/* Email row with inline change form */}
+            <View style={styles.infoRow}>
+              <View style={[styles.infoIconBox, { backgroundColor: colors.primary + '15' }]}>
+                <Ionicons name="mail-outline" size={16} color={colors.primary} />
+              </View>
+              <View style={styles.infoText}>
+                <Text style={styles.infoLabel}>Email</Text>
+                <Text style={styles.infoValue} numberOfLines={1}>{data?.email ?? '—'}</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => { setChangingEmail(v => !v); setEmailMsg(''); setNewEmail(''); }}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Text style={styles.changeEmailBtn}>
+                  {changingEmail ? 'Cancel' : 'Change'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {changingEmail && (
+              <View style={styles.changeEmailWrap}>
+                <AuthInput
+                  label="New Email Address"
+                  value={newEmail}
+                  onChangeText={v => { setNewEmail(v); setEmailMsg(''); }}
+                  placeholder="you@example.com"
+                  iconName="mail-outline"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  autoComplete="email"
+                  onSubmitEditing={handleChangeEmail}
+                  returnKeyType="send"
+                />
+                {!!emailMsg && (
+                  <Text style={[
+                    styles.emailMsgText,
+                    { color: emailMsg.startsWith('✓') ? '#22C55E' : colors.status.error },
+                  ]}>{emailMsg}</Text>
+                )}
+                <TouchableOpacity
+                  style={[styles.saveBtn, (!newEmail.trim() || emailSaving) && styles.btnDisabled, { marginTop: 10 }]}
+                  onPress={handleChangeEmail}
+                  disabled={!newEmail.trim() || emailSaving}
+                  activeOpacity={0.85}
+                >
+                  {emailSaving
+                    ? <ActivityIndicator color="#fff" size="small" />
+                    : <Text style={styles.saveText}>Send Confirmation</Text>
+                  }
+                </TouchableOpacity>
+              </View>
+            )}
+
             <Divider colors={colors} />
             <InfoRow
               icon="at-outline"
@@ -456,6 +532,17 @@ function createStyles(colors: AppColors) {
     errorText: {
       color: colors.status.error, fontSize: 13,
       fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18,
+    },
+
+    changeEmailBtn: {
+      fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.primary,
+    },
+    changeEmailWrap: {
+      paddingHorizontal: 16, paddingBottom: 14,
+    },
+    emailMsgText: {
+      fontSize: 12, fontFamily: 'Inter_400Regular',
+      lineHeight: 18, marginTop: 6,
     },
 
     editActions: { flexDirection: 'row', gap: 10, marginTop: 8 },

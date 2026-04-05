@@ -62,8 +62,8 @@ export default function EmailVerifyScreen() {
         /* Existing user → show password login step */
         setStep('login');
       } else {
-        /* New user → OTP verify → KYC */
-        router.push({ pathname: '/(auth)/otp-verify', params: { email: trimmedEmail, mode: 'auth' } });
+        /* New user → OTP verify (Confirm Sign Up template) → KYC */
+        router.push({ pathname: '/(auth)/otp-verify', params: { email: trimmedEmail, mode: 'signup' } });
       }
     } catch {
       setError('Could not reach the server. Please try again.');
@@ -242,6 +242,26 @@ export default function EmailVerifyScreen() {
               >
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </TouchableOpacity>
+
+              {/* Magic link — passwordless login via email link */}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or</Text>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.magicLinkBtn, loading && styles.btnDisabled]}
+                onPress={() => {
+                  setError('');
+                  router.push({ pathname: '/(auth)/otp-verify', params: { email: trimmedEmail, mode: 'auth' } });
+                }}
+                disabled={loading}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="link-outline" size={17} color={colors.primary} />
+                <Text style={styles.magicLinkText}>Send me a login link</Text>
+              </TouchableOpacity>
             </>
           )}
         </ScrollView>
@@ -313,5 +333,17 @@ function createStyles(colors: AppColors) {
     row:         { flexDirection: 'row', alignItems: 'center', gap: 10 },
     forgotBtn:   { alignItems: 'center', paddingVertical: 16, marginTop: 2 },
     forgotText:  { color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+    dividerRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 4,
+    },
+    dividerLine: { flex: 1, height: 1, backgroundColor: colors.border.default },
+    dividerText: { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted },
+    magicLinkBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+      gap: 8, height: 48, borderRadius: 24,
+      borderWidth: 1.5, borderColor: colors.primary + '55',
+      backgroundColor: colors.primary + '0D',
+    },
+    magicLinkText: { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.primary },
   });
 }
