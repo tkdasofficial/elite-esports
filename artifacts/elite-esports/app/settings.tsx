@@ -289,6 +289,17 @@ export default function SettingsScreen() {
         {/* ── Account ── */}
         <Text style={styles.sectionTitle}>Account</Text>
         <View style={styles.card}>
+          <TouchableOpacity style={styles.row} onPress={() => router.push('/account-info')} activeOpacity={0.75}>
+            <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
+              <Ionicons name="person-outline" size={18} color={colors.primary} />
+            </View>
+            <View style={styles.rowText}>
+              <Text style={styles.rowLabel}>Account Info</Text>
+              <Text style={styles.rowSublabel}>View and edit your KYC information</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+          </TouchableOpacity>
+          <View style={{ height: 1, backgroundColor: colors.border.default, marginHorizontal: 16 }} />
           <TouchableOpacity style={styles.row} onPress={handleResetPassword} disabled={resetLoading} activeOpacity={0.75}>
             <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
               <Ionicons name="mail-outline" size={18} color={colors.primary} />

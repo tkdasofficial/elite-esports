@@ -69,13 +69,18 @@ export default function OtpVerifyScreen() {
     if (isResend) setSendError('');
     setSending(true);
     try {
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          /* For reset, never create a new user. For auth, allow creation for new signups. */
-          shouldCreateUser: mode !== 'reset',
-        },
-      });
+      /*
+       * Reset mode → resetPasswordForEmail (triggers "Reset Password" email template,
+       *   verifyOtp type: 'recovery')
+       * Auth mode  → signInWithOtp (triggers "Confirm signup" / "Magic Link" template,
+       *   verifyOtp type: 'email')
+       */
+      const { error } = mode === 'reset'
+        ? await supabase.auth.resetPasswordForEmail(email)
+        : await supabase.auth.signInWithOtp({
+            email,
+            options: { shouldCreateUser: true },
+          });
       if (!mounted.current) return;
       if (error) {
         setSendError(
@@ -119,7 +124,8 @@ export default function OtpVerifyScreen() {
       const { data, error: verifyErr } = await supabase.auth.verifyOtp({
         email,
         token: code,
-        type: 'email',
+        /* 'recovery' pairs with resetPasswordForEmail; 'email' pairs with signInWithOtp */
+        type: mode === 'reset' ? 'recovery' : 'email',
       });
 
       if (!mounted.current) return;

@@ -27,6 +27,7 @@ export default function EmailVerifyScreen() {
   const [step, setStep]         = useState<Step>('email');
   const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
+  const [checking, setChecking] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [error, setError]       = useState('');
 
@@ -36,28 +37,39 @@ export default function EmailVerifyScreen() {
 
   const trimmedEmail = email.trim().toLowerCase();
 
-  /* ── Validate email then send OTP (for new accounts) ── */
-  const handleEmailContinue = () => {
+  /* ── Continue: check DB → route appropriately ── */
+  const handleContinue = async () => {
     if (!trimmedEmail || !EMAIL_REGEX.test(trimmedEmail)) {
       setError('Please enter a valid email address.');
       return;
     }
     setError('');
-    /* Navigate to OTP page — it will send the code itself on mount */
-    router.push({
-      pathname: '/(auth)/otp-verify',
-      params: { email: trimmedEmail, mode: 'auth' },
-    });
-  };
+    setChecking(true);
 
-  /* ── Show password login step ── */
-  const handleShowLogin = () => {
-    if (!trimmedEmail || !EMAIL_REGEX.test(trimmedEmail)) {
-      setError('Please enter your email first.');
-      return;
+    try {
+      /* Check if email is already registered — no email sent, pure DB lookup */
+      const { data: exists, error: rpcErr } = await supabase
+        .rpc('check_email_registered', { p_email: trimmedEmail });
+
+      if (rpcErr) {
+        /* RPC not available yet — fall back: treat as new user → OTP */
+        console.warn('check_email_registered RPC not found, defaulting to OTP flow');
+        router.push({ pathname: '/(auth)/otp-verify', params: { email: trimmedEmail, mode: 'auth' } });
+        return;
+      }
+
+      if (exists) {
+        /* Existing user → show password login step */
+        setStep('login');
+      } else {
+        /* New user → OTP verify → KYC */
+        router.push({ pathname: '/(auth)/otp-verify', params: { email: trimmedEmail, mode: 'auth' } });
+      }
+    } catch {
+      setError('Could not reach the server. Please try again.');
+    } finally {
+      setChecking(false);
     }
-    setError('');
-    setStep('login');
   };
 
   /* ── Password sign-in ── */
@@ -82,11 +94,8 @@ export default function EmailVerifyScreen() {
 
       const msg = (err?.message ?? '').toLowerCase();
       if (msg.includes('email not confirmed')) {
-        /* Account exists but unconfirmed → send OTP to verify */
-        router.push({
-          pathname: '/(auth)/otp-verify',
-          params: { email: trimmedEmail, mode: 'auth' },
-        });
+        /* Unconfirmed account → verify via OTP */
+        router.push({ pathname: '/(auth)/otp-verify', params: { email: trimmedEmail, mode: 'auth' } });
         return;
       }
 
@@ -98,14 +107,10 @@ export default function EmailVerifyScreen() {
     }
   };
 
-  /* ── Forgot password → OTP in reset mode ── */
+  /* ── Forgot password → OTP reset flow (uses resetPasswordForEmail) ── */
   const handleForgotPassword = () => {
     setError('');
-    /* Navigate to OTP page — it will send the reset code itself on mount */
-    router.push({
-      pathname: '/(auth)/otp-verify',
-      params: { email: trimmedEmail, mode: 'reset' },
-    });
+    router.push({ pathname: '/(auth)/otp-verify', params: { email: trimmedEmail, mode: 'reset' } });
   };
 
   const goBack = () => {
@@ -114,30 +119,11 @@ export default function EmailVerifyScreen() {
     setPassword('');
   };
 
-  const stepMeta: Record<Step, {
-    icon: keyof typeof Ionicons.glyphMap;
-    title: string;
-    subtitle: string;
-  }> = {
-    email: {
-      icon: 'mail-outline',
-      title: 'Get Started',
-      subtitle: 'Enter your email to sign in or create an account',
-    },
-    login: {
-      icon: 'lock-closed-outline',
-      title: 'Welcome Back',
-      subtitle: 'Enter your password to continue',
-    },
-  };
-
-  const { icon, title, subtitle } = stepMeta[step];
-
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
       <LinearGradient colors={gradientColors} locations={[0, 0.45, 1]} style={StyleSheet.absoluteFill} />
 
-      {step !== 'email' && (
+      {step === 'login' && (
         <TouchableOpacity
           style={[styles.backBtn, { top: insets.top + 10 }]}
           onPress={goBack}
@@ -151,18 +137,26 @@ export default function EmailVerifyScreen() {
         <ScrollView
           contentContainerStyle={[
             styles.scroll,
-            { paddingBottom: insets.bottom + 48, paddingTop: step !== 'email' ? 56 : 16 },
+            { paddingBottom: insets.bottom + 48, paddingTop: step === 'login' ? 56 : 16 },
           ]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           {/* Icon */}
           <View style={styles.iconWrap}>
-            <Ionicons name={icon} size={30} color={colors.primary} />
+            <Ionicons
+              name={step === 'email' ? 'mail-outline' : 'lock-closed-outline'}
+              size={30}
+              color={colors.primary}
+            />
           </View>
 
-          <Text style={styles.title}>{title}</Text>
-          <Text style={styles.subtitle}>{subtitle}</Text>
+          <Text style={styles.title}>{step === 'email' ? 'Get Started' : 'Welcome Back'}</Text>
+          <Text style={styles.subtitle}>
+            {step === 'email'
+              ? 'Enter your email to sign in or create an account'
+              : 'Enter your password to continue'}
+          </Text>
 
           {/* ── Email step ── */}
           {step === 'email' && (
@@ -177,37 +171,27 @@ export default function EmailVerifyScreen() {
                   keyboardType="email-address"
                   autoCapitalize="none"
                   autoComplete="email"
-                  onSubmitEditing={handleEmailContinue}
+                  onSubmitEditing={handleContinue}
                   returnKeyType="go"
                 />
               </View>
 
               {!!error && <ErrorRow text={error} colors={colors} styles={styles} />}
 
-              {/* Primary: send OTP (new accounts / continue with code) */}
               <TouchableOpacity
-                style={[styles.btn, !email.trim() && styles.btnDisabled]}
-                onPress={handleEmailContinue}
-                disabled={!email.trim()}
+                style={[styles.btn, (!email.trim() || checking) && styles.btnDisabled]}
+                onPress={handleContinue}
+                disabled={!email.trim() || checking}
                 activeOpacity={0.85}
               >
-                <View style={styles.row}>
-                  <Ionicons name="mail-outline" size={18} color="#fff" />
-                  <Text style={styles.btnText}>Continue with Code</Text>
-                </View>
-              </TouchableOpacity>
-
-              {/* Secondary: password login (existing accounts) */}
-              <TouchableOpacity
-                style={[styles.passwordBtn, !email.trim() && styles.btnDisabled]}
-                onPress={handleShowLogin}
-                disabled={!email.trim()}
-                activeOpacity={0.85}
-              >
-                <View style={styles.row}>
-                  <Ionicons name="lock-closed-outline" size={17} color={colors.text.primary} />
-                  <Text style={styles.passwordBtnText}>Sign In with Password</Text>
-                </View>
+                {checking ? (
+                  <View style={styles.row}>
+                    <ActivityIndicator color="#fff" size="small" />
+                    <Text style={styles.btnText}>Checking…</Text>
+                  </View>
+                ) : (
+                  <Text style={styles.btnText}>Continue</Text>
+                )}
               </TouchableOpacity>
             </>
           )}
@@ -216,11 +200,7 @@ export default function EmailVerifyScreen() {
           {step === 'login' && (
             <>
               {/* Email pill */}
-              <TouchableOpacity
-                style={styles.emailPill}
-                onPress={goBack}
-                activeOpacity={0.7}
-              >
+              <TouchableOpacity style={styles.emailPill} onPress={goBack} activeOpacity={0.7}>
                 <Ionicons name="mail-outline" size={15} color={colors.text.muted} />
                 <Text style={styles.emailPillText} numberOfLines={1}>{email}</Text>
                 <Text style={styles.changeText}>Change</Text>
@@ -262,16 +242,6 @@ export default function EmailVerifyScreen() {
               >
                 <Text style={styles.forgotText}>Forgot Password?</Text>
               </TouchableOpacity>
-
-              {/* Let existing users also use OTP if they prefer */}
-              <TouchableOpacity
-                style={styles.otpLink}
-                onPress={handleEmailContinue}
-                disabled={loading}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.otpLinkText}>Sign in with verification code instead</Text>
-              </TouchableOpacity>
             </>
           )}
         </ScrollView>
@@ -291,17 +261,14 @@ function ErrorRow({ text, colors, styles }: { text: string; colors: AppColors; s
 
 function createStyles(colors: AppColors) {
   return StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background.dark },
+    container:   { flex: 1, backgroundColor: colors.background.dark },
     backBtn: {
       position: 'absolute', left: 16, zIndex: 20,
       width: 38, height: 38, borderRadius: 19,
       backgroundColor: colors.background.elevated,
       alignItems: 'center', justifyContent: 'center',
     },
-    scroll: {
-      flexGrow: 1, justifyContent: 'center',
-      paddingHorizontal: 24,
-    },
+    scroll: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: 24 },
     iconWrap: {
       alignSelf: 'center', width: 80, height: 80, borderRadius: 40,
       backgroundColor: colors.background.elevated,
@@ -327,8 +294,8 @@ function createStyles(colors: AppColors) {
       flex: 1, color: colors.text.secondary,
       fontSize: 13, fontFamily: 'Inter_400Regular',
     },
-    changeText: { color: colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
-    fieldWrap: { marginBottom: 10 },
+    changeText:  { color: colors.primary, fontSize: 13, fontFamily: 'Inter_600SemiBold' },
+    fieldWrap:   { marginBottom: 10 },
     errorWrap: {
       flexDirection: 'row', alignItems: 'flex-start',
       gap: 6, marginBottom: 14, paddingHorizontal: 4,
@@ -337,32 +304,14 @@ function createStyles(colors: AppColors) {
       color: colors.status.error, fontSize: 13,
       fontFamily: 'Inter_400Regular', flex: 1, lineHeight: 18,
     },
-
-    /* Primary button (OTP / sign in) */
     btn: {
       backgroundColor: colors.primary, borderRadius: 30, height: 54,
       alignItems: 'center', justifyContent: 'center', marginTop: 6,
     },
     btnDisabled: { opacity: 0.4 },
-    btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
-    row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-
-    /* Secondary button (password login) */
-    passwordBtn: {
-      backgroundColor: colors.background.elevated,
-      borderRadius: 30, height: 54,
-      alignItems: 'center', justifyContent: 'center',
-      marginTop: 12, borderWidth: 1, borderColor: colors.border.default,
-    },
-    passwordBtnText: {
-      color: colors.text.primary, fontSize: 15,
-      fontFamily: 'Inter_600SemiBold', letterSpacing: 0.1,
-    },
-
-    forgotBtn: { alignItems: 'center', paddingVertical: 16, marginTop: 2 },
-    forgotText: { color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
-
-    otpLink: { alignItems: 'center', paddingVertical: 8 },
-    otpLinkText: { color: colors.text.muted, fontSize: 13, fontFamily: 'Inter_400Regular' },
+    btnText:     { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold', letterSpacing: 0.2 },
+    row:         { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    forgotBtn:   { alignItems: 'center', paddingVertical: 16, marginTop: 2 },
+    forgotText:  { color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
   });
 }
