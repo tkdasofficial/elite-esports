@@ -364,7 +364,7 @@ export default function SettingsScreen() {
         </View>
 
         <View style={styles.appInfoRow}>
-          <Text style={styles.version}>Elite eSports · v1.0.0</Text>
+          <Text style={styles.version}>Elite eSports · v2.5.0</Text>
           <Text style={styles.packageName}>com.elite.esports.android</Text>
         </View>
       </ScrollView>

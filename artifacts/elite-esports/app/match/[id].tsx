@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, StyleSheet,
   TouchableOpacity, Alert, Platform, BackHandler,
-  ActivityIndicator, Linking,
+  ActivityIndicator, Linking, Modal, FlatList,
 } from 'react-native';
 import { SkeletonBar } from '@/components/SkeletonBar';
 import { ConfirmModal } from '@/components/ConfirmModal';
@@ -15,11 +15,22 @@ import { useTheme } from '@/store/ThemeContext';
 import { STATUS_CONFIG } from '@/utils/types';
 import { useAuth } from '@/store/AuthContext';
 import { useMatchDetail } from '@/features/match/hooks/useMatchDetail';
+import { useMatchPlayers } from '@/features/match/hooks/useMatchPlayers';
+import { useMatchWinners } from '@/features/match/hooks/useMatchWinners';
 import { AdLoadingOverlay } from '@/components/AdLoadingOverlay';
 import { useAdGate } from '@/hooks/useAdGate';
 import { supabase } from '@/services/supabase';
 import { useWallet } from '@/store/WalletContext';
 import type { AppColors } from '@/utils/colors';
+
+const MEDAL_COLORS = ['#FFD700', '#C0C0C0', '#CD7F32'];
+
+function rankMedal(rank: number): string {
+  if (rank === 1) return '🥇';
+  if (rank === 2) return '🥈';
+  if (rank === 3) return '🥉';
+  return `#${rank}`;
+}
 
 /** Display a prize amount cleanly — whole numbers show without decimals,
  *  fractional amounts show with 2 decimal places. */
@@ -66,6 +77,11 @@ export default function MatchDetailScreen() {
   const [claimResult,       setClaimResult]       = useState<{ rank: number; points: number; prize: number } | null>(null);
   const [alreadyClaimed,    setAlreadyClaimed]    = useState(false);
   const [leaveModalVisible, setLeaveModalVisible] = useState(false);
+  const [showPlayers,       setShowPlayers]       = useState(false);
+  const [showWinners,       setShowWinners]       = useState(false);
+
+  const { players, loading: playersLoading } = useMatchPlayers(id, showPlayers);
+  const { winners, loading: winnersLoading } = useMatchWinners(id, showWinners);
 
   const bottomPad = insets.bottom;
   const isLive    = match?.status === 'ongoing';
@@ -321,6 +337,59 @@ export default function MatchDetailScreen() {
             </View>
           </View>
 
+          {/* ── Game Info Card ── */}
+          {(match.game_mode || match.squad_type) && (
+            <View style={styles.gameInfoRow}>
+              {match.game_mode ? (
+                <View style={styles.gameInfoChip}>
+                  <Ionicons name="game-controller-outline" size={13} color={colors.primary} />
+                  <Text style={styles.gameInfoChipLabel}>Mode</Text>
+                  <Text style={styles.gameInfoChipValue}>{match.game_mode}</Text>
+                </View>
+              ) : null}
+              {match.squad_type ? (
+                <View style={styles.gameInfoChip}>
+                  <Ionicons name="people-outline" size={13} color={colors.primary} />
+                  <Text style={styles.gameInfoChipLabel}>Type</Text>
+                  <Text style={styles.gameInfoChipValue}>{match.squad_type}</Text>
+                </View>
+              ) : null}
+            </View>
+          )}
+
+          {/* ── Players & Winners Action Buttons ── */}
+          <View style={styles.actionRow}>
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={() => setShowPlayers(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="people-outline" size={18} color={colors.primary} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.actionBtnLabel}>Players</Text>
+                <Text style={styles.actionBtnSub}>
+                  {match.players_joined} joined
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+            </TouchableOpacity>
+
+            {match.status === 'completed' && (
+              <TouchableOpacity
+                style={[styles.actionBtn, { borderColor: GOLD + '55' }]}
+                onPress={() => setShowWinners(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="trophy-outline" size={18} color={GOLD} />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.actionBtnLabel, { color: GOLD }]}>Winners</Text>
+                  <Text style={styles.actionBtnSub}>View leaderboard</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+              </TouchableOpacity>
+            )}
+          </View>
+
           {/* ── Slot Meter ── */}
           <View style={styles.card}>
             <View style={styles.cardHeader}>
@@ -513,6 +582,105 @@ export default function MatchDetailScreen() {
           </View>
         </View>
       )}
+
+      {/* ── Players Modal ── */}
+      <Modal
+        visible={showPlayers}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowPlayers(false)}
+      >
+        <View style={[styles.sheetContainer, { backgroundColor: colors.background.dark }]}>
+          <View style={styles.sheetHandle} />
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>Players ({match.players_joined})</Text>
+            <TouchableOpacity onPress={() => setShowPlayers(false)} style={styles.sheetClose}>
+              <Ionicons name="close" size={22} color={colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+          {playersLoading ? (
+            <View style={styles.sheetLoading}>
+              <ActivityIndicator color={colors.primary} size="large" />
+            </View>
+          ) : players.length === 0 ? (
+            <View style={styles.sheetEmpty}>
+              <Ionicons name="people-outline" size={44} color="#444" />
+              <Text style={styles.sheetEmptyText}>No players have joined yet</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={players}
+              keyExtractor={item => item.user_id}
+              contentContainerStyle={{ paddingBottom: insets.bottom + 24, paddingHorizontal: 16 }}
+              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.border.subtle, marginLeft: 60 }} />}
+              renderItem={({ item, index }) => (
+                <View style={styles.playerRow}>
+                  <View style={styles.playerAvatar}>
+                    <Text style={styles.playerAvatarText}>{(item.username?.[0] ?? '?').toUpperCase()}</Text>
+                  </View>
+                  <Text style={styles.playerName}>{item.username}</Text>
+                  <Text style={styles.playerIndex}>#{index + 1}</Text>
+                </View>
+              )}
+            />
+          )}
+        </View>
+      </Modal>
+
+      {/* ── Winners Modal ── */}
+      <Modal
+        visible={showWinners}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowWinners(false)}
+      >
+        <View style={[styles.sheetContainer, { backgroundColor: colors.background.dark }]}>
+          <View style={styles.sheetHandle} />
+          <View style={styles.sheetHeader}>
+            <Text style={styles.sheetTitle}>Winners</Text>
+            <TouchableOpacity onPress={() => setShowWinners(false)} style={styles.sheetClose}>
+              <Ionicons name="close" size={22} color={colors.text.primary} />
+            </TouchableOpacity>
+          </View>
+          {winnersLoading ? (
+            <View style={styles.sheetLoading}>
+              <ActivityIndicator color={GOLD} size="large" />
+            </View>
+          ) : winners.length === 0 ? (
+            <View style={styles.sheetEmpty}>
+              <Ionicons name="trophy-outline" size={44} color="#444" />
+              <Text style={styles.sheetEmptyText}>Results not published yet</Text>
+            </View>
+          ) : (
+            <FlatList
+              data={winners}
+              keyExtractor={item => item.user_id}
+              contentContainerStyle={{ paddingBottom: insets.bottom + 24, paddingHorizontal: 16 }}
+              ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.border.subtle, marginLeft: 60 }} />}
+              renderItem={({ item }) => (
+                <View style={styles.winnerRow}>
+                  <Text style={[
+                    styles.winnerRowRank,
+                    item.rank <= 3 && { color: MEDAL_COLORS[item.rank - 1] },
+                  ]}>
+                    {rankMedal(item.rank)}
+                  </Text>
+                  <View style={styles.winnerRowAvatar}>
+                    <Text style={styles.playerAvatarText}>{(item.username?.[0] ?? '?').toUpperCase()}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.playerName}>{item.username}</Text>
+                    <Text style={styles.winnerRowPts}>{item.points} pts</Text>
+                  </View>
+                  {item.prize > 0 && (
+                    <Text style={styles.winnerRowPrize}>₹{formatPrize(item.prize)}</Text>
+                  )}
+                </View>
+              )}
+            />
+          )}
+        </View>
+      </Modal>
 
       {/* ── Leave Confirmation Modal ── */}
       <ConfirmModal
@@ -885,5 +1053,108 @@ function createStyles(colors: AppColors) {
     emptyTitle:  { fontSize: 18, fontFamily: 'Inter_600SemiBold', color: colors.text.muted },
     backLink:    { paddingHorizontal: 24, paddingVertical: 10 },
     backLinkText: { color: colors.primary, fontSize: 14, fontFamily: 'Inter_600SemiBold' },
+
+    /* ── Game Info Chips ── */
+    gameInfoRow: {
+      flexDirection: 'row', gap: 10, marginBottom: 14, flexWrap: 'wrap',
+    },
+    gameInfoChip: {
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      backgroundColor: colors.background.card,
+      borderRadius: 20, borderWidth: 1, borderColor: colors.primary + '40',
+      paddingHorizontal: 12, paddingVertical: 8, flexShrink: 1,
+    },
+    gameInfoChipLabel: {
+      fontSize: 10, fontFamily: 'Inter_600SemiBold',
+      color: colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.8,
+    },
+    gameInfoChipValue: {
+      fontSize: 13, fontFamily: 'Inter_700Bold', color: colors.primary,
+    },
+
+    /* ── Action Buttons ── */
+    actionRow: { gap: 10, marginBottom: 14 },
+    actionBtn: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      backgroundColor: colors.background.card,
+      borderRadius: 14, borderWidth: 1, borderColor: colors.border.default,
+      paddingHorizontal: 16, paddingVertical: 14,
+    },
+    actionBtnLabel: {
+      fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.text.primary,
+    },
+    actionBtnSub: {
+      fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginTop: 1,
+    },
+
+    /* ── Modal Sheet ── */
+    sheetContainer: { flex: 1 },
+    sheetHandle: {
+      width: 40, height: 4, borderRadius: 2,
+      backgroundColor: '#444', alignSelf: 'center', marginTop: 10, marginBottom: 4,
+    },
+    sheetHeader: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      paddingHorizontal: 20, paddingVertical: 16,
+      borderBottomWidth: 1, borderBottomColor: colors.border.default,
+    },
+    sheetTitle: {
+      fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.text.primary,
+    },
+    sheetClose: {
+      width: 36, height: 36, borderRadius: 18,
+      backgroundColor: colors.background.elevated,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    sheetLoading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+    sheetEmpty: {
+      flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12,
+    },
+    sheetEmptyText: {
+      fontSize: 15, fontFamily: 'Inter_400Regular', color: colors.text.muted,
+    },
+
+    /* ── Player Row ── */
+    playerRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      paddingVertical: 14,
+    },
+    playerAvatar: {
+      width: 40, height: 40, borderRadius: 20,
+      backgroundColor: colors.primary + '22',
+      borderWidth: 1, borderColor: colors.primary + '44',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    playerAvatarText: {
+      fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.primary,
+    },
+    playerName: {
+      flex: 1, fontSize: 15, fontFamily: 'Inter_600SemiBold', color: colors.text.primary,
+    },
+    playerIndex: {
+      fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted,
+    },
+
+    /* ── Winner Row ── */
+    winnerRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      paddingVertical: 14,
+    },
+    winnerRowRank: {
+      fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.text.muted,
+      width: 36, textAlign: 'center',
+    },
+    winnerRowAvatar: {
+      width: 40, height: 40, borderRadius: 20,
+      backgroundColor: 'rgba(255,215,0,0.12)',
+      borderWidth: 1, borderColor: 'rgba(255,215,0,0.3)',
+      alignItems: 'center', justifyContent: 'center',
+    },
+    winnerRowPts: {
+      fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginTop: 1,
+    },
+    winnerRowPrize: {
+      fontSize: 16, fontFamily: 'Inter_700Bold', color: SUCCESS,
+    },
   });
 }
