@@ -2,8 +2,9 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Alert, TextInput, Modal, KeyboardAvoidingView, Platform,
-  RefreshControl, ActivityIndicator, Clipboard,
+  RefreshControl, ActivityIndicator,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import Svg, { Circle, Path } from 'react-native-svg';
 import { SkeletonBar } from '@/components/SkeletonBar';
 import { AvatarSVG, AVATAR_NAMES } from '@/components/AvatarSVG';
@@ -171,7 +172,7 @@ export default function MyTeamScreen() {
   };
 
   const copyCode = (code: string) => {
-    Clipboard.setString(code);
+    Clipboard.setStringAsync(code);
     Alert.alert('Copied!', `Team code "${code}" copied to clipboard.`);
   };
 
