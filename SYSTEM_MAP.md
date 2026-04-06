@@ -704,4 +704,77 @@ cancelled  → Tournament cancelled (refund entry fees)
 
 ---
 
+---
+
+## Native Cloud Messaging (NCM) Module
+
+### Overview
+A custom push-notification system built on top of Supabase Realtime and `expo-background-fetch`.
+Guarantees delivery even when battery-saver mode kills background network connections.
+
+### New Permissions (Android)
+| Permission | Purpose |
+|---|---|
+| `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Already present — match geo features |
+| `POST_NOTIFICATIONS` | Already present — system notifications |
+| `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` | NEW — request app be exempted from battery-save killing |
+| `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_DATA_SYNC` | NEW — background data processing |
+
+### New Supabase Tables
+
+#### `device_registrations`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | auto |
+| `user_id` | UUID FK → auth.users | |
+| `duid` | TEXT UNIQUE | Device Unique ID, generated on first launch, stored in SecureStore |
+| `platform` | TEXT | 'android' \| 'ios' |
+| `os_version` | TEXT | |
+| `push_token` | TEXT | FCM/APNs token |
+| `email` | TEXT | |
+| `display_name` | TEXT | |
+| `is_active` | BOOLEAN | false on sign-out |
+| `updated_at` | TIMESTAMPTZ | |
+
+#### `ncm_notifications`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | UUID PK | auto |
+| `title` | TEXT | Notification subject |
+| `body` | TEXT | Notification message |
+| `channel_id` | TEXT | Android channel, default: 'elite-esports-default' |
+| `target_user_id` | UUID nullable | NULL = broadcast to all |
+| `target_duid` | TEXT nullable | NULL = all devices of target user |
+| `status` | TEXT | 'pending' \| 'delivered' \| 'failed' |
+| `delivered_at` | TIMESTAMPTZ | |
+| `created_at` | TIMESTAMPTZ | |
+
+### Key Source Files
+| File | Purpose |
+|---|---|
+| `src/services/NCMService.ts` | DUID generation, device registration, Realtime subscription, background task, battery check |
+| `src/store/NCMContext.tsx` | Provider: initializes NCM on login, prompts battery-saver alert |
+| `app/admin-ncm.tsx` | Admin console: send notifications, view devices, view delivery history |
+| `supabase/migrations/015_ncm_module.sql` | Schema for `device_registrations` + `ncm_notifications` |
+
+### Workflow 1 — Device Registration
+1. User installs app and signs in
+2. `NCMContext` → `initNCM(user)` called
+3. `NCMService.registerDevice()` generates DUID (stored in SecureStore) and upserts `device_registrations` row
+4. Battery saver detection runs; if active, user is prompted to exempt the app
+
+### Workflow 2 — Admin Sends Notification
+1. Admin opens **NCM Console** (`admin-ncm.tsx`)
+2. Fills in Title, Message, Channel; optionally targets a specific User UUID or DUID
+3. INSERT → `ncm_notifications` with `status = 'pending'`
+4. On each device, Supabase Realtime fires an INSERT trigger
+5. `subscribeNCMRealtime()` checks if the row targets this user/DUID; if yes, fires local notification
+6. Row status updated to `'delivered'`
+
+### Background Fallback
+- `expo-background-fetch` task `NCM_BACKGROUND_POLL` runs every ≥15 min
+- On each wake, it queries `ncm_notifications` for any `pending` rows targeting the user
+- Ensures delivery even after battery-saver kills the foreground Realtime socket
+- Also triggers on `AppState` change to `active` (foreground resume)
+
 *End of SYSTEM_MAP.md — Elite eSports*

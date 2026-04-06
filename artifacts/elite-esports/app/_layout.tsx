@@ -18,6 +18,7 @@ import { ThemeProvider, useTheme } from '@/store/ThemeContext';
 import { NotificationsProvider } from '@/store/NotificationsContext';
 import { WalletProvider } from '@/store/WalletContext';
 import { AdProvider } from '@/store/AdContext';
+import { NCMProvider } from '@/store/NCMContext';
 import { setupAndroidChannels } from '@/services/NotificationService';
 import { requestAppPermissions } from '@/services/PermissionService';
 import { loadHapticPreference } from '@/utils/haptics';
@@ -60,6 +61,7 @@ function RootLayoutNav() {
       <Stack.Screen name="disclaimer" />
       <Stack.Screen name="admin-config" />
       <Stack.Screen name="admin-sponsorships" />
+      <Stack.Screen name="admin-ncm" />
     </Stack>
   );
 }
@@ -113,9 +115,11 @@ export default function RootLayout() {
               <ProfileProvider>
                 <NotificationsProvider>
                   <WalletProvider>
-                    <AdProvider>
-                      <ThemedRoot />
-                    </AdProvider>
+                    <NCMProvider>
+                      <AdProvider>
+                        <ThemedRoot />
+                      </AdProvider>
+                    </NCMProvider>
                   </WalletProvider>
                 </NotificationsProvider>
               </ProfileProvider>
