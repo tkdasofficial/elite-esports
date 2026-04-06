@@ -59,9 +59,6 @@ function RootLayoutNav() {
       <Stack.Screen name="sponsored" />
       <Stack.Screen name="account-info" />
       <Stack.Screen name="disclaimer" />
-      <Stack.Screen name="admin-config" />
-      <Stack.Screen name="admin-sponsorships" />
-      <Stack.Screen name="admin-ncm" />
     </Stack>
   );
 }
