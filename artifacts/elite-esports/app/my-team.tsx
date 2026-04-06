@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Alert, TextInput, Modal, KeyboardAvoidingView, Platform,
-  RefreshControl, ActivityIndicator,
+  RefreshControl, ActivityIndicator, Switch,
 } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
 import Svg, { Circle, Path } from 'react-native-svg';
@@ -15,71 +15,57 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { useMyTeam } from '@/features/team/hooks/useMyTeam';
 import { useAuth } from '@/store/AuthContext';
 import { useGames } from '@/features/games/hooks/useGames';
+import { router } from 'expo-router';
 import type { AppColors } from '@/utils/colors';
 
-/* ── Use only first 10 avatars ─────────────────────────────────── */
 const TEAM_AVATAR_COUNT = 10;
 const TEAM_AVATAR_INDICES = Array.from({ length: TEAM_AVATAR_COUNT }, (_, i) => i);
 const MAX_MEMBERS = 5;
 
-/** Parse the avatar string stored in DB → numeric index */
 function avatarIndex(avatar?: string | null): number {
   const n = parseInt(avatar ?? '0', 10);
   return Number.isFinite(n) && n >= 0 && n < TEAM_AVATAR_COUNT ? n : 0;
 }
 
-/** Professional team / members icon — 3 person silhouettes */
 function TeamIcon({ size = 64 }: { size?: number }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 64 64">
-      {/* Centre person (larger) */}
       <Circle cx="32" cy="20" r="9" fill="#EE3D2D" />
-      <Path
-        d="M16 52 Q16 36 32 36 Q48 36 48 52"
-        fill="#EE3D2D"
-      />
-      {/* Left person */}
+      <Path d="M16 52 Q16 36 32 36 Q48 36 48 52" fill="#EE3D2D" />
       <Circle cx="13" cy="24" r="7" fill="#EE3D2D" opacity="0.55" />
-      <Path
-        d="M0 52 Q0 38 13 38 Q20 38 23 43"
-        fill="#EE3D2D"
-        opacity="0.55"
-      />
-      {/* Right person */}
+      <Path d="M0 52 Q0 38 13 38 Q20 38 23 43" fill="#EE3D2D" opacity="0.55" />
       <Circle cx="51" cy="24" r="7" fill="#EE3D2D" opacity="0.55" />
-      <Path
-        d="M64 52 Q64 38 51 38 Q44 38 41 43"
-        fill="#EE3D2D"
-        opacity="0.55"
-      />
+      <Path d="M64 52 Q64 38 51 38 Q44 38 41 43" fill="#EE3D2D" opacity="0.55" />
     </Svg>
   );
 }
 
 export default function MyTeamScreen() {
-  const { user } = useAuth();
+  const { user }  = useAuth();
   const { team, loading, refreshing, refresh, createTeam, updateTeam, joinTeam, revokeMember, leaveTeam } = useMyTeam(user?.id);
   const { games, loading: gamesLoading } = useGames();
-  const insets = useSafeAreaInsets();
+  const insets    = useSafeAreaInsets();
   const { colors } = useTheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const styles    = useMemo(() => createStyles(colors), [colors]);
 
   /* ── create state ── */
-  const [showCreate, setShowCreate] = useState(false);
-  const [createStep, setCreateStep] = useState<1 | 2 | 3>(1);
-  const [newAvatar,  setNewAvatar]  = useState('0');
-  const [newName,    setNewName]    = useState('');
-  const [newSlogan,  setNewSlogan]  = useState('');
-  const [newGame,    setNewGame]    = useState('');
-  const [creating,   setCreating]   = useState(false);
+  const [showCreate,      setShowCreate]      = useState(false);
+  const [createStep,      setCreateStep]      = useState<1 | 2 | 3>(1);
+  const [newAvatar,       setNewAvatar]       = useState('0');
+  const [newName,         setNewName]         = useState('');
+  const [newSlogan,       setNewSlogan]       = useState('');
+  const [newGame,         setNewGame]         = useState('');
+  const [newOpenToAnyone, setNewOpenToAnyone] = useState(true);
+  const [creating,        setCreating]        = useState(false);
 
   /* ── edit state ── */
-  const [showEdit,  setShowEdit]  = useState(false);
-  const [editStep,  setEditStep]  = useState<1 | 2>(1);
-  const [editAvatar, setEditAvatar] = useState('0');
-  const [editName,   setEditName]   = useState('');
-  const [editSlogan, setEditSlogan] = useState('');
-  const [saving,    setSaving]    = useState(false);
+  const [showEdit,         setShowEdit]         = useState(false);
+  const [editStep,         setEditStep]         = useState<1 | 2>(1);
+  const [editAvatar,       setEditAvatar]       = useState('0');
+  const [editName,         setEditName]         = useState('');
+  const [editSlogan,       setEditSlogan]       = useState('');
+  const [editOpenToAnyone, setEditOpenToAnyone] = useState(true);
+  const [saving,           setSaving]           = useState(false);
 
   /* ── join state ── */
   const [showJoin, setShowJoin] = useState(false);
@@ -90,12 +76,12 @@ export default function MyTeamScreen() {
     if (games.length > 0 && !newGame) setNewGame(games[0].name);
   }, [games]);
 
-  /* ── open edit modal pre-filled ── */
   const openEdit = () => {
     if (!team) return;
     setEditAvatar(team.avatar ?? '0');
     setEditName(team.name ?? '');
     setEditSlogan(team.slogan ?? '');
+    setEditOpenToAnyone(team.open_to_anyone ?? true);
     setEditStep(1);
     setShowEdit(true);
   };
@@ -106,6 +92,7 @@ export default function MyTeamScreen() {
     setNewName('');
     setNewSlogan('');
     setNewGame(games[0]?.name ?? '');
+    setNewOpenToAnyone(true);
     setShowCreate(false);
   };
 
@@ -114,7 +101,7 @@ export default function MyTeamScreen() {
     if (!newGame)        { Alert.alert('Required', 'Select a game.'); return; }
     setCreating(true);
     try {
-      await createTeam({ name: newName, slogan: newSlogan, avatar: newAvatar, game: newGame });
+      await createTeam({ name: newName, slogan: newSlogan, avatar: newAvatar, game: newGame, open_to_anyone: newOpenToAnyone });
       resetCreate();
     } catch (e: any) {
       Alert.alert('Error', e.message ?? 'Failed to create team.');
@@ -126,7 +113,7 @@ export default function MyTeamScreen() {
     if (!editName.trim()) { Alert.alert('Required', 'Enter a team name.'); return; }
     setSaving(true);
     try {
-      await updateTeam({ name: editName, slogan: editSlogan, avatar: editAvatar });
+      await updateTeam({ name: editName, slogan: editSlogan, avatar: editAvatar, open_to_anyone: editOpenToAnyone });
       setShowEdit(false);
     } catch (e: any) {
       Alert.alert('Error', e.message ?? 'Failed to save changes.');
@@ -150,8 +137,7 @@ export default function MyTeamScreen() {
   const handleRevoke = (memberId: string, memberName: string) => {
     Alert.alert('Kick Member', `Remove ${memberName} from the team?`, [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Kick', style: 'destructive', onPress: async () => {
+      { text: 'Kick', style: 'destructive', onPress: async () => {
           try { await revokeMember(memberId); }
           catch (e: any) { Alert.alert('Error', e.message); }
         },
@@ -162,8 +148,7 @@ export default function MyTeamScreen() {
   const handleLeave = () => {
     Alert.alert('Leave Team', 'Are you sure you want to leave?', [
       { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Leave', style: 'destructive', onPress: async () => {
+      { text: 'Leave', style: 'destructive', onPress: async () => {
           try { await leaveTeam(); }
           catch (e: any) { Alert.alert('Error', e.message); }
         },
@@ -232,6 +217,17 @@ export default function MyTeamScreen() {
                 <Ionicons name="people-outline" size={12} color={colors.text.muted} />
                 <Text style={styles.infoBadgeText}>{members.length}/{MAX_MEMBERS}</Text>
               </View>
+              {/* Open to anyone badge */}
+              <View style={[styles.infoBadge, team.open_to_anyone && { borderColor: colors.primary + '66', backgroundColor: colors.primary + '15' }]}>
+                <Ionicons
+                  name={team.open_to_anyone ? 'people-circle-outline' : 'lock-closed-outline'}
+                  size={12}
+                  color={team.open_to_anyone ? colors.primary : colors.text.muted}
+                />
+                <Text style={[styles.infoBadgeText, team.open_to_anyone && { color: colors.primary }]}>
+                  {team.open_to_anyone ? 'Open' : 'Closed'}
+                </Text>
+              </View>
             </View>
 
             {/* Unique code */}
@@ -243,6 +239,24 @@ export default function MyTeamScreen() {
               <Ionicons name="copy-outline" size={18} color={colors.primary} />
             </TouchableOpacity>
           </View>
+
+          {/* ── Team Matches Button ── */}
+          <TouchableOpacity
+            style={styles.teamMatchesBtn}
+            onPress={() => router.push('/team-matches')}
+            activeOpacity={0.85}
+          >
+            <View style={styles.teamMatchesBtnLeft}>
+              <View style={styles.teamMatchesIcon}>
+                <Ionicons name="trophy-outline" size={20} color={colors.primary} />
+              </View>
+              <View>
+                <Text style={styles.teamMatchesBtnTitle}>Team Matches</Text>
+                <Text style={styles.teamMatchesBtnSub}>View matches & join requests</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={colors.text.muted} />
+          </TouchableOpacity>
 
           {/* ── Members ── */}
           <Text style={styles.sectionLabel}>Members ({members.length}/{MAX_MEMBERS})</Text>
@@ -288,7 +302,6 @@ export default function MyTeamScreen() {
             <View style={styles.overlay}>
               <View style={styles.sheet}>
                 <View style={styles.handle} />
-
                 <View style={styles.stepRow}>
                   {([1, 2] as const).map(s => (
                     <View key={s} style={[styles.stepDot, editStep === s && styles.stepDotActive]} />
@@ -325,7 +338,7 @@ export default function MyTeamScreen() {
                   </>
                 )}
 
-                {/* Edit Step 2: Name + Slogan */}
+                {/* Edit Step 2: Name + Slogan + Open setting */}
                 {editStep === 2 && (
                   <>
                     <View style={styles.stepAvatarPreview}>
@@ -357,6 +370,15 @@ export default function MyTeamScreen() {
                       placeholderTextColor={colors.text.muted}
                       maxLength={50}
                       multiline
+                    />
+
+                    {/* Anyone can join toggle */}
+                    <ToggleRow
+                      label="Anyone can join matches"
+                      sub="Let players outside your team request to join"
+                      value={editOpenToAnyone}
+                      onToggle={setEditOpenToAnyone}
+                      colors={colors}
                     />
 
                     <View style={styles.stepNavRow}>
@@ -463,7 +485,7 @@ export default function MyTeamScreen() {
                 </>
               )}
 
-              {/* Step 2: Name + Slogan */}
+              {/* Step 2: Name + Slogan + Open Setting */}
               {createStep === 2 && (
                 <>
                   <View style={styles.stepAvatarPreview}>
@@ -495,6 +517,15 @@ export default function MyTeamScreen() {
                     placeholderTextColor={colors.text.muted}
                     maxLength={50}
                     multiline
+                  />
+
+                  {/* Anyone can join toggle */}
+                  <ToggleRow
+                    label="Anyone can join matches"
+                    sub="Let players outside your team request to join"
+                    value={newOpenToAnyone}
+                    onToggle={setNewOpenToAnyone}
+                    colors={colors}
                   />
 
                   <View style={styles.stepNavRow}>
@@ -631,15 +662,44 @@ export default function MyTeamScreen() {
   );
 }
 
+/* ── Toggle Row component ─────────────────────────────────────── */
+function ToggleRow({ label, sub, value, onToggle, colors }: {
+  label: string;
+  sub: string;
+  value: boolean;
+  onToggle: (v: boolean) => void;
+  colors: AppColors;
+}) {
+  return (
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      backgroundColor: colors.background.elevated,
+      borderRadius: 14, padding: 14, marginBottom: 18,
+      borderWidth: 1, borderColor: value ? colors.primary + '55' : colors.border.default,
+    }}>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary, marginBottom: 2 }}>{label}</Text>
+        <Text style={{ fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, lineHeight: 17 }}>{sub}</Text>
+      </View>
+      <Switch
+        value={value}
+        onValueChange={onToggle}
+        trackColor={{ false: colors.border.default, true: colors.primary + 'AA' }}
+        thumbColor={value ? colors.primary : colors.text.muted}
+        ios_backgroundColor={colors.border.default}
+      />
+    </View>
+  );
+}
+
 function createStyles(colors: AppColors) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background.dark },
     scroll:    { padding: 16 },
 
-    /* ── banner ── */
     banner: {
       backgroundColor: colors.background.card, borderRadius: 20,
-      alignItems: 'center', padding: 24, marginBottom: 20,
+      alignItems: 'center', padding: 24, marginBottom: 16,
       borderWidth: 1, borderColor: colors.border.default,
     },
     editBtn: {
@@ -659,13 +719,8 @@ function createStyles(colors: AppColors) {
     teamName:    { fontSize: 22, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 4, textAlign: 'center' },
     teamSlogan:  { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted, textAlign: 'center', fontStyle: 'italic', marginBottom: 12 },
 
-    badgeRow:     { flexDirection: 'row', gap: 8, marginBottom: 16 },
-    infoBadge:    {
-      flexDirection: 'row', alignItems: 'center', gap: 5,
-      backgroundColor: colors.background.elevated, borderRadius: 8,
-      paddingHorizontal: 10, paddingVertical: 5,
-      borderWidth: 1, borderColor: colors.border.default,
-    },
+    badgeRow:      { flexDirection: 'row', gap: 8, marginBottom: 16, flexWrap: 'wrap', justifyContent: 'center' },
+    infoBadge:     { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.background.elevated, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: colors.border.default },
     infoBadgeText: { fontSize: 12, fontFamily: 'Inter_500Medium', color: colors.text.secondary },
 
     codeRow: {
@@ -677,55 +732,48 @@ function createStyles(colors: AppColors) {
     codeLabel: { fontSize: 10, fontFamily: 'Inter_600SemiBold', color: colors.text.muted, letterSpacing: 1.2, marginBottom: 2 },
     codeValue: { fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.primary, letterSpacing: 3 },
 
-    /* ── members ── */
-    sectionLabel: {
-      fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.text.muted,
-      textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 2,
+    teamMatchesBtn: {
+      flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+      backgroundColor: colors.background.card,
+      borderRadius: 16, paddingHorizontal: 16, paddingVertical: 14,
+      marginBottom: 16,
+      borderWidth: 1, borderColor: colors.primary + '44',
     },
-    memberRow: {
-      flexDirection: 'row', alignItems: 'center', gap: 12,
-      backgroundColor: colors.background.card, borderRadius: 14, padding: 12,
-      marginBottom: 8, borderWidth: 1, borderColor: colors.border.subtle,
+    teamMatchesBtnLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    teamMatchesIcon: {
+      width: 42, height: 42, borderRadius: 12,
+      backgroundColor: colors.primary + '18',
+      alignItems: 'center', justifyContent: 'center',
+      borderWidth: 1, borderColor: colors.primary + '44',
     },
-    memberAvatar:    { width: 44, height: 44, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.background.elevated, alignItems: 'center', justifyContent: 'center' },
-    memberName:      { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary },
-    memberUsername:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginTop: 2 },
-    memberRight:     { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    teamMatchesBtnTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.text.primary },
+    teamMatchesBtnSub:   { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginTop: 2 },
+
+    sectionLabel: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8, marginLeft: 2 },
+    memberRow:    { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.background.card, borderRadius: 14, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: colors.border.subtle },
+    memberAvatar: { width: 44, height: 44, borderRadius: 22, overflow: 'hidden', backgroundColor: colors.background.elevated, alignItems: 'center', justifyContent: 'center' },
+    memberName:   { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.primary },
+    memberUsername:{ fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, marginTop: 2 },
+    memberRight:  { flexDirection: 'row', alignItems: 'center', gap: 8 },
     roleBadge:       { backgroundColor: colors.background.elevated, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 4 },
     roleCaptainBadge:{ backgroundColor: 'rgba(238,61,45,0.12)', borderWidth: 1, borderColor: colors.primary },
     roleText:        { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: colors.text.muted },
     roleCaptainText: { color: colors.primary },
-    kickBtn: {
-      width: 30, height: 30, borderRadius: 15,
-      backgroundColor: 'rgba(239,68,68,0.1)',
-      alignItems: 'center', justifyContent: 'center',
-      borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)',
-    },
+    kickBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(239,68,68,0.1)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)' },
 
-    leaveBtn: {
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
-      backgroundColor: 'rgba(239,68,68,0.08)', borderRadius: 14, height: 52, marginTop: 12,
-      borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)',
-    },
+    leaveBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: 'rgba(239,68,68,0.08)', borderRadius: 14, height: 52, marginTop: 12, borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)' },
     leaveBtnText: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: colors.status.error },
 
-    /* ── empty state ── */
-    emptyState:   { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24 },
-    emptyAvatarRing: {
-      width: 104, height: 104, borderRadius: 52,
-      backgroundColor: 'rgba(238,61,45,0.08)',
-      alignItems: 'center', justifyContent: 'center',
-      marginBottom: 20, borderWidth: 2, borderColor: colors.primary,
-    },
-    emptyTitle:   { fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 10 },
-    emptyText:    { fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.muted, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
-    emptyActions: { width: '100%', gap: 12 },
-    createBtn:    { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 14, height: 54 },
-    createBtnText:{ fontSize: 16, fontFamily: 'Inter_700Bold', color: '#fff' },
-    joinBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: 'rgba(238,61,45,0.1)', borderRadius: 14, height: 54, borderWidth: 1, borderColor: colors.primary },
-    joinBtnText:  { fontSize: 16, fontFamily: 'Inter_700Bold', color: colors.primary },
+    emptyState:      { alignItems: 'center', paddingTop: 60, paddingHorizontal: 24 },
+    emptyAvatarRing: { width: 104, height: 104, borderRadius: 52, backgroundColor: 'rgba(238,61,45,0.08)', alignItems: 'center', justifyContent: 'center', marginBottom: 20, borderWidth: 2, borderColor: colors.primary },
+    emptyTitle:      { fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.text.primary, marginBottom: 10 },
+    emptyText:       { fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.muted, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
+    emptyActions:    { width: '100%', gap: 12 },
+    createBtn:       { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 14, height: 54 },
+    createBtnText:   { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#fff' },
+    joinBtn:         { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: 'rgba(238,61,45,0.1)', borderRadius: 14, height: 54, borderWidth: 1, borderColor: colors.primary },
+    joinBtnText:     { fontSize: 16, fontFamily: 'Inter_700Bold', color: colors.primary },
 
-    /* ── modal sheet ── */
     overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
     sheet:   { backgroundColor: colors.background.card, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 44 },
     handle:  { width: 40, height: 4, borderRadius: 2, backgroundColor: colors.border.default, alignSelf: 'center', marginBottom: 16 },
@@ -738,25 +786,21 @@ function createStyles(colors: AppColors) {
 
     stepAvatarPreview: { alignSelf: 'center', marginBottom: 12 },
 
-    /* ── avatar grid ── */
     avatarGrid:      { flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', paddingBottom: 8 },
     avatarCell:      { width: 80, height: 88, borderRadius: 16, backgroundColor: colors.background.elevated, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'transparent', paddingVertical: 8 },
     avatarCellActive:{ borderColor: colors.primary, backgroundColor: 'rgba(238,61,45,0.1)' },
     avatarCellName:  { fontSize: 9, fontFamily: 'Inter_600SemiBold', color: colors.text.muted, marginTop: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
 
-    /* ── inputs ── */
     inputLabel: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: colors.text.muted, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
     charHint:   { fontSize: 11, fontFamily: 'Inter_400Regular', color: colors.text.muted, textTransform: 'none', letterSpacing: 0 },
     input:      { backgroundColor: colors.background.elevated, borderRadius: 12, height: 52, paddingHorizontal: 16, fontSize: 15, fontFamily: 'Inter_400Regular', color: colors.text.primary, borderWidth: 1, borderColor: colors.border.default, marginBottom: 18 },
 
-    /* ── game list ── */
     gameList:            { gap: 10, paddingBottom: 8 },
     gameOption:          { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.background.elevated, borderRadius: 12, padding: 14, borderWidth: 1, borderColor: colors.border.default },
     gameOptionActive:    { borderColor: colors.primary, backgroundColor: 'rgba(238,61,45,0.08)' },
     gameOptionText:      { fontSize: 15, fontFamily: 'Inter_500Medium', color: colors.text.secondary },
-    gameOptionTextActive:{ color: colors.primary, fontFamily: 'Inter_600SemiBold' },
+    gameOptionTextActive: { color: colors.primary, fontFamily: 'Inter_600SemiBold' },
 
-    /* ── navigation ── */
     stepNavRow:  { flexDirection: 'row', gap: 10, marginBottom: 12 },
     nextBtn:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary, borderRadius: 14, height: 52 },
     nextBtnText: { fontSize: 15, fontFamily: 'Inter_700Bold', color: '#fff' },

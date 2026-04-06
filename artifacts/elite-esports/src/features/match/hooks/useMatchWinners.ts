@@ -6,6 +6,7 @@ export type MatchWinner = {
   username: string;
   avatar_index: number;
   rank: number;
+  kills: number;
   points: number;
   prize: number;
 };
@@ -17,25 +18,68 @@ export function useMatchWinners(matchId: string, enabled: boolean) {
   const fetchWinners = async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from('match_participants')
-        .select('user_id, rank, points, prize, users(username, avatar_index)')
+      const { data: results } = await supabase
+        .from('match_results')
+        .select('user_id, rank, kills, points')
         .eq('match_id', matchId)
-        .not('rank', 'is', null)
+        .gt('rank', 0)
         .order('rank', { ascending: true });
 
-      if (data) {
-        setWinners(
-          data.map((row: any) => ({
-            user_id: row.user_id,
-            username: row.users?.username ?? 'Unknown',
-            avatar_index: row.users?.avatar_index ?? 0,
-            rank: row.rank,
-            points: row.points ?? 0,
-            prize: Number(row.prize ?? 0),
-          })),
-        );
+      if (!results || results.length === 0) {
+        setWinners([]);
+        return;
       }
+
+      const { data: matchData } = await supabase
+        .from('matches')
+        .select('prize_pool')
+        .eq('id', matchId)
+        .maybeSingle();
+
+      const prizePool = Number(matchData?.prize_pool ?? 0);
+
+      const { data: tierData } = await supabase
+        .from('prize_tiers')
+        .select('rank, prize_amount')
+        .eq('match_id', matchId)
+        .order('rank', { ascending: true });
+
+      const tierMap: Record<number, number> = {};
+      if (tierData && tierData.length > 0) {
+        tierData.forEach(t => { tierMap[t.rank] = Number(t.prize_amount); });
+      } else {
+        tierMap[1] = Math.round(prizePool * 0.50 * 100) / 100;
+        tierMap[2] = Math.round(prizePool * 0.30 * 100) / 100;
+        tierMap[3] = Math.round(prizePool * 0.10 * 100) / 100;
+      }
+
+      const userIds = results.map(r => r.user_id);
+      const { data: users } = await supabase
+        .from('users')
+        .select('id, username, avatar_url')
+        .in('id', userIds);
+
+      const userMap: Record<string, { username: string | null; avatar_url: string | null }> = {};
+      (users ?? []).forEach(u => {
+        userMap[u.id] = { username: u.username, avatar_url: u.avatar_url };
+      });
+
+      setWinners(
+        results.map(r => {
+          const u = userMap[r.user_id];
+          const avatarRaw = u?.avatar_url ?? '0';
+          const avatarIndex = /^\d+$/.test(avatarRaw) ? parseInt(avatarRaw, 10) : 0;
+          return {
+            user_id:      r.user_id,
+            username:     u?.username ?? 'Unknown',
+            avatar_index: avatarIndex,
+            rank:         r.rank,
+            kills:        r.kills ?? 0,
+            points:       r.points ?? 0,
+            prize:        tierMap[r.rank] ?? 0,
+          };
+        }),
+      );
     } finally {
       setLoading(false);
     }

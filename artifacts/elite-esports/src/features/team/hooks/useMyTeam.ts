@@ -10,19 +10,19 @@ export interface TeamMember {
 }
 
 export interface Team {
-  id:         string;
-  name:       string;
-  tag:        string;
-  slogan:     string;
-  avatar:     string;
-  code:       string;
-  game:       string;
-  created_by: string;
-  created_at: string;
-  team_members?: TeamMember[];
+  id:             string;
+  name:           string;
+  tag:            string;
+  slogan:         string;
+  avatar:         string;
+  code:           string;
+  game:           string;
+  created_by:     string;
+  created_at:     string;
+  open_to_anyone: boolean;
+  team_members?:  TeamMember[];
 }
 
-/** Generate a random 8-char uppercase alphanumeric code */
 function genCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let result = '';
@@ -30,7 +30,6 @@ function genCode(): string {
   return result;
 }
 
-/** PostgreSQL undefined_column error code */
 const PG_UNDEFINED_COLUMN = '42703';
 
 export function useMyTeam(userId?: string) {
@@ -41,7 +40,6 @@ export function useMyTeam(userId?: string) {
   const fetchTeam = useCallback(async () => {
     if (!userId) { setLoading(false); return; }
     try {
-      /* Step 1 — find the user's latest team membership (limit 1 avoids maybeSingle error when multiple rows exist) */
       const { data: memberships, error: memErr } = await supabase
         .from('team_members')
         .select('team_id, role, joined_at')
@@ -58,26 +56,24 @@ export function useMyTeam(userId?: string) {
 
       const membership = memberships[0];
 
-      /* Step 2 — fetch the team row (try full columns, fall back to basic) */
       let teamRow: Team | null = null;
       const { data: fullTeam, error: fullErr } = await supabase
         .from('teams')
-        .select('id, name, tag, slogan, avatar, code, game, created_by, created_at')
+        .select('id, name, tag, slogan, avatar, code, game, created_by, created_at, open_to_anyone')
         .eq('id', membership.team_id)
         .maybeSingle();
 
       if (fullErr) {
-        /* Extended columns may not exist yet — fall back to base columns */
         const { data: basicTeam } = await supabase
           .from('teams')
           .select('id, name, tag, game, created_by, created_at')
           .eq('id', membership.team_id)
           .maybeSingle();
         if (basicTeam) {
-          teamRow = { ...(basicTeam as any), slogan: '', avatar: '0', code: '--------' };
+          teamRow = { ...(basicTeam as any), slogan: '', avatar: '0', code: '--------', open_to_anyone: true };
         }
       } else {
-        teamRow = fullTeam as Team | null;
+        teamRow = fullTeam ? { ...fullTeam, open_to_anyone: fullTeam.open_to_anyone ?? true } as Team : null;
       }
 
       if (!teamRow) {
@@ -87,7 +83,6 @@ export function useMyTeam(userId?: string) {
         return;
       }
 
-      /* Step 3 — fetch all members of that team */
       const { data: membersRaw } = await supabase
         .from('team_members')
         .select('id, user_id, role, joined_at')
@@ -95,8 +90,6 @@ export function useMyTeam(userId?: string) {
         .order('joined_at', { ascending: true });
 
       const members = membersRaw ?? [];
-
-      /* Step 4 — fetch profiles for all members */
       const userIds = members.map(m => m.user_id);
       let profileMap: Record<string, { username: string | null; name: string | null; avatar_url?: string | null }> = {};
 
@@ -132,19 +125,14 @@ export function useMyTeam(userId?: string) {
 
   useEffect(() => { fetchTeam(); }, [fetchTeam]);
 
-  /* ─── create team ───────────────────────────────────────────────── */
+  /* ─── create team ───────────────────────────────────────────── */
   const createTeam = useCallback(async (opts: {
-    name: string; slogan: string; avatar: string; game: string;
+    name: string; slogan: string; avatar: string; game: string; open_to_anyone: boolean;
   }): Promise<void> => {
     if (!userId) throw new Error('Not authenticated');
 
-    /* Check the user isn't already in a team */
     const { data: existing } = await supabase
-      .from('team_members')
-      .select('id')
-      .eq('user_id', userId)
-      .limit(1);
-
+      .from('team_members').select('id').eq('user_id', userId).limit(1);
     if (existing && existing.length > 0) {
       throw new Error('You are already in a team. Leave your current team first.');
     }
@@ -152,31 +140,23 @@ export function useMyTeam(userId?: string) {
     const tag  = opts.name.trim().slice(0, 4).toUpperCase();
     const code = genCode();
 
-    /* Try inserting with all extended columns first */
     const { data: newTeam, error: teamErr } = await supabase
       .from('teams')
       .insert({
-        name:       opts.name.trim(),
-        tag,
-        slogan:     opts.slogan.trim(),
-        avatar:     opts.avatar,
-        code,
-        game:       opts.game,
-        created_by: userId,
+        name: opts.name.trim(), tag, slogan: opts.slogan.trim(),
+        avatar: opts.avatar, code, game: opts.game,
+        created_by: userId, open_to_anyone: opts.open_to_anyone,
       })
-      .select()
-      .single();
+      .select().single();
 
     let teamId: string;
 
     if (teamErr) {
-      /* If the error is missing columns, fall back to the base schema */
       if (teamErr.code === PG_UNDEFINED_COLUMN || teamErr.message?.includes('column')) {
         const { data: fallback, error: fallbackErr } = await supabase
           .from('teams')
           .insert({ name: opts.name.trim(), tag, game: opts.game, created_by: userId })
-          .select()
-          .single();
+          .select().single();
         if (fallbackErr) throw new Error(fallbackErr.message);
         teamId = fallback.id;
       } else {
@@ -186,7 +166,6 @@ export function useMyTeam(userId?: string) {
       teamId = newTeam.id;
     }
 
-    /* Add the creator as captain */
     const { error: memberErr } = await supabase
       .from('team_members')
       .insert({ team_id: teamId, user_id: userId, role: 'captain' });
@@ -195,79 +174,58 @@ export function useMyTeam(userId?: string) {
     await fetchTeam();
   }, [userId, fetchTeam]);
 
-  /* ─── update team (captain only) ───────────────────────────────── */
+  /* ─── update team (captain only) ────────────────────────────── */
   const updateTeam = useCallback(async (opts: {
-    name: string; slogan: string; avatar: string;
+    name: string; slogan: string; avatar: string; open_to_anyone: boolean;
   }): Promise<void> => {
     if (!userId || !team) throw new Error('No team to update');
     const tag = opts.name.trim().slice(0, 4).toUpperCase();
     const { error } = await supabase
       .from('teams')
-      .update({ name: opts.name.trim(), tag, slogan: opts.slogan.trim(), avatar: opts.avatar })
+      .update({ name: opts.name.trim(), tag, slogan: opts.slogan.trim(), avatar: opts.avatar, open_to_anyone: opts.open_to_anyone })
       .eq('id', team.id);
 
     if (error) throw new Error(error.message);
     await fetchTeam();
   }, [userId, team, fetchTeam]);
 
-  /* ─── join by code ─────────────────────────────────────────────── */
+  /* ─── join by code ──────────────────────────────────────────── */
   const joinTeam = useCallback(async (code: string): Promise<void> => {
     if (!userId) throw new Error('Not authenticated');
 
     const { data: existing } = await supabase
-      .from('team_members')
-      .select('id')
-      .eq('user_id', userId)
-      .limit(1);
-
+      .from('team_members').select('id').eq('user_id', userId).limit(1);
     if (existing && existing.length > 0) {
       throw new Error('You are already in a team. Leave your current team first.');
     }
 
     const { data: found, error: findErr } = await supabase
-      .from('teams')
-      .select('id')
-      .eq('code', code.trim().toUpperCase())
-      .maybeSingle();
-
+      .from('teams').select('id').eq('code', code.trim().toUpperCase()).maybeSingle();
     if (findErr) throw new Error(findErr.message);
     if (!found)  throw new Error('No team found with that code. Check and try again.');
 
     const { count } = await supabase
-      .from('team_members')
-      .select('id', { count: 'exact', head: true })
-      .eq('team_id', found.id);
-
+      .from('team_members').select('id', { count: 'exact', head: true }).eq('team_id', found.id);
     if ((count ?? 0) >= 5) throw new Error('This team is full (max 5 members).');
 
     const { error: joinErr } = await supabase
-      .from('team_members')
-      .insert({ team_id: found.id, user_id: userId, role: 'member' });
-
+      .from('team_members').insert({ team_id: found.id, user_id: userId, role: 'member' });
     if (joinErr) throw new Error(joinErr.message);
     await fetchTeam();
   }, [userId, fetchTeam]);
 
-  /* ─── revoke (kick) a member ────────────────────────────────────── */
+  /* ─── revoke (kick) a member ────────────────────────────────── */
   const revokeMember = useCallback(async (memberId: string): Promise<void> => {
-    const { error } = await supabase
-      .from('team_members')
-      .delete()
-      .eq('id', memberId);
-
+    const { error } = await supabase.from('team_members').delete().eq('id', memberId);
     if (error) throw new Error(error.message);
     await fetchTeam();
   }, [fetchTeam]);
 
-  /* ─── leave team ────────────────────────────────────────────────── */
+  /* ─── leave team ────────────────────────────────────────────── */
   const leaveTeam = useCallback(async (): Promise<void> => {
     if (!userId || !team) throw new Error('No team to leave');
     const { error } = await supabase
-      .from('team_members')
-      .delete()
-      .eq('team_id', team.id)
-      .eq('user_id', userId);
-
+      .from('team_members').delete().eq('team_id', team.id).eq('user_id', userId);
     if (error) throw new Error(error.message);
     await fetchTeam();
   }, [userId, team, fetchTeam]);
