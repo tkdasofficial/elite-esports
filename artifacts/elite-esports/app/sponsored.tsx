@@ -189,7 +189,7 @@ export default function GetSponsoredScreen() {
       <View style={styles.container}>
         <ScreenHeader title="Get Sponsored" />
         <View style={{ padding: 20, gap: 12 }}>
-          {[1, 2, 3].map(i => <SkeletonBar key={i} height={56} borderRadius={12} />)}
+          {[1, 2, 3].map(i => <SkeletonBar key={i} width="100%" height={56} radius={12} />)}
         </View>
       </View>
     );

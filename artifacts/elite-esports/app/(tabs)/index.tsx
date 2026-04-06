@@ -239,7 +239,6 @@ export default function HomeScreen() {
           data={Array.from({ length: SKELETON_COUNT }, (_, i) => i)}
           keyExtractor={i => `skel-${i}`}
           renderItem={() => <SkeletonCard />}
-          estimatedItemSize={270}
           contentContainerStyle={{ padding: 16, paddingBottom: tabBarHeight + 16 }}
           ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
           showsVerticalScrollIndicator={false}
@@ -254,7 +253,6 @@ export default function HomeScreen() {
               onPress={() => router.push({ pathname: '/match/[id]', params: { id: item.id } })}
             />
           )}
-          estimatedItemSize={270}
           contentContainerStyle={{ padding: 16, paddingBottom: tabBarHeight + 16 }}
           ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
           refreshControl={

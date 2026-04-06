@@ -16,7 +16,10 @@ export type AuthEventType =
   | 'email_verify'
   | 'token_exchange'
   | 'deep_link_received'
-  | 'callback_error';
+  | 'callback_error'
+  | 'otp_verify_reset'
+  | 'otp_verify_auth'
+  | 'otp_verify_signup';
 
 export type AuthEvent = {
   type: AuthEventType;
