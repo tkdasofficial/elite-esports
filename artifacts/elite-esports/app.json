@@ -12,7 +12,6 @@
     "android": {
       "package": "com.elite.esports.android",
       "googleServicesFile": "./google-services.json",
-      "versionCode": 2,
       "jsEngine": "hermes",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/icon.png",
