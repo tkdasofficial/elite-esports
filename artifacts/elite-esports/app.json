@@ -2,7 +2,7 @@
   "expo": {
     "name": "Elite eSports",
     "slug": "elite-esports",
-    "version": "2.5.0",
+    "version": "2.5.1",
     "owner": "avzio-expo",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",

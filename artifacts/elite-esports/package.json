@@ -1,6 +1,6 @@
 {
   "name": "@workspace/elite-esports",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "private": true,
   "main": "expo-router/entry",
   "packageManager": "npm@10.8.2",
