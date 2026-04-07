@@ -175,6 +175,8 @@ $$;
 -- Called from kyc.tsx after auth.updateUser() sets kyc_completed = true
 -- in auth metadata. This function syncs that flag into public.users
 -- so the join_match RPC (which checks users.kyc_completed) works correctly.
+DROP FUNCTION IF EXISTS public.sync_kyc_status() CASCADE;
+
 CREATE OR REPLACE FUNCTION public.sync_kyc_status()
 RETURNS void
 LANGUAGE plpgsql
