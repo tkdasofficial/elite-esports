@@ -146,7 +146,7 @@ export default function KYCScreen() {
           region:           region.trim(),
           city:             city.trim(),
           zip:              zip.trim(),
-          phone:            phone.trim() ? `${countryCode}${phone.trim()}` : '',
+          phone:            (() => { const d = phone.replace(/\D/g, '').slice(0, 10); return d ? `${countryCode}${d}` : ''; })(),
           referral_code_used: referralCode.trim().toUpperCase(),
           terms_accepted:   true,
           privacy_accepted: true,

@@ -74,9 +74,10 @@ export default function AccountInfoScreen() {
 
       const meta = authUser.user_metadata ?? {};
 
-      /* Strip country code from phone for editing, keep raw for display */
+      /* Strip country code from phone — take last 10 digits regardless of format */
       const rawPhone = meta.phone ?? '';
-      const cleanPhone = rawPhone.replace(/^\+\d{1,4}/, '').replace(/[^0-9]/g, '').slice(0, 10);
+      const allDigits = rawPhone.replace(/\D/g, '');
+      const cleanPhone = allDigits.length > 10 ? allDigits.slice(-10) : allDigits;
 
       const kycData: KYCData = {
         email:        authUser.email ?? '',
@@ -141,7 +142,9 @@ export default function AccountInfoScreen() {
       }
 
       const countryCode = getCountryCode(country);
-      const phoneVal    = phone.trim() ? `${countryCode}${phone.trim()}` : '';
+      // Store exactly 10 digits with country code prefix
+      const cleanedPhone = phone.replace(/\D/g, '').slice(0, 10);
+      const phoneVal     = cleanedPhone ? `${countryCode}${cleanedPhone}` : '';
 
       const { error: updateErr } = await supabase.auth.updateUser({
         data: {

@@ -19,11 +19,8 @@ export function useProfile(userId?: string) {
         supabase.from('users').select('id, name, username, avatar_url').eq('id', userId).maybeSingle(),
         supabase.from('wallets').select('balance').eq('user_id', userId).maybeSingle(),
         supabase.from('user_games').select('game_id, uid, in_game_name, games(name)').eq('user_id', userId),
-        /* Played — total matches entered */
         supabase.from('match_participants').select('id', { count: 'exact', head: true }).eq('user_id', userId),
-        /* Wins — match_results where rank = 1 */
         supabase.from('match_results').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('rank', 1),
-        /* Earned — lifetime total of all incoming wallet credits */
         supabase.from('wallet_transactions')
           .select('amount')
           .eq('user_id', userId)
@@ -39,22 +36,23 @@ export function useProfile(userId?: string) {
       const earned    = (earnedRes.data ?? []).reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
       const games = rawGames.map((g: any) => ({
-        game_id: g.game_id ?? '',
-        game: (Array.isArray(g.games) ? g.games[0]?.name : g.games?.name) ?? g.game_id ?? '',
-        uid: g.uid ?? '',
+        game_id:    g.game_id ?? '',
+        game:       (Array.isArray(g.games) ? g.games[0]?.name : g.games?.name) ?? g.game_id ?? '',
+        uid:        g.uid ?? '',
         inGameName: g.in_game_name ?? undefined,
       }));
 
       if (user) {
+        // avatar_url stores the numeric index as a plain string ("0", "1", …)
         const rawAvatarUrl = user.avatar_url ?? '';
-        const avatarIndex = /^\d+$/.test(rawAvatarUrl) ? parseInt(rawAvatarUrl, 10) : 0;
+        const avatarIndex  = /^\d+$/.test(rawAvatarUrl) ? parseInt(rawAvatarUrl, 10) : 0;
         setProfile({
-          id: user.id,
-          full_name: user.name ?? '',
-          username: user.username,
+          id:           user.id,
+          full_name:    user.name ?? '',
+          username:     user.username,
           avatar_index: avatarIndex,
           games,
-          balance: wallet?.balance ?? 0,
+          balance:      wallet?.balance ?? 0,
           played,
           wins,
           earned,
@@ -72,17 +70,20 @@ export function useProfile(userId?: string) {
   const save = async (updates: Partial<ProfileData>): Promise<{ error: Error | null }> => {
     if (!userId) return { error: new Error('Not authenticated') };
     try {
+      // 1. Save user profile — always include avatar_url so it is never lost
       const { error: upsertErr } = await supabase
         .from('users')
         .upsert({
-          id: userId,
-          name: updates.full_name ?? '',
-          username: updates.username ?? null,
+          id:         userId,
+          name:       updates.full_name ?? '',
+          username:   updates.username ?? null,
           avatar_url: String(updates.avatar_index ?? 0),
+          updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
 
       if (upsertErr) return { error: new Error(upsertErr.message) };
 
+      // 2. Save game IDs — uid AND in_game_name are always saved together
       if (updates.games !== undefined) {
         const { error: delErr } = await supabase
           .from('user_games')
@@ -94,37 +95,26 @@ export function useProfile(userId?: string) {
         if (validGames.length > 0) {
           const { error: insertErr } = await supabase
             .from('user_games')
-            .insert(validGames.map(g => ({
-              user_id: userId,
-              game_id: g.game_id,
-              uid: g.uid,
+            .insert(validGames.map((g: any) => ({
+              user_id:      userId,
+              game_id:      g.game_id,
+              uid:          g.uid,
               in_game_name: g.inGameName ?? null,
             })));
 
-          if (insertErr) {
-            if (insertErr.message?.includes('in_game_name')) {
-              const { error: fallbackErr } = await supabase
-                .from('user_games')
-                .insert(validGames.map(g => ({
-                  user_id: userId,
-                  game_id: g.game_id,
-                  uid: g.uid,
-                })));
-              if (fallbackErr) return { error: new Error(fallbackErr.message) };
-            } else {
-              return { error: new Error(insertErr.message) };
-            }
-          }
+          if (insertErr) return { error: new Error(insertErr.message) };
         }
       }
 
+      // 3. Update local state — use explicit undefined check so index 0 is preserved
       setProfile(prev => ({
         ...prev,
-        full_name: updates.full_name ?? prev.full_name,
-        username: updates.username ?? prev.username,
-        avatar_index: updates.avatar_index ?? prev.avatar_index,
-        games: updates.games ?? prev.games,
+        full_name:    updates.full_name    !== undefined ? updates.full_name    : prev.full_name,
+        username:     updates.username     !== undefined ? updates.username     : prev.username,
+        avatar_index: updates.avatar_index !== undefined ? updates.avatar_index : prev.avatar_index,
+        games:        updates.games        !== undefined ? updates.games        : prev.games,
       }));
+
       return { error: null };
     } catch (e: any) {
       return { error: new Error(e?.message ?? 'Save failed') };
