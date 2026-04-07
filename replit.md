@@ -262,11 +262,60 @@ artifacts/elite-esports/
 - `adaptMatch()` / `matchToDbPayload()` bridge DB column names ↔ app type names
 - Admin check: `admin_users` table lookup on every auth state change
 
-## Notification System
-- `expo-notifications ~0.32.16` installed and configured
-- 5 Android channels: Default, Match Alerts, Rewards, Tournaments, Account & Security — all HIGH importance
-- Permission requested at app startup (`initNotifications()` in `_layout.tsx`)
-- Notification detail screen at `app/notification/[id].tsx` — shows full title, message, timestamp, type
+## NCM — Native Cloud Messaging (No FCM keys needed)
+
+### Architecture
+```
+Backend event → SQL trigger → notify_user() helper
+   → INSERT ncm_notifications    (Realtime → device local notification)
+   → INSERT notifications        (in-app notification list)
+
+Device online:  Supabase Realtime carries INSERT → app fires local notification
+Device offline: Background fetch polls pending rows every 15 min
+App foreground: Polls on every foreground resume to catch missed notifications
+```
+
+### Key tables (run 016_ncm_full_backend.sql in Supabase)
+| Table | Purpose |
+|---|---|
+| `device_registrations` | One row per app-install (keyed by DUID) |
+| `ncm_notifications` | Push queue — Realtime triggers local notification on device |
+| `notifications` | In-app notification list (also written by notify_user()) |
+
+### DUID (Device Unique ID)
+- Generated once on first launch: `DUID-{base36timestamp}-{random6}`
+- Stored in SecureStore (primary) with AsyncStorage fallback
+- Upserted to `device_registrations` on every login
+
+### Realtime channels (two per user)
+- `ncm-user-{userId}`: user-specific notifications (`target_user_id=eq.{userId}`)
+- `ncm-broadcast-{userId}`: global broadcasts (`target_user_id=is.null`)
+
+### Backend triggers (all in migration 016)
+| Event | Notification |
+|---|---|
+| `match_participants` INSERT | "You're In! Joined {match}" |
+| `wallet_transactions` INSERT type=prize | "Prize Credited ₹X" |
+| `wallet_transactions` INSERT type=referral | "Referral Bonus ₹X" |
+| `wallet_transactions` INSERT type=ad_bonus | "Ad Bonus ₹X" |
+| `wallet_transactions` INSERT type=refund | "Entry Fee Refunded ₹X" |
+| `payments` INSERT | "Deposit Received — under review" |
+| `payments` UPDATE → approved | "Deposit Approved ₹X" |
+| `payments` UPDATE → rejected | "Deposit Rejected ₹X" |
+| `withdrawals` INSERT | "Withdrawal Requested ₹X" |
+| `withdrawals` UPDATE → approved | "Withdrawal Processed ₹X" |
+| `withdrawals` UPDATE → rejected | "Withdrawal Rejected ₹X" |
+| `match_results` INSERT | "Match Result — Rank #N, Prize ₹X" |
+| `matches` UPDATE → ongoing | "Match is LIVE!" (all participants) |
+| `matches` UPDATE → cancelled | "Match Cancelled, refund issued" (all participants) |
+| Admin SQL call | `SELECT broadcast_notification('title','body')` |
+
+### Android notification channels (5)
+- `elite-esports-default` — General
+- `elite-esports-match` — Match Alerts (HIGH)
+- `elite-esports-reward` — Prizes & Rewards (HIGH)
+- `elite-esports-tournament` — Tournaments (HIGH)
+- `elite-esports-account` — Deposits / Withdrawals (MAX)
 
 ## Package Identity
 - **Android package**: `com.elite.esports.android`

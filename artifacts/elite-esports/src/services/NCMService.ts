@@ -1,19 +1,18 @@
 /**
  * Native Cloud Messaging (NCM) Service
  *
- * Workflow 1 — Device Registration:
- *   On sign-in, generate (or reuse) a persistent DUID and save it together
- *   with the user record and FCM/APNs push token to `device_registrations`.
+ * Delivery architecture (no FCM/APNs keys needed):
+ *   1. Device registers → DUID + token saved to `device_registrations`
+ *   2. Backend trigger  → inserts row in `ncm_notifications`
+ *   3. Supabase Realtime carries the INSERT to the device (online path)
+ *   4. App fires a LOCAL notification immediately on receipt
+ *   5. Background fetch polls pending rows every 15 min (offline fallback)
+ *   6. App foreground poll syncs any missed notifications on reconnect
  *
- * Workflow 2 — Notification Delivery:
- *   Subscribe to `ncm_notifications` via Supabase Realtime.
- *   When a pending row targeting this user (or broadcast) arrives, fire a
- *   local notification via expo-notifications and mark it delivered.
- *
- * Background fallback:
- *   Register an expo-background-fetch task that polls for pending NCM rows
- *   every ~15 min so the device can receive messages even after battery-saver
- *   kills the foreground Realtime socket.
+ * DUID (Device Unique ID):
+ *   Generated once on first launch, stored in SecureStore (AsyncStorage fallback).
+ *   Format: DUID-<base36 timestamp>-<random 6 chars>
+ *   Persists across app restarts. One row per app-install in device_registrations.
  */
 
 import * as Notifications from 'expo-notifications';
@@ -26,17 +25,20 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/services/supabase';
 
-const DUID_KEY = 'elite_ncm_duid';
-const LAST_POLL_KEY = 'elite_ncm_last_poll';
+// ── Constants ────────────────────────────────────────────────────────────────
+const DUID_KEY        = 'elite_ncm_duid';
+const LAST_POLL_KEY   = 'elite_ncm_last_poll';
 const BACKGROUND_TASK = 'NCM_BACKGROUND_POLL';
 
+// ── DUID generation & persistence ────────────────────────────────────────────
 function generateDUID(): string {
-  const ts = Date.now().toString(36).toUpperCase();
+  const ts   = Date.now().toString(36).toUpperCase();
   const rand = Math.random().toString(36).substring(2, 8).toUpperCase();
   return `DUID-${ts}-${rand}`;
 }
 
 async function getDUID(): Promise<string> {
+  // Primary: SecureStore (survives reinstall on iOS, encrypted on Android)
   try {
     const stored = await SecureStore.getItemAsync(DUID_KEY);
     if (stored) return stored;
@@ -44,6 +46,7 @@ async function getDUID(): Promise<string> {
     await SecureStore.setItemAsync(DUID_KEY, id);
     return id;
   } catch {
+    // Fallback: AsyncStorage (works everywhere, not encrypted)
     const fallback = await AsyncStorage.getItem(DUID_KEY);
     if (fallback) return fallback;
     const id = generateDUID();
@@ -52,41 +55,43 @@ async function getDUID(): Promise<string> {
   }
 }
 
+// ── Raw device push token (stored for reference, delivery is via Realtime) ───
 async function getPushToken(): Promise<string | null> {
   try {
     const { status } = await Notifications.getPermissionsAsync();
     if (status !== 'granted') return null;
     const t = await Notifications.getDevicePushTokenAsync();
-    return t.data as string;
+    return typeof t.data === 'string' ? t.data : null;
   } catch {
-    return null;
+    return null; // Graceful fail on emulators / no Play Services
   }
 }
 
+// ── Device registration ───────────────────────────────────────────────────────
 export async function registerDevice(user: User): Promise<void> {
   try {
-    const duid = await getDUID();
+    const duid      = await getDUID();
     const pushToken = await getPushToken();
 
     await supabase.from('device_registrations').upsert(
       {
-        user_id: user.id,
+        user_id:      user.id,
         duid,
-        platform: Platform.OS,
-        os_version: String(Platform.Version),
-        push_token: pushToken ?? null,
-        email: user.email ?? null,
-        display_name:
-          user.user_metadata?.full_name ||
-          user.user_metadata?.name ||
-          user.email?.split('@')[0] ||
-          null,
-        updated_at: new Date().toISOString(),
-        is_active: true,
+        platform:     Platform.OS,
+        os_version:   String(Platform.Version),
+        push_token:   pushToken ?? null,
+        email:        user.email ?? null,
+        display_name: user.user_metadata?.full_name
+                      || user.user_metadata?.name
+                      || user.email?.split('@')[0]
+                      || null,
+        updated_at:   new Date().toISOString(),
+        is_active:    true,
       },
       { onConflict: 'duid' },
     );
   } catch {
+    // Non-critical — do not crash the app
   }
 }
 
@@ -95,10 +100,11 @@ export async function deregisterDevice(userId: string): Promise<void> {
     const duid = await getDUID();
     await supabase
       .from('device_registrations')
-      .update({ is_active: false })
+      .update({ is_active: false, updated_at: new Date().toISOString() })
       .eq('user_id', userId)
       .eq('duid', duid);
   } catch {
+    // Non-critical
   }
 }
 
@@ -106,6 +112,7 @@ export async function getNCMDeviceId(): Promise<string> {
   return getDUID();
 }
 
+// ── Local notification delivery ───────────────────────────────────────────────
 async function deliverNCMNotification(row: {
   id: string;
   title: string;
@@ -113,60 +120,80 @@ async function deliverNCMNotification(row: {
   channel_id?: string;
 }): Promise<void> {
   try {
+    // Try channel-aware notification first (Android)
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: row.title,
-        body: row.body,
-        sound: true,
+        title:    row.title,
+        body:     row.body,
+        sound:    true,
         priority: Notifications.AndroidNotificationPriority.MAX,
-        data: { ncm_id: row.id },
+        data:     { ncm_id: row.id },
       },
       trigger: {
         channelId: row.channel_id ?? 'elite-esports-default',
       } as Notifications.NotificationTriggerInput,
     });
   } catch {
-    await Notifications.scheduleNotificationAsync({
-      content: {
-        title: row.title,
-        body: row.body,
-        sound: true,
-        priority: Notifications.AndroidNotificationPriority.MAX,
-        data: { ncm_id: row.id },
-      },
-      trigger: null,
-    });
+    // Fallback for iOS or unsupported trigger format
+    try {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title:    row.title,
+          body:     row.body,
+          sound:    true,
+          priority: Notifications.AndroidNotificationPriority.MAX,
+          data:     { ncm_id: row.id },
+        },
+        trigger: null,
+      });
+    } catch {
+      // Fail silently — notification is still in the in-app list
+    }
   }
 
-  await supabase
-    .from('ncm_notifications')
-    .update({ status: 'delivered', delivered_at: new Date().toISOString() })
-    .eq('id', row.id);
+  // Mark delivered in the DB so offline poll doesn't re-send it
+  try {
+    await supabase
+      .from('ncm_notifications')
+      .update({ status: 'delivered', delivered_at: new Date().toISOString() })
+      .eq('id', row.id);
+  } catch {
+    // Non-critical
+  }
 }
 
+// ── Offline sync poll ─────────────────────────────────────────────────────────
+// Called on: app foreground, background fetch, initial mount
 async function pollPendingNotifications(userId: string): Promise<void> {
   try {
     const duid = await getDUID();
+
+    // Fetch all pending rows for this user (user-specific OR broadcast)
     const { data } = await supabase
       .from('ncm_notifications')
       .select('id, title, body, channel_id')
       .eq('status', 'pending')
       .or(`target_user_id.eq.${userId},target_user_id.is.null`)
-      .or(`target_duid.eq.${duid},target_duid.is.null`);
+      .or(`target_duid.eq.${duid},target_duid.is.null`)
+      .order('created_at', { ascending: true });
 
     if (!data || data.length === 0) return;
+
     for (const row of data) {
       await deliverNCMNotification(row);
     }
+
     await AsyncStorage.setItem(LAST_POLL_KEY, Date.now().toString());
   } catch {
+    // Non-critical
   }
 }
 
+// ── Background fetch task (offline fallback every 15 min) ────────────────────
 TaskManager.defineTask(BACKGROUND_TASK, async () => {
   try {
-    const session = await supabase.auth.getSession();
-    const userId = session?.data?.session?.user?.id;
+    const { data: { session } } = await supabase.auth.getSession();
+    const userId = session?.user?.id;
     if (!userId) return BackgroundFetch.BackgroundFetchResult.NoData;
     await pollPendingNotifications(userId);
     return BackgroundFetch.BackgroundFetchResult.NewData;
@@ -180,78 +207,103 @@ async function registerBackgroundTask(): Promise<void> {
     const isRegistered = await TaskManager.isTaskRegisteredAsync(BACKGROUND_TASK);
     if (isRegistered) return;
     await BackgroundFetch.registerTaskAsync(BACKGROUND_TASK, {
-      minimumInterval: 15 * 60,
-      stopOnTerminate: false,
-      startOnBoot: true,
+      minimumInterval: 15 * 60,  // 15 minutes
+      stopOnTerminate: false,    // continue after app is killed
+      startOnBoot:     true,     // start on device reboot
     });
   } catch {
+    // Background fetch not supported in Expo Go — safe to ignore
   }
 }
 
-let realtimeChannel: ReturnType<typeof supabase.channel> | null = null;
+// ── Realtime subscription (online delivery) ───────────────────────────────────
+// Two separate channels:
+//   Channel A — user-specific notifications (target_user_id = userId)
+//   Channel B — broadcast notifications (target_user_id IS NULL)
+// This avoids receiving other users' notifications in the realtime stream.
+
+let userChannel:      ReturnType<typeof supabase.channel> | null = null;
+let broadcastChannel: ReturnType<typeof supabase.channel> | null = null;
 
 export function subscribeNCMRealtime(userId: string): () => void {
-  if (realtimeChannel) {
-    supabase.removeChannel(realtimeChannel);
-    realtimeChannel = null;
-  }
+  // Tear down any existing subscriptions first
+  if (userChannel)      { supabase.removeChannel(userChannel);      userChannel = null; }
+  if (broadcastChannel) { supabase.removeChannel(broadcastChannel); broadcastChannel = null; }
 
-  realtimeChannel = supabase
-    .channel(`ncm-${userId}`)
+  // Shared handler — filters by DUID if target_duid is set
+  const handleRow = async (payload: { new: Record<string, unknown> }) => {
+    const row = payload.new as {
+      id:             string;
+      title:          string;
+      body:           string;
+      channel_id?:    string;
+      status:         string;
+      target_user_id: string | null;
+      target_duid:    string | null;
+    };
+
+    if (row.status !== 'pending') return;
+
+    // If the notification targets a specific device, verify it's this one
+    if (row.target_duid !== null) {
+      const duid = await getDUID();
+      if (row.target_duid !== duid) return;
+    }
+
+    await deliverNCMNotification(row);
+  };
+
+  // Channel A: user-specific
+  userChannel = supabase
+    .channel(`ncm-user-${userId}`)
     .on(
       'postgres_changes',
       {
-        event: 'INSERT',
+        event:  'INSERT',
         schema: 'public',
-        table: 'ncm_notifications',
+        table:  'ncm_notifications',
+        filter: `target_user_id=eq.${userId}`,
       },
-      async (payload) => {
-        const row = payload.new as {
-          id: string;
-          title: string;
-          body: string;
-          channel_id?: string;
-          status: string;
-          target_user_id: string | null;
-          target_duid: string | null;
-        };
-
-        if (row.status !== 'pending') return;
-
-        const duid = await getDUID();
-        const targetsUser =
-          row.target_user_id === null || row.target_user_id === userId;
-        const targetsDUID =
-          row.target_duid === null || row.target_duid === duid;
-
-        if (targetsUser && targetsDUID) {
-          await deliverNCMNotification(row);
-        }
-      },
+      handleRow,
     )
     .subscribe();
 
+  // Channel B: broadcast (target_user_id IS NULL)
+  broadcastChannel = supabase
+    .channel(`ncm-broadcast-${userId}`)
+    .on(
+      'postgres_changes',
+      {
+        event:  'INSERT',
+        schema: 'public',
+        table:  'ncm_notifications',
+        filter: 'target_user_id=is.null',
+      },
+      handleRow,
+    )
+    .subscribe();
+
+  // Foreground sync: poll when app comes back from background
   const appStateSub = AppState.addEventListener('change', async (state) => {
     if (state === 'active') {
       await pollPendingNotifications(userId);
     }
   });
 
+  // Cleanup function returned to the caller (NCMContext)
   return () => {
-    if (realtimeChannel) {
-      supabase.removeChannel(realtimeChannel);
-      realtimeChannel = null;
-    }
+    if (userChannel)      { supabase.removeChannel(userChannel);      userChannel = null; }
+    if (broadcastChannel) { supabase.removeChannel(broadcastChannel); broadcastChannel = null; }
     appStateSub.remove();
   };
 }
 
+// ── Battery saver helpers ─────────────────────────────────────────────────────
 export async function requestBatteryOptimizationExemption(): Promise<void> {
   try {
     if (Platform.OS === 'android') {
-      const pkg = 'com.elite.esports.android';
-      const url = `package:${pkg}`;
-      const canOpen = await Linking.canOpenURL(url);
+      const url      = `package:com.elite.esports.android`;
+      const canOpen  = await Linking.canOpenURL(url);
       if (canOpen) {
         await Linking.openURL(url);
       } else {
@@ -259,10 +311,7 @@ export async function requestBatteryOptimizationExemption(): Promise<void> {
       }
     }
   } catch {
-    try {
-      await Linking.openSettings();
-    } catch {
-    }
+    try { await Linking.openSettings(); } catch { /* ignore */ }
   }
 }
 
@@ -274,6 +323,7 @@ export async function checkBatterySaverActive(): Promise<boolean> {
   }
 }
 
+// ── Entry point ───────────────────────────────────────────────────────────────
 export async function initNCM(user: User): Promise<void> {
   await registerDevice(user);
   await registerBackgroundTask();
