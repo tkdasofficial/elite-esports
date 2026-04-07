@@ -175,7 +175,21 @@ $$;
 -- Called from kyc.tsx after auth.updateUser() sets kyc_completed = true
 -- in auth metadata. This function syncs that flag into public.users
 -- so the join_match RPC (which checks users.kyc_completed) works correctly.
-DROP FUNCTION IF EXISTS public.sync_kyc_status() CASCADE;
+-- Drop every overload of sync_kyc_status regardless of argument types
+DO $$
+DECLARE
+  r RECORD;
+BEGIN
+  FOR r IN
+    SELECT oid, pg_get_function_identity_arguments(oid) AS args
+      FROM pg_proc
+     WHERE proname = 'sync_kyc_status'
+       AND pronamespace = 'public'::regnamespace
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS public.sync_kyc_status(%s) CASCADE', r.args);
+  END LOOP;
+END
+$$;
 
 CREATE OR REPLACE FUNCTION public.sync_kyc_status()
 RETURNS void
