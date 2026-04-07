@@ -48,7 +48,22 @@ CREATE POLICY "mps_admin"  ON public.match_prize_splits FOR ALL USING (
 --  Priority: match_prize_splits for that rank → fallback: prize_pool percentages.
 --  Idempotent: skips if wallet_transaction already exists for this user+match.
 
-CREATE OR REPLACE FUNCTION public.auto_distribute_prize()
+-- Drop every overload of auto_distribute_prize before recreating
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN
+    SELECT oid, pg_get_function_identity_arguments(oid) AS args
+      FROM pg_proc
+     WHERE proname = 'auto_distribute_prize'
+       AND pronamespace = 'public'::regnamespace
+  LOOP
+    EXECUTE format('DROP FUNCTION IF EXISTS public.auto_distribute_prize(%s) CASCADE', r.args);
+  END LOOP;
+END
+$$;
+
+CREATE FUNCTION public.auto_distribute_prize()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -191,7 +206,7 @@ BEGIN
 END
 $$;
 
-CREATE OR REPLACE FUNCTION public.sync_kyc_status()
+CREATE FUNCTION public.sync_kyc_status()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
