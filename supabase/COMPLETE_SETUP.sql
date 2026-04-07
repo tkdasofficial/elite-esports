@@ -865,6 +865,14 @@ BEGIN
     RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
   END IF;
 
+  -- 0. KYC gate — must have completed profile setup
+  IF NOT EXISTS (
+    SELECT 1 FROM public.users
+    WHERE id = v_user_id AND kyc_completed = true
+  ) THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Profile setup required before joining a match');
+  END IF;
+
   -- 1. Load match details
   SELECT status, max_players, joined_players, entry_fee
   INTO v_status, v_max_players, v_joined, v_fee
