@@ -30,31 +30,17 @@ export function useMatchWinners(matchId: string, enabled: boolean) {
         return;
       }
 
-      const { data: matchData } = await supabase
-        .from('matches')
-        .select('prize_pool')
-        .eq('id', matchId)
-        .maybeSingle();
-
-      const prizePool = Number(matchData?.prize_pool ?? 0);
-
       const { data: splitData } = await supabase
         .from('match_prize_splits')
-        .select('rank, percentage')
+        .select('rank, prize_amount')
         .eq('match_id', matchId)
         .order('rank', { ascending: true });
 
       const tierMap: Record<number, number> = {};
       if (splitData && splitData.length > 0) {
         splitData.forEach(s => {
-          tierMap[s.rank] = prizePool > 0
-            ? Math.round(Number(s.percentage) * prizePool) / 100
-            : 0;
+          tierMap[s.rank] = Number(s.prize_amount ?? 0);
         });
-      } else {
-        tierMap[1] = Math.round(prizePool * 0.50 * 100) / 100;
-        tierMap[2] = Math.round(prizePool * 0.30 * 100) / 100;
-        tierMap[3] = Math.round(prizePool * 0.10 * 100) / 100;
       }
 
       const userIds = results.map(r => r.user_id);

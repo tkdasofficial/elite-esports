@@ -80,7 +80,7 @@ export default function MatchDetailScreen() {
 
   const { players, loading: playersLoading } = useMatchPlayers(id, showPlayers);
   const { winners, loading: winnersLoading } = useMatchWinners(id, showWinners);
-  const { tiers,   loading: tiersLoading   } = usePrizeTiers(id, match?.prize_pool ?? 0, showWinners);
+  const { tiers,   loading: tiersLoading   } = usePrizeTiers(id, showWinners);
 
   const bottomPad = insets.bottom;
   const isLive    = match?.status === 'ongoing';
@@ -787,14 +787,10 @@ export default function MatchDetailScreen() {
                         <Text style={styles.tierRankLabel}>Rank #{tier.rank}</Text>
                         <Text style={styles.tierRankHint}>
                           {tier.rank === 1 ? 'Champion' : tier.rank === 2 ? 'Runner-up' : tier.rank === 3 ? '3rd Place' : `Position ${tier.rank}`}
-                          {tier.percentage > 0 ? ` · ${tier.percentage}%` : ''}
                         </Text>
                       </View>
                       <View style={{ alignItems: 'flex-end' }}>
                         <Text style={styles.tierPrize}>₹{formatPrize(tier.prize_amount)}</Text>
-                        {tier.percentage > 0 ? (
-                          <Text style={styles.tierRankHint}>{tier.percentage}% of pool</Text>
-                        ) : null}
                       </View>
                     </View>
                   ))}

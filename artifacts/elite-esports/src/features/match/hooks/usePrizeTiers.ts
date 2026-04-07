@@ -4,10 +4,9 @@ import { supabase } from '@/services/supabase';
 export type PrizeTier = {
   rank: number;
   prize_amount: number;
-  percentage: number;
 };
 
-export function usePrizeTiers(matchId: string, prizePool: number, enabled: boolean) {
+export function usePrizeTiers(matchId: string, enabled: boolean) {
   const [tiers, setTiers] = useState<PrizeTier[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +19,7 @@ export function usePrizeTiers(matchId: string, prizePool: number, enabled: boole
       try {
         const { data } = await supabase
           .from('match_prize_splits')
-          .select('rank, percentage')
+          .select('rank, prize_amount')
           .eq('match_id', matchId)
           .order('rank', { ascending: true });
 
@@ -30,18 +29,9 @@ export function usePrizeTiers(matchId: string, prizePool: number, enabled: boole
           setTiers(
             data.map(t => ({
               rank:         t.rank,
-              percentage:   Number(t.percentage),
-              prize_amount: prizePool > 0
-                ? Math.round(Number(t.percentage) * prizePool) / 100
-                : 0,
+              prize_amount: Number(t.prize_amount ?? 0),
             })),
           );
-        } else if (prizePool > 0) {
-          setTiers([
-            { rank: 1, percentage: 50, prize_amount: Math.round(prizePool * 0.50 * 100) / 100 },
-            { rank: 2, percentage: 30, prize_amount: Math.round(prizePool * 0.30 * 100) / 100 },
-            { rank: 3, percentage: 10, prize_amount: Math.round(prizePool * 0.10 * 100) / 100 },
-          ]);
         } else {
           setTiers([]);
         }
@@ -52,7 +42,7 @@ export function usePrizeTiers(matchId: string, prizePool: number, enabled: boole
 
     fetchTiers();
     return () => { cancelled = true; };
-  }, [matchId, prizePool, enabled]);
+  }, [matchId, enabled]);
 
   return { tiers, loading };
 }
