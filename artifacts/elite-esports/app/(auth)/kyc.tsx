@@ -136,8 +136,8 @@ export default function KYCScreen() {
         return;
       }
 
-      /* Save extra meta */
-      await supabase.auth.updateUser({
+      /* Save extra meta + mark KYC complete */
+      const { error: metaErr } = await supabase.auth.updateUser({
         data: {
           full_name:        name,
           username:         uname,
@@ -146,12 +146,27 @@ export default function KYCScreen() {
           city:             city.trim(),
           zip:              zip.trim(),
           phone:            phone.trim() ? `${countryCode}${phone.trim()}` : '',
-          referral_code:    referralCode.trim().toUpperCase(),
+          referral_code_used: referralCode.trim().toUpperCase(),
           terms_accepted:   true,
           privacy_accepted: true,
           kyc_completed:    true,
         },
       });
+
+      if (metaErr) {
+        setError(metaErr.message);
+        setLoading(false);
+        return;
+      }
+
+      /* Sync KYC flag + referral_code into public.users (via SECURITY DEFINER RPC) */
+      await supabase.rpc('sync_kyc_status');
+
+      /* Process referral code if the user entered one */
+      const code = referralCode.trim().toUpperCase();
+      if (code.length > 0) {
+        await supabase.rpc('use_referral_code', { p_code: code });
+      }
 
       router.replace('/(tabs)');
     } catch (e: any) {

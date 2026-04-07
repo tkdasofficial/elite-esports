@@ -11,6 +11,7 @@ import { useTheme } from '@/store/ThemeContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { submitDeposit } from '@/services/walletApi';
 import { useAppSettings } from '@/hooks/useAppSettings';
+import { useAuth } from '@/store/AuthContext';
 import type { AppColors } from '@/utils/colors';
 
 const QUICK_AMOUNTS = [50, 100, 250, 500, 1000, 2000, 5000];
@@ -34,8 +35,11 @@ export default function AddMoneyScreen() {
   const { colors }   = useTheme();
   const styles       = useMemo(() => createStyles(colors), [colors]);
   const { settings } = useAppSettings();
+  const { user }     = useAuth();
 
   const upiId = settings.upi_id || ADMIN_UPI_ID;
+
+  const kycDone = user?.user_metadata?.kyc_completed === true;
 
   const [amount, setAmount] = useState('');
   const [utr,    setUtr]    = useState('');
@@ -94,6 +98,27 @@ export default function AddMoneyScreen() {
       })}
     </View>
   );
+
+  if (!kycDone) {
+    return (
+      <View style={styles.container}>
+        <ScreenHeader title="Add Money" />
+        <View style={styles.centerState}>
+          <View style={styles.kycIconWrap}>
+            <Ionicons name="shield-checkmark-outline" size={54} color={colors.primary} />
+          </View>
+          <Text style={styles.kycTitle}>Profile Verification Required</Text>
+          <Text style={styles.kycBody}>
+            You need to complete your profile setup before you can add money to your wallet.
+          </Text>
+          <TouchableOpacity style={styles.kycBtn} onPress={() => router.push('/(auth)/kyc')} activeOpacity={0.85}>
+            <Text style={styles.kycBtnText}>Complete Profile</Text>
+            <Ionicons name="arrow-forward" size={16} color="#fff" style={{ marginLeft: 6 }} />
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
 
   if (step === 'processing') {
     return (
@@ -323,6 +348,26 @@ function createStyles(colors: AppColors) {
     successIcon:     { width: 100, height: 100, borderRadius: 50, backgroundColor: colors.primary + '1A', alignItems: 'center', justifyContent: 'center' },
     processingTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', color: colors.text.primary, textAlign: 'center' },
     processingText:  { fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.muted, textAlign: 'center', lineHeight: 22 },
+
+    kycIconWrap: {
+      width: 96, height: 96, borderRadius: 48,
+      backgroundColor: colors.primary + '18',
+      alignItems: 'center', justifyContent: 'center', marginBottom: 8,
+    },
+    kycTitle: {
+      fontSize: 20, fontFamily: 'Inter_700Bold',
+      color: colors.text.primary, textAlign: 'center',
+    },
+    kycBody: {
+      fontSize: 14, fontFamily: 'Inter_400Regular',
+      color: colors.text.muted, textAlign: 'center', lineHeight: 22,
+    },
+    kycBtn: {
+      flexDirection: 'row', alignItems: 'center',
+      backgroundColor: colors.primary, borderRadius: 30,
+      paddingHorizontal: 28, paddingVertical: 14, marginTop: 8,
+    },
+    kycBtnText: { fontSize: 15, fontFamily: 'Inter_700Bold', color: '#fff' },
 
     steps:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
     stepItem:  { alignItems: 'center', gap: 6 },
