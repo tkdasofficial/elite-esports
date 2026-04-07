@@ -104,8 +104,21 @@ export default function MatchDetailScreen() {
     return () => handler.remove();
   }, [isLive, hasJoined, gateWithInterstitial]);
 
-  // ── JOIN: fetch profile first, then show confirm modal ────────────────────
+  // ── JOIN: KYC gate first, then fetch profile, then show confirm modal ──────
   const handleJoinPress = useCallback(async () => {
+    // Block unverified users before doing anything else
+    if (!user?.user_metadata?.kyc_completed) {
+      Alert.alert(
+        'Profile Required',
+        'You need to complete your profile setup before joining a match.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Complete Profile', onPress: () => router.push('/(auth)/kyc') },
+        ]
+      );
+      return;
+    }
+
     if (!match?.game_id) {
       Alert.alert('Error', 'Match game not configured.');
       return;
@@ -124,7 +137,7 @@ export default function MatchDetailScreen() {
       setProfileLoading(false);
       Alert.alert('Error', 'Could not load your game profile.');
     }
-  }, [match?.game_id, fetchGameProfile]);
+  }, [user?.user_metadata?.kyc_completed, match?.game_id, fetchGameProfile]);
 
   const handleJoinConfirm = useCallback(() => {
     setJoinConfirmVisible(false);

@@ -129,7 +129,9 @@ function ProfileGate() {
   useEffect(() => {
     if (!user) return;
     if (loading) return;
-    if (!profile.username) {
+    // Redirect to KYC if username missing OR kyc_completed flag not set
+    const kycDone = user.user_metadata?.kyc_completed === true;
+    if (!profile.username || !kycDone) {
       router.replace('/(auth)/kyc' as any);
     }
   }, [user, loading, profile.username]);
