@@ -80,7 +80,7 @@ export default function MatchDetailScreen() {
 
   const { players, loading: playersLoading } = useMatchPlayers(id, showPlayers);
   const { winners, loading: winnersLoading } = useMatchWinners(id, showWinners);
-  const { tiers,   loading: tiersLoading   } = usePrizeTiers(id, showWinners);
+  const { tiers,   loading: tiersLoading   } = usePrizeTiers(id);
 
   const bottomPad = insets.bottom;
   const isLive    = match?.status === 'ongoing';
@@ -376,8 +376,8 @@ export default function MatchDetailScreen() {
                   {match.status === 'completed' ? 'Winners' : 'Prize Distribution'}
                 </Text>
                 <Text style={styles.actionBtnSub}>
-                  {match.status === 'completed'
-                    ? 'View final leaderboard'
+                  {tiers.length > 0
+                    ? `${tiers.length} winner${tiers.length !== 1 ? 's' : ''} · ₹${match.prize_pool.toLocaleString('en-IN')} pool`
                     : `₹${match.prize_pool.toLocaleString('en-IN')} total pool`}
                 </Text>
               </View>
@@ -739,42 +739,51 @@ export default function MatchDetailScreen() {
 
       {/* ═══════════════════════════════════════════════════════
           PRIZE DISTRIBUTION / WINNERS MODAL
-          • Before completed: show prize tier breakdown from DB
-          • After completed: show actual winners list
+          • Before completed : prize splits from match_prize_splits
+          • After completed  : actual winners from match_results
+                               with prize from match_prize_splits
       ════════════════════════════════════════════════════════ */}
       <Modal visible={showWinners} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowWinners(false)}>
         <View style={[styles.sheetContainer, { backgroundColor: colors.background.dark }]}>
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeader}>
             <Text style={[styles.sheetTitle, { color: match.status === 'completed' ? GOLD : colors.text.primary }]}>
-              {match.status === 'completed' ? '🏆 Winners' : 'Prize Distribution'}
+              {match.status === 'completed' ? '🏆 Winners' : '🏆 Prize Distribution'}
             </Text>
             <TouchableOpacity onPress={() => setShowWinners(false)} style={styles.sheetClose}>
               <Ionicons name="close" size={22} color={colors.text.primary} />
             </TouchableOpacity>
           </View>
 
-          {/* ── BEFORE COMPLETED: Prize Tier Breakdown ── */}
+          {/* ── BEFORE COMPLETED: Prize Tier Breakdown from match_prize_splits ── */}
           {match.status !== 'completed' && (
             <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: insets.bottom + 24 }}>
-              {/* Prize Pool Header */}
+
+              {/* Summary header */}
               <View style={styles.prizePoolCard}>
                 <Ionicons name="trophy" size={36} color={GOLD} />
                 <Text style={styles.prizePoolAmount}>₹{match.prize_pool.toLocaleString('en-IN')}</Text>
                 <Text style={styles.prizePoolLabel}>Total Prize Pool</Text>
+                {tiers.length > 0 && (
+                  <View style={styles.winnerCountBadge}>
+                    <Ionicons name="people" size={12} color={GOLD} />
+                    <Text style={styles.winnerCountText}>{tiers.length} Winner{tiers.length !== 1 ? 's' : ''}</Text>
+                  </View>
+                )}
               </View>
 
               {tiersLoading ? (
-                <ActivityIndicator color={GOLD} style={{ marginTop: 20 }} />
+                <ActivityIndicator color={GOLD} style={{ marginTop: 24 }} />
               ) : tiers.length > 0 ? (
                 <>
-                  <View style={styles.tierHeaderRow}>
-                    <Ionicons name="people-outline" size={14} color={colors.text.muted} />
-                    <Text style={styles.tierHeaderText}>{tiers.length} Winner{tiers.length !== 1 ? 's' : ''}</Text>
-                  </View>
-
-                  {tiers.map(tier => (
-                    <View key={tier.rank} style={styles.tierRow}>
+                  {tiers.map((tier, idx) => (
+                    <View
+                      key={tier.rank}
+                      style={[
+                        styles.tierRow,
+                        idx === 0 && { borderTopWidth: 0 },
+                      ]}
+                    >
                       <View style={styles.tierRankBadge}>
                         <Text style={[
                           styles.tierRankText,
@@ -789,28 +798,27 @@ export default function MatchDetailScreen() {
                           {tier.rank === 1 ? 'Champion' : tier.rank === 2 ? 'Runner-up' : tier.rank === 3 ? '3rd Place' : `Position ${tier.rank}`}
                         </Text>
                       </View>
-                      <View style={{ alignItems: 'flex-end' }}>
-                        <Text style={styles.tierPrize}>₹{formatPrize(tier.prize_amount)}</Text>
-                      </View>
+                      <Text style={styles.tierPrize}>₹{formatPrize(tier.prize_amount)}</Text>
                     </View>
                   ))}
 
                   <View style={styles.prizeInfoRow}>
                     <Ionicons name="information-circle-outline" size={14} color={colors.text.muted} />
                     <Text style={styles.prizeInfoText}>
-                      Prize amounts are credited after match results are published
+                      Prizes are credited after match results are published by admin
                     </Text>
                   </View>
                 </>
               ) : (
-                <Text style={[styles.sheetEmptyText, { marginTop: 20, textAlign: 'center' }]}>
-                  Prize breakdown will be published once results are finalised.
-                </Text>
+                <View style={styles.sheetEmpty}>
+                  <Ionicons name="trophy-outline" size={40} color="#444" />
+                  <Text style={styles.sheetEmptyText}>Prize breakdown not set yet</Text>
+                </View>
               )}
             </ScrollView>
           )}
 
-          {/* ── AFTER COMPLETED: Winners List ── */}
+          {/* ── AFTER COMPLETED: Winners from match_results + prize from match_prize_splits ── */}
           {match.status === 'completed' && (
             winnersLoading ? (
               <View style={styles.sheetLoading}><ActivityIndicator color={GOLD} size="large" /></View>
@@ -833,7 +841,9 @@ export default function MatchDetailScreen() {
                   </View>
                 )}
                 contentContainerStyle={{ paddingBottom: insets.bottom + 24, paddingHorizontal: 16 }}
-                ItemSeparatorComponent={() => <View style={{ height: 1, backgroundColor: colors.border.subtle, marginLeft: 68 }} />}
+                ItemSeparatorComponent={() => (
+                  <View style={{ height: 1, backgroundColor: colors.border.subtle, marginLeft: 68 }} />
+                )}
                 renderItem={({ item }) => (
                   <View style={styles.winnerRow}>
                     <View style={styles.winnerRankBadge}>
@@ -1079,9 +1089,13 @@ function createStyles(colors: AppColors) {
     prizePoolCard:  { alignItems: 'center', paddingVertical: 20, gap: 6, marginBottom: 8 },
     prizePoolAmount:{ fontSize: 28, fontFamily: 'Inter_700Bold', color: GOLD },
     prizePoolLabel: { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted },
-
-    tierHeaderRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12 },
-    tierHeaderText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.text.muted },
+    winnerCountBadge: {
+      flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4,
+      backgroundColor: GOLD + '18', borderRadius: 20,
+      paddingHorizontal: 12, paddingVertical: 5,
+      borderWidth: 1, borderColor: GOLD + '44',
+    },
+    winnerCountText: { fontSize: 12, fontFamily: 'Inter_600SemiBold', color: GOLD },
 
     tierRow: {
       flexDirection: 'row', alignItems: 'center', gap: 12,

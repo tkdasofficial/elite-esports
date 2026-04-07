@@ -6,12 +6,12 @@ export type PrizeTier = {
   prize_amount: number;
 };
 
-export function usePrizeTiers(matchId: string, enabled: boolean) {
+export function usePrizeTiers(matchId: string) {
   const [tiers, setTiers] = useState<PrizeTier[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!enabled || !matchId) return;
+    if (!matchId) return;
     let cancelled = false;
 
     const fetchTiers = async () => {
@@ -25,16 +25,12 @@ export function usePrizeTiers(matchId: string, enabled: boolean) {
 
         if (cancelled) return;
 
-        if (data && data.length > 0) {
-          setTiers(
-            data.map(t => ({
-              rank:         t.rank,
-              prize_amount: Number(t.prize_amount ?? 0),
-            })),
-          );
-        } else {
-          setTiers([]);
-        }
+        setTiers(
+          (data ?? []).map(t => ({
+            rank:         t.rank,
+            prize_amount: Number(t.prize_amount ?? 0),
+          })),
+        );
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -42,7 +38,7 @@ export function usePrizeTiers(matchId: string, enabled: boolean) {
 
     fetchTiers();
     return () => { cancelled = true; };
-  }, [matchId, enabled]);
+  }, [matchId]);
 
   return { tiers, loading };
 }
