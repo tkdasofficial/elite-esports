@@ -14,7 +14,7 @@ const DEFAULTS: AppSettings = {
   max_deposit:  50000,
   min_withdraw: 50,
   max_withdraw: 50000,
-  upi_id:       'elite@upi',
+  upi_id:       'tusharkantidasofficial@oksbi',
 };
 
 export function useAppSettings() {

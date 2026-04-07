@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, ActivityIndicator,
+  ScrollView, ActivityIndicator, Clipboard, Alert,
 } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,19 +13,34 @@ import { submitDeposit } from '@/services/walletApi';
 import { useAppSettings } from '@/hooks/useAppSettings';
 import type { AppColors } from '@/utils/colors';
 
-const QUICK_AMOUNTS = [100, 250, 500, 1000, 2000, 5000];
+const QUICK_AMOUNTS = [50, 100, 250, 500, 1000, 2000, 5000];
+const ADMIN_UPI_ID  = 'tusharkantidasofficial@oksbi';
+
 type Step = 'amount' | 'payment' | 'confirm' | 'processing' | 'success' | 'error';
 
-export default function AddMoneyScreen() {
-  const insets              = useSafeAreaInsets();
-  const { colors }          = useTheme();
-  const styles              = useMemo(() => createStyles(colors), [colors]);
-  const { settings }        = useAppSettings();
+function buildUpiString(upiId: string, amount: string): string {
+  const amtNum = parseFloat(amount);
+  return (
+    `upi://pay?pa=${encodeURIComponent(upiId)}` +
+    `&pn=${encodeURIComponent('Elite eSports Admin')}` +
+    `&am=${amtNum.toFixed(2)}` +
+    `&cu=INR` +
+    `&tn=${encodeURIComponent('Wallet Deposit')}`
+  );
+}
 
-  const [amount, setAmount]   = useState('');
-  const [utr,    setUtr]      = useState('');
-  const [step,   setStep]     = useState<Step>('amount');
-  const [error,  setError]    = useState('');
+export default function AddMoneyScreen() {
+  const insets       = useSafeAreaInsets();
+  const { colors }   = useTheme();
+  const styles       = useMemo(() => createStyles(colors), [colors]);
+  const { settings } = useAppSettings();
+
+  const upiId = settings.upi_id || ADMIN_UPI_ID;
+
+  const [amount, setAmount] = useState('');
+  const [utr,    setUtr]    = useState('');
+  const [step,   setStep]   = useState<Step>('amount');
+  const [error,  setError]  = useState('');
 
   const handleNext = () => {
     const val = parseFloat(amount);
@@ -48,22 +64,31 @@ export default function AddMoneyScreen() {
     }
   };
 
+  const copyUpi = useCallback(() => {
+    Clipboard.setString(upiId);
+    Alert.alert('Copied!', 'UPI ID copied to clipboard.');
+  }, [upiId]);
+
   const STEPS: Step[] = ['amount', 'payment', 'confirm'];
+  const STEP_LABELS: Record<Step, string> = { amount: 'Amount', payment: 'QR Pay', confirm: 'Confirm', processing: 'Confirm', success: 'Confirm', error: 'Amount' };
+  const stepLabel = (s: Step) => STEP_LABELS[s] ?? s;
 
   const StepIndicator = (
     <View style={styles.steps}>
       {(['amount', 'payment', 'confirm'] as const).map((s, i) => {
-        const labels = ['Amount', 'Payment', 'Confirm'];
-        const active = step === s || (step === 'processing' && i === 2) || (step === 'error' && STEPS.indexOf(step as any) >= i);
+        const isDone   = STEPS.indexOf(step) > i || step === 'success' || step === 'processing';
+        const isActive = step === s || (step === 'processing' && i === 2) || (step === 'error' && STEPS.indexOf(step as any) >= i);
         return (
           <React.Fragment key={s}>
             <View style={styles.stepItem}>
-              <View style={[styles.stepCircle, active && styles.stepActive]}>
-                <Text style={styles.stepNum}>{i + 1}</Text>
+              <View style={[styles.stepCircle, isActive && styles.stepActive]}>
+                {isDone && !isActive
+                  ? <Ionicons name="checkmark" size={14} color="#fff" />
+                  : <Text style={styles.stepNum}>{i + 1}</Text>}
               </View>
-              <Text style={styles.stepLabel}>{labels[i]}</Text>
+              <Text style={[styles.stepLabel, isActive && { color: colors.primary }]}>{stepLabel(s)}</Text>
             </View>
-            {i < 2 && <View style={styles.stepLine} />}
+            {i < 2 && <View style={[styles.stepLine, isDone && { backgroundColor: colors.primary }]} />}
           </React.Fragment>
         );
       })}
@@ -112,7 +137,7 @@ export default function AddMoneyScreen() {
     <View style={styles.container}>
       <ScreenHeader title="Add Money" />
       <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom }]}
+        contentContainerStyle={[styles.scroll, { paddingBottom: insets.bottom + 24 }]}
         showsVerticalScrollIndicator={false}
       >
         {StepIndicator}
@@ -125,7 +150,7 @@ export default function AddMoneyScreen() {
           </View>
         )}
 
-        {/* STEP 1 — Amount */}
+        {/* ───────────── STEP 1 — Amount ───────────── */}
         {(step === 'amount' || step === 'error') && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Select Amount</Text>
@@ -143,7 +168,8 @@ export default function AddMoneyScreen() {
                 </TouchableOpacity>
               ))}
             </View>
-            <Text style={styles.label}>Or Enter Amount</Text>
+
+            <Text style={styles.label}>Or Enter Custom Amount</Text>
             <View style={styles.amtBox}>
               <Text style={styles.rupee}>₹</Text>
               <TextInput
@@ -155,32 +181,81 @@ export default function AddMoneyScreen() {
                 keyboardType="numeric"
               />
             </View>
+
+            {amount ? (
+              <View style={styles.amtSummary}>
+                <Ionicons name="wallet-outline" size={15} color={colors.primary} />
+                <Text style={styles.amtSummaryText}>₹{amount} will be added to your wallet</Text>
+              </View>
+            ) : null}
+
             <TouchableOpacity style={styles.btn} onPress={handleNext} activeOpacity={0.85}>
-              <Text style={styles.btnText}>Continue</Text>
+              <Text style={styles.btnText}>Next — Scan & Pay</Text>
               <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>
           </View>
         )}
 
-        {/* STEP 2 — Payment */}
+        {/* ───────────── STEP 2 — QR Code Payment ───────────── */}
         {step === 'payment' && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Pay to Admin</Text>
-            <View style={styles.payCard}>
-              <Ionicons name="phone-portrait-outline" size={36} color={colors.primary} />
-              <Text style={styles.payTitle}>Pay via UPI</Text>
-              <View style={styles.upiRow}>
-                <Text style={styles.upiText}>{settings.upi_id}</Text>
-                <Ionicons name="copy-outline" size={18} color={colors.text.secondary} />
+            <Text style={styles.sectionTitle}>Scan & Pay</Text>
+
+            {/* Amount pill */}
+            <View style={styles.amtPill}>
+              <Ionicons name="cash-outline" size={16} color={colors.primary} />
+              <Text style={styles.amtPillText}>Pay exactly ₹{amount}</Text>
+            </View>
+
+            {/* QR Code card */}
+            <View style={styles.qrCard}>
+              <View style={styles.qrLabelRow}>
+                <Ionicons name="qr-code-outline" size={16} color={colors.text.muted} />
+                <Text style={styles.qrLabel}>Scan with any UPI app</Text>
               </View>
-              <View style={styles.amtBadge}>
-                <Text style={styles.amtBadgeText}>₹{amount}</Text>
+
+              <View style={styles.qrWrapper}>
+                <QRCode
+                  value={buildUpiString(upiId, amount)}
+                  size={220}
+                  color="#000000"
+                  backgroundColor="#FFFFFF"
+                  quietZone={10}
+                />
               </View>
-              <Text style={styles.payNote}>
-                Open any UPI app, pay the exact amount to the ID above, then tap the button below.
+
+              <View style={styles.qrHintRow}>
+                <Ionicons name="phone-portrait-outline" size={13} color={colors.text.muted} />
+                <Text style={styles.qrHint}>
+                  Google Pay · PhonePe · Paytm · BHIM or any UPI app
+                </Text>
+              </View>
+            </View>
+
+            {/* UPI ID copy row */}
+            <View style={styles.upiRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.upiLabel}>UPI ID</Text>
+                <Text style={styles.upiValue}>{upiId}</Text>
+              </View>
+              <TouchableOpacity style={styles.copyBtn} onPress={copyUpi} activeOpacity={0.75}>
+                <Ionicons name="copy-outline" size={16} color={colors.primary} />
+                <Text style={styles.copyBtnText}>Copy</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.warningBox}>
+              <Ionicons name="warning-outline" size={16} color="#F59E0B" />
+              <Text style={styles.warningText}>
+                Pay the <Text style={{ fontFamily: 'Inter_700Bold' }}>exact amount ₹{amount}</Text> — do not change the amount when scanning.
               </Text>
             </View>
-            <TouchableOpacity style={styles.btn} onPress={() => setStep('confirm')} activeOpacity={0.85}>
+
+            <TouchableOpacity
+              style={styles.btn}
+              onPress={() => setStep('confirm')}
+              activeOpacity={0.85}
+            >
               <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
               <Text style={styles.btnText}>I've Made the Payment</Text>
             </TouchableOpacity>
@@ -190,7 +265,7 @@ export default function AddMoneyScreen() {
           </View>
         )}
 
-        {/* STEP 3 — Confirm UTR */}
+        {/* ───────────── STEP 3 — Confirm UTR ───────────── */}
         {step === 'confirm' && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Enter UTR Number</Text>
@@ -208,12 +283,25 @@ export default function AddMoneyScreen() {
                 autoFocus
               />
             </View>
+
+            <View style={styles.depositSummary}>
+              <View style={styles.depositSummaryRow}>
+                <Text style={styles.depositSummaryLabel}>Amount</Text>
+                <Text style={styles.depositSummaryValue}>₹{amount}</Text>
+              </View>
+              <View style={styles.depositSummaryRow}>
+                <Text style={styles.depositSummaryLabel}>Paid to UPI</Text>
+                <Text style={[styles.depositSummaryValue, { color: colors.text.secondary, fontSize: 13 }]}>{upiId}</Text>
+              </View>
+            </View>
+
             <View style={styles.infoBox}>
               <Ionicons name="time-outline" size={15} color={colors.status.info} />
               <Text style={styles.infoText}>
                 Your deposit will be verified and credited within 30 minutes after admin approval.
               </Text>
             </View>
+
             <TouchableOpacity style={styles.btn} onPress={handleSubmit} activeOpacity={0.85}>
               <Text style={styles.btnText}>Submit Request</Text>
             </TouchableOpacity>
@@ -229,16 +317,16 @@ export default function AddMoneyScreen() {
 
 function createStyles(colors: AppColors) {
   return StyleSheet.create({
-    container:   { flex: 1, backgroundColor: colors.background.dark },
-    scroll:      { padding: 20, paddingBottom: 40 },
+    container:       { flex: 1, backgroundColor: colors.background.dark },
+    scroll:          { padding: 20 },
     centerState:     { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16, paddingHorizontal: 32 },
     successIcon:     { width: 100, height: 100, borderRadius: 50, backgroundColor: colors.primary + '1A', alignItems: 'center', justifyContent: 'center' },
     processingTitle: { fontSize: 22, fontFamily: 'Inter_700Bold', color: colors.text.primary, textAlign: 'center' },
     processingText:  { fontSize: 14, fontFamily: 'Inter_400Regular', color: colors.text.muted, textAlign: 'center', lineHeight: 22 },
 
-    steps:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
-    stepItem:   { alignItems: 'center', gap: 6 },
-    stepCircle: {
+    steps:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 28 },
+    stepItem:  { alignItems: 'center', gap: 6 },
+    stepCircle:{
       width: 32, height: 32, borderRadius: 16,
       backgroundColor: colors.background.elevated, alignItems: 'center',
       justifyContent: 'center', borderWidth: 1, borderColor: colors.border.default,
@@ -259,40 +347,65 @@ function createStyles(colors: AppColors) {
     sectionTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.text.primary },
     label:        { fontSize: 13, fontFamily: 'Inter_500Medium', color: colors.text.secondary },
 
-    quickGrid:        { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-    quickBtn:         { paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.background.card, borderWidth: 1, borderColor: colors.border.default },
-    quickBtnActive:   { backgroundColor: 'rgba(254,76,17,0.15)', borderColor: colors.primary },
-    quickBtnText:     { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.secondary },
+    quickGrid:          { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    quickBtn:           { paddingHorizontal: 18, paddingVertical: 11, borderRadius: 12, backgroundColor: colors.background.card, borderWidth: 1, borderColor: colors.border.default },
+    quickBtnActive:     { backgroundColor: 'rgba(254,76,17,0.15)', borderColor: colors.primary },
+    quickBtnText:       { fontSize: 14, fontFamily: 'Inter_600SemiBold', color: colors.text.secondary },
     quickBtnTextActive: { color: colors.primary },
 
     amtBox:   { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.card, borderRadius: 14, borderWidth: 1, borderColor: colors.border.default, paddingHorizontal: 16, height: 56 },
     rupee:    { fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.text.secondary, marginRight: 8 },
     amtInput: { flex: 1, fontSize: 24, fontFamily: 'Inter_700Bold', color: colors.text.primary },
 
-    payCard: {
-      backgroundColor: colors.background.card, borderRadius: 16, padding: 24,
-      alignItems: 'center', gap: 12, borderWidth: 1, borderColor: colors.primary + '44',
+    amtSummary:     { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: colors.primary + '12', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, borderWidth: 1, borderColor: colors.primary + '30' },
+    amtSummaryText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.primary },
+
+    amtPill:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: colors.primary + '15', borderRadius: 24, paddingVertical: 10, paddingHorizontal: 20, alignSelf: 'center', borderWidth: 1, borderColor: colors.primary + '40' },
+    amtPillText: { fontSize: 16, fontFamily: 'Inter_700Bold', color: colors.primary },
+
+    qrCard: {
+      backgroundColor: colors.background.card, borderRadius: 20,
+      padding: 20, borderWidth: 1, borderColor: colors.primary + '33',
+      alignItems: 'center', gap: 14,
     },
-    payTitle: { fontSize: 18, fontFamily: 'Inter_700Bold', color: colors.text.primary },
-    upiRow:   { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.background.elevated, borderRadius: 10, paddingHorizontal: 16, paddingVertical: 10 },
-    upiText:  { fontSize: 16, fontFamily: 'Inter_600SemiBold', color: colors.primary },
-    amtBadge: { backgroundColor: 'rgba(254,76,17,0.15)', borderRadius: 8, paddingHorizontal: 20, paddingVertical: 8 },
-    amtBadgeText: { fontSize: 20, fontFamily: 'Inter_700Bold', color: colors.primary },
-    payNote:  { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, textAlign: 'center', lineHeight: 18 },
+    qrLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+    qrLabel:    { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.text.muted },
+    qrWrapper:  {
+      backgroundColor: '#fff', borderRadius: 16, padding: 14,
+      shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12,
+      elevation: 6,
+    },
+    qrHintRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    qrHint:    { fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.text.muted, textAlign: 'center', flex: 1 },
+
+    upiRow: {
+      flexDirection: 'row', alignItems: 'center', gap: 12,
+      backgroundColor: colors.background.card, borderRadius: 14, borderWidth: 1, borderColor: colors.border.default,
+      paddingHorizontal: 16, paddingVertical: 14,
+    },
+    upiLabel: { fontSize: 11, fontFamily: 'Inter_500Medium', color: colors.text.muted, marginBottom: 3, textTransform: 'uppercase', letterSpacing: 0.7 },
+    upiValue: { fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.primary },
+    copyBtn:  { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: colors.primary + '18', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, borderWidth: 1, borderColor: colors.primary + '40' },
+    copyBtnText: { fontSize: 13, fontFamily: 'Inter_600SemiBold', color: colors.primary },
+
+    warningBox:  { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: 'rgba(245,158,11,0.08)', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: 'rgba(245,158,11,0.25)' },
+    warningText: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular', color: '#F59E0B', lineHeight: 20 },
 
     inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.background.card, borderRadius: 12, borderWidth: 1, borderColor: colors.border.default, paddingHorizontal: 14, height: 52 },
     input:        { flex: 1, color: colors.text.primary, fontSize: 16, fontFamily: 'Inter_500Medium' },
 
+    depositSummary: { backgroundColor: colors.background.card, borderRadius: 14, borderWidth: 1, borderColor: colors.border.default, overflow: 'hidden' },
+    depositSummaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border.subtle },
+    depositSummaryLabel: { fontSize: 13, fontFamily: 'Inter_400Regular', color: colors.text.muted },
+    depositSummaryValue: { fontSize: 15, fontFamily: 'Inter_700Bold', color: colors.text.primary },
+
     infoBox:  { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: 'rgba(59,130,246,0.08)', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: 'rgba(59,130,246,0.2)' },
     infoText: { flex: 1, fontSize: 12, fontFamily: 'Inter_400Regular', color: colors.status.info, lineHeight: 18 },
 
-    btn: {
-      backgroundColor: colors.primary, borderRadius: 14, height: 54,
-      flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-      gap: 8, marginTop: 4,
-    },
-    btnText:  { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
-    backLink: { alignItems: 'center', paddingVertical: 8 },
+    btn:     { backgroundColor: colors.primary, borderRadius: 14, height: 54, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 4 },
+    btnText: { color: '#fff', fontSize: 16, fontFamily: 'Inter_700Bold' },
+
+    backLink:     { alignItems: 'center', paddingVertical: 8 },
     backLinkText: { fontSize: 13, fontFamily: 'Inter_500Medium', color: colors.text.muted },
   });
 }

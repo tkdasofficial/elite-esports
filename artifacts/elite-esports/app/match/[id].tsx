@@ -772,11 +772,17 @@ export default function MatchDetailScreen() {
                       </View>
                       <View style={{ flex: 1 }}>
                         <Text style={styles.tierRankLabel}>Rank #{tier.rank}</Text>
-                        {tier.rank === 1 && <Text style={styles.tierRankHint}>Champion</Text>}
-                        {tier.rank === 2 && <Text style={styles.tierRankHint}>Runner-up</Text>}
-                        {tier.rank === 3 && <Text style={styles.tierRankHint}>3rd Place</Text>}
+                        <Text style={styles.tierRankHint}>
+                          {tier.rank === 1 ? 'Champion' : tier.rank === 2 ? 'Runner-up' : tier.rank === 3 ? '3rd Place' : `Position ${tier.rank}`}
+                          {tier.percentage > 0 ? ` · ${tier.percentage}%` : ''}
+                        </Text>
                       </View>
-                      <Text style={styles.tierPrize}>₹{formatPrize(tier.prize_amount)}</Text>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={styles.tierPrize}>₹{formatPrize(tier.prize_amount)}</Text>
+                        {tier.percentage > 0 ? (
+                          <Text style={styles.tierRankHint}>{tier.percentage}% of pool</Text>
+                        ) : null}
+                      </View>
                     </View>
                   ))}
 

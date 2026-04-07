@@ -38,15 +38,19 @@ export function useMatchWinners(matchId: string, enabled: boolean) {
 
       const prizePool = Number(matchData?.prize_pool ?? 0);
 
-      const { data: tierData } = await supabase
-        .from('prize_tiers')
-        .select('rank, prize_amount')
+      const { data: splitData } = await supabase
+        .from('match_prize_splits')
+        .select('rank, percentage')
         .eq('match_id', matchId)
         .order('rank', { ascending: true });
 
       const tierMap: Record<number, number> = {};
-      if (tierData && tierData.length > 0) {
-        tierData.forEach(t => { tierMap[t.rank] = Number(t.prize_amount); });
+      if (splitData && splitData.length > 0) {
+        splitData.forEach(s => {
+          tierMap[s.rank] = prizePool > 0
+            ? Math.round(Number(s.percentage) * prizePool) / 100
+            : 0;
+        });
       } else {
         tierMap[1] = Math.round(prizePool * 0.50 * 100) / 100;
         tierMap[2] = Math.round(prizePool * 0.30 * 100) / 100;
