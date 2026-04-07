@@ -138,13 +138,22 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
--- Drop & recreate trigger cleanly
-DROP TRIGGER IF EXISTS trg_auto_prize_on_result ON public.match_results;
+-- Drop & recreate trigger cleanly (only if match_results exists)
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'match_results'
+  ) THEN
+    DROP TRIGGER IF EXISTS trg_auto_prize_on_result ON public.match_results;
 
-CREATE TRIGGER trg_auto_prize_on_result
-  AFTER INSERT ON public.match_results
-  FOR EACH ROW
-  EXECUTE FUNCTION public.auto_distribute_prize();
+    CREATE TRIGGER trg_auto_prize_on_result
+      AFTER INSERT ON public.match_results
+      FOR EACH ROW
+      EXECUTE FUNCTION public.auto_distribute_prize();
+  END IF;
+END
+$$;
 
 
 -- ── 5. Migrate data from prize_tiers → match_prize_splits (if prize_tiers exists) ─
@@ -167,8 +176,24 @@ ALTER TABLE public.users
 
 
 -- ── 7. Add type column to notifications if missing (used by notify_user RPC) ──
-ALTER TABLE public.notifications
-  ADD COLUMN IF NOT EXISTS type TEXT NOT NULL DEFAULT 'general';
+-- Only alter if the notifications table actually exists
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.tables
+     WHERE table_schema = 'public' AND table_name = 'notifications'
+  ) THEN
+    IF NOT EXISTS (
+      SELECT 1 FROM information_schema.columns
+       WHERE table_schema = 'public'
+         AND table_name   = 'notifications'
+         AND column_name  = 'type'
+    ) THEN
+      ALTER TABLE public.notifications ADD COLUMN type TEXT NOT NULL DEFAULT 'general';
+    END IF;
+  END IF;
+END
+$$;
 
 
 -- ── 8. Enable realtime on match_prize_splits ──────────────────────────────────
