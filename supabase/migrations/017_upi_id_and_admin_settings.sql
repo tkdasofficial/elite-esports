@@ -113,14 +113,36 @@ REVOKE ALL ON FUNCTION public.get_admin_settings() FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION public.get_admin_settings() TO authenticated;
 
 
+-- ─── 5. Enable Realtime on app_settings ──────────────────────────────────────
+--   When admin updates upi_id (or limits), all open app sessions refresh
+--   automatically via the realtime subscription in useAppSettings.ts
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_publication_tables
+    WHERE pubname   = 'supabase_realtime'
+      AND schemaname = 'public'
+      AND tablename  = 'app_settings'
+  ) THEN
+    ALTER PUBLICATION supabase_realtime ADD TABLE public.app_settings;
+  END IF;
+END
+$$;
+
+
 -- =============================================================================
 -- DONE.
 --   • app_settings.upi_id column added / confirmed
 --   • Default row seeded (if empty)
+--   • Realtime enabled on app_settings (live UPI ID push to all open sessions)
 --   • update_app_settings(upi_id, limits...) RPC created (admin only)
 --   • get_admin_settings() RPC created (admin only)
 --
--- To set your UPI ID right now, run this SQL:
+-- ─── HOW TO SET YOUR UPI ID ──────────────────────────────────────────────────
+-- Option A — Direct SQL (Supabase Dashboard → SQL Editor):
 --   UPDATE public.app_settings SET upi_id = 'yourname@bank';
--- Or call the RPC from the admin panel in the app.
+--
+-- Option B — Via RPC (from any authenticated admin session):
+--   SELECT update_app_settings(p_upi_id => 'yourname@bank');
 -- =============================================================================
