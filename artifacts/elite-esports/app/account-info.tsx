@@ -74,9 +74,9 @@ export default function AccountInfoScreen() {
 
       const meta = authUser.user_metadata ?? {};
 
-      /* Strip country code from phone if present */
+      /* Strip country code from phone for editing, keep raw for display */
       const rawPhone = meta.phone ?? '';
-      const cleanPhone = rawPhone.replace(/^\+\d{1,3}/, '');
+      const cleanPhone = rawPhone.replace(/^\+\d{1,4}/, '').replace(/[^0-9]/g, '').slice(0, 10);
 
       const kycData: KYCData = {
         email:        authUser.email ?? '',
@@ -115,6 +115,10 @@ export default function AccountInfoScreen() {
     if (uname && uname.length < 3)    { setError('Username must be at least 3 characters.'); return; }
     if (uname && !/^[a-z0-9_]+$/.test(uname)) {
       setError('Username can only contain letters, numbers and underscores.');
+      return;
+    }
+    if (phone.trim() && phone.trim().length !== 10) {
+      setError('Phone number must be exactly 10 digits.');
       return;
     }
 
@@ -400,10 +404,11 @@ export default function AccountInfoScreen() {
                 <AuthInput
                   label="Phone Number"
                   value={phone}
-                  onChangeText={setPhone}
-                  placeholder="Without country code"
+                  onChangeText={v => setPhone(v.replace(/[^0-9]/g, '').slice(0, 10))}
+                  placeholder="10-digit number"
                   iconName="call-outline"
-                  keyboardType="phone-pad"
+                  keyboardType="number-pad"
+                  maxLength={10}
                 />
               </View>
 
@@ -462,7 +467,13 @@ export default function AccountInfoScreen() {
               {data?.phone ? (
                 <>
                   <Divider colors={colors} />
-                  <InfoRow icon="call-outline" label="Phone" value={data.phone} colors={colors} styles={styles} />
+                  <InfoRow
+                    icon="call-outline"
+                    label="Phone"
+                    value={`${getCountryCode(data.country)} ${data.phone}`}
+                    colors={colors}
+                    styles={styles}
+                  />
                 </>
               ) : null}
 

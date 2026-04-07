@@ -18,7 +18,7 @@ export function useProfile(userId?: string) {
       const [userRes, walletRes, gamesRes, playedRes, winsRes, earnedRes] = await Promise.all([
         supabase.from('users').select('id, name, username, avatar_url').eq('id', userId).maybeSingle(),
         supabase.from('wallets').select('balance').eq('user_id', userId).maybeSingle(),
-        supabase.from('user_games').select('game_id, uid, games(name)').eq('user_id', userId),
+        supabase.from('user_games').select('game_id, uid, in_game_name, games(name)').eq('user_id', userId),
         /* Played — total matches entered */
         supabase.from('match_participants').select('id', { count: 'exact', head: true }).eq('user_id', userId),
         /* Wins — match_results where rank = 1 */
@@ -42,6 +42,7 @@ export function useProfile(userId?: string) {
         game_id: g.game_id ?? '',
         game: (Array.isArray(g.games) ? g.games[0]?.name : g.games?.name) ?? g.game_id ?? '',
         uid: g.uid ?? '',
+        inGameName: g.in_game_name ?? undefined,
       }));
 
       if (user) {
@@ -97,8 +98,23 @@ export function useProfile(userId?: string) {
               user_id: userId,
               game_id: g.game_id,
               uid: g.uid,
+              in_game_name: g.inGameName ?? null,
             })));
-          if (insertErr) return { error: new Error(insertErr.message) };
+
+          if (insertErr) {
+            if (insertErr.message?.includes('in_game_name')) {
+              const { error: fallbackErr } = await supabase
+                .from('user_games')
+                .insert(validGames.map(g => ({
+                  user_id: userId,
+                  game_id: g.game_id,
+                  uid: g.uid,
+                })));
+              if (fallbackErr) return { error: new Error(fallbackErr.message) };
+            } else {
+              return { error: new Error(insertErr.message) };
+            }
+          }
         }
       }
 

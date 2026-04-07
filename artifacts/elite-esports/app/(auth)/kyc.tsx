@@ -95,6 +95,7 @@ export default function KYCScreen() {
     if (!countryVal)                     { setError('Please enter your country.'); return; }
     if (password.length < 6)             { setError('Password must be at least 6 characters.'); return; }
     if (!passwordsMatch)                 { setError('Passwords do not match.'); return; }
+    if (phone.trim() && phone.trim().length !== 10) { setError('Phone number must be exactly 10 digits.'); return; }
     if (!termsAccepted)                  { setError('Please accept the Terms of Service.'); return; }
     if (!privacyAccepted)               { setError('Please accept the Privacy Policy.'); return; }
     if (!user?.id)                       { setError('Not authenticated. Please sign in again.'); return; }
@@ -304,11 +305,12 @@ export default function KYCScreen() {
                 <TextInput
                   style={styles.phoneInput}
                   value={phone}
-                  onChangeText={v => { setPhone(v.replace(/[^0-9]/g, '')); setError(''); }}
-                  placeholder="Phone number"
+                  onChangeText={v => { setPhone(v.replace(/[^0-9]/g, '').slice(0, 10)); setError(''); }}
+                  placeholder="10-digit number"
                   placeholderTextColor={colors.text.muted}
-                  keyboardType="phone-pad"
+                  keyboardType="number-pad"
                   autoComplete="tel"
+                  maxLength={10}
                 />
               </View>
             </View>
