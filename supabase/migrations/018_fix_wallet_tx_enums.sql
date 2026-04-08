@@ -446,14 +446,26 @@ BEGIN
   IF v_meta IS NULL THEN RETURN; END IF;
 
   UPDATE public.users
-  SET kyc_completed = COALESCE((v_meta->>'kyc_completed')::BOOLEAN, false)
+  SET kyc_completed = COALESCE((v_meta->>'kyc_completed')::BOOLEAN, false),
+      referral_code = COALESCE(
+        referral_code,
+        UPPER(SUBSTRING(encode(sha256(auth.uid()::text::bytea), 'hex'), 1, 8))
+      )
   WHERE id = auth.uid();
 
   IF NOT FOUND THEN
-    INSERT INTO public.users (id, kyc_completed)
-    VALUES (auth.uid(), COALESCE((v_meta->>'kyc_completed')::BOOLEAN, false))
+    INSERT INTO public.users (id, kyc_completed, referral_code)
+    VALUES (
+      auth.uid(),
+      COALESCE((v_meta->>'kyc_completed')::BOOLEAN, false),
+      UPPER(SUBSTRING(encode(sha256(auth.uid()::text::bytea), 'hex'), 1, 8))
+    )
     ON CONFLICT (id) DO UPDATE
-      SET kyc_completed = COALESCE((v_meta->>'kyc_completed')::BOOLEAN, false);
+      SET kyc_completed = COALESCE((v_meta->>'kyc_completed')::BOOLEAN, false),
+          referral_code = COALESCE(
+            public.users.referral_code,
+            UPPER(SUBSTRING(encode(sha256(auth.uid()::text::bytea), 'hex'), 1, 8))
+          );
   END IF;
 END;
 $$;
@@ -491,6 +503,121 @@ END;
 $$;
 
 
+-- ─────────────────────────────────────────────────────────────────────────────
+-- PART 10 · Referral code system
+-- ─────────────────────────────────────────────────────────────────────────────
+
+-- Add referral_code column to users (deterministic from user id)
+ALTER TABLE public.users
+  ADD COLUMN IF NOT EXISTS referral_code TEXT;
+
+-- Populate existing users whose referral_code is not yet set
+-- Uses SHA-256 of the user id → first 8 hex chars, uppercase
+UPDATE public.users
+SET referral_code = UPPER(SUBSTRING(encode(sha256(id::text::bytea), 'hex'), 1, 8))
+WHERE referral_code IS NULL;
+
+-- Add unique constraint (ignore if already exists)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.table_constraints
+    WHERE table_schema = 'public'
+      AND table_name   = 'users'
+      AND constraint_name = 'users_referral_code_key'
+  ) THEN
+    ALTER TABLE public.users ADD CONSTRAINT users_referral_code_key UNIQUE (referral_code);
+  END IF;
+END;
+$$;
+
+-- get_referral_code(): returns caller's referral code, computing & storing it if missing
+CREATE OR REPLACE FUNCTION public.get_referral_code()
+RETURNS TEXT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_code TEXT;
+BEGIN
+  SELECT referral_code INTO v_code FROM public.users WHERE id = auth.uid();
+
+  IF v_code IS NULL OR v_code = '' THEN
+    v_code := UPPER(SUBSTRING(encode(sha256(auth.uid()::text::bytea), 'hex'), 1, 8));
+    UPDATE public.users SET referral_code = v_code WHERE id = auth.uid();
+    IF NOT FOUND THEN
+      INSERT INTO public.users (id, referral_code)
+      VALUES (auth.uid(), v_code)
+      ON CONFLICT (id) DO UPDATE SET referral_code = EXCLUDED.referral_code;
+    END IF;
+  END IF;
+
+  RETURN v_code;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_referral_code() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_referral_code() TO authenticated;
+
+-- use_referral_code(p_code): credits the owner of p_code with ₹10 referral bonus
+CREATE OR REPLACE FUNCTION public.use_referral_code(p_code TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_user_id   UUID := auth.uid();
+  v_owner_id  UUID;
+  v_reward    NUMERIC := 10;
+  v_ref       TEXT;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Not authenticated');
+  END IF;
+
+  IF p_code IS NULL OR TRIM(p_code) = '' THEN
+    RETURN jsonb_build_object('success', false, 'error', 'No code provided');
+  END IF;
+
+  -- Find the owner of this code (cannot use your own)
+  SELECT id INTO v_owner_id
+  FROM public.users
+  WHERE referral_code = UPPER(TRIM(p_code))
+    AND id <> v_user_id;
+
+  IF NOT FOUND THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Invalid referral code');
+  END IF;
+
+  -- Idempotency: each new user can only be referred once
+  v_ref := 'referral:' || v_user_id::TEXT;
+  IF EXISTS (
+    SELECT 1 FROM public.wallet_transactions
+    WHERE user_id = v_owner_id AND reference_id = v_ref
+  ) THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Referral already applied');
+  END IF;
+
+  -- Credit the referrer's wallet
+  INSERT INTO public.wallets (user_id, balance, updated_at)
+  VALUES (v_owner_id, v_reward, NOW())
+  ON CONFLICT (user_id) DO UPDATE
+    SET balance    = public.wallets.balance + v_reward,
+        updated_at = NOW();
+
+  INSERT INTO public.wallet_transactions (user_id, type, amount, status, reference_id)
+  VALUES (v_owner_id, 'credit', v_reward, 'approved', v_ref);
+
+  RETURN jsonb_build_object('success', true, 'reward', v_reward);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.use_referral_code(TEXT) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.use_referral_code(TEXT) TO authenticated;
+
+
 -- =============================================================================
 -- DONE.
 --   ✅ wallet_transactions.type and .status are now TEXT with CHECK constraints
@@ -500,8 +627,11 @@ $$;
 --   ✅ claim_match_prize RPC recreated (uses match_prize_splits)
 --   ✅ auto_distribute_prize trigger recreated
 --   ✅ sync_kyc_status RPC created
+--   ✅ get_referral_code RPC created (returns caller's unique 8-char code)
+--   ✅ use_referral_code RPC created (credits referrer ₹10)
 --   ✅ Missing columns added: users.kyc_completed, users.phone,
---      user_games.in_game_name, notifications.type
+--      user_games.in_game_name, notifications.type, users.referral_code
 --   ✅ match_prize_splits table created
 --   ✅ Existing users with usernames marked kyc_completed = true
+--   ✅ Existing users populated with referral_code
 -- =============================================================================

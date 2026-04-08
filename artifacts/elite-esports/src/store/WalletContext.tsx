@@ -44,6 +44,7 @@ function sevenDaysAgo(): string {
 function labelFromRef(referenceId: string | null, type: string): string {
   if (!referenceId) return type === 'credit' ? 'Deposit' : 'Withdraw';
   if (referenceId.startsWith('result:'))     return 'Winning Prize';
+  if (referenceId.startsWith('autopay:'))    return 'Auto Prize';
   if (referenceId.startsWith('entry:'))      return 'Entry Fee';
   if (referenceId.startsWith('refund:'))     return 'Refund';
   if (referenceId.startsWith('referral:'))   return 'Referral Bonus';
@@ -57,6 +58,7 @@ function labelFromRef(referenceId: string | null, type: string): string {
 function descFromRef(referenceId: string | null, type: string): string {
   if (!referenceId) return type === 'credit' ? 'Wallet deposit' : 'Wallet debit';
   if (referenceId.startsWith('result:'))     return 'Match winning prize credited';
+  if (referenceId.startsWith('autopay:'))    return 'Auto prize distributed for match result';
   if (referenceId.startsWith('entry:'))      return 'Match entry fee paid';
   if (referenceId.startsWith('refund:'))     return 'Entry fee refunded';
   if (referenceId.startsWith('referral:'))   return 'Referral reward earned';

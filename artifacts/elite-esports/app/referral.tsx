@@ -13,25 +13,6 @@ import { supabase } from '@/services/supabase';
 import { useAuth } from '@/store/AuthContext';
 import type { AppColors } from '@/utils/colors';
 
-const CHARSET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-
-function generateReferralCode(userId: string): string {
-  let hash = 5381;
-  for (let i = 0; i < userId.length; i++) {
-    hash = ((hash << 5) + hash) ^ userId.charCodeAt(i);
-    hash = hash >>> 0;
-  }
-  let code = '';
-  let n = hash;
-  for (let i = 0; i < 8; i++) {
-    code += CHARSET[n % CHARSET.length];
-    n = Math.floor(n / CHARSET.length);
-    if (n === 0) n = hash ^ (i + 1) * 2654435761;
-    n = n >>> 0;
-  }
-  return code;
-}
-
 interface ReferralTx {
   id: string;
   amount: number;
@@ -50,32 +31,39 @@ export default function ReferralScreen() {
   const [loading, setLoading] = useState(true);
   const [totalEarned, setTotalEarned] = useState(0);
   const [referralCount, setReferralCount] = useState(0);
+  const [referralCode, setReferralCode] = useState('--------');
 
-  const referralCode = user?.id ? generateReferralCode(user.id) : '--------';
-
-  const loadHistory = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from('wallet_transactions')
-        .select('id, amount, created_at, reference_id')
-        .eq('user_id', user.id)
-        .like('reference_id', 'referral:%')
-        .order('created_at', { ascending: false });
+      const [codeRes, txRes] = await Promise.allSettled([
+        supabase.rpc('get_referral_code'),
+        supabase
+          .from('wallet_transactions')
+          .select('id, amount, created_at, reference_id')
+          .eq('user_id', user.id)
+          .like('reference_id', 'referral:%')
+          .order('created_at', { ascending: false }),
+      ]);
 
-      if (data) {
-        setHistory(data as ReferralTx[]);
-        const total = data.reduce((s, r) => s + Number(r.amount), 0);
+      if (codeRes.status === 'fulfilled' && codeRes.value.data) {
+        setReferralCode(codeRes.value.data as string);
+      }
+
+      const txData = txRes.status === 'fulfilled' ? txRes.value.data : null;
+      if (txData) {
+        setHistory(txData as ReferralTx[]);
+        const total = txData.reduce((s: number, r: ReferralTx) => s + Number(r.amount), 0);
         setTotalEarned(total);
-        setReferralCount(data.length);
+        setReferralCount(txData.length);
       }
     } finally {
       setLoading(false);
     }
   }, [user?.id]);
 
-  useEffect(() => { loadHistory(); }, [loadHistory]);
+  useEffect(() => { loadData(); }, [loadData]);
 
   const handleCopy = async () => {
     await Clipboard.setStringAsync(referralCode);
