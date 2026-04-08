@@ -24,8 +24,8 @@ export function useProfile(userId?: string) {
         supabase.from('wallet_transactions')
           .select('amount')
           .eq('user_id', userId)
-          .in('type', ['deposit', 'prize', 'credit', 'refund'])
-          .in('status', ['approved', 'completed']),
+          .eq('type', 'credit')
+          .eq('status', 'approved'),
       ]);
 
       const user      = userRes.data;
