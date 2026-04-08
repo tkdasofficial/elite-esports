@@ -15,7 +15,7 @@
       "jsEngine": "hermes",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#000000"
+        "backgroundColor": "#1e0f0b"
       },
       "permissions": [
         "android.permission.RECEIVE_BOOT_COMPLETED",
