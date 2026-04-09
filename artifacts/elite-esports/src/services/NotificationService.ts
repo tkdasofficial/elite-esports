@@ -113,6 +113,28 @@ export async function openSystemNotificationSettings(): Promise<void> {
   }
 }
 
+// ── Notification template ─────────────────────────────────────────────────────
+// Consistent visual template for all local notifications:
+//   [App icon]  Title  ←  bold subject line
+//               Body   ←  smaller message text (expands to full on pull-down)
+//   Accent colour #FE4C11  |  Vibration: configured per-channel (setNotificationChannelAsync)
+function buildNotificationContent(
+  title: string,
+  body: string,
+  channelId: string,
+): Notifications.NotificationContentInput {
+  return {
+    title,
+    body,
+    sound:       true,
+    priority:    Notifications.AndroidNotificationPriority.HIGH,
+    color:       '#FE4C11',
+    sticky:      false,
+    autoDismiss: true,
+    data:        { channelId },
+  };
+}
+
 // ── Local notification scheduling (pref-gated) ────────────────────────────────
 export async function scheduleLocalNotification(
   title: string,
@@ -130,16 +152,18 @@ export async function scheduleLocalNotification(
   const { status } = await Notifications.getPermissionsAsync();
   if (status !== 'granted') return;
 
-  await Notifications.scheduleNotificationAsync({
-    content: {
-      title,
-      body,
-      sound:    true,
-      priority: Notifications.AndroidNotificationPriority.HIGH,
-      data:     { channelId },
-    },
-    trigger: {
-      channelId,
-    } as Notifications.NotificationTriggerInput,
-  });
+  const content = buildNotificationContent(title, body, channelId);
+
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content,
+      trigger: { channelId } as Notifications.NotificationTriggerInput,
+    });
+  } catch {
+    // Fallback: immediate delivery without channel (iOS)
+    await Notifications.scheduleNotificationAsync({
+      content,
+      trigger: null,
+    });
+  }
 }

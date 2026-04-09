@@ -40,9 +40,11 @@
           "icon": "./assets/images/icon.png",
           "color": "#FE4C11",
           "defaultChannel": "elite-esports-default",
-          "enableBackgroundRemoteNotifications": true
+          "enableBackgroundRemoteNotifications": true,
+          "iosDisplayInForeground": true
         }
       ],
+      "./plugins/withFCMNotificationConfig.js",
       [
         "expo-location",
         {

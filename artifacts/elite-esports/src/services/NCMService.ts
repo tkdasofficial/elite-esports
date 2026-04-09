@@ -114,6 +114,29 @@ export async function getNCMDeviceId(): Promise<string> {
   return getDUID();
 }
 
+// ── Notification template ─────────────────────────────────────────────────────
+// Builds a consistent notification content object used by every delivery path.
+// Visual template:
+//   [App icon]  Title ← bold subject text, one line
+//               Body  ← smaller message text, expands to full text on pull-down
+//   Accent colour: #FE4C11  |  Vibration: set per-channel in FCMService
+function buildNotificationContent(
+  title: string,
+  body: string,
+  data: Record<string, unknown>,
+): Notifications.NotificationContentInput {
+  return {
+    title,
+    body,
+    sound:       true,
+    priority:    Notifications.AndroidNotificationPriority.HIGH,
+    color:       '#FE4C11',
+    sticky:      false,
+    autoDismiss: true,
+    data,
+  };
+}
+
 // ── Local notification delivery ───────────────────────────────────────────────
 async function deliverNCMNotification(row: {
   id: string;
@@ -121,35 +144,30 @@ async function deliverNCMNotification(row: {
   body: string;
   channel_id?: string;
 }): Promise<void> {
+  const content = buildNotificationContent(
+    row.title,
+    row.body,
+    { ncm_id: row.id },
+  );
+
   try {
-    // Try channel-aware notification first (Android)
+    // Channel-aware delivery (Android — routes to the correct channel so that
+    // vibration pattern, sound, and importance are applied as configured)
     await Notifications.scheduleNotificationAsync({
-      content: {
-        title:    row.title,
-        body:     row.body,
-        sound:    true,
-        priority: Notifications.AndroidNotificationPriority.MAX,
-        data:     { ncm_id: row.id },
-      },
+      content,
       trigger: {
         channelId: row.channel_id ?? 'elite-esports-default',
       } as Notifications.NotificationTriggerInput,
     });
   } catch {
-    // Fallback for iOS or unsupported trigger format
+    // Fallback: immediate delivery without channel (iOS + unsupported triggers)
     try {
       await Notifications.scheduleNotificationAsync({
-        content: {
-          title:    row.title,
-          body:     row.body,
-          sound:    true,
-          priority: Notifications.AndroidNotificationPriority.MAX,
-          data:     { ncm_id: row.id },
-        },
+        content,
         trigger: null,
       });
     } catch {
-      // Fail silently — notification is still in the in-app list
+      // Silent fail — the notification is still visible inside the in-app list
     }
   }
 
