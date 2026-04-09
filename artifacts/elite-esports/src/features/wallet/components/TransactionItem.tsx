@@ -53,7 +53,7 @@ export function TransactionItem({ tx }: Props) {
 
       {/* Left icon */}
       <View style={[styles.iconWrap, { backgroundColor: typeConf.iconBg }]}>
-        <Ionicons name={typeConf.icon} size={26} color={typeConf.iconColor} />
+        <Ionicons name={typeConf.icon} size={20} color={typeConf.iconColor} />
       </View>
 
       {/* Middle info */}

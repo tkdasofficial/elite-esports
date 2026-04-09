@@ -76,7 +76,7 @@ export function GlobalHeader({ onSearch }: Props) {
               <Animated.View
                 style={[StyleSheet.absoluteFill, styles.searchBar, { opacity: searchOpacity }]}
               >
-                <Feather name="search" size={22} color={colors.text.muted} />
+                <Feather name="search" size={17} color={colors.text.muted} />
                 <TextInput
                   ref={inputRef}
                   style={styles.searchInput}
@@ -94,7 +94,7 @@ export function GlobalHeader({ onSearch }: Props) {
                     onPress={() => handleChange('')}
                     hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
-                    <Feather name="x-circle" size={22} color={colors.text.muted} />
+                    <Feather name="x-circle" size={17} color={colors.text.muted} />
                   </Pressable>
                 )}
               </Animated.View>
@@ -113,7 +113,7 @@ export function GlobalHeader({ onSearch }: Props) {
                   onPress={openSearch}
                   hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 >
-                  <Feather name="search" size={26} color={colors.text.secondary} />
+                  <Feather name="search" size={21} color={colors.text.secondary} />
                 </Pressable>
                 <Pressable
                   style={styles.iconBtn}
@@ -123,7 +123,7 @@ export function GlobalHeader({ onSearch }: Props) {
                   }}
                   hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                 >
-                  <Feather name="bell" size={26} color={colors.text.secondary} />
+                  <Feather name="bell" size={21} color={colors.text.secondary} />
                   {unreadCount > 0 && (
                     <View style={styles.badge}>
                       <Text style={styles.badgeTxt}>
@@ -156,10 +156,10 @@ function createStyles(
     },
     inner: {},
     content: {
-      height: 64, flexDirection: 'row', alignItems: 'center',
+      height: 56, flexDirection: 'row', alignItems: 'center',
       paddingLeft: 16, paddingRight: 4, gap: 8,
     },
-    centerFlex: { flex: 1, height: 52, justifyContent: 'center' },
+    centerFlex: { flex: 1, height: 44, justifyContent: 'center' },
     logoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     logoMark: {
       width: 48, height: 48, borderRadius: 13,

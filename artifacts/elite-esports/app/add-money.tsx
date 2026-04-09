@@ -92,7 +92,7 @@ export default function AddMoneyScreen() {
             <View style={styles.stepItem}>
               <View style={[styles.stepCircle, isActive && styles.stepActive]}>
                 {isDone && !isActive
-                  ? <Ionicons name="checkmark" size={23} color="#fff" />
+                  ? <Ionicons name="checkmark" size={18} color="#fff" />
                   : <Text style={styles.stepNum}>{i + 1}</Text>}
               </View>
               <Text style={[styles.stepLabel, isActive && { color: colors.primary }]}>{stepLabel(s)}</Text>
@@ -118,7 +118,7 @@ export default function AddMoneyScreen() {
           </Text>
           <TouchableOpacity style={styles.kycBtn} onPress={() => router.push('/(auth)/kyc')} activeOpacity={0.85}>
             <Text style={styles.kycBtnText}>Complete Profile</Text>
-            <Ionicons name="arrow-forward" size={27} color="#fff" style={{ marginLeft: 6 }} />
+            <Ionicons name="arrow-forward" size={21} color="#fff" style={{ marginLeft: 6 }} />
           </TouchableOpacity>
         </View>
       </View>
@@ -205,7 +205,7 @@ export default function AddMoneyScreen() {
         {/* Error Banner */}
         {step === 'error' && (
           <View style={styles.errorBanner}>
-            <Ionicons name="alert-circle-outline" size={23} color="#fff" />
+            <Ionicons name="alert-circle-outline" size={18} color="#fff" />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -244,19 +244,19 @@ export default function AddMoneyScreen() {
 
             {amount ? (
               <View style={styles.amtSummary}>
-                <Ionicons name="wallet-outline" size={26} color={colors.primary} />
+                <Ionicons name="wallet-outline" size={20} color={colors.primary} />
                 <Text style={styles.amtSummaryText}>₹{amount} will be added to your wallet</Text>
               </View>
             ) : null}
 
             <View style={styles.upiPreviewRow}>
-              <Ionicons name="qr-code-outline" size={23} color={colors.text.muted} />
+              <Ionicons name="qr-code-outline" size={18} color={colors.text.muted} />
               <Text style={styles.upiPreviewText}>Pay to: <Text style={{ color: colors.primary }}>{upiId}</Text></Text>
             </View>
 
             <TouchableOpacity style={styles.btn} onPress={handleNext} activeOpacity={0.85}>
               <Text style={styles.btnText}>Next — Scan &amp; Pay</Text>
-              <Ionicons name="arrow-forward" size={23} color="#fff" />
+              <Ionicons name="arrow-forward" size={18} color="#fff" />
             </TouchableOpacity>
           </View>
         )}
@@ -267,14 +267,14 @@ export default function AddMoneyScreen() {
             <Text style={styles.sectionTitle}>Scan &amp; Pay</Text>
 
             <View style={styles.amtPill}>
-              <Ionicons name="cash-outline" size={27} color={colors.primary} />
+              <Ionicons name="cash-outline" size={21} color={colors.primary} />
               <Text style={styles.amtPillText}>Pay exactly ₹{amount}</Text>
             </View>
 
             {/* QR Code — generated from live backend UPI ID */}
             <View style={styles.qrCard}>
               <View style={styles.qrLabelRow}>
-                <Ionicons name="qr-code-outline" size={27} color={colors.text.muted} />
+                <Ionicons name="qr-code-outline" size={21} color={colors.text.muted} />
                 <Text style={styles.qrLabel}>Scan with any UPI app</Text>
               </View>
 
@@ -289,7 +289,7 @@ export default function AddMoneyScreen() {
               </View>
 
               <View style={styles.qrHintRow}>
-                <Ionicons name="phone-portrait-outline" size={28} color={colors.text.muted} />
+                <Ionicons name="phone-portrait-outline" size={22} color={colors.text.muted} />
                 <Text style={styles.qrHint}>
                   Google Pay · PhonePe · Paytm · BHIM or any UPI app
                 </Text>
@@ -303,13 +303,13 @@ export default function AddMoneyScreen() {
                 <Text style={styles.upiValue}>{upiId}</Text>
               </View>
               <TouchableOpacity style={styles.copyBtn} onPress={copyUpi} activeOpacity={0.75}>
-                <Ionicons name="copy-outline" size={27} color={colors.primary} />
+                <Ionicons name="copy-outline" size={21} color={colors.primary} />
                 <Text style={styles.copyBtnText}>Copy</Text>
               </TouchableOpacity>
             </View>
 
             <View style={styles.warningBox}>
-              <Ionicons name="warning-outline" size={27} color="#F59E0B" />
+              <Ionicons name="warning-outline" size={21} color="#F59E0B" />
               <Text style={styles.warningText}>
                 Pay the <Text style={{ fontFamily: 'Inter_700Bold' }}>exact amount ₹{amount}</Text> — do not change the amount when scanning.
               </Text>
@@ -320,7 +320,7 @@ export default function AddMoneyScreen() {
               onPress={() => setStep('confirm')}
               activeOpacity={0.85}
             >
-              <Ionicons name="checkmark-circle-outline" size={23} color="#fff" />
+              <Ionicons name="checkmark-circle-outline" size={18} color="#fff" />
               <Text style={styles.btnText}>I've Made the Payment</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.backLink} onPress={() => setStep('amount')}>
@@ -335,7 +335,7 @@ export default function AddMoneyScreen() {
             <Text style={styles.sectionTitle}>Enter UTR Number</Text>
             <Text style={styles.label}>Transaction / UTR ID</Text>
             <View style={styles.inputWrapper}>
-              <Ionicons name="receipt-outline" size={23} color={colors.text.muted} style={{ marginRight: 10 }} />
+              <Ionicons name="receipt-outline" size={18} color={colors.text.muted} style={{ marginRight: 10 }} />
               <TextInput
                 style={styles.input}
                 value={utr}
@@ -360,7 +360,7 @@ export default function AddMoneyScreen() {
             </View>
 
             <View style={styles.infoBox}>
-              <Ionicons name="time-outline" size={26} color={colors.status.info} />
+              <Ionicons name="time-outline" size={20} color={colors.status.info} />
               <Text style={styles.infoText}>
                 Your deposit will be verified and credited within 30 minutes after admin approval.
               </Text>

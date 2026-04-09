@@ -53,7 +53,7 @@ export function ConfirmModal({
               {/* Icon */}
               {icon && (
                 <View style={[styles.iconWrap, { backgroundColor: (iconColor ?? colors.primary) + '18' }]}>
-                  <Ionicons name={icon} size={28} color={iconColor ?? colors.primary} />
+                  <Ionicons name={icon} size={22} color={iconColor ?? colors.primary} />
                 </View>
               )}
 

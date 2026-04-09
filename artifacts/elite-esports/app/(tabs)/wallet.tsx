@@ -46,7 +46,7 @@ export default function WalletScreen() {
                   onPress={() => router.push('/add-money')}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name="add-circle" size={23} color="#fff" />
+                  <Ionicons name="add-circle" size={18} color="#fff" />
                   <Text style={styles.actionBtnText}>Add Money</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -54,7 +54,7 @@ export default function WalletScreen() {
                   onPress={() => router.push('/withdraw')}
                   activeOpacity={0.85}
                 >
-                  <Ionicons name="arrow-up-circle-outline" size={23} color="#fff" />
+                  <Ionicons name="arrow-up-circle-outline" size={18} color="#fff" />
                   <Text style={styles.actionBtnText}>Withdraw</Text>
                 </TouchableOpacity>
               </View>
@@ -67,11 +67,11 @@ export default function WalletScreen() {
             >
               <View style={styles.historyBtnLeft}>
                 <View style={styles.historyIconBox}>
-                  <Ionicons name="receipt-outline" size={27} color={colors.primary} />
+                  <Ionicons name="receipt-outline" size={21} color={colors.primary} />
                 </View>
                 <Text style={styles.historyBtnText}>Full Transaction History</Text>
               </View>
-              <Ionicons name="chevron-forward" size={27} color={colors.text.muted} />
+              <Ionicons name="chevron-forward" size={21} color={colors.text.muted} />
             </TouchableOpacity>
 
             {transactions.length > 0 && (

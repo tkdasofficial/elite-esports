@@ -47,7 +47,7 @@ export default function TransactionHistoryScreen() {
       <ScreenHeader title="Transaction History" />
 
       <View style={styles.windowBanner}>
-        <Ionicons name="time-outline" size={23} color={colors.text.muted} />
+        <Ionicons name="time-outline" size={18} color={colors.text.muted} />
         <Text style={styles.windowText}>Showing last 7 days · auto-cleared daily</Text>
       </View>
 

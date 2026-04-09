@@ -90,7 +90,7 @@ export default function ReferralScreen() {
         {/* Hero Card */}
         <View style={styles.heroCard}>
           <View style={styles.heroIcon}>
-            <Ionicons name="gift" size={30} color={colors.primary} />
+            <Ionicons name="gift" size={24} color={colors.primary} />
           </View>
           <Text style={styles.heroTitle}>Invite Friends & Earn</Text>
           <Text style={styles.heroSub}>
@@ -114,7 +114,7 @@ export default function ReferralScreen() {
               onPress={handleCopy}
               activeOpacity={0.8}
             >
-              <Ionicons name={copied ? 'checkmark-circle' : 'copy-outline'} size={27} color={copied ? colors.status.success : colors.text.secondary} />
+              <Ionicons name={copied ? 'checkmark-circle' : 'copy-outline'} size={21} color={copied ? colors.status.success : colors.text.secondary} />
               <Text style={[styles.actionBtnText, { color: copied ? colors.status.success : colors.text.secondary }]}>
                 {copied ? 'Copied!' : 'Copy Code'}
               </Text>
@@ -124,7 +124,7 @@ export default function ReferralScreen() {
               onPress={handleShare}
               activeOpacity={0.85}
             >
-              <Ionicons name="share-social-outline" size={27} color="#fff" />
+              <Ionicons name="share-social-outline" size={21} color="#fff" />
               <Text style={[styles.actionBtnText, { color: '#fff' }]}>Share</Text>
             </TouchableOpacity>
           </View>
@@ -133,12 +133,12 @@ export default function ReferralScreen() {
         {/* Stats Row */}
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Ionicons name="people" size={26} color={colors.primary} style={{ marginBottom: 8 }} />
+            <Ionicons name="people" size={20} color={colors.primary} style={{ marginBottom: 8 }} />
             <Text style={styles.statValue}>{referralCount}</Text>
             <Text style={styles.statLabel}>Referrals</Text>
           </View>
           <View style={[styles.statCard, styles.statDivider, { borderColor: colors.border.default }]}>
-            <Ionicons name="wallet" size={26} color="#22C55E" style={{ marginBottom: 8 }} />
+            <Ionicons name="wallet" size={20} color="#22C55E" style={{ marginBottom: 8 }} />
             <Text style={[styles.statValue, { color: '#22C55E' }]}>₹{totalEarned.toFixed(0)}</Text>
             <Text style={styles.statLabel}>Total Earned</Text>
           </View>
@@ -154,7 +154,7 @@ export default function ReferralScreen() {
           ].map(item => (
             <View key={item.step} style={styles.stepRow}>
               <View style={styles.stepIconWrap}>
-                <Ionicons name={item.icon} size={23} color={colors.primary} />
+                <Ionicons name={item.icon} size={18} color={colors.primary} />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={styles.stepTitle}>{item.title}</Text>
@@ -184,7 +184,7 @@ export default function ReferralScreen() {
             {history.map(item => (
               <View key={item.id} style={styles.histRow}>
                 <View style={styles.histIcon}>
-                  <Ionicons name="person-add-outline" size={23} color={colors.primary} />
+                  <Ionicons name="person-add-outline" size={18} color={colors.primary} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.histLabel}>Referral Bonus</Text>

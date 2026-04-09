@@ -42,7 +42,7 @@ export default function LeaderboardScreen() {
       <View style={{ width: 42, marginRight: 12 }} />
       <Text style={[styles.colLabel, { flex: 1 }]}>Player</Text>
       <View style={styles.trophyHeader}>
-        <Ionicons name="trophy" size={26} color="#FFA200" />
+        <Ionicons name="trophy" size={20} color="#FFA200" />
         <Text style={styles.colLabel}>Wins</Text>
       </View>
     </View>

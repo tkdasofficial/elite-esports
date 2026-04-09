@@ -39,7 +39,7 @@ export default function LiveScreen() {
           <Ionicons name="cloud-offline-outline" size={52} color={colors.text.muted} />
           <Text style={[styles.emptyTitle, { color: colors.text.secondary }]}>Could not load matches</Text>
           <TouchableOpacity style={[styles.retryBtn, { backgroundColor: colors.primary }]} onPress={retry}>
-            <Ionicons name="refresh" size={27} color="#fff" />
+            <Ionicons name="refresh" size={21} color="#fff" />
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>

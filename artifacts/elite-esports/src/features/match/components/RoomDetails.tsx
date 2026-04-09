@@ -17,7 +17,7 @@ export function RoomDetails({ roomId, roomPassword }: Props) {
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <Ionicons name="key-outline" size={23} color={colors.primary} />
+        <Ionicons name="key-outline" size={18} color={colors.primary} />
         <Text style={styles.title}>Room Details</Text>
       </View>
       {roomId && (

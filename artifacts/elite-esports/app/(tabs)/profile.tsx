@@ -121,7 +121,7 @@ export default function ProfileScreen() {
               onPress={() => router.push('/edit-profile')}
               activeOpacity={0.85}
             >
-              <Feather name="camera" size={28} color="#fff" />
+              <Feather name="camera" size={22} color="#fff" />
             </TouchableOpacity>
           </View>
         </View>
@@ -131,7 +131,7 @@ export default function ProfileScreen() {
           <Text style={styles.name}>{name}</Text>
           <Text style={styles.username}>@{username}</Text>
           <View style={styles.badgePill}>
-            <Ionicons name="flash" size={26} color={colors.primary} />
+            <Ionicons name="flash" size={20} color={colors.primary} />
             <Text style={styles.badgeText}>{AVATAR_NAMES[avatarIndex]}</Text>
           </View>
         </View>
@@ -143,7 +143,7 @@ export default function ProfileScreen() {
             onPress={() => router.push('/edit-profile')}
             activeOpacity={0.85}
           >
-            <Feather name="edit-2" size={26} color="#fff" />
+            <Feather name="edit-2" size={20} color="#fff" />
             <Text style={styles.actionBtnPrimaryText}>Edit Profile</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -151,7 +151,7 @@ export default function ProfileScreen() {
             onPress={() => router.push('/my-matches')}
             activeOpacity={0.85}
           >
-            <Feather name="award" size={26} color={colors.text.primary} />
+            <Feather name="award" size={20} color={colors.text.primary} />
             <Text style={styles.actionBtnOutlineText}>My Matches</Text>
           </TouchableOpacity>
         </View>
@@ -185,7 +185,7 @@ export default function ProfileScreen() {
               onPress={() => router.push('/edit-profile')}
               activeOpacity={0.7}
             >
-              <Feather name="plus" size={28} color={colors.primary} />
+              <Feather name="plus" size={22} color={colors.primary} />
               <Text style={styles.sectionActionText}>Manage</Text>
             </TouchableOpacity>
           </View>
@@ -197,7 +197,7 @@ export default function ProfileScreen() {
               activeOpacity={0.8}
             >
               <View style={styles.emptyGamesIcon}>
-                <Ionicons name="game-controller-outline" size={28} color={colors.text.muted} />
+                <Ionicons name="game-controller-outline" size={22} color={colors.text.muted} />
               </View>
               <Text style={styles.emptyGamesText}>No games linked yet</Text>
               <Text style={styles.emptyGamesHint}>Tap to add your games</Text>
@@ -212,7 +212,7 @@ export default function ProfileScreen() {
                     activeOpacity={0.75}
                   >
                     <View style={styles.gameRowIcon}>
-                      <Ionicons name="game-controller-outline" size={23} color={colors.primary} />
+                      <Ionicons name="game-controller-outline" size={18} color={colors.primary} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.gameRowName} numberOfLines={1}>{g.game}</Text>
@@ -220,7 +220,7 @@ export default function ProfileScreen() {
                         {g.inGameName ? g.inGameName : g.uid}
                       </Text>
                     </View>
-                    <Feather name="chevron-right" size={26} color={colors.text.muted} />
+                    <Feather name="chevron-right" size={20} color={colors.text.muted} />
                   </TouchableOpacity>
                   {i < linkedGames.length - 1 && <View style={styles.gameDivider} />}
                 </React.Fragment>
@@ -241,10 +241,10 @@ export default function ProfileScreen() {
                   activeOpacity={0.75}
                 >
                   <View style={styles.menuIconBox}>
-                    <Feather name={item.icon} size={23} color={colors.primary} />
+                    <Feather name={item.icon} size={18} color={colors.primary} />
                   </View>
                   <Text style={styles.menuLabel}>{item.label}</Text>
-                  <Feather name="chevron-right" size={28} color={colors.text.muted} />
+                  <Feather name="chevron-right" size={22} color={colors.text.muted} />
                 </TouchableOpacity>
                 {i < MENU_ITEMS.length - 1 && <View style={styles.menuDivider} />}
               </React.Fragment>
@@ -255,7 +255,7 @@ export default function ProfileScreen() {
         {/* ── Sign Out ── */}
         <View style={styles.signOutWrap}>
           <TouchableOpacity style={styles.signOutBtn} onPress={signOut} activeOpacity={0.8}>
-            <Feather name="log-out" size={28} color={colors.status.error} />
+            <Feather name="log-out" size={22} color={colors.status.error} />
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
@@ -275,7 +275,7 @@ export default function ProfileScreen() {
               <View style={styles.popupInner}>
                 <View style={styles.popupHeader}>
                   <View style={styles.popupHeaderIcon}>
-                    <Ionicons name="game-controller-outline" size={26} color={colors.primary} />
+                    <Ionicons name="game-controller-outline" size={20} color={colors.primary} />
                   </View>
                   <Text style={styles.popupGameName} numberOfLines={1}>{selectedGame.game}</Text>
                   <TouchableOpacity
@@ -284,7 +284,7 @@ export default function ProfileScreen() {
                     activeOpacity={0.7}
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                   >
-                    <Feather name="x" size={28} color={colors.text.primary} />
+                    <Feather name="x" size={22} color={colors.text.primary} />
                   </TouchableOpacity>
                 </View>
 
@@ -302,8 +302,8 @@ export default function ProfileScreen() {
                         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       >
                         {copiedField === 'name'
-                          ? <Ionicons name="checkmark" size={23} color={colors.status.success} />
-                          : <Feather name="copy" size={28} color={colors.text.muted} />
+                          ? <Ionicons name="checkmark" size={18} color={colors.status.success} />
+                          : <Feather name="copy" size={22} color={colors.text.muted} />
                         }
                         <Text style={[styles.copyBtnText, copiedField === 'name' && { color: colors.status.success }]}>
                           {copiedField === 'name' ? 'Copied!' : 'Copy'}
@@ -324,8 +324,8 @@ export default function ProfileScreen() {
                       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     >
                       {copiedField === 'uid'
-                        ? <Ionicons name="checkmark" size={23} color={colors.status.success} />
-                        : <Feather name="copy" size={28} color={colors.text.muted} />
+                        ? <Ionicons name="checkmark" size={18} color={colors.status.success} />
+                        : <Feather name="copy" size={22} color={colors.text.muted} />
                       }
                       <Text style={[styles.copyBtnText, copiedField === 'uid' && { color: colors.status.success }]}>
                         {copiedField === 'uid' ? 'Copied!' : 'Copy'}
@@ -339,7 +339,7 @@ export default function ProfileScreen() {
                   onPress={() => { setSelectedGame(null); setCopiedField(null); router.push('/edit-profile'); }}
                   activeOpacity={0.85}
                 >
-                  <Feather name="edit-2" size={23} color="#fff" />
+                  <Feather name="edit-2" size={18} color="#fff" />
                   <Text style={styles.popupEditBtnText}>Edit in Profile Settings</Text>
                 </TouchableOpacity>
               </View>

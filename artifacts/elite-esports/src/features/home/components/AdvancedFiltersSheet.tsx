@@ -176,7 +176,7 @@ export function AdvancedFiltersSheet({
           </TouchableOpacity>
           <Text style={[sheetStyles.headerTitle, { color: colors.text.primary }]}>Advanced Filters</Text>
           <TouchableOpacity onPress={onClose} style={sheetStyles.headerAction}>
-            <Ionicons name="close" size={26} color={colors.text.secondary} />
+            <Ionicons name="close" size={20} color={colors.text.secondary} />
           </TouchableOpacity>
         </View>
 
@@ -203,11 +203,11 @@ export function AdvancedFiltersSheet({
                   onPress={() => update('sortBy', opt.key)}
                   activeOpacity={0.75}
                 >
-                  <Feather name={opt.icon} size={23} color={active ? colors.primary : colors.text.muted} />
+                  <Feather name={opt.icon} size={18} color={active ? colors.primary : colors.text.muted} />
                   <Text style={[sheetStyles.sortCardText, { color: active ? colors.primary : colors.text.secondary }]}>
                     {opt.label}
                   </Text>
-                  {active && <Ionicons name="checkmark-circle" size={23} color={colors.primary} />}
+                  {active && <Ionicons name="checkmark-circle" size={18} color={colors.primary} />}
                 </TouchableOpacity>
               );
             })}
@@ -233,11 +233,11 @@ export function AdvancedFiltersSheet({
                   onPress={() => update('entryFilter', opt.key)}
                   activeOpacity={0.75}
                 >
-                  <Ionicons name={opt.icon} size={23} color={active ? opt.color : colors.text.muted} />
+                  <Ionicons name={opt.icon} size={18} color={active ? opt.color : colors.text.muted} />
                   <Text style={[sheetStyles.sortCardText, { color: active ? opt.color : colors.text.secondary }]}>
                     {opt.label}
                   </Text>
-                  {active && <Ionicons name="checkmark-circle" size={23} color={opt.color} />}
+                  {active && <Ionicons name="checkmark-circle" size={18} color={opt.color} />}
                 </TouchableOpacity>
               );
             })}
@@ -291,7 +291,7 @@ export function AdvancedFiltersSheet({
             onPress={handleApply}
             activeOpacity={0.85}
           >
-            <Ionicons name="checkmark-circle" size={23} color="#fff" />
+            <Ionicons name="checkmark-circle" size={18} color="#fff" />
             <Text style={sheetStyles.applyText}>
               Apply Filters{activeCount > 0 ? ` (${activeCount})` : ''}
             </Text>
