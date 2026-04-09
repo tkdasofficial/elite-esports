@@ -5,6 +5,7 @@ import {
   StyleSheet,
   Pressable,
   Dimensions,
+  useColorScheme,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,20 +21,47 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const { width, height } = Dimensions.get('window');
 
 const STATS = [
-  { icon: 'calendar-outline' as const,  label: 'Daily Tournaments' },
-  { icon: 'people-outline'   as const,  label: '10K+ Players'       },
-  { icon: 'cash-outline'     as const,  label: 'Cash Prizes'        },
+  { icon: 'calendar-outline' as const, label: 'Daily Tournaments' },
+  { icon: 'people-outline'   as const, label: '10K+ Players'      },
+  { icon: 'cash-outline'     as const, label: 'Cash Prizes'       },
 ];
 
 const GAMES = [
-  { icon: 'flame-outline'  as const, label: 'Free Fire', accent: '#EE3D2D' },
-  { icon: 'skull-outline'  as const, label: 'BGMI',      accent: '#50C878' },
+  { icon: 'flame-outline' as const, label: 'Free Fire', accent: '#EE3D2D' },
+  { icon: 'skull-outline' as const, label: 'BGMI',      accent: '#50C878' },
 ];
+
+function useTheme() {
+  const scheme = useColorScheme();
+  const dark = scheme === 'dark';
+  return {
+    dark,
+    gradientColors: dark
+      ? (['#001408', '#000A04', '#000000'] as const)
+      : (['#F0FFF6', '#F7FFF9', '#FFFFFF'] as const),
+    headline:     dark ? '#FFFFFF' : '#0A0A0A',
+    subtext:      dark ? '#606060' : '#666666',
+    eyebrowLine:  dark ? '#50C87860' : '#50C87880',
+    iconGradColors: dark
+      ? (['#50C87822', '#50C87806'] as const)
+      : (['#50C87830', '#50C87810'] as const),
+    iconBorder:   dark ? '#50C87840' : '#50C87860',
+    gameTagBg:    dark ? '#060E08' : '#F0FFF4',
+    ringColors:   dark
+      ? ['#50C87810', '#50C87820', '#50C87830']
+      : ['#50C87818', '#50C87828', '#50C87838'],
+    divider:      dark ? '#1A1A1A' : '#E0E0E0',
+    statLabel:    dark ? '#555555' : '#888888',
+    statSep:      dark ? '#1E1E1E' : '#DDDDDD',
+    dotInactive:  dark ? '#222222' : '#CCCCCC',
+  };
+}
 
 export default function PlayScreen() {
   const insets = useSafeAreaInsets();
   const scale = useSharedValue(1);
   const btnStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const t = useTheme();
 
   const topPad = insets.top;
   const botPad = insets.bottom + 8;
@@ -46,76 +74,64 @@ export default function PlayScreen() {
   return (
     <View style={[styles.root, { paddingTop: topPad, paddingBottom: botPad }]}>
       <LinearGradient
-        colors={['#001408', '#000A04', '#000000']}
+        colors={t.gradientColors}
         locations={[0, 0.5, 1]}
         style={StyleSheet.absoluteFill}
       />
 
-      {/* ── Illustration ── */}
       <View style={styles.illus}>
-        {/* Concentric rings */}
-        <View style={styles.ring3} />
-        <View style={styles.ring2} />
-        <View style={styles.ring1} />
+        <View style={[styles.ring3, { borderColor: t.ringColors[0] }]} />
+        <View style={[styles.ring2, { borderColor: t.ringColors[1] }]} />
+        <View style={[styles.ring1, { borderColor: t.ringColors[2] }]} />
 
-        {/* Central icon */}
         <View style={styles.iconWrap}>
-          <LinearGradient
-            colors={['#50C87822', '#50C87806']}
-            style={styles.iconGrad}
-          >
+          <LinearGradient colors={t.iconGradColors} style={[styles.iconGrad, { borderColor: t.iconBorder }]}>
             <Ionicons name="game-controller-outline" size={64} color="#50C878" />
           </LinearGradient>
         </View>
 
-        {/* Game tags — positioned on ring */}
         <View style={styles.gameTags}>
           {GAMES.map((g) => (
-            <View key={g.label} style={[styles.gameTag, { borderColor: g.accent + '50' }]}>
+            <View key={g.label} style={[styles.gameTag, { borderColor: g.accent + '50', backgroundColor: t.gameTagBg }]}>
               <Ionicons name={g.icon} size={14} color={g.accent} />
               <Text style={[styles.gameTagTxt, { color: g.accent }]}>{g.label}</Text>
             </View>
           ))}
         </View>
 
-        {/* Horizontal divider */}
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: t.divider }]} />
 
-        {/* Stats row */}
         <View style={styles.statsRow}>
           {STATS.map((s, i) => (
             <React.Fragment key={s.label}>
               <View style={styles.statItem}>
                 <Ionicons name={s.icon} size={18} color="#50C878" />
-                <Text style={styles.statLabel}>{s.label}</Text>
+                <Text style={[styles.statLabel, { color: t.statLabel }]}>{s.label}</Text>
               </View>
-              {i < STATS.length - 1 && <View style={styles.statSep} />}
+              {i < STATS.length - 1 && <View style={[styles.statSep, { backgroundColor: t.statSep }]} />}
             </React.Fragment>
           ))}
         </View>
       </View>
 
-      {/* ── Text ── */}
       <View style={styles.textBlock}>
         <View style={styles.eyebrow}>
-          <View style={styles.eyebrowLine} />
+          <View style={[styles.eyebrowLine, { backgroundColor: t.eyebrowLine }]} />
           <Text style={styles.eyebrowTxt}>ELITE eSPORTS</Text>
-          <View style={styles.eyebrowLine} />
+          <View style={[styles.eyebrowLine, { backgroundColor: t.eyebrowLine }]} />
         </View>
-        <Text style={styles.headline}>JOIN THE{'\n'}BATTLE</Text>
-        <Text style={styles.subtext}>
+        <Text style={[styles.headline, { color: t.headline }]}>JOIN THE{'\n'}BATTLE</Text>
+        <Text style={[styles.subtext, { color: t.subtext }]}>
           Compete in daily tournaments and win real cash.
         </Text>
       </View>
 
-      {/* ── Dots ── */}
       <View style={styles.dots}>
         <View style={[styles.dot, styles.dotActive]} />
-        <View style={[styles.dot, styles.dotInactive]} />
-        <View style={[styles.dot, styles.dotInactive]} />
+        <View style={[styles.dot, { backgroundColor: t.dotInactive }]} />
+        <View style={[styles.dot, { backgroundColor: t.dotInactive }]} />
       </View>
 
-      {/* ── Button ── */}
       <View style={styles.cta}>
         <Animated.View style={[styles.btnWrap, btnStyle]}>
           <Pressable
@@ -153,149 +169,44 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  ring3: {
-    position: 'absolute',
-    width: R3, height: R3, borderRadius: R3 / 2,
-    borderWidth: 1, borderColor: '#50C87810',
-  },
-  ring2: {
-    position: 'absolute',
-    width: R2, height: R2, borderRadius: R2 / 2,
-    borderWidth: 1, borderColor: '#50C87820',
-  },
-  ring1: {
-    position: 'absolute',
-    width: R1, height: R1, borderRadius: R1 / 2,
-    borderWidth: 1, borderColor: '#50C87830',
-  },
+  ring3: { position: 'absolute', width: R3, height: R3, borderRadius: R3 / 2, borderWidth: 1 },
+  ring2: { position: 'absolute', width: R2, height: R2, borderRadius: R2 / 2, borderWidth: 1 },
+  ring1: { position: 'absolute', width: R1, height: R1, borderRadius: R1 / 2, borderWidth: 1 },
 
   iconWrap: { marginBottom: 24 },
   iconGrad: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    alignItems: 'center',
-    justifyContent: 'center',
+    width: 120, height: 120, borderRadius: 60,
+    alignItems: 'center', justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#50C87840',
   },
 
-  gameTags: {
-    flexDirection: 'row',
-    gap: 10,
-    marginBottom: 20,
-  },
+  gameTags: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   gameTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    backgroundColor: '#060E08',
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    borderWidth: 1, borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8,
   },
-  gameTagTxt: {
-    fontSize: 12,
-    fontFamily: 'Inter_700Bold',
-    letterSpacing: 0.6,
-  },
+  gameTagTxt: { fontSize: 12, fontFamily: 'Inter_700Bold', letterSpacing: 0.6 },
 
-  divider: {
-    width: width * 0.55,
-    height: 1,
-    backgroundColor: '#1A1A1A',
-    marginBottom: 20,
-  },
+  divider: { width: width * 0.55, height: 1, marginBottom: 20 },
 
-  statsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-  },
-  statItem: {
-    flex: 1,
-    alignItems: 'center',
-    gap: 6,
-  },
-  statLabel: {
-    fontSize: 10,
-    fontFamily: 'Inter_500Medium',
-    color: '#555',
-    textAlign: 'center',
-    letterSpacing: 0.3,
-  },
-  statSep: {
-    width: 1,
-    height: 28,
-    backgroundColor: '#1E1E1E',
-  },
+  statsRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20 },
+  statItem: { flex: 1, alignItems: 'center', gap: 6 },
+  statLabel: { fontSize: 10, fontFamily: 'Inter_500Medium', textAlign: 'center', letterSpacing: 0.3 },
+  statSep: { width: 1, height: 28 },
 
-  textBlock: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-  },
-  eyebrow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 14,
-  },
-  eyebrowLine: {
-    flex: 1,
-    maxWidth: 32,
-    height: 1,
-    backgroundColor: '#50C87860',
-  },
-  eyebrowTxt: {
-    fontSize: 11,
-    fontFamily: 'Inter_600SemiBold',
-    color: '#50C878',
-    letterSpacing: 2,
-  },
-  headline: {
-    fontSize: 38,
-    fontFamily: 'Inter_700Bold',
-    color: '#FFFFFF',
-    letterSpacing: 0.5,
-    textAlign: 'center',
-    lineHeight: 46,
-    marginBottom: 12,
-    textTransform: 'uppercase',
-  },
-  subtext: {
-    fontSize: 14,
-    fontFamily: 'Inter_400Regular',
-    color: '#606060',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  textBlock: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32 },
+  eyebrow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 },
+  eyebrowLine: { flex: 1, maxWidth: 32, height: 1 },
+  eyebrowTxt: { fontSize: 11, fontFamily: 'Inter_600SemiBold', color: '#50C878', letterSpacing: 2 },
+  headline: { fontSize: 38, fontFamily: 'Inter_700Bold', letterSpacing: 0.5, textAlign: 'center', lineHeight: 46, marginBottom: 12, textTransform: 'uppercase' },
+  subtext: { fontSize: 14, fontFamily: 'Inter_400Regular', textAlign: 'center', lineHeight: 22 },
 
-  dots: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 18,
-  },
+  dots: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 18 },
   dot: { height: 6, borderRadius: 3 },
   dotActive: { width: 24, backgroundColor: '#50C878' },
-  dotInactive: { width: 6, backgroundColor: '#222222' },
 
   cta: { width: '100%', paddingHorizontal: 24 },
   btnWrap: { borderRadius: 14, overflow: 'hidden' },
-  btnGrad: {
-    height: 58,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-  },
-  btnTxt: {
-    fontSize: 15,
-    fontFamily: 'Inter_700Bold',
-    color: '#000000',
-    letterSpacing: 2,
-  },
+  btnGrad: { height: 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 },
+  btnTxt: { fontSize: 15, fontFamily: 'Inter_700Bold', color: '#000000', letterSpacing: 2 },
 });
