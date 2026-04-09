@@ -50,7 +50,7 @@ function NotifCard({ notif, onPress, colors }: { notif: Notification; onPress: (
       <View style={[styles.icon, { backgroundColor: notif.is_read ? colors.background.elevated : 'rgba(254,76,17,0.12)' }]}>
         <Ionicons
           name={(ICON_MAP[notif.type] || 'notifications-outline') as any}
-          size={20}
+          size={26}
           color={notif.is_read ? colors.text.muted : colors.primary}
         />
       </View>

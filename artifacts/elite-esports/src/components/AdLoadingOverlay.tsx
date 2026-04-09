@@ -94,7 +94,7 @@ export function AdLoadingOverlay({ visible, bypassAfter, onSkip, label = 'Loadin
 
           {canSkip && (
             <TouchableOpacity style={styles.skipBtn} onPress={onSkip} activeOpacity={0.8}>
-              <Ionicons name="arrow-forward-circle-outline" size={18} color="#fff" />
+              <Ionicons name="arrow-forward-circle-outline" size={23} color="#fff" />
               <Text style={styles.skipText}>Continue</Text>
             </TouchableOpacity>
           )}

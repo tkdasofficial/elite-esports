@@ -75,7 +75,7 @@ export default function WithdrawScreen() {
           </Text>
           <TouchableOpacity style={styles.kycBtn} onPress={() => router.push('/(auth)/kyc')} activeOpacity={0.85}>
             <Text style={styles.kycBtnText}>Complete Profile</Text>
-            <Ionicons name="arrow-forward" size={16} color="#fff" style={{ marginLeft: 6 }} />
+            <Ionicons name="arrow-forward" size={27} color="#fff" style={{ marginLeft: 6 }} />
           </TouchableOpacity>
         </View>
       </View>
@@ -111,7 +111,7 @@ export default function WithdrawScreen() {
         {/* Error Banner */}
         {step === 'error' && (
           <View style={styles.errorBanner}>
-            <Ionicons name="alert-circle-outline" size={18} color="#fff" />
+            <Ionicons name="alert-circle-outline" size={23} color="#fff" />
             <Text style={styles.errorText}>{error}</Text>
           </View>
         )}
@@ -134,7 +134,7 @@ export default function WithdrawScreen() {
         {/* UPI ID */}
         <Text style={[styles.label, { marginTop: 20 }]}>UPI ID</Text>
         <View style={styles.inputWrapper}>
-          <Ionicons name="phone-portrait-outline" size={18} color={colors.text.muted} style={{ marginRight: 10 }} />
+          <Ionicons name="phone-portrait-outline" size={23} color={colors.text.muted} style={{ marginRight: 10 }} />
           <TextInput
             style={styles.input}
             value={upiId}
@@ -148,7 +148,7 @@ export default function WithdrawScreen() {
 
         {/* Info */}
         <View style={styles.infoBox}>
-          <Ionicons name="time-outline" size={15} color={colors.status.warning} />
+          <Ionicons name="time-outline" size={26} color={colors.status.warning} />
           <Text style={styles.infoText}>
             Withdrawals are processed within 24–48 hours after admin approval.
           </Text>
@@ -160,7 +160,7 @@ export default function WithdrawScreen() {
           onPress={handleSubmit}
           activeOpacity={0.85}
         >
-          <Ionicons name="arrow-up-circle-outline" size={20} color="#fff" />
+          <Ionicons name="arrow-up-circle-outline" size={26} color="#fff" />
           <Text style={styles.btnText}>Request Withdrawal</Text>
         </TouchableOpacity>
       </ScrollView>

@@ -39,7 +39,7 @@ export function LeaderRow({ item }: Props) {
 
       {/* Trophy + win count */}
       <View style={[styles.trophyChip, { borderColor: rankColor + '55' }]}>
-        <Ionicons name="trophy" size={13} color="#FFA200" />
+        <Ionicons name="trophy" size={28} color="#FFA200" />
         <Text style={[styles.trophyCount, { color: rankColor }]}>
           {item.wins}
         </Text>

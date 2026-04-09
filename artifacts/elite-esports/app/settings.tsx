@@ -156,7 +156,7 @@ export default function SettingsScreen() {
           {/* Vibration Feedback */}
           <View style={styles.row}>
             <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
-              <Ionicons name="phone-portrait" size={18} color={colors.primary} />
+              <Ionicons name="phone-portrait" size={23} color={colors.primary} />
             </View>
             <View style={styles.rowText}>
               <Text style={styles.rowLabel}>Vibration Feedback</Text>
@@ -193,7 +193,7 @@ export default function SettingsScreen() {
               >
                 <Ionicons
                   name={opt.icon as any}
-                  size={20}
+                  size={26}
                   color={isActive ? colors.primary : colors.text.muted}
                 />
                 <Text style={[styles.themeLabel, isActive && styles.themeLabelActive]}>
@@ -201,7 +201,7 @@ export default function SettingsScreen() {
                 </Text>
                 {isActive && (
                   <View style={styles.themeCheck}>
-                    <Ionicons name="checkmark" size={14} color={colors.primary} />
+                    <Ionicons name="checkmark" size={23} color={colors.primary} />
                   </View>
                 )}
               </TouchableOpacity>
@@ -214,12 +214,12 @@ export default function SettingsScreen() {
 
         {permStatus !== 'granted' && (
           <TouchableOpacity style={styles.permBanner} onPress={handleEnableNotifications} activeOpacity={0.8}>
-            <Ionicons name="warning-outline" size={18} color={colors.status.warning} />
+            <Ionicons name="warning-outline" size={23} color={colors.status.warning} />
             <View style={styles.permBannerText}>
               <Text style={styles.permBannerTitle}>Notifications are blocked</Text>
               <Text style={styles.permBannerSub}>Tap to open system settings and enable notifications</Text>
             </View>
-            <Ionicons name="chevron-forward" size={14} color={colors.status.warning} />
+            <Ionicons name="chevron-forward" size={23} color={colors.status.warning} />
           </TouchableOpacity>
         )}
 
@@ -232,7 +232,7 @@ export default function SettingsScreen() {
                 }]}>
                   <Ionicons
                     name={permStatus === 'granted' ? 'shield-checkmark' : 'shield-outline'}
-                    size={18}
+                    size={23}
                     color={permStatus === 'granted' ? colors.status.success : colors.status.warning}
                   />
                 </View>
@@ -252,7 +252,7 @@ export default function SettingsScreen() {
                   </View>
                 ) : (
                   <TouchableOpacity onPress={handleEnableNotifications}>
-                    <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+                    <Ionicons name="chevron-forward" size={27} color={colors.text.muted} />
                   </TouchableOpacity>
                 )}
               </View>
@@ -268,7 +268,7 @@ export default function SettingsScreen() {
           ].map(item => (
             <View key={item.key} style={[styles.row, item.disabled && styles.rowDisabled]}>
               <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
-                <Ionicons name={item.icon as any} size={18} color={colors.primary} />
+                <Ionicons name={item.icon as any} size={23} color={colors.primary} />
               </View>
               <View style={styles.rowText}>
                 <Text style={[styles.rowLabel, item.disabled && styles.rowLabelMuted]}>{item.label}</Text>
@@ -291,18 +291,18 @@ export default function SettingsScreen() {
         <View style={styles.card}>
           <TouchableOpacity style={styles.row} onPress={() => router.push('/account-info')} activeOpacity={0.75}>
             <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
-              <Ionicons name="person-outline" size={18} color={colors.primary} />
+              <Ionicons name="person-outline" size={23} color={colors.primary} />
             </View>
             <View style={styles.rowText}>
               <Text style={styles.rowLabel}>Account Info</Text>
               <Text style={styles.rowSublabel}>View and edit your KYC information</Text>
             </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+            <Ionicons name="chevron-forward" size={27} color={colors.text.muted} />
           </TouchableOpacity>
           <View style={{ height: 1, backgroundColor: colors.border.default, marginHorizontal: 16 }} />
           <TouchableOpacity style={styles.row} onPress={handleResetPassword} disabled={resetLoading} activeOpacity={0.75}>
             <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
-              <Ionicons name="mail-outline" size={18} color={colors.primary} />
+              <Ionicons name="mail-outline" size={23} color={colors.primary} />
             </View>
             <View style={styles.rowText}>
               <Text style={styles.rowLabel}>Reset Password</Text>
@@ -310,7 +310,7 @@ export default function SettingsScreen() {
             </View>
             {resetLoading
               ? <ActivityIndicator size="small" color={colors.primary} />
-              : <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+              : <Ionicons name="chevron-forward" size={27} color={colors.text.muted} />
             }
           </TouchableOpacity>
         </View>
@@ -331,12 +331,12 @@ export default function SettingsScreen() {
               activeOpacity={0.75}
             >
               <View style={[styles.iconBox, { backgroundColor: colors.primary + '18' }]}>
-                <Ionicons name={item.icon as any} size={18} color={colors.primary} />
+                <Ionicons name={item.icon as any} size={23} color={colors.primary} />
               </View>
               <View style={styles.rowText}>
                 <Text style={styles.rowLabel}>{item.label}</Text>
               </View>
-              <Ionicons name="chevron-forward" size={16} color={colors.text.muted} />
+              <Ionicons name="chevron-forward" size={27} color={colors.text.muted} />
             </TouchableOpacity>
           ))}
         </View>
@@ -355,7 +355,7 @@ export default function SettingsScreen() {
             activeOpacity={0.75}
           >
             <View style={[styles.iconBox, { backgroundColor: 'rgba(239,68,68,0.12)' }]}>
-              <Ionicons name="log-out-outline" size={18} color={colors.status.error} />
+              <Ionicons name="log-out-outline" size={23} color={colors.status.error} />
             </View>
             <View style={styles.rowText}>
               <Text style={[styles.rowLabel, { color: colors.status.error }]}>Sign Out</Text>

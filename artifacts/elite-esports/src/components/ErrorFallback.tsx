@@ -40,7 +40,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
           onPress={() => setIsModalVisible(true)}
           style={({ pressed }) => [styles.topButton, { top: insets.top + 16, backgroundColor: theme.backgroundSecondary, opacity: pressed ? 0.8 : 1 }]}
         >
-          <Feather name="alert-circle" size={20} color={theme.text} />
+          <Feather name="alert-circle" size={26} color={theme.text} />
         </Pressable>
       )}
       <View style={styles.content}>
@@ -57,7 +57,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
               <View style={[styles.modalHeader, { borderBottomColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
                 <Text style={[styles.modalTitle, { color: theme.text }]}>Error Details</Text>
                 <Pressable onPress={() => setIsModalVisible(false)} style={styles.closeButton}>
-                  <Feather name="x" size={24} color={theme.text} />
+                  <Feather name="x" size={30} color={theme.text} />
                 </Pressable>
               </View>
               <ScrollView style={styles.modalScrollView} contentContainerStyle={[styles.modalScrollContent, { paddingBottom: insets.bottom + 16 }]}>

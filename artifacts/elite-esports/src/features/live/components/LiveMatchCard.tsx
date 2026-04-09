@@ -45,11 +45,11 @@ export function LiveMatchCard({ match }: Props) {
 
         <View style={styles.infoRow}>
           <View style={styles.infoItem}>
-            <Ionicons name="people-outline" size={16} color={colors.text.secondary} />
+            <Ionicons name="people-outline" size={27} color={colors.text.secondary} />
             <Text style={styles.infoText}>{match.players_joined}/{match.max_players}</Text>
           </View>
           <View style={styles.infoItem}>
-            <Ionicons name="trophy-outline" size={16} color={colors.primary} />
+            <Ionicons name="trophy-outline" size={27} color={colors.primary} />
             <Text style={[styles.infoText, { color: colors.primary }]}>₹{match.prize_pool}</Text>
           </View>
         </View>
@@ -59,7 +59,7 @@ export function LiveMatchCard({ match }: Props) {
           onPress={() => match.stream_url && Linking.openURL(match.stream_url)}
           activeOpacity={0.8}
         >
-          <Ionicons name="play-circle" size={22} color="#fff" />
+          <Ionicons name="play-circle" size={28} color="#fff" />
           <Text style={styles.watchBtnText}>Watch Live</Text>
         </TouchableOpacity>
       </View>

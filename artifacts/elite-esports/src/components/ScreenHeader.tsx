@@ -21,7 +21,7 @@ export function ScreenHeader({ title, rightElement, onBack }: ScreenHeaderProps)
     <View style={[styles.header, { paddingTop: topInset }]}>
       <View style={styles.content}>
         <TouchableOpacity style={styles.backBtn} onPress={onBack ?? (() => router.back())} activeOpacity={0.7}>
-          <Ionicons name="arrow-back" size={24} color={colors.text.primary} />
+          <Ionicons name="arrow-back" size={30} color={colors.text.primary} />
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
         <View style={styles.right}>

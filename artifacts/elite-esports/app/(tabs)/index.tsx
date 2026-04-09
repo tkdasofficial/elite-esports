@@ -184,7 +184,7 @@ export default function HomeScreen() {
               onPress={resetAll}
               activeOpacity={0.8}
             >
-              <Ionicons name="close" size={12} color={colors.status.error} />
+              <Ionicons name="close" size={27} color={colors.status.error} />
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -200,7 +200,7 @@ export default function HomeScreen() {
           >
             <Feather
               name="sliders"
-              size={14}
+              size={23}
               color={advActiveCount > 0 ? '#fff' : colors.text.secondary}
             />
             <Text style={[
@@ -230,7 +230,7 @@ export default function HomeScreen() {
           <Ionicons name="cloud-offline-outline" size={52} color={colors.text.muted} />
           <Text style={[styles.emptyTitle, { color: colors.text.secondary }]}>Could not load matches</Text>
           <TouchableOpacity style={[styles.retryBtn, { backgroundColor: colors.primary }]} onPress={retry}>
-            <Ionicons name="refresh" size={16} color="#fff" />
+            <Ionicons name="refresh" size={27} color="#fff" />
             <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -285,7 +285,7 @@ export default function HomeScreen() {
                   style={[styles.retryBtn, { backgroundColor: colors.background.elevated, marginTop: 4 }]}
                   onPress={resetAll}
                 >
-                  <Ionicons name="close-circle-outline" size={16} color={colors.text.secondary} />
+                  <Ionicons name="close-circle-outline" size={27} color={colors.text.secondary} />
                   <Text style={[styles.retryText, { color: colors.text.secondary }]}>Clear Filters</Text>
                 </TouchableOpacity>
               )}

@@ -44,9 +44,9 @@ function createStyles(colors: AppColors) {
       marginBottom: 18,
     },
     logoCircle: {
-      width: 86,
-      height: 86,
-      borderRadius: 24,
+      width: 120,
+      height: 120,
+      borderRadius: 30,
       backgroundColor: '#0D0D0D',
       borderWidth: 1.5,
       borderColor: colors.primary + '66',
@@ -55,8 +55,8 @@ function createStyles(colors: AppColors) {
       overflow: 'hidden',
     },
     logoImage: {
-      width: 62,
-      height: 62,
+      width: 96,
+      height: 96,
     },
     appName: {
       fontSize: 28,

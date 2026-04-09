@@ -69,7 +69,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
         <View style={styles.header}>
           {step === 'details' ? (
             <TouchableOpacity onPress={() => setStep('select')} style={styles.navBtn} activeOpacity={0.7}>
-              <Ionicons name="chevron-back" size={22} color={colors.text.primary} />
+              <Ionicons name="chevron-back" size={28} color={colors.text.primary} />
             </TouchableOpacity>
           ) : (
             <View style={styles.navBtn} />
@@ -78,7 +78,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
             {step === 'select' ? 'Select Game' : 'Game Details'}
           </Text>
           <TouchableOpacity onPress={handleClose} style={styles.navBtn} activeOpacity={0.7}>
-            <Ionicons name="close" size={22} color={colors.text.primary} />
+            <Ionicons name="close" size={28} color={colors.text.primary} />
           </TouchableOpacity>
         </View>
 
@@ -120,7 +120,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
                       <Image source={{ uri: item.banner_url }} style={styles.gameBanner} resizeMode="cover" />
                     ) : (
                       <View style={[styles.gameBanner, styles.gameBannerPlaceholder]}>
-                        <Ionicons name="game-controller-outline" size={22} color={colors.text.muted} />
+                        <Ionicons name="game-controller-outline" size={28} color={colors.text.muted} />
                       </View>
                     )}
                     <View style={styles.gameInfo}>
@@ -129,13 +129,13 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
                       </Text>
                       {alreadyAdded && (
                         <View style={styles.addedBadge}>
-                          <Ionicons name="checkmark-circle" size={12} color={colors.status.success} />
+                          <Ionicons name="checkmark-circle" size={27} color={colors.status.success} />
                           <Text style={styles.addedText}>Already added</Text>
                         </View>
                       )}
                     </View>
                     {!alreadyAdded && (
-                      <Ionicons name="chevron-forward" size={18} color={colors.text.muted} style={{ marginRight: 4 }} />
+                      <Ionicons name="chevron-forward" size={23} color={colors.text.muted} style={{ marginRight: 4 }} />
                     )}
                   </TouchableOpacity>
                 );
@@ -161,7 +161,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
                   <Image source={{ uri: selectedGame.banner_url }} style={styles.chipBanner} resizeMode="cover" />
                 ) : (
                   <View style={[styles.chipBanner, styles.gameBannerPlaceholder]}>
-                    <Ionicons name="game-controller-outline" size={16} color={colors.text.muted} />
+                    <Ionicons name="game-controller-outline" size={27} color={colors.text.muted} />
                   </View>
                 )}
                 <Text style={styles.chipName} numberOfLines={1}>{selectedGame.name}</Text>
@@ -176,7 +176,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
 
               <Text style={styles.fieldLabel}>In-game Name</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="person-outline" size={16} color={colors.text.muted} style={styles.inputIcon} />
+                <Ionicons name="person-outline" size={27} color={colors.text.muted} style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
                   value={inGameName}
@@ -193,7 +193,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
 
               <Text style={[styles.fieldLabel, { marginTop: 22 }]}>Player UID</Text>
               <View style={styles.inputWrapper}>
-                <Ionicons name="key-outline" size={16} color={colors.text.muted} style={styles.inputIcon} />
+                <Ionicons name="key-outline" size={27} color={colors.text.muted} style={styles.inputIcon} />
                 <TextInput
                   ref={uidRef}
                   style={styles.input}
@@ -214,7 +214,7 @@ export function AddGameModal({ visible, existingGames, onClose, onAdd }: AddGame
                 disabled={!canAdd}
                 activeOpacity={0.85}
               >
-                <Ionicons name="add-circle-outline" size={19} color="#fff" />
+                <Ionicons name="add-circle-outline" size={30} color="#fff" />
                 <Text style={styles.addBtnText}>Add Game</Text>
               </TouchableOpacity>
             </ScrollView>

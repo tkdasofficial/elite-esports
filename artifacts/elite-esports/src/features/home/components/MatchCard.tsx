@@ -80,7 +80,7 @@ export function MatchCard({ match, onPress }: Props) {
         <View style={styles.titleRow}>
           <Text style={styles.title} numberOfLines={1}>{match.title}</Text>
           <View style={styles.playersWrap}>
-            <Ionicons name="people-outline" size={12} color={colors.text.secondary} />
+            <Ionicons name="people-outline" size={27} color={colors.text.secondary} />
             <Text style={styles.playersText}>
               {match.players_joined}/{match.max_players}
             </Text>
@@ -93,7 +93,7 @@ export function MatchCard({ match, onPress }: Props) {
           <View style={[styles.statBadge, isFree ? styles.feeBadgeFree : styles.feeBadgePaid]}>
             <Ionicons
               name={isFree ? 'gift-outline' : 'ticket-outline'}
-              size={11}
+              size={26}
               color={isFree ? '#22C55E' : '#EE3D2D'}
             />
             <Text style={[styles.badgeText, isFree ? styles.feeTextFree : styles.feeTextPaid]}>
@@ -103,7 +103,7 @@ export function MatchCard({ match, onPress }: Props) {
 
           {/* Prize Pool */}
           <View style={styles.prizeBadge}>
-            <Ionicons name="trophy" size={11} color={gold} />
+            <Ionicons name="trophy" size={26} color={gold} />
             <Text style={styles.prizeText}>₹{match.prize_pool.toLocaleString('en-IN')}</Text>
           </View>
 
@@ -113,7 +113,7 @@ export function MatchCard({ match, onPress }: Props) {
           {/* Details button — same position as before */}
           <View style={styles.detailsBtn}>
             <Text style={styles.detailsTxt}>Details</Text>
-            <Ionicons name="arrow-forward" size={12} color="#fff" />
+            <Ionicons name="arrow-forward" size={27} color="#fff" />
           </View>
         </View>
 

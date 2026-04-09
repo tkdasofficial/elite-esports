@@ -58,7 +58,7 @@ function TabIcon({ routeName, isFocused }: { routeName: TabName; isFocused: bool
         ]}
       />
       <Animated.View style={{ transform: [{ scale }] }}>
-        <Feather name={(tab?.icon ?? 'home') as any} size={22} color={iconColor} />
+        <Feather name={(tab?.icon ?? 'home') as any} size={30} color={iconColor} />
       </Animated.View>
     </View>
   );
@@ -178,13 +178,13 @@ const styles = StyleSheet.create({
   iconWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    width: 44,
-    height: 44,
+    width: 54,
+    height: 54,
   },
   activePill: {
     position: 'absolute',
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
   },
 });
