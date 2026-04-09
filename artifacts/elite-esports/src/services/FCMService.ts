@@ -328,17 +328,33 @@ export function subscribeNotificationResponses(): () => void {
   };
 }
 
+const LAST_HANDLED_NOTIF_KEY = 'elite_last_handled_notif_id';
+
 /**
  * Handle the case where the user tapped a notification that cold-launched
  * the app (app was completely killed).
+ *
+ * getLastNotificationResponseAsync() persists across normal app restarts and
+ * does NOT clear itself automatically — so we track the notification request
+ * ID in AsyncStorage and skip it if it was already handled in a previous
+ * session. This prevents the "always redirects to /notifications" bug.
+ *
  * Call this once after the root navigator is ready.
  */
 export async function handleColdStartNotification(): Promise<void> {
   try {
     const response = await Notifications.getLastNotificationResponseAsync();
-    if (response) {
-      handleNotificationResponse(response);
-    }
+    if (!response) return;
+
+    const requestId = response.notification.request.identifier;
+
+    // Skip if we already routed this notification in a previous session
+    const lastHandled = await AsyncStorage.getItem(LAST_HANDLED_NOTIF_KEY);
+    if (lastHandled === requestId) return;
+
+    // Mark as handled before navigating (in case navigation throws)
+    await AsyncStorage.setItem(LAST_HANDLED_NOTIF_KEY, requestId);
+    handleNotificationResponse(response);
   } catch {
     // Non-critical
   }
