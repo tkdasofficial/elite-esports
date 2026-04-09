@@ -5,11 +5,12 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as Notifications from 'expo-notifications';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AuthProvider } from '@/store/AuthContext';
@@ -19,11 +20,15 @@ import { NotificationsProvider } from '@/store/NotificationsContext';
 import { WalletProvider } from '@/store/WalletContext';
 import { AdProvider } from '@/store/AdContext';
 import { NCMProvider } from '@/store/NCMContext';
-import { setupAndroidChannels } from '@/services/NotificationService';
 import { requestAppPermissions } from '@/services/PermissionService';
 import { loadHapticPreference } from '@/utils/haptics';
 import { deepLinkService } from '@/services/DeepLinkService';
 import { deviceFingerprint } from '@/services/DeviceFingerprint';
+import {
+  initFCM,
+  subscribeNotificationResponses,
+  handleColdStartNotification,
+} from '@/services/FCMService';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -70,6 +75,9 @@ function ThemedRoot() {
     Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold,
   });
 
+  // Track whether the navigator is ready so cold-start routing works
+  const navigatorReadyRef = useRef(false);
+
   useEffect(() => {
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
@@ -77,14 +85,29 @@ function ThemedRoot() {
   }, [fontsLoaded, fontError]);
 
   useEffect(() => {
-    setupAndroidChannels().catch(() => {});
+    // ── 1. Android notification channels + notification handler ─────────────
+    initFCM().catch(() => {});
+
+    // ── 2. Other app-level permissions & services ───────────────────────────
     requestAppPermissions().catch(() => {});
     loadHapticPreference().catch(() => {});
     deepLinkService.init();
     deviceFingerprint.init().catch(() => {});
 
+    // ── 3. Subscribe to notification taps (foreground & background states) ──
+    const unsubResponses = subscribeNotificationResponses();
+
+    // ── 4. Handle cold-start tap (app was killed, user tapped notification) ─
+    // Slight delay ensures the Expo Router navigator is fully mounted.
+    const coldStartTimer = setTimeout(() => {
+      navigatorReadyRef.current = true;
+      handleColdStartNotification().catch(() => {});
+    }, 500);
+
     return () => {
+      unsubResponses();
       deepLinkService.destroy();
+      clearTimeout(coldStartTimer);
     };
   }, []);
 

@@ -68,10 +68,13 @@ async function getPushToken(): Promise<string | null> {
 }
 
 // ── Device registration ───────────────────────────────────────────────────────
+// NOTE: push_token is intentionally omitted here.
+// FCMService.registerFCMToken() writes the FCM token to device_registrations
+// with full token data. NCMService only updates presence/metadata fields
+// so we don't accidentally overwrite a valid token with null.
 export async function registerDevice(user: User): Promise<void> {
   try {
-    const duid      = await getDUID();
-    const pushToken = await getPushToken();
+    const duid = await getDUID();
 
     await supabase.from('device_registrations').upsert(
       {
@@ -79,7 +82,6 @@ export async function registerDevice(user: User): Promise<void> {
         duid,
         platform:     Platform.OS,
         os_version:   String(Platform.Version),
-        push_token:   pushToken ?? null,
         email:        user.email ?? null,
         display_name: user.user_metadata?.full_name
                       || user.user_metadata?.name
