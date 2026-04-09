@@ -160,17 +160,17 @@ function createStyles(
       paddingLeft: 16, paddingRight: 4, gap: 8,
     },
     centerFlex: { flex: 1, height: 44, justifyContent: 'center' },
-    logoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+    logoRow: { flexDirection: 'row', alignItems: 'center', gap: 9 },
     logoMark: {
-      width: 48, height: 48, borderRadius: 13,
+      width: 36, height: 36, borderRadius: 9,
       backgroundColor: '#0D0D0D',
       alignItems: 'center', justifyContent: 'center',
       borderWidth: 1, borderColor: colors.primary + '88',
       overflow: 'hidden',
     },
     logoImage: {
-      width: 40,
-      height: 40,
+      width: 58,
+      height: 58,
     },
     logoText: {
       fontSize: 18, fontFamily: 'Inter_700Bold',
