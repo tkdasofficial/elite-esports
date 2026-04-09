@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, StyleSheet, Image } from 'react-native';
 import { useTheme } from '@/store/ThemeContext';
 import type { AppColors } from '@/utils/colors';
+
+const logoImage = require('../../../../assets/images/logo.png');
 
 interface Props {
   tagline?: string;
@@ -17,7 +18,7 @@ export function AuthLogo({ tagline = 'Compete. Win. Dominate.', showName = true 
     <View style={[styles.container, !showName && styles.containerCompact]}>
       <View style={styles.logoWrap}>
         <View style={styles.logoCircle}>
-          <Ionicons name="flash" size={36} color={colors.primary} />
+          <Image source={logoImage} style={styles.logoImage} resizeMode="contain" />
         </View>
       </View>
       {showName && (
@@ -43,14 +44,19 @@ function createStyles(colors: AppColors) {
       marginBottom: 18,
     },
     logoCircle: {
-      width: 76,
-      height: 76,
+      width: 86,
+      height: 86,
       borderRadius: 24,
-      backgroundColor: colors.background.elevated,
+      backgroundColor: '#0D0D0D',
       borderWidth: 1.5,
       borderColor: colors.primary + '66',
       alignItems: 'center',
       justifyContent: 'center',
+      overflow: 'hidden',
+    },
+    logoImage: {
+      width: 62,
+      height: 62,
     },
     appName: {
       fontSize: 28,

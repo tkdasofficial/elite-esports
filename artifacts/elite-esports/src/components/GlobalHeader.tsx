@@ -1,14 +1,16 @@
 import React, { useRef, useState, useMemo } from 'react';
 import {
   View, Text, Pressable, StyleSheet,
-  Animated, TextInput, Keyboard,
+  Animated, TextInput, Keyboard, Image,
 } from 'react-native';
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Feather } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '@/store/ThemeContext';
 import { triggerHaptic } from '@/utils/haptics';
 import { useNotifications } from '@/store/NotificationsContext';
+
+const logoImage = require('../../assets/images/logo.png');
 
 interface Props {
   onSearch?: (query: string) => void;
@@ -63,7 +65,7 @@ export function GlobalHeader({ onSearch }: Props) {
               pointerEvents={searching ? 'none' : 'auto'}
             >
               <View style={styles.logoMark}>
-                <Ionicons name="flash" size={17} color={colors.primary} />
+                <Image source={logoImage} style={styles.logoImage} resizeMode="contain" />
               </View>
               <Text style={styles.logoText}>
                 Elite <Text style={styles.logoAccent}>eSports</Text>
@@ -160,10 +162,15 @@ function createStyles(
     centerFlex: { flex: 1, height: 44, justifyContent: 'center' },
     logoRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
     logoMark: {
-      width: 32, height: 32, borderRadius: 9,
-      backgroundColor: isDark ? '#1C0400' : '#FFF0EE',
+      width: 34, height: 34, borderRadius: 9,
+      backgroundColor: '#0D0D0D',
       alignItems: 'center', justifyContent: 'center',
       borderWidth: 1, borderColor: colors.primary + '88',
+      overflow: 'hidden',
+    },
+    logoImage: {
+      width: 26,
+      height: 26,
     },
     logoText: {
       fontSize: 18, fontFamily: 'Inter_700Bold',

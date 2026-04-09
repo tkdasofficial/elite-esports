@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Linking, ActivityIndicator,
+  ScrollView, Linking, ActivityIndicator, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -13,6 +13,7 @@ import { useAppConfig } from '@/hooks/useAppConfig';
 import type { AppColors } from '@/utils/colors';
 
 const APP_VERSION = '2.5.0';
+const logoImage = require('../assets/images/logo.png');
 
 const FEATURES = [
   { icon: 'trophy-outline',           text: 'Daily & weekly competitive tournaments' },
@@ -74,7 +75,7 @@ export default function AboutScreen() {
         <View style={styles.heroBanner}>
           <LinearGradient colors={heroBannerGradient} style={StyleSheet.absoluteFill} />
           <View style={styles.heroLogoCircle}>
-            <Ionicons name="flash" size={40} color={isDark ? colors.primary : '#fff'} />
+            <Image source={logoImage} style={styles.heroLogoImage} resizeMode="contain" />
           </View>
           <Text style={styles.heroName}>
             Elite <Text style={styles.heroAccent}>eSports</Text>
@@ -247,11 +248,14 @@ function createStyles(colors: AppColors) {
       borderWidth: 1, borderColor: colors.primary + '44',
     },
     heroLogoCircle: {
-      width: 80, height: 80, borderRadius: 24,
-      backgroundColor: 'rgba(0,0,0,0.25)',
-      borderWidth: 2, borderColor: 'rgba(255,255,255,0.2)',
+      width: 90, height: 90, borderRadius: 26,
+      backgroundColor: '#0D0D0D',
+      borderWidth: 2, borderColor: colors.primary + '66',
       alignItems: 'center', justifyContent: 'center',
-      marginBottom: 16,
+      marginBottom: 16, overflow: 'hidden',
+    },
+    heroLogoImage: {
+      width: 66, height: 66,
     },
     heroName: {
       fontSize: 28, fontFamily: 'Inter_700Bold',
