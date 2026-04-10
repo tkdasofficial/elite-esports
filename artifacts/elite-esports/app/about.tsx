@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet,
-  ScrollView, Linking, ActivityIndicator, Image,
+  ScrollView, Linking, Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
@@ -12,7 +12,10 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { useAppConfig } from '@/hooks/useAppConfig';
 import type { AppColors } from '@/utils/colors';
 
-const APP_VERSION = '2.5.0';
+const SUPPORT_EMAIL    = 'help.eliteesports@outlook.com';
+const WHATSAPP_NUMBER  = '919046813904';
+
+const APP_VERSION = '2.5.1';
 const logoImage = require('../assets/images/logo.png');
 
 const FEATURES = [
@@ -43,12 +46,6 @@ const SOCIAL_PLATFORMS = [
   { key: 'linkedin_url',  icon: 'logo-linkedin',  label: 'LinkedIn',  bg: '#0A66C2', fg: '#fff' },
 ] as const;
 
-/* ── Contact email config ── */
-const EMAIL_TYPES = [
-  { key: 'support_email',  icon: 'headset-outline' as const,  label: 'Support',  sub: 'Technical help & account issues' },
-  { key: 'queries_email',  icon: 'chatbox-outline' as const,  label: 'Queries',  sub: 'General questions & feedback' },
-  { key: 'legal_email',    icon: 'briefcase-outline' as const, label: 'Legal',   sub: 'Legal, compliance & GDPR' },
-] as const;
 
 export default function AboutScreen() {
   const insets = useSafeAreaInsets();
@@ -61,7 +58,6 @@ export default function AboutScreen() {
     : [colors.primary + 'CC', colors.primaryDark];
 
   const activeSocials = SOCIAL_PLATFORMS.filter(p => !!(config as any)[p.key]);
-  const activeEmails  = EMAIL_TYPES.filter(e => !!(config as any)[e.key]);
 
   return (
     <View style={styles.container}>
@@ -128,40 +124,44 @@ export default function AboutScreen() {
         </View>
 
         {/* ── Contact Us ── */}
-        {loading ? (
-          <View style={{ alignItems: 'center', paddingVertical: 16 }}>
-            <ActivityIndicator color={colors.primary} />
-          </View>
-        ) : activeEmails.length > 0 ? (
-          <>
-            <Text style={styles.sectionLabel}>Contact Us</Text>
-            <View style={styles.card}>
-              {activeEmails.map((e, i) => {
-                const email = (config as any)[e.key] as string;
-                return (
-                  <React.Fragment key={e.key}>
-                    {i > 0 && <View style={styles.rowDivider} />}
-                    <TouchableOpacity
-                      style={styles.emailRow}
-                      onPress={() => Linking.openURL(`mailto:${email}`)}
-                      activeOpacity={0.75}
-                    >
-                      <View style={styles.emailIcon}>
-                        <Ionicons name={e.icon} size={17} color={colors.primary} />
-                      </View>
-                      <View style={styles.emailTextWrap}>
-                        <Text style={styles.emailLabel}>{e.label}</Text>
-                        <Text style={styles.emailSub}>{e.sub}</Text>
-                        <Text style={styles.emailAddress}>{email}</Text>
-                      </View>
-                      <Ionicons name="open-outline" size={15} color={colors.text.muted} />
-                    </TouchableOpacity>
-                  </React.Fragment>
-                );
-              })}
+        <Text style={styles.sectionLabel}>Contact Us</Text>
+        <View style={styles.card}>
+          <TouchableOpacity
+            style={styles.emailRow}
+            onPress={() => Linking.openURL(`mailto:${SUPPORT_EMAIL}`)}
+            activeOpacity={0.75}
+          >
+            <View style={styles.emailIcon}>
+              <Ionicons name="headset-outline" size={17} color={colors.primary} />
             </View>
-          </>
-        ) : null}
+            <View style={styles.emailTextWrap}>
+              <Text style={styles.emailLabel}>Support</Text>
+              <Text style={styles.emailSub}>Technical help & account issues</Text>
+              <Text style={styles.emailAddress}>{SUPPORT_EMAIL}</Text>
+            </View>
+            <Ionicons name="open-outline" size={15} color={colors.text.muted} />
+          </TouchableOpacity>
+
+          <View style={styles.rowDivider} />
+
+          <TouchableOpacity
+            style={styles.emailRow}
+            onPress={() => Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}`)}
+            activeOpacity={0.75}
+          >
+            <View style={[styles.emailIcon, styles.whatsappIcon]}>
+              <Ionicons name="logo-whatsapp" size={19} color="#fff" />
+            </View>
+            <View style={styles.emailTextWrap}>
+              <Text style={styles.emailLabel}>WhatsApp Support</Text>
+              <Text style={styles.emailSub}>Chat with us directly</Text>
+              <Text style={styles.emailAddress}>+91-90468-13904</Text>
+            </View>
+            <View style={styles.whatsappBadge}>
+              <Text style={styles.whatsappBadgeText}>Chat</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
         {/* ── Follow Us (Social) ── */}
         {!loading && activeSocials.length > 0 && (
@@ -248,14 +248,14 @@ function createStyles(colors: AppColors) {
       borderWidth: 1, borderColor: colors.primary + '44',
     },
     heroLogoCircle: {
-      width: 90, height: 90, borderRadius: 26,
+      width: 108, height: 108, borderRadius: 30,
       backgroundColor: '#0D0D0D',
       borderWidth: 2, borderColor: colors.primary + '66',
       alignItems: 'center', justifyContent: 'center',
       marginBottom: 16, overflow: 'hidden',
     },
     heroLogoImage: {
-      width: 66, height: 66,
+      width: 174, height: 174,
     },
     heroName: {
       fontSize: 28, fontFamily: 'Inter_700Bold',
@@ -332,6 +332,16 @@ function createStyles(colors: AppColors) {
     },
     emailAddress: {
       fontSize: 12, fontFamily: 'Inter_500Medium', color: colors.primary,
+    },
+    whatsappIcon: {
+      backgroundColor: '#25D366',
+    },
+    whatsappBadge: {
+      backgroundColor: '#25D366',
+      borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4,
+    },
+    whatsappBadgeText: {
+      fontSize: 12, fontFamily: 'Inter_700Bold', color: '#fff',
     },
 
     /* Social grid */

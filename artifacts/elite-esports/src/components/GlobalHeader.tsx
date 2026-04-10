@@ -169,8 +169,8 @@ function createStyles(
       overflow: 'hidden',
     },
     logoImage: {
-      width: 58,
-      height: 58,
+      width: 52,
+      height: 52,
     },
     logoText: {
       fontSize: 18, fontFamily: 'Inter_700Bold',
