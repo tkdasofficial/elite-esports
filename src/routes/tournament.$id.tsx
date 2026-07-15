@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Users, Trophy, ScrollText, Medal } from "lucide-react";
+import { ArrowLeft, Users, Trophy, ScrollText } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { TournamentCard } from "@/components/tournament-card";
 import {
@@ -47,29 +47,32 @@ function TournamentDetail() {
 
 
 
-      {/* Tabs */}
-      <div className="mx-4 mt-3 flex rounded-xl bg-surface-2 p-1">
+      {/* Tabs — soft pill for active */}
+      <div className="mx-4 mt-4 flex items-center gap-2">
         {(
           [
-            { k: "prize", l: "Prize", Icon: Trophy },
+            { k: "prize", l: "Prize Pool", Icon: Trophy },
             { k: "players", l: "Players", Icon: Users },
             { k: "rules", l: "Rules", Icon: ScrollText },
           ] as const
-        ).map(({ k, l, Icon }) => (
-          <button
-            key={k}
-            onClick={() => setTab(k)}
-            className={cn(
-              "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 font-display text-xs font-bold uppercase tracking-wider transition-all",
-              tab === k
-                ? "bg-brand text-brand-foreground brand-glow"
-                : "text-muted-foreground"
-            )}
-          >
-            <Icon className="h-3.5 w-3.5" />
-            {l}
-          </button>
-        ))}
+        ).map(({ k, l, Icon }) => {
+          const active = tab === k;
+          return (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              className={cn(
+                "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2.5 font-display text-xs font-black uppercase tracking-wider transition-all",
+                active
+                  ? "bg-brand/12 text-brand"
+                  : "text-muted-foreground"
+              )}
+            >
+              <Icon className="h-4 w-4" strokeWidth={active ? 2.5 : 2} />
+              {l}
+            </button>
+          );
+        })}
       </div>
 
       <div className="mx-4 mt-3">
@@ -98,39 +101,41 @@ function TournamentDetail() {
 
 
 function PrizeList() {
-  const medalColor = (r: number) =>
+  const medalBg = (r: number) =>
     r === 1
-      ? "text-gold border-gold/40 bg-gold/10"
+      ? "bg-gold/15"
       : r === 2
-        ? "text-silver border-silver/40 bg-silver/10"
+        ? "bg-silver/20"
         : r === 3
-          ? "text-bronze border-bronze/40 bg-bronze/10"
-          : "text-muted-foreground border-border bg-surface-2";
+          ? "bg-bronze/15"
+          : "bg-surface";
+  const medalIcon = (r: number) =>
+    r === 1 ? "🥇" : r === 2 ? "🥈" : r === 3 ? "🥉" : "🎖️";
   return (
-    <ul className="space-y-2 pb-32">
-      {PRIZE_DISTRIBUTION.map(({ rank, prize }) => (
-        <li
-          key={rank}
-          className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
-        >
-          <div
+    <div className="rounded-2xl border border-border bg-card p-4 pb-32">
+      <h3 className="mb-3 font-display text-lg font-black">
+        Prize Distribution
+      </h3>
+      <ul className="space-y-1.5">
+        {PRIZE_DISTRIBUTION.map(({ rank, prize }) => (
+          <li
+            key={rank}
             className={cn(
-              "grid h-11 w-11 place-items-center rounded-xl border font-display font-black",
-              medalColor(rank)
+              "flex items-center justify-between rounded-lg px-3 py-2.5",
+              medalBg(rank)
             )}
           >
-            {rank <= 3 ? <Medal className="h-5 w-5" /> : `#${rank}`}
-          </div>
-          <div className="flex-1 font-display text-sm font-bold">
-            Rank {rank}
-          </div>
-
-          <div className="font-display text-lg font-black text-brand">
-            ₹{prize}
-          </div>
-        </li>
-      ))}
-    </ul>
+            <div className="flex items-center gap-2">
+              <span className="text-lg leading-none">{medalIcon(rank)}</span>
+              <span className="font-display text-sm font-bold">{rank}</span>
+            </div>
+            <span className="font-display text-sm font-black text-success">
+              ₹{prize}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
