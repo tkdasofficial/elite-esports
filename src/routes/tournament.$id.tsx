@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Users, Trophy, ScrollText, Medal } from "lucide-react";
+import { ArrowLeft, Users, Trophy, ScrollText } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { TournamentCard } from "@/components/tournament-card";
 import {
