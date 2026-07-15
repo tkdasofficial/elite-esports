@@ -95,40 +95,6 @@ function TournamentDetail() {
 
 
 
-function Pill({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="rounded-md bg-black/40 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur">
-      {children}
-    </span>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  highlight,
-}: {
-  label: string;
-  value: string;
-  highlight?: boolean;
-}) {
-  return (
-    <div className="flex min-w-0 flex-col items-center justify-center px-2 text-center">
-      <div
-        className={cn(
-          "truncate font-display text-base font-black leading-tight",
-          highlight && "text-brand"
-        )}
-      >
-        {value}
-      </div>
-      <div className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
-        {label}
-      </div>
-    </div>
-  );
-}
-
 
 function PrizeList() {
   const medalColor = (r: number) =>
