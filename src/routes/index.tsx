@@ -27,8 +27,8 @@ function Home() {
             <div className="mt-1 font-display text-3xl font-black leading-none">
               ₹2,40,000
             </div>
-            <div className="mt-1 text-xs opacity-90">
-              Resets every Monday • 4 days left
+            <div className="mt-1 text-[10px] uppercase tracking-widest opacity-80">
+              4 days left
             </div>
           </div>
           <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-black/25 text-3xl">
@@ -58,14 +58,6 @@ function Home() {
         })}
       </div>
 
-      <div className="flex items-center justify-between px-4 pb-2 pt-1">
-        <h2 className="font-display text-sm font-bold uppercase tracking-wider">
-          Live Tournaments
-        </h2>
-        <span className="flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">
-          <TrendingUp className="h-3 w-3 text-brand" /> {filtered.length} open
-        </span>
-      </div>
 
       <div className="space-y-3 px-4">
         {filtered.map((t) => (
