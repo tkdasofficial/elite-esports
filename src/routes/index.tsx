@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { Flame, TrendingUp } from "lucide-react";
+import { Flame } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
 import { TournamentCard } from "@/components/tournament-card";
 import { CATEGORIES, TOURNAMENTS } from "@/lib/tournament-data";
