@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
+import { Route as SupportRouteImport } from './routes/support'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as PrivateRouteImport } from './routes/private'
 import { Route as MatchesRouteImport } from './routes/matches'
@@ -20,6 +21,11 @@ import { Route as TournamentIdRouteImport } from './routes/tournament.$id'
 const WalletRoute = WalletRouteImport.update({
   id: '/wallet',
   path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SettingsRoute = SettingsRouteImport.update({
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/matches': typeof MatchesRoute
   '/private': typeof PrivateRoute
   '/settings': typeof SettingsRoute
+  '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
   '/tournament/$id': typeof TournamentIdRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/matches': typeof MatchesRoute
   '/private': typeof PrivateRoute
   '/settings': typeof SettingsRoute
+  '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
   '/tournament/$id': typeof TournamentIdRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/matches': typeof MatchesRoute
   '/private': typeof PrivateRoute
   '/settings': typeof SettingsRoute
+  '/support': typeof SupportRoute
   '/wallet': typeof WalletRoute
   '/tournament/$id': typeof TournamentIdRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/matches'
     | '/private'
     | '/settings'
+    | '/support'
     | '/wallet'
     | '/tournament/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/matches'
     | '/private'
     | '/settings'
+    | '/support'
     | '/wallet'
     | '/tournament/$id'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/matches'
     | '/private'
     | '/settings'
+    | '/support'
     | '/wallet'
     | '/tournament/$id'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   MatchesRoute: typeof MatchesRoute
   PrivateRoute: typeof PrivateRoute
   SettingsRoute: typeof SettingsRoute
+  SupportRoute: typeof SupportRoute
   WalletRoute: typeof WalletRoute
   TournamentIdRoute: typeof TournamentIdRoute
 }
@@ -128,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/wallet'
       fullPath: '/wallet'
       preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/settings': {
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   MatchesRoute: MatchesRoute,
   PrivateRoute: PrivateRoute,
   SettingsRoute: SettingsRoute,
+  SupportRoute: SupportRoute,
   WalletRoute: WalletRoute,
   TournamentIdRoute: TournamentIdRoute,
 }
