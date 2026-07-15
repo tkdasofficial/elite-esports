@@ -25,56 +25,26 @@ function TournamentDetail() {
 
   return (
     <AppShell hideTopBar hideBottomNav>
-      {/* Compact header banner */}
-      <div className="relative h-44 overflow-hidden bg-gradient-to-br from-brand via-brand/50 to-black">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,55,0,0.55),transparent_65%)]" />
-        <div className="absolute -right-6 top-4 text-[9rem] leading-none opacity-20">
-          🎯
-        </div>
-        <div className="h-[env(safe-area-inset-top)]" />
-        <div className="relative flex items-center justify-between px-4 py-3">
-          <Link
-            to="/"
-            className="grid h-10 w-10 place-items-center rounded-full bg-black/40 text-white backdrop-blur"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <span className="rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur">
-            {t.matchId}
-          </span>
-        </div>
-        <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-          <div className="mb-1.5 flex gap-1.5">
-            <Pill>{t.mode}</Pill>
-            <Pill>{t.map}</Pill>
-          </div>
-          <h1 className="font-display text-xl font-black leading-tight drop-shadow-lg">
-            {t.title}
-          </h1>
-        </div>
-      </div>
-
-      {/* Quick stats card */}
-      <div className="mx-4 -mt-5 grid grid-cols-3 divide-x divide-border rounded-2xl border border-border bg-card py-3 shadow-lg">
-        <Stat
-          label="Prize"
-          value={t.perKill ? `₹${t.perKill}/kill` : `₹${t.prize}`}
-          highlight
-        />
-        <Stat label="Entry" value={`₹${t.entry}`} />
-        <Stat label="Slots" value={`${t.slotsFilled}/${t.slotsTotal}`} />
-      </div>
-
-
-      {/* Meta row */}
-      <div className="mx-4 mt-3 flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
-        <span>{t.dateTime}</span>
-        <span className="text-brand">
-          {t.slotsTotal - t.slotsFilled === 0
-            ? "Full"
-            : `${t.slotsTotal - t.slotsFilled} spots left`}
+      {/* Slim header */}
+      <div className="h-[env(safe-area-inset-top)]" />
+      <div className="flex items-center justify-between px-4 py-3">
+        <Link
+          to="/"
+          className="grid h-10 w-10 place-items-center rounded-full bg-surface-2"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </Link>
+        <span className="rounded-full bg-surface-2 px-3 py-1 font-display text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          {t.matchId}
         </span>
       </div>
+
+      {/* Reused match card */}
+      <div className="px-4">
+        <TournamentCard t={t} />
+      </div>
+
+
 
       {/* Tabs */}
       <div className="mx-4 mt-3 flex rounded-xl bg-surface-2 p-1">
