@@ -180,15 +180,10 @@ function PrizeList() {
           >
             {rank <= 3 ? <Medal className="h-5 w-5" /> : `#${rank}`}
           </div>
-          <div className="flex-1">
-            <div className="font-display text-sm font-bold">
-              Rank {rank}
-              {rank === 1 && " • Champion"}
-            </div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              {rank <= 3 ? ["Gold", "Silver", "Bronze"][rank - 1] : "Reward"}
-            </div>
+          <div className="flex-1 font-display text-sm font-bold">
+            Rank {rank}
           </div>
+
           <div className="font-display text-lg font-black text-brand">
             ₹{prize}
           </div>
