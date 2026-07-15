@@ -41,8 +41,9 @@ function TournamentDetail() {
 
       {/* Reused match card */}
       <div className="px-4">
-        <TournamentCard t={t} />
+        <TournamentCard t={t} variant="detail" />
       </div>
+
 
 
 
