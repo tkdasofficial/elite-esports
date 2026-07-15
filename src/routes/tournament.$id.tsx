@@ -2,6 +2,7 @@ import { createFileRoute, Link, useParams } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowLeft, Users, Trophy, ScrollText, Medal } from "lucide-react";
 import { AppShell } from "@/components/app-shell";
+import { TournamentCard } from "@/components/tournament-card";
 import {
   TOURNAMENTS,
   PRIZE_DISTRIBUTION,
@@ -9,6 +10,7 @@ import {
   RULES,
 } from "@/lib/tournament-data";
 import { cn } from "@/lib/utils";
+
 
 export const Route = createFileRoute("/tournament/$id")({
   component: TournamentDetail,
