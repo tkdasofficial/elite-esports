@@ -3,10 +3,10 @@ import { Home, Trophy, Gamepad2, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const items = [
-  { to: "/", label: "Home", icon: Home },
-  { to: "/matches", label: "My Matches", icon: Gamepad2 },
-  { to: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { to: "/wallet", label: "Wallet", icon: Wallet },
+  { to: "/", icon: Home },
+  { to: "/matches", icon: Gamepad2 },
+  { to: "/wallet", icon: Wallet },
+  { to: "/leaderboard", icon: Trophy },
 ] as const;
 
 export function BottomNav() {
@@ -24,19 +24,18 @@ export function BottomNav() {
               key={it.to}
               to={it.to}
               className={cn(
-                "flex flex-col items-center gap-1 py-3 text-[10px] font-semibold uppercase tracking-wider transition-colors",
+                "flex items-center justify-center py-3.5 transition-colors",
                 active ? "text-brand" : "text-muted-foreground"
               )}
             >
               <div
                 className={cn(
-                  "grid h-9 w-9 place-items-center rounded-xl transition-all",
+                  "grid h-11 w-11 place-items-center rounded-xl transition-all",
                   active && "bg-brand/15 brand-glow"
                 )}
               >
-                <Icon className="h-5 w-5" strokeWidth={active ? 2.5 : 2} />
+                <Icon className="h-6 w-6" strokeWidth={active ? 2.5 : 2} />
               </div>
-              {it.label}
             </Link>
           );
         })}
