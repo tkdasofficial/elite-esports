@@ -20,14 +20,9 @@ export function TopBar() {
           </span>
         </button>
 
-        <Link to="/" className="flex flex-col items-center leading-none">
-          <span className="font-display text-[10px] uppercase tracking-[0.3em] text-muted-foreground">
-            Elite
-          </span>
-          <span className="font-display text-lg font-black uppercase tracking-wider">
-            e<span className="text-gradient-brand">Sports</span>
-          </span>
-        </Link>
+        <div className="flex-1" />
+
+
 
         <Link
           to="/wallet"

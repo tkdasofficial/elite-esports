@@ -18,16 +18,8 @@ function MatchesPage() {
 
   return (
     <AppShell>
-      <div className="px-4 pt-2">
-        <h1 className="font-display text-2xl font-black uppercase tracking-wide">
-          My Matches
-        </h1>
-        <p className="text-xs text-muted-foreground">
-          Track your tournaments — past, present & future.
-        </p>
-      </div>
+      <div className="mx-4 mt-2 grid grid-cols-3 gap-1 rounded-xl bg-surface-2 p-1">
 
-      <div className="mx-4 mt-4 grid grid-cols-3 gap-1 rounded-xl bg-surface-2 p-1">
         {(["upcoming", "live", "played"] as const).map((t) => (
           <button
             key={t}

@@ -25,16 +25,11 @@ function LeaderboardPage() {
   return (
     <AppShell>
       <div className="px-4 pt-2 text-center">
-        <h1 className="font-display text-2xl font-black uppercase tracking-wide">
-          Weekly Leaderboard
-        </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Resets every Monday • Cash prizes for Top 10
-        </p>
-        <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-brand/15 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-brand">
-          🔥 3 days 14h left
+        <div className="inline-flex items-center gap-1 rounded-full bg-brand/15 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-brand">
+          🔥 3d 14h left
         </div>
       </div>
+
 
       {/* Podium */}
       <div className="mx-4 mt-6 grid grid-cols-3 items-end gap-2">
@@ -58,14 +53,10 @@ function LeaderboardPage() {
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-surface-2 font-display text-xs font-black text-brand">
                 {p.ign.slice(0, 2).toUpperCase()}
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-display text-sm font-bold">
-                  {p.ign}
-                </div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Elite Player
-                </div>
+              <div className="min-w-0 flex-1 truncate font-display text-sm font-bold">
+                {p.ign}
               </div>
+
               <div className="font-display font-black text-brand">
                 {fmt(p.earnings)}
               </div>
@@ -81,21 +72,17 @@ function LeaderboardPage() {
             #{me.rank}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Your Rank
+            <div className="text-[10px] uppercase tracking-widest text-brand">
+              You
             </div>
             <div className="truncate font-display text-sm font-bold">
               {me.ign}
             </div>
           </div>
-          <div className="text-right">
-            <div className="font-display font-black text-brand">
-              {fmt(me.earnings)}
-            </div>
-            <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
-              this week
-            </div>
+          <div className="font-display font-black text-brand">
+            {fmt(me.earnings)}
           </div>
+
         </div>
       </div>
     </AppShell>

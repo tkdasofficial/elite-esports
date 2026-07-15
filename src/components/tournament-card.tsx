@@ -24,7 +24,7 @@ export function TournamentCard({ t }: { t: Tournament }) {
           <h3 className="mt-2 font-display text-base font-bold leading-tight">
             {t.title}
           </h3>
-          <div className="mt-1 text-xs text-muted-foreground">{t.matchId}</div>
+
 
           <div className="mt-2.5 flex items-center gap-1.5 text-sm">
             <Zap className="h-4 w-4 text-brand" strokeWidth={2.5} />
