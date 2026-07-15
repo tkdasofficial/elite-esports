@@ -37,8 +37,8 @@ function Home() {
         </div>
       </section>
 
-      {/* Category tabs */}
-      <div className="scrollbar-hide sticky top-[62px] z-20 -mx-0 flex gap-2 overflow-x-auto bg-background/95 px-4 py-3 backdrop-blur-xl">
+      {/* Category tabs — underline style */}
+      <div className="scrollbar-hide sticky top-[62px] z-20 flex gap-6 overflow-x-auto border-b border-border bg-background/95 px-4 py-3 backdrop-blur-xl">
         {CATEGORIES.map((c) => {
           const active = c === cat;
           return (
@@ -46,13 +46,14 @@ function Home() {
               key={c}
               onClick={() => setCat(c)}
               className={cn(
-                "shrink-0 rounded-full px-4 py-1.5 font-display text-xs font-bold uppercase tracking-wider transition-all",
-                active
-                  ? "bg-brand text-brand-foreground brand-glow"
-                  : "bg-surface-2 text-muted-foreground"
+                "relative shrink-0 pb-2 font-display text-sm font-black uppercase tracking-wider transition-colors",
+                active ? "text-brand" : "text-muted-foreground"
               )}
             >
               {c}
+              {active && (
+                <span className="absolute inset-x-0 -bottom-[13px] h-[3px] rounded-full bg-brand" />
+              )}
             </button>
           );
         })}

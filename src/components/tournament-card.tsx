@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router";
-import { Users, Calendar, Zap } from "lucide-react";
 import type { Tournament } from "@/lib/tournament-data";
 import { cn } from "@/lib/utils";
 
@@ -27,94 +26,75 @@ export function TournamentCard({ t, variant = "default" }: Props) {
         !isDetail && "transition-transform active:scale-[0.98]"
       )}
     >
-      <div className="flex items-stretch gap-3 p-3">
-        {/* Thumbnail */}
-        <div className="relative aspect-square w-20 shrink-0 overflow-hidden rounded-xl bg-gradient-to-br from-brand/50 via-brand/15 to-surface-2 ring-1 ring-border">
-          <div className="absolute inset-0 grid place-items-center">
-            <div className="text-center font-display leading-tight text-white/90 drop-shadow-lg">
-              <div className="text-2xl">🎯</div>
-              <div className="text-[9px] font-black uppercase tracking-wider">
-                {t.mode}
-              </div>
-            </div>
+      {/* Top: body + thumbnail */}
+      <div className="flex items-start gap-3 p-3 pb-2">
+        {/* Body */}
+        <div className="flex min-w-0 flex-1 flex-col gap-2">
+          <div className="flex flex-wrap gap-1.5">
+            <Pill>{t.mode}</Pill>
+            <Pill>{t.map}</Pill>
+            <Pill>{t.slotsTotal} SLOTS</Pill>
           </div>
-          <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/70 to-transparent" />
+          <h3 className="font-display text-[15px] font-black uppercase leading-tight tracking-wide">
+            {t.title}
+          </h3>
+          <div className="font-display text-sm font-bold text-brand">
+            Prize Pool — {t.perKill ? `₹${t.perKill}/kill` : `₹${t.prize}`}
+          </div>
         </div>
 
-        {/* Body */}
-        <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
-          <div className="min-w-0">
-            <div className="flex flex-wrap gap-1">
-              <Pill>{t.mode}</Pill>
-              <Pill>{t.map}</Pill>
-              <Pill>{t.slotsTotal} SLOTS</Pill>
+        {/* Thumbnail */}
+        <div className="flex shrink-0 flex-col items-center gap-1">
+          <div className="relative h-20 w-20 overflow-hidden rounded-lg bg-gradient-to-br from-brand/60 via-brand/25 to-surface-2 ring-1 ring-border">
+            <div className="absolute inset-0 grid place-items-center text-2xl drop-shadow">
+              🎯
             </div>
-            <h3 className="mt-1.5 truncate font-display text-[15px] font-bold leading-tight">
-              {t.title}
-            </h3>
-            <div className="mt-1 flex items-center gap-3 text-[11px] text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <Zap className="h-3 w-3 text-brand" strokeWidth={2.5} />
-                <span className="font-display font-bold text-brand">
-                  {t.perKill ? `₹${t.perKill}/kill` : `₹${t.prize}`}
-                </span>
-              </span>
-              <span className="flex items-center gap-1">
-                <Calendar className="h-3 w-3" />
-                <span className="whitespace-nowrap">{t.dateTime}</span>
-              </span>
-            </div>
+            <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-black/70 to-transparent" />
           </div>
-
-          {/* Slot row */}
-          <div>
-            <div className="mb-1 flex items-center justify-between text-[10px] font-semibold">
-              <span className="flex items-center gap-1 text-muted-foreground">
-                <Users className="h-3 w-3" />
-                <span className="tabular-nums">
-                  {t.slotsFilled}/{t.slotsTotal}
-                </span>
-              </span>
-              <span className={cn(full ? "text-destructive" : "text-brand")}>
-                {full ? "Full" : `${left} left`}
-              </span>
-            </div>
-            <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-brand to-brand/60 transition-all"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
+          <div className="text-[10px] font-semibold tabular-nums text-foreground/80">
+            {t.dateTime}
           </div>
         </div>
       </div>
 
-      {/* Join footer — only in default (list) variant */}
-      {!isDetail && (
-        <div className="flex items-center justify-between gap-2 border-t border-border bg-surface/50 px-3 py-2">
-          <span className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
-            Entry Fee
+      {/* Progress line */}
+      <div className="mx-3 h-[3px] overflow-hidden rounded-full bg-surface-2">
+        <div
+          className="h-full rounded-full bg-brand transition-all"
+          style={{ width: `${Math.max(pct, 4)}%` }}
+        />
+      </div>
+
+      {/* Footer: match id / spots / diagonal JOIN */}
+      <div className="mt-2 flex items-stretch">
+        <div className="flex flex-1 items-center justify-between px-3 pb-3 pt-1 text-[11px] font-bold">
+          <span className="uppercase tracking-widest text-muted-foreground/70">
+            {t.matchId ? t.matchId : "MATCH ID"}
           </span>
-          <button
-            disabled={full}
+          <span className={cn(full ? "text-destructive" : "text-brand")}>
+            {left} spots left
+          </span>
+        </div>
+
+        {!isDetail && (
+          <div
             className={cn(
-              "rounded-lg px-4 py-1.5 font-display text-sm font-black uppercase tracking-wider transition-all",
-              full
-                ? "bg-surface-2 text-muted-foreground"
-                : "bg-brand text-brand-foreground brand-glow active:scale-95"
+              "relative -mr-px flex items-center justify-center bg-brand pl-6 pr-4 font-display text-sm font-black uppercase tracking-wider text-brand-foreground",
+              full && "bg-muted-foreground/60"
             )}
+            style={{ clipPath: "polygon(14px 0, 100% 0, 100% 100%, 0% 100%)" }}
           >
             ₹{t.entry} Join
-          </button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </Wrapper>
   );
 }
 
 function Pill({ children }: { children: React.ReactNode }) {
   return (
-    <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-foreground/80">
+    <span className="rounded-md border border-border bg-background px-2 py-0.5 font-display text-[9px] font-bold uppercase tracking-widest text-foreground/80">
       {children}
     </span>
   );
