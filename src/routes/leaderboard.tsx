@@ -72,21 +72,17 @@ function LeaderboardPage() {
             #{me.rank}
           </span>
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Your Rank
+            <div className="text-[10px] uppercase tracking-widest text-brand">
+              You
             </div>
             <div className="truncate font-display text-sm font-bold">
               {me.ign}
             </div>
           </div>
-          <div className="text-right">
-            <div className="font-display font-black text-brand">
-              {fmt(me.earnings)}
-            </div>
-            <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
-              this week
-            </div>
+          <div className="font-display font-black text-brand">
+            {fmt(me.earnings)}
           </div>
+
         </div>
       </div>
     </AppShell>
