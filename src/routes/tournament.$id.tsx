@@ -23,10 +23,10 @@ function TournamentDetail() {
 
   return (
     <AppShell hideTopBar hideBottomNav>
-      {/* Header banner */}
-      <div className="relative h-56 overflow-hidden bg-gradient-to-br from-brand via-brand/60 to-black">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,55,0,0.5),transparent_60%)]" />
-        <div className="absolute inset-0 grid place-items-center text-8xl opacity-30">
+      {/* Compact header banner */}
+      <div className="relative h-44 overflow-hidden bg-gradient-to-br from-brand via-brand/50 to-black">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_20%,rgba(255,55,0,0.55),transparent_65%)]" />
+        <div className="absolute -right-6 top-4 text-[9rem] leading-none opacity-20">
           🎯
         </div>
         <div className="h-[env(safe-area-inset-top)]" />
@@ -42,53 +42,63 @@ function TournamentDetail() {
           </span>
         </div>
         <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-          <div className="mb-2 flex gap-1.5">
+          <div className="mb-1.5 flex gap-1.5">
             <Pill>{t.mode}</Pill>
             <Pill>{t.map}</Pill>
-            <Pill>{t.slotsTotal} SLOTS</Pill>
           </div>
-          <h1 className="font-display text-2xl font-black leading-tight drop-shadow-lg">
+          <h1 className="font-display text-xl font-black leading-tight drop-shadow-lg">
             {t.title}
           </h1>
-          <div className="mt-1 text-xs opacity-90">{t.dateTime}</div>
         </div>
       </div>
 
-      {/* Quick stats */}
-      <div className="mx-4 -mt-6 grid grid-cols-3 gap-2 rounded-2xl border border-border bg-card p-3 shadow-lg">
-        <Stat label="Prize Pool" value={t.perKill ? `₹${t.perKill}/kill` : `₹${t.prize}`} highlight />
+      {/* Quick stats card */}
+      <div className="mx-4 -mt-5 grid grid-cols-3 divide-x divide-border rounded-2xl border border-border bg-card p-3 shadow-lg">
+        <Stat
+          label="Prize"
+          value={t.perKill ? `₹${t.perKill}/kill` : `₹${t.prize}`}
+          highlight
+        />
         <Stat label="Entry" value={`₹${t.entry}`} />
-        <Stat label="Filled" value={`${t.slotsFilled}/${t.slotsTotal}`} />
+        <Stat label="Slots" value={`${t.slotsFilled}/${t.slotsTotal}`} />
+      </div>
+
+      {/* Meta row */}
+      <div className="mx-4 mt-3 flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+        <span>{t.dateTime}</span>
+        <span className="text-brand">
+          {t.slotsTotal - t.slotsFilled === 0
+            ? "Full"
+            : `${t.slotsTotal - t.slotsFilled} spots left`}
+        </span>
       </div>
 
       {/* Tabs */}
-      <div className="mx-4 mt-4 rounded-xl bg-surface-2 p-1">
-        <div className="grid grid-cols-3 gap-1">
-          {(
-            [
-              { k: "prize", l: "Prize Pool", Icon: Trophy },
-              { k: "players", l: "Players", Icon: Users },
-              { k: "rules", l: "Rules", Icon: ScrollText },
-            ] as const
-          ).map(({ k, l, Icon }) => (
-            <button
-              key={k}
-              onClick={() => setTab(k)}
-              className={cn(
-                "flex items-center justify-center gap-1.5 rounded-lg py-2 font-display text-xs font-bold uppercase tracking-wider transition-all",
-                tab === k
-                  ? "bg-brand text-brand-foreground brand-glow"
-                  : "text-muted-foreground"
-              )}
-            >
-              <Icon className="h-3.5 w-3.5" />
-              {l}
-            </button>
-          ))}
-        </div>
+      <div className="mx-4 mt-3 flex rounded-xl bg-surface-2 p-1">
+        {(
+          [
+            { k: "prize", l: "Prize", Icon: Trophy },
+            { k: "players", l: "Players", Icon: Users },
+            { k: "rules", l: "Rules", Icon: ScrollText },
+          ] as const
+        ).map(({ k, l, Icon }) => (
+          <button
+            key={k}
+            onClick={() => setTab(k)}
+            className={cn(
+              "flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 font-display text-xs font-bold uppercase tracking-wider transition-all",
+              tab === k
+                ? "bg-brand text-brand-foreground brand-glow"
+                : "text-muted-foreground"
+            )}
+          >
+            <Icon className="h-3.5 w-3.5" />
+            {l}
+          </button>
+        ))}
       </div>
 
-      <div className="mx-4 mt-4">
+      <div className="mx-4 mt-3">
         {tab === "prize" && <PrizeList />}
         {tab === "players" && <PlayerList filled={t.slotsFilled} />}
         {tab === "rules" && <RulesList />}
@@ -96,15 +106,12 @@ function TournamentDetail() {
 
       {/* Sticky Join */}
       <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-md items-center gap-3 p-4">
-          <div>
-            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-              Entry Fee
-            </div>
-            <div className="font-display text-xl font-black">₹{t.entry}</div>
+        <div className="mx-auto flex max-w-md items-center gap-3 p-3">
+          <div className="rounded-xl bg-surface-2 px-3 py-2 font-display text-lg font-black">
+            ₹{t.entry}
           </div>
-          <button className="flex-1 rounded-xl bg-brand py-3.5 font-display text-base font-black uppercase tracking-wider text-brand-foreground brand-glow active:scale-[0.98]">
-            Join Tournament
+          <button className="flex-1 rounded-xl bg-brand py-3 font-display text-base font-black uppercase tracking-wider text-brand-foreground brand-glow active:scale-[0.98]">
+            Join Now
           </button>
         </div>
         <div className="h-[env(safe-area-inset-bottom)]" />
@@ -112,6 +119,8 @@ function TournamentDetail() {
     </AppShell>
   );
 }
+
+
 
 function Pill({ children }: { children: React.ReactNode }) {
   return (
