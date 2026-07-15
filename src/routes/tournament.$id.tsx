@@ -197,16 +197,11 @@ function PlayerList({ filled }: { filled: number }) {
   const shown = PLAYERS.slice(0, Math.max(filled, 6));
   return (
     <div className="pb-32">
-      <div className="mb-2 flex items-center justify-between">
-        <span className="font-display text-sm font-bold uppercase tracking-wider">
-          Registered
-        </span>
-        <span className="text-xs text-muted-foreground">
-          {shown.length} Players
-        </span>
+      <div className="mb-2 text-right text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+        {shown.length} Players
       </div>
       <ul className="grid grid-cols-2 gap-2">
-        {shown.map((p, i) => (
+        {shown.map((p) => (
           <li
             key={p}
             className="flex items-center gap-2 rounded-xl border border-border bg-card p-2"
@@ -214,13 +209,8 @@ function PlayerList({ filled }: { filled: number }) {
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-2 font-display text-xs font-black text-brand">
               {p.slice(0, 2).toUpperCase()}
             </div>
-            <div className="min-w-0 flex-1">
-              <div className="truncate font-display text-xs font-bold">
-                {p}
-              </div>
-              <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
-                Slot #{i + 1}
-              </div>
+            <div className="min-w-0 flex-1 truncate font-display text-xs font-bold">
+              {p}
             </div>
           </li>
         ))}
@@ -228,6 +218,7 @@ function PlayerList({ filled }: { filled: number }) {
     </div>
   );
 }
+
 
 function RulesList() {
   return (
