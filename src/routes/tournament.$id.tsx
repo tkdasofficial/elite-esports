@@ -53,7 +53,7 @@ function TournamentDetail() {
       </div>
 
       {/* Quick stats card */}
-      <div className="mx-4 -mt-5 grid grid-cols-3 divide-x divide-border rounded-2xl border border-border bg-card p-3 shadow-lg">
+      <div className="mx-4 -mt-5 grid grid-cols-3 divide-x divide-border rounded-2xl border border-border bg-card py-3 shadow-lg">
         <Stat
           label="Prize"
           value={t.perKill ? `₹${t.perKill}/kill` : `₹${t.prize}`}
@@ -62,6 +62,7 @@ function TournamentDetail() {
         <Stat label="Entry" value={`₹${t.entry}`} />
         <Stat label="Slots" value={`${t.slotsFilled}/${t.slotsTotal}`} />
       </div>
+
 
       {/* Meta row */}
       <div className="mx-4 mt-3 flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
@@ -140,21 +141,22 @@ function Stat({
   highlight?: boolean;
 }) {
   return (
-    <div className="text-center">
+    <div className="flex min-w-0 flex-col items-center justify-center px-2 text-center">
       <div
         className={cn(
-          "font-display text-base font-black",
+          "truncate font-display text-base font-black leading-tight",
           highlight && "text-brand"
         )}
       >
         {value}
       </div>
-      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+      <div className="mt-0.5 text-[9px] uppercase tracking-wider text-muted-foreground">
         {label}
       </div>
     </div>
   );
 }
+
 
 function PrizeList() {
   const medalColor = (r: number) =>
