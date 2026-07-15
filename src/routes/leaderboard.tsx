@@ -25,16 +25,11 @@ function LeaderboardPage() {
   return (
     <AppShell>
       <div className="px-4 pt-2 text-center">
-        <h1 className="font-display text-2xl font-black uppercase tracking-wide">
-          Weekly Leaderboard
-        </h1>
-        <p className="mt-1 text-xs text-muted-foreground">
-          Resets every Monday • Cash prizes for Top 10
-        </p>
-        <div className="mt-2 inline-flex items-center gap-1 rounded-full bg-brand/15 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-brand">
-          🔥 3 days 14h left
+        <div className="inline-flex items-center gap-1 rounded-full bg-brand/15 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-brand">
+          🔥 3d 14h left
         </div>
       </div>
+
 
       {/* Podium */}
       <div className="mx-4 mt-6 grid grid-cols-3 items-end gap-2">
