@@ -9,12 +9,18 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TournamentIdRouteImport } from './routes/tournament.$id'
 
+const WalletRoute = WalletRouteImport.update({
+  id: '/wallet',
+  path: '/wallet',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/leaderboard': typeof LeaderboardRoute
   '/matches': typeof MatchesRoute
   '/settings': typeof SettingsRoute
+  '/wallet': typeof WalletRoute
   '/tournament/$id': typeof TournamentIdRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/leaderboard': typeof LeaderboardRoute
   '/matches': typeof MatchesRoute
   '/settings': typeof SettingsRoute
+  '/wallet': typeof WalletRoute
   '/tournament/$id': typeof TournamentIdRoute
 }
 export interface FileRoutesById {
@@ -61,19 +69,33 @@ export interface FileRoutesById {
   '/leaderboard': typeof LeaderboardRoute
   '/matches': typeof MatchesRoute
   '/settings': typeof SettingsRoute
+  '/wallet': typeof WalletRoute
   '/tournament/$id': typeof TournamentIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/leaderboard' | '/matches' | '/settings' | '/tournament/$id'
+  fullPaths:
+    | '/'
+    | '/leaderboard'
+    | '/matches'
+    | '/settings'
+    | '/wallet'
+    | '/tournament/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/leaderboard' | '/matches' | '/settings' | '/tournament/$id'
+  to:
+    | '/'
+    | '/leaderboard'
+    | '/matches'
+    | '/settings'
+    | '/wallet'
+    | '/tournament/$id'
   id:
     | '__root__'
     | '/'
     | '/leaderboard'
     | '/matches'
     | '/settings'
+    | '/wallet'
     | '/tournament/$id'
   fileRoutesById: FileRoutesById
 }
@@ -82,11 +104,19 @@ export interface RootRouteChildren {
   LeaderboardRoute: typeof LeaderboardRoute
   MatchesRoute: typeof MatchesRoute
   SettingsRoute: typeof SettingsRoute
+  WalletRoute: typeof WalletRoute
   TournamentIdRoute: typeof TournamentIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/wallet': {
+      id: '/wallet'
+      path: '/wallet'
+      fullPath: '/wallet'
+      preLoaderRoute: typeof WalletRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/settings': {
       id: '/settings'
       path: '/settings'
@@ -130,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   LeaderboardRoute: LeaderboardRoute,
   MatchesRoute: MatchesRoute,
   SettingsRoute: SettingsRoute,
+  WalletRoute: WalletRoute,
   TournamentIdRoute: TournamentIdRoute,
 }
 export const routeTree = rootRouteImport
