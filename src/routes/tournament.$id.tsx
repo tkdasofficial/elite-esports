@@ -1,0 +1,244 @@
+import { createFileRoute, Link, useParams } from "@tanstack/react-router";
+import { useState } from "react";
+import { ArrowLeft, Users, Trophy, ScrollText, Medal } from "lucide-react";
+import { AppShell } from "@/components/app-shell";
+import {
+  TOURNAMENTS,
+  PRIZE_DISTRIBUTION,
+  PLAYERS,
+  RULES,
+} from "@/lib/tournament-data";
+import { cn } from "@/lib/utils";
+
+export const Route = createFileRoute("/tournament/$id")({
+  component: TournamentDetail,
+});
+
+type Tab = "prize" | "players" | "rules";
+
+function TournamentDetail() {
+  const { id } = useParams({ from: "/tournament/$id" });
+  const t = TOURNAMENTS.find((x) => x.id === id) ?? TOURNAMENTS[0];
+  const [tab, setTab] = useState<Tab>("prize");
+
+  return (
+    <AppShell hideTopBar hideBottomNav>
+      {/* Header banner */}
+      <div className="relative h-56 overflow-hidden bg-gradient-to-br from-brand via-brand/60 to-black">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,55,0,0.5),transparent_60%)]" />
+        <div className="absolute inset-0 grid place-items-center text-8xl opacity-30">
+          🎯
+        </div>
+        <div className="h-[env(safe-area-inset-top)]" />
+        <div className="relative flex items-center justify-between px-4 py-3">
+          <Link
+            to="/"
+            className="grid h-10 w-10 place-items-center rounded-full bg-black/40 text-white backdrop-blur"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <span className="rounded-full bg-black/40 px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-white backdrop-blur">
+            {t.matchId}
+          </span>
+        </div>
+        <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+          <div className="mb-2 flex gap-1.5">
+            <Pill>{t.mode}</Pill>
+            <Pill>{t.map}</Pill>
+            <Pill>{t.slotsTotal} SLOTS</Pill>
+          </div>
+          <h1 className="font-display text-2xl font-black leading-tight drop-shadow-lg">
+            {t.title}
+          </h1>
+          <div className="mt-1 text-xs opacity-90">{t.dateTime}</div>
+        </div>
+      </div>
+
+      {/* Quick stats */}
+      <div className="mx-4 -mt-6 grid grid-cols-3 gap-2 rounded-2xl border border-border bg-card p-3 shadow-lg">
+        <Stat label="Prize Pool" value={t.perKill ? `₹${t.perKill}/kill` : `₹${t.prize}`} highlight />
+        <Stat label="Entry" value={`₹${t.entry}`} />
+        <Stat label="Filled" value={`${t.slotsFilled}/${t.slotsTotal}`} />
+      </div>
+
+      {/* Tabs */}
+      <div className="mx-4 mt-4 rounded-xl bg-surface-2 p-1">
+        <div className="grid grid-cols-3 gap-1">
+          {(
+            [
+              { k: "prize", l: "Prize Pool", Icon: Trophy },
+              { k: "players", l: "Players", Icon: Users },
+              { k: "rules", l: "Rules", Icon: ScrollText },
+            ] as const
+          ).map(({ k, l, Icon }) => (
+            <button
+              key={k}
+              onClick={() => setTab(k)}
+              className={cn(
+                "flex items-center justify-center gap-1.5 rounded-lg py-2 font-display text-xs font-bold uppercase tracking-wider transition-all",
+                tab === k
+                  ? "bg-brand text-brand-foreground brand-glow"
+                  : "text-muted-foreground"
+              )}
+            >
+              <Icon className="h-3.5 w-3.5" />
+              {l}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mx-4 mt-4">
+        {tab === "prize" && <PrizeList />}
+        {tab === "players" && <PlayerList filled={t.slotsFilled} />}
+        {tab === "rules" && <RulesList />}
+      </div>
+
+      {/* Sticky Join */}
+      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-md items-center gap-3 p-4">
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Entry Fee
+            </div>
+            <div className="font-display text-xl font-black">₹{t.entry}</div>
+          </div>
+          <button className="flex-1 rounded-xl bg-brand py-3.5 font-display text-base font-black uppercase tracking-wider text-brand-foreground brand-glow active:scale-[0.98]">
+            Join Tournament
+          </button>
+        </div>
+        <div className="h-[env(safe-area-inset-bottom)]" />
+      </div>
+    </AppShell>
+  );
+}
+
+function Pill({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="rounded-md bg-black/40 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider backdrop-blur">
+      {children}
+    </span>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: string;
+  highlight?: boolean;
+}) {
+  return (
+    <div className="text-center">
+      <div
+        className={cn(
+          "font-display text-base font-black",
+          highlight && "text-brand"
+        )}
+      >
+        {value}
+      </div>
+      <div className="text-[9px] uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function PrizeList() {
+  const medalColor = (r: number) =>
+    r === 1
+      ? "text-gold border-gold/40 bg-gold/10"
+      : r === 2
+        ? "text-silver border-silver/40 bg-silver/10"
+        : r === 3
+          ? "text-bronze border-bronze/40 bg-bronze/10"
+          : "text-muted-foreground border-border bg-surface-2";
+  return (
+    <ul className="space-y-2 pb-32">
+      {PRIZE_DISTRIBUTION.map(({ rank, prize }) => (
+        <li
+          key={rank}
+          className="flex items-center gap-3 rounded-xl border border-border bg-card p-3"
+        >
+          <div
+            className={cn(
+              "grid h-11 w-11 place-items-center rounded-xl border font-display font-black",
+              medalColor(rank)
+            )}
+          >
+            {rank <= 3 ? <Medal className="h-5 w-5" /> : `#${rank}`}
+          </div>
+          <div className="flex-1">
+            <div className="font-display text-sm font-bold">
+              Rank {rank}
+              {rank === 1 && " • Champion"}
+            </div>
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              {rank <= 3 ? ["Gold", "Silver", "Bronze"][rank - 1] : "Reward"}
+            </div>
+          </div>
+          <div className="font-display text-lg font-black text-brand">
+            ₹{prize}
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function PlayerList({ filled }: { filled: number }) {
+  const shown = PLAYERS.slice(0, Math.max(filled, 6));
+  return (
+    <div className="pb-32">
+      <div className="mb-2 flex items-center justify-between">
+        <span className="font-display text-sm font-bold uppercase tracking-wider">
+          Registered
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {shown.length} Players
+        </span>
+      </div>
+      <ul className="grid grid-cols-2 gap-2">
+        {shown.map((p, i) => (
+          <li
+            key={p}
+            className="flex items-center gap-2 rounded-xl border border-border bg-card p-2"
+          >
+            <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-surface-2 font-display text-xs font-black text-brand">
+              {p.slice(0, 2).toUpperCase()}
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-display text-xs font-bold">
+                {p}
+              </div>
+              <div className="text-[9px] uppercase tracking-widest text-muted-foreground">
+                Slot #{i + 1}
+              </div>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function RulesList() {
+  return (
+    <ol className="space-y-2 pb-32">
+      {RULES.map((r, i) => (
+        <li
+          key={i}
+          className="flex gap-3 rounded-xl border border-border bg-card p-3"
+        >
+          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-brand/15 font-display text-xs font-black text-brand">
+            {i + 1}
+          </span>
+          <p className="text-sm leading-relaxed text-foreground/90">{r}</p>
+        </li>
+      ))}
+    </ol>
+  );
+}
