@@ -53,14 +53,10 @@ function LeaderboardPage() {
               <div className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-surface-2 font-display text-xs font-black text-brand">
                 {p.ign.slice(0, 2).toUpperCase()}
               </div>
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-display text-sm font-bold">
-                  {p.ign}
-                </div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                  Elite Player
-                </div>
+              <div className="min-w-0 flex-1 truncate font-display text-sm font-bold">
+                {p.ign}
               </div>
+
               <div className="font-display font-black text-brand">
                 {fmt(p.earnings)}
               </div>
