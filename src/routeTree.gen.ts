@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WalletRouteImport } from './routes/wallet'
 import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as PrivateRouteImport } from './routes/private'
 import { Route as MatchesRouteImport } from './routes/matches'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as IndexRouteImport } from './routes/index'
@@ -24,6 +25,11 @@ const WalletRoute = WalletRouteImport.update({
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivateRoute = PrivateRouteImport.update({
+  id: '/private',
+  path: '/private',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MatchesRoute = MatchesRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/leaderboard': typeof LeaderboardRoute
   '/matches': typeof MatchesRoute
+  '/private': typeof PrivateRoute
   '/settings': typeof SettingsRoute
   '/wallet': typeof WalletRoute
   '/tournament/$id': typeof TournamentIdRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/leaderboard': typeof LeaderboardRoute
   '/matches': typeof MatchesRoute
+  '/private': typeof PrivateRoute
   '/settings': typeof SettingsRoute
   '/wallet': typeof WalletRoute
   '/tournament/$id': typeof TournamentIdRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/leaderboard': typeof LeaderboardRoute
   '/matches': typeof MatchesRoute
+  '/private': typeof PrivateRoute
   '/settings': typeof SettingsRoute
   '/wallet': typeof WalletRoute
   '/tournament/$id': typeof TournamentIdRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/leaderboard'
     | '/matches'
+    | '/private'
     | '/settings'
     | '/wallet'
     | '/tournament/$id'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/leaderboard'
     | '/matches'
+    | '/private'
     | '/settings'
     | '/wallet'
     | '/tournament/$id'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/leaderboard'
     | '/matches'
+    | '/private'
     | '/settings'
     | '/wallet'
     | '/tournament/$id'
@@ -103,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LeaderboardRoute: typeof LeaderboardRoute
   MatchesRoute: typeof MatchesRoute
+  PrivateRoute: typeof PrivateRoute
   SettingsRoute: typeof SettingsRoute
   WalletRoute: typeof WalletRoute
   TournamentIdRoute: typeof TournamentIdRoute
@@ -122,6 +135,13 @@ declare module '@tanstack/react-router' {
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/private': {
+      id: '/private'
+      path: '/private'
+      fullPath: '/private'
+      preLoaderRoute: typeof PrivateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/matches': {
@@ -159,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LeaderboardRoute: LeaderboardRoute,
   MatchesRoute: MatchesRoute,
+  PrivateRoute: PrivateRoute,
   SettingsRoute: SettingsRoute,
   WalletRoute: WalletRoute,
   TournamentIdRoute: TournamentIdRoute,
